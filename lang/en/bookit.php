@@ -35,4 +35,4 @@ $string['modulename_link'] = 'BigBlueButton/view';
 $string['modulenameplural'] = 'Exam Bookings';
 $string['pluginadministration'] = 'Exam booking administration';
 $string['pluginname'] = 'Exam Booking';
-
+$string['addbooking'] = 'add booking';

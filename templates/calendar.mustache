@@ -36,8 +36,16 @@
 {{#js}}
     const ec = new EventCalendar(document.getElementById('ec'), {
         view: 'timeGridWeek',
+        customButtons: {
+            addButton: {
+                text: '{{ addbooking }}',
+                click: function() {
+                    window.location.replace('{{ entryform }}');
+                }
+            }
+        },
         headerToolbar: {
-            start: 'prev,next today',
+            start: 'prev,next today, addButton',
             center: 'title',
             end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek resourceTimeGridWeek,resourceTimelineWeek'
         },

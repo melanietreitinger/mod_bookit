@@ -61,10 +61,13 @@ $PAGE->requires->js(new moodle_url('/mod/bookit/assets/event-calendar.min.js'), 
 $PAGE->requires->css(new moodle_url('/mod/bookit/assets/event-calendar.min.css'), true);
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
-//add hyperlink to calendar.php with id to the page 
+
 echo $OUTPUT->header();
 
-$templatecontext = (object)[];
+$templatecontext = (object)[
+  'entryform' => new moodle_url('/mod/bookit/add.php', ['id' => $cm->id]),
+  'addbooking' => get_string('addbooking', 'mod_bookit'),
+];
 
 echo $OUTPUT->render_from_template('mod_bookit/calendar', $templatecontext);
 
