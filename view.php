@@ -24,8 +24,8 @@
 
 use mod_bookit\event\course_module_viewed;
 
-require(__DIR__.'/../../config.php');
-require_once(__DIR__.'/lib.php');
+require(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
@@ -34,13 +34,13 @@ $id = optional_param('id', 0, PARAM_INT);
 $b = optional_param('b', 0, PARAM_INT);
 
 if ($id) {
-    $cm = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-    $moduleinstance = $DB->get_record('bookit', ['id' => $cm->instance], '*', MUST_EXIST);
+  $cm = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
+  $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+  $moduleinstance = $DB->get_record('bookit', ['id' => $cm->instance], '*', MUST_EXIST);
 } else {
-    $moduleinstance = $DB->get_record('bookit', ['id' => $b], '*', MUST_EXIST);
-    $course = $DB->get_record('course', ['id' => $moduleinstance->course], '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('bookit', $moduleinstance->id, $course->id, false, MUST_EXIST);
+  $moduleinstance = $DB->get_record('bookit', ['id' => $b], '*', MUST_EXIST);
+  $course = $DB->get_record('course', ['id' => $moduleinstance->course], '*', MUST_EXIST);
+  $cm = get_coursemodule_from_instance('bookit', $moduleinstance->id, $course->id, false, MUST_EXIST);
 }
 
 require_login($course, true, $cm);
@@ -48,8 +48,8 @@ require_login($course, true, $cm);
 $modulecontext = context_module::instance($cm->id);
 
 $event = course_module_viewed::create([
-    'objectid' => $moduleinstance->id,
-    'context' => $modulecontext,
+  'objectid' => $moduleinstance->id,
+  'context' => $modulecontext,
 ]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
@@ -57,9 +57,15 @@ $event->trigger();
 
 $PAGE->set_url('/mod/bookit/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
+$PAGE->requires->js(new moodle_url('/mod/bookit/assets/event-calendar.min.js'), true);
+$PAGE->requires->css(new moodle_url('/mod/bookit/assets/event-calendar.min.css'), true);
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
-
+//add hyperlink to calendar.php with id to the page 
 echo $OUTPUT->header();
+
+$templatecontext = (object)[];
+
+echo $OUTPUT->render_from_template('mod_bookit/calendar', $templatecontext);
 
 echo $OUTPUT->footer();
