@@ -36,17 +36,17 @@ class event {
     public string $department;
     public int $starttime;
     public int $endtime;
-    public int $duration;
-    public int $participantsamount;
-    public string $compensationfordisadvantage;
-    public int $status;
+    public ?int $duration;
+    public ?int $participantsamount;
+    public ?string $compensationfordisadvantage;
+    public ?int $status;
     public ?int $personinchargeid;
     public ?string $personinchargename;
     public ?string $personinchargeemail;
     public ?int $coursetemplate;
-    public string $notes;
-    public string $internalnotes;
-    public string $support;
+    public ?string $notes;
+    public ?string $internalnotes;
+    public ?string $support;
     public array $resources;
     public ?int $refcourseid;
     public ?int $usermodified;
@@ -73,8 +73,8 @@ class event {
      * @param int|null $timemodified
      */
     public function __construct(string $name, $semester, $department, int $starttime, int $endtime, int $duration,
-            int $participantsamount, string $compensationfordisadvantage, int $status, $personinchargeid, $personinchargename,
-            $personinchargeemail, $coursetemplate, string $internalnotes, string $notes, string $support, $resources, $refcourseid,
+            $participantsamount, $compensationfordisadvantage, $status, $personinchargeid, $personinchargename,
+            $personinchargeemail, $coursetemplate, $internalnotes, $notes, $support, $resources, $refcourseid,
             $usermodified = null, $timecreated = null, $timemodified = null, $id = null) {
         $this->id = $id;
         $this->name = $name;
@@ -141,6 +141,7 @@ class event {
                 $record->notes,
                 $record->internalnotes,
                 $record->support,
+                $record->resources,
                 $record->refcourseid,
                 $record->usermodified ?? null,
                 $record->timecreated ?? null,

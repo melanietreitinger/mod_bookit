@@ -40,8 +40,8 @@ $string['addbooking'] = 'Request booking';
 // Booking form.
 $string['event_name'] = 'Event title';
 $string['event_name_help'] = 'Enter the title of the event.';
-$string['summer_semester'] = 'summer term';
-$string['winter_semester'] = 'winter term';
+$string['summer_semester'] = 'Summer Term';
+$string['winter_semester'] = 'Winter Term';
 $string['select_semester'] = 'Term';
 $string['select_semester_help'] = 'Select term of event.';
 $string['event_department'] = 'Department';

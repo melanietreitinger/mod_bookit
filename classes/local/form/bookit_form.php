@@ -16,6 +16,8 @@
 
 namespace mod_bookit\local\form;
 
+use mod_bookit\local\manager\categories_manager;
+
 require_once($CFG->libdir . '/formslib.php');
 
 /**
@@ -33,46 +35,7 @@ class bookit_form extends \moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        //     // Überschrift (Heading) für die erste Gruppe
-        // $mform->addElement('header', 'general', 'General Settings');
-
-        // // Felder für die erste Gruppe erstellen
-        // $name = $mform->createElement('text', 'name', 'Event Name', array('size' => '64'));
-        // $description = $mform->createElement('editor', 'introeditor', 'Description');
-
-        // // Gruppe mit den Feldern "Name" und "Beschreibung" hinzufügen
-        // $mform->addGroup(array($name, $description), 'generalgroup', 'General Information', ' ', false);
-
-        // // Regeln für die Gruppe festlegen
-        // $mform->addGroupRule('generalgroup', [
-        //     'name' => [
-        //         ['required', null, 'required', null, 'client'],
-        //         ['maxlength', 255, 'maxlength', 255, 'client']
-        //     ]
-        // ]);
-
-        // $mform->setType('name', PARAM_TEXT);
-        // $mform->setType('introeditor', PARAM_RAW);
-
-        // // Unterüberschrift (Subheading) und eine weitere Gruppe
-        // $mform->addElement('html', '<h3>Additional Settings</h3>');
-
-        // // Felder für die zweite Gruppe erstellen
-        // $numcards = $mform->createElement('text', 'numcards', 'Number of Cards', array('size' => '4'));
-        // $cardtype = $mform->createElement('select', 'cardtype', 'Card Type', [
-        //     'tshirtsizes' => 'T-Shirt Sizes',
-        //     'fibonacci' => 'Fibonacci Numbers',
-        //     'numbers' => 'Normal Numbers',
-        // ]);
-
-        // // Gruppe mit den Feldern "Numcards" und "Cardtype" hinzufügen
-        // $mform->addGroup(array($numcards, $cardtype), 'additionalgroup', 'Additional Information', ' ', false);
-
-        // // Typ und Standardwerte für die Felder festlegen
-        // $mform->setType('numcards', PARAM_INT);
-        // $mform->setDefault('numcards', 6);
-
-        // =====================================
+        $categories = categories_manager::get_categories();
 
         // Add the standard "name" field.
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), array('size' => '64'));
@@ -111,13 +74,13 @@ class bookit_form extends \moodleform {
         $mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
         // Add the "Bookingtimes" fields.
-        $mform->addElement('date_time_selector', 'event_start', get_string('event_start', 'mod_bookit'));
-        $mform->addRule('event_start', null, 'required', null, 'client');
-        $mform->addHelpButton('event_start', 'event_start', 'mod_bookit');
+        $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'));
+        $mform->addRule('starttime', null, 'required', null, 'client');
+        $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
-        $mform->addElement('date_time_selector', 'event_end', get_string('event_end', 'mod_bookit'));
-        $mform->addRule('event_end', null, 'required', null, 'client');
-        $mform->addHelpButton('event_end', 'event_end', 'mod_bookit');
+        $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'));
+        $mform->addRule('endtime', null, 'required', null, 'client');
+        $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
 
         // Add the "duration" field.
         $mform->addElement('text', 'duration', get_string('event_duration', 'mod_bookit'), ['size' => '4']);
@@ -152,30 +115,17 @@ class bookit_form extends \moodleform {
         $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"), 'wrap="virtual" rows="20" cols="50"');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
-        // RESSOURCES.
-        // $mform->addElement('header', 'resources', get_string('event_resources', 'mod_bookit'));
-        // $mform->setExpanded('resources', true);
+        foreach(categories_manager::get_categories() as $category) {
+            if ($category['name'] === 'Rooms') {
+                continue;
+            }
+            $mform->addElement('header', 'header_' . $category['id'], $category['name']);
 
-        $resources = [
-                'Hardware' => ['microphone', 'headphone'],
-                'Software' => ['safe exam browser', 'chrome'],
-                'Licenses' => ['license1', 'license'],
-        ];
-        //$resourcedetails = [];
-
-        // '$resources = [
-        //     'category 1' => [],
-        // ];'
-
-        foreach($resources as $key => $value){
-            $mform->addElement('header', $key, $key);
-            $mform->setExpanded($key, true);
-
-            foreach($value as $v) {
+            foreach($category['resources'] as $v) {
                 $preprocedure = [];
-                $preprocedure[] =  $mform->createElement('advcheckbox', 'preprocedure[]','', $v, ['group' => 1], ['',$v]);
-                $preprocedure[] =  $mform->createElement('text', 'amount', get_string('resource_amount', 'mod_bookit'), array('size' => '4'));
-                $mform->setType('amount', PARAM_INT);
+                $preprocedure[] =  $mform->createElement('advcheckbox', 'checkbox_' . $v['id'],'', $v['name'], ['group' => 1], ['',$v['name']]);
+                $preprocedure[] =  $mform->createElement('text', 'amount_' . $v['id'], get_string('resource_amount', 'mod_bookit'), array('size' => '4'));
+                $mform->setType('amount_' . $v['id'], PARAM_INT);
                 $mform->addGroup($preprocedure, 'preproceduregroup', 'Please select', ['<br>'], false);
             }
         }

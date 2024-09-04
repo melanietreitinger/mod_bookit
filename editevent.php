@@ -23,6 +23,8 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_bookit\local\manager\categories_manager;
+
 require(__DIR__.'/../../config.php');
 
 global $DB, $OUTPUT;
@@ -48,7 +50,34 @@ $PAGE->set_heading($title);
 $PAGE->set_context($modulecontext);
 $PAGE->set_cm($cm, $course, $moduleinstance);
 
-$form = new \mod_bookit\local\form\bookit_form();
+$form = new \mod_bookit\local\form\bookit_form($PAGE->url);
+
+$redirecturl = new moodle_url('/mod/bookit/view.php', ['id' => $cm->id]);
+
+if ($form->is_cancelled()) {
+    redirect($redirecturl);
+}
+
+if ($data = $form->get_data()) {
+    $mappings = [];
+    foreach (categories_manager::get_categories() as $category) {
+
+        foreach ($category['resources'] as $resource) {
+            $checkboxname = 'checkbox' . $resource['id'];
+            if (isset($data->$checkboxname)) {
+                $mappings[] = [
+                    'resourceid' => $resource['id'],
+                    'amount' => $data->{'amount' . $resource['id']},
+                ];
+            }
+        }
+    }
+    $data->resources = $mappings;
+    $data->status = \mod_bookit\local\entity\event::STATUS_OPEN;
+    $event = \mod_bookit\local\entity\event::from_record($data);
+    $event->save();
+    redirect($redirecturl);
+}
 
 echo $OUTPUT->header();
 
