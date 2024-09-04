@@ -56,8 +56,8 @@
         <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="semester" TYPE="int" LENGTH="8" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="department" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="start" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="end" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="duration" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="participantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Number of participants"/>
         <FIELD NAME="compensationfordisadvantages" TYPE="text" NOTNULL="false" SEQUENCE="false"/>

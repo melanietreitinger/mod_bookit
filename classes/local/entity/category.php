@@ -14,9 +14,9 @@ class category {
     public ?int $id;
     public string $name;
     public ?string $description;
-    public int $usermodified;
-    public int $timecreated;
-    public int $timemodified;
+    public ?int $usermodified;
+    public ?int $timecreated;
+    public ?int $timemodified;
 
     /**
      * @param string $name
@@ -26,8 +26,8 @@ class category {
      * @param int $timemodified
      * @param int|null $id
      */
-    public function __construct(string $name, ?string $description, int $usermodified, int $timecreated,
-            int $timemodified, ?int $id = null) {
+    public function __construct(string $name, ?string $description, int $usermodified = null, int $timecreated = null,
+            int $timemodified = null, ?int $id = null) {
         $this->id = $id;
         $this->name = $name;
         $this->description = $description;
@@ -63,9 +63,9 @@ class category {
         );
     }
 
-    public function save(): void {
+    public function save($userid = null): void {
         global $DB, $USER;
-        $this->usermodified = $USER->id;
+        $this->usermodified = $userid ?? $USER->id;
         if (!$this->timecreated) {
             $this->timecreated = time();
         }

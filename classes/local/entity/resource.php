@@ -16,22 +16,22 @@ class resource {
     public ?string $description;
     public int $amount;
     public int $categoryid;
-    public int $usermodified;
-    public int $timecreated;
-    public int $timemodified;
+    public ?int $usermodified;
+    public ?int $timecreated;
+    public ?int $timemodified;
 
     /**
      * @param string $name
-     * @param $description
+     * @param string|null $description
      * @param int $amount
      * @param int $categoryid
-     * @param int $usermodified
-     * @param int $timecreated
-     * @param int $timemodified
+     * @param int|null $usermodified
+     * @param int|null $timecreated
+     * @param int|null $timemodified
      * @param int|null $id
      */
-    public function __construct(string $name, ?string $description, int $amount, int $categoryid, int $usermodified, int $timecreated,
-            int $timemodified, ?int $id) {
+    public function __construct(string $name, ?string $description, int $amount, int $categoryid, int $usermodified = null,
+            int $timecreated = null, int $timemodified = null, int $id = null) {
         $this->id = $id;
         $this->name = $name;
         $this->description = $description;
@@ -71,9 +71,9 @@ class resource {
         );
     }
 
-    public function save(): void {
+    public function save($userid = null): void {
         global $DB, $USER;
-        $this->usermodified = $USER->id;
+        $this->usermodified = $userid ?? $USER->id;
         if (!$this->timecreated) {
             $this->timecreated = time();
         }

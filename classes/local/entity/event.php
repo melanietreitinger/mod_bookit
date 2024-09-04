@@ -25,15 +25,21 @@ namespace mod_bookit\local\entity;
  */
 class event {
 
+    const STATUS_OPEN = 1;
+    const STATUS_ACCEPTED = 2;
+    const STATUS_REJECTED = 3;
+
+
     public ?int $id;
     public string $name;
     public int $semester;
     public string $department;
-    public int $start;
-    public int $end;
+    public int $starttime;
+    public int $endtime;
     public int $duration;
     public int $participantsamount;
     public string $compensationfordisadvantage;
+    public int $status;
     public ?int $personinchargeid;
     public ?string $personinchargename;
     public ?string $personinchargeemail;
@@ -49,8 +55,8 @@ class event {
     /**
      * @param string $name
      * @param int $semester
-     * @param int $start
-     * @param int $end
+     * @param int $starttime
+     * @param int $endtime
      * @param int $duration
      * @param int $participantsamount
      * @param string $compensationfordisadvantage
@@ -65,19 +71,20 @@ class event {
      * @param int|null $timecreated
      * @param int|null $timemodified
      */
-    public function __construct(string $name, $semester, $department, int $start, int $end, int $duration, int $participantsamount,
-            string $compensationfordisadvantage, $personinchargeid, $personinchargename, $personinchargeemail, $coursetemplate,
-            string $internalnotes, string $notes, string $support, $refcourseid, $usermodified, $timecreated, $timemodified,
-            $id = null) {
+    public function __construct(string $name, $semester, $department, int $starttime, int $endtime, int $duration,
+            int $participantsamount, string $compensationfordisadvantage, int $status, $personinchargeid, $personinchargename,
+            $personinchargeemail, $coursetemplate, string $internalnotes, string $notes, string $support, $refcourseid,
+            $usermodified = null, $timecreated = null, $timemodified = null, $id = null) {
         $this->id = $id;
         $this->name = $name;
         $this->semester = $semester;
         $this->department = $department;
-        $this->start = $start;
-        $this->end = $end;
+        $this->starttime = $starttime;
+        $this->endtime = $endtime;
         $this->duration = $duration;
         $this->participantsamount = $participantsamount;
         $this->compensationfordisadvantage = $compensationfordisadvantage;
+        $this->status = $status;
         $this->personinchargeid = $personinchargeid;
         $this->personinchargename = $personinchargename;
         $this->personinchargeemail = $personinchargeemail;
@@ -112,11 +119,12 @@ class event {
                 $record->name,
                 $record->semester,
                 $record->department,
-                $record->start,
-                $record->end,
+                $record->starttime,
+                $record->endtime,
                 $record->duration,
                 $record->participantsamount,
                 $record->compensationfordisadvantage,
+                $record->status,
                 $record->personinchargeid,
                 $record->personinchargename,
                 $record->personinchargeemail,
@@ -132,9 +140,9 @@ class event {
         );
     }
 
-    public function save(): void {
+    public function save($userid = null): void {
         global $DB, $USER;
-        $this->usermodified = $USER->id;
+        $this->usermodified = $userid ?? $USER->id;
         if (!$this->timecreated) {
             $this->timecreated = time();
         }
