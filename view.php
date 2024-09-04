@@ -67,6 +67,8 @@ echo $OUTPUT->header();
 $templatecontext = (object)[
   'entryform' => new moodle_url('/mod/bookit/add.php', ['id' => $cm->id]),
   'addbooking' => get_string('addbooking', 'mod_bookit'),
+  'id' => $cm->id,
+  'eventsource' => new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]),
 ];
 
 echo $OUTPUT->render_from_template('mod_bookit/calendar', $templatecontext);

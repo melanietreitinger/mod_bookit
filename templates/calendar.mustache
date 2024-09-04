@@ -53,9 +53,14 @@
             {id: 1, title: 'Resource A'},
             {id: 2, title: 'Resource B'}
         ],
+        eventSources: [
+          {
+            url: '{{ eventsource }}',
+          },
+        ],
         scrollTime: '09:00:00',
-        events: createEvents(),
         views: {
+
             timeGridWeek: {pointer: true},
             resourceTimeGridWeek: {pointer: true},
             resourceTimelineWeek: {
