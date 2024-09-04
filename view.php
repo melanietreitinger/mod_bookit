@@ -59,6 +59,7 @@ $PAGE->set_url('/mod/bookit/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->requires->js(new moodle_url('/mod/bookit/assets/event-calendar.min.js'), true);
 $PAGE->requires->css(new moodle_url('/mod/bookit/assets/event-calendar.min.css'), true);
+$PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendar.min.css'), true);
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
