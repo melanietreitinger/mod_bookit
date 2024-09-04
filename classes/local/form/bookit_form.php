@@ -66,9 +66,12 @@ class bookit_form extends \moodleform {
 
         // Add the "room" field.
         $rooms = [];
-        for ($i = 0; $i < 4; $i++) {
-
-            $rooms[$i] = get_string('event_room', 'mod_bookit') . " " . ($i);
+        foreach ($categories as $category) {
+            if ($category['name'] === 'Rooms') {
+                foreach ($category['resources'] as $resource) {
+                    $rooms[$resource['id']] = $resource['name'];
+                }
+            }
         }
         $mform->addElement('select', 'room', get_string('event_room', 'mod_bookit'), $rooms);
         $mform->addHelpButton('room', 'event_room', 'mod_bookit');
@@ -126,7 +129,8 @@ class bookit_form extends \moodleform {
                 $preprocedure[] =  $mform->createElement('advcheckbox', 'checkbox_' . $v['id'],'', $v['name'], ['group' => 1], ['',$v['name']]);
                 $preprocedure[] =  $mform->createElement('text', 'amount_' . $v['id'], get_string('resource_amount', 'mod_bookit'), array('size' => '4'));
                 $mform->setType('amount_' . $v['id'], PARAM_INT);
-                $mform->addGroup($preprocedure, 'preproceduregroup', 'Please select', ['<br>'], false);
+                $mform->addGroup($preprocedure, 'preproceduregroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'], false);
+                $mform->disabledIf('amount_' . $v['id'], 'checkbox_' . $v['id']);
             }
         }
 

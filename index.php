@@ -72,12 +72,12 @@ if ($course->format == 'weeks') {
 foreach ($bookits as $bookit) {
     if (!$bookit->visible) {
         $link = html_writer::link(
-            new moodle_url('/mod/bookit/view.php', ['id' => $bookit->coursemodule)],
+            new moodle_url('/mod/bookit/view.php', ['id' => $bookit->coursemodule]),
             format_string($bookit->name, true),
-            ['class' => 'dimmed')];
+            ['class' => 'dimmed']);
     } else {
         $link = html_writer::link(
-            new moodle_url('/mod/bookit/view.php', ['id' => $bookit->coursemodule)],
+            new moodle_url('/mod/bookit/view.php', ['id' => $bookit->coursemodule]),
             format_string($bookit->name, true));
     }
 

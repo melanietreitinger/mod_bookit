@@ -66,6 +66,7 @@ $string['event_compensationfordisadvantages_help'] = 'Enter here informations of
 $string['edit_event'] = "Edit an event";
 $string['event_notes'] = 'Notes';
 $string['event_notes_help'] = 'Please enter additional notes to inform your support team.';
+$string['please_select_and_enter'] = 'Please select and enter a number';
 
 // Booking form headings.
 $string['event_resources'] = 'Resources';
