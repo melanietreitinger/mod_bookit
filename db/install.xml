@@ -82,7 +82,7 @@
         <KEY NAME="even_ref_fk" TYPE="foreign" FIELDS="refcourseid" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="bookit_event_resources">
+    <TABLE NAME="bookit_event_resources" COMMENT="Stores the booked resources for an event">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="eventid" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
