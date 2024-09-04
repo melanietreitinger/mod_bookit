@@ -44,11 +44,11 @@ if ($id) {
     $params['id'] = $id;
 }
 $PAGE->set_url('/mod/bookit/editevent.php', $params);
+$PAGE->set_context($modulecontext);
+$PAGE->set_cm($cm, $course, $moduleinstance);
 $title = get_string('edit_event', 'mod_bookit');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
-$PAGE->set_context($modulecontext);
-$PAGE->set_cm($cm, $course, $moduleinstance);
 
 $form = new \mod_bookit\local\form\bookit_form($PAGE->url);
 
