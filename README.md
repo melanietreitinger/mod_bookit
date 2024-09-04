@@ -27,6 +27,11 @@ Alternatively, you can run
 
 to complete the installation from the command line.
 
+## Credits ##
+This project was started on the MoodleMoot DACH 2024 DeVCamp.
+
+Contributers: Justus Diekmann, Philipp Dorok, Florian Fischer, Sandra Jaeger, Valentin Koser, Christian Kupfer, Hanna Meyer zu Hörste, Lena Nedwed, Katja Neubehler, Jonas Priebe, Christopher Reimann, Melanie Treitinger.
+
 ## License ##
 
 2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>

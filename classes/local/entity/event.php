@@ -47,6 +47,7 @@ class event {
     public string $notes;
     public string $internalnotes;
     public string $support;
+    public array $resources;
     public ?int $refcourseid;
     public ?int $usermodified;
     public ?int $timecreated;
@@ -73,7 +74,7 @@ class event {
      */
     public function __construct(string $name, $semester, $department, int $starttime, int $endtime, int $duration,
             int $participantsamount, string $compensationfordisadvantage, int $status, $personinchargeid, $personinchargename,
-            $personinchargeemail, $coursetemplate, string $internalnotes, string $notes, string $support, $refcourseid,
+            $personinchargeemail, $coursetemplate, string $internalnotes, string $notes, string $support, $resources, $refcourseid,
             $usermodified = null, $timecreated = null, $timemodified = null, $id = null) {
         $this->id = $id;
         $this->name = $name;
@@ -92,6 +93,7 @@ class event {
         $this->notes = $notes;
         $this->internalnotes = $internalnotes;
         $this->support = $support;
+        $this->resources = $resources;
         $this->refcourseid = $refcourseid;
         $this->usermodified = $usermodified;
         $this->timecreated = $timecreated;
@@ -105,6 +107,13 @@ class event {
     public static function from_database($id) {
         global $DB;
         $record = $DB->get_record("bookit_event", array("id" => $id), '*', MUST_EXIST);
+
+        $mappings = $DB->get_records('bookit_event_resources', ['eventid' => $record->id]);
+        $map = [];
+        foreach ($mappings as $mapping) {
+            $map[] = (object) ['resourceid' => $mapping->resourceid, 'amount' => $mapping->amount];
+        }
+        $record->resources = $map;
 
         return self::from_record($record);
     }
@@ -147,10 +156,25 @@ class event {
             $this->timecreated = time();
         }
         $this->timemodified = time();
+
+
+        $data = (object) clone $this;
+        $mappings = $data->resources;
+        unset($data->resources);
+
         if ($this->id) {
             $DB->update_record('bookit_event', $this);
+            $DB->delete_records("bookit_event_resources", ['eventid' => $this->id]);
         } else {
             $this->id = $DB->insert_record('bookit_event', $this);
+        }
+
+        foreach ($mappings as $mapping) {
+            $DB->insert_record('bookit_event_resources', [
+                'eventid' => $this->id,
+                'resourceid' => $mapping->resourceid,
+                'amount' => $mapping->amount
+            ]);
         }
     }
 

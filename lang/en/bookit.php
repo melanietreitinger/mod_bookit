@@ -25,14 +25,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['bookit:addinstance'] = 'Add bookit instance';
-$string['bookit:view'] = 'View bookit instance';
+$string['bookit:addinstance'] = 'Add BookIt instance';
+$string['bookit:view'] = 'View BookIt instance';
 $string['bookitfieldset'] = 'PLACEHOLDER';
 $string['instancename'] = 'Name';
-$string['modulename'] = 'Exam Booking';
-$string['modulename_help'] = 'Exam Booking is a tool to book exam dates, rooms and ressources.';
-$string['modulename_link'] = 'BigBlueButton/view';
-$string['modulenameplural'] = 'Exam Bookings';
-$string['pluginadministration'] = 'Exam booking administration';
-$string['pluginname'] = 'Exam Booking';
-$string['addbooking'] = 'add booking';
+$string['modulename'] = 'BookIt';
+$string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
+$string['modulename_link'] = 'mod/bookit/view';
+$string['modulenameplural'] = 'BookIt instances';
+$string['pluginadministration'] = 'BookIt administration';
+$string['pluginname'] = 'BookIt';
+$string['addbooking'] = 'Request booking';
