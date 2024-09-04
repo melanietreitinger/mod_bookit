@@ -34,8 +34,12 @@
 }}
 <div id="ec"></div>
 {{#js}}
+    let viewType = 'timeGridWeek';
+    if (window.screen.width <= 1000) {
+      viewType = 'listWeek';
+    }
     const ec = new EventCalendar(document.getElementById('ec'), {
-        view: 'timeGridWeek',
+        view: viewType,
         customButtons: {
             addButton: {
                 text: '{{ addbooking }}',
