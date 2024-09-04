@@ -1,57 +1,37 @@
 <?php
-
-<<<<<<< HEAD
 function xmldb_bookit_install()
 {
   global $DB;
-=======
-function xmldb_bookit_install() {
-    global $DB;
-    $category = new \mod_bookit\local\entity\category('Rooms', 'Examrooms');
-    $category->save(2);
-    $resource = new \mod_bookit\local\entity\resource('Exam room 1', 'Capacity 255 seats', 1, $category->id);
-    $resource->save(2);
-    $event = new \mod_bookit\local\entity\event('Exam Biologie 1', 20241, 'IT', 1725436800, 1725444000, 90, 85,
-            '3 Zeitverlängerungen', 1, 2, 'Prof. Superprof', 'superprof@example.com', 4, 'Internal lorem ipsum',
-            'Lorem Ipsum dolor...', 'Susi Support', [
-                    (object) ['resourceid' => $resource->id, 'amount' => 2]
-                    ], null, 2);
-    $event->save(2);
->>>>>>> 6c228bbac59aad6fb6f0febb5ce90ce52110536f
 
   $category = new \mod_bookit\local\entity\category('Rooms', 'Examrooms');
   $category->save(2);
 
-  $resourceNames = ['Exam room 2', 'Exam room 3', 'Exam room 4', 'Exam room 5', 'Exam room 6', 'Exam room 7', 'Exam room 8', 'Exam room 9', 'Exam room 10', 'Exam room 11'];
-  $eventNames = [
-    'Exam Mathematics',
-    'Exam Philosophy',
-    'Exam Physics',
-    'Exam Chemistry',
-    'Exam Biology',
-    'Exam Computer Science',
-    'Exam History',
-    'Exam Literature',
-    'Exam Art',
-    'Exam Sociology'
-  ];
+  $resources = [];
+  $events = [];
 
-  // Get the start of the week
-  $startOfWeek = strtotime("last monday midnight");
+  $subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'History', 'Geography', 'English Literature', 'Psychology', 'Sociology'];
 
-  for ($i = 0; $i < 10; $i++) {
-    $resource = new \mod_bookit\local\entity\resource($resourceNames[$i], 'Capacity 255 seats', 1, $category->id);
+  for ($i = 1; $i <= 10; $i++) {
+    $resource = new \mod_bookit\local\entity\resource('Exam room ' . $i, 'Capacity 255 seats', 1, $category->id);
     $resource->save(2);
+    $resources[] = $resource;
 
-    // Add random day of the week and time for each event between 07:00 and 20:00
-    $eventTime = $startOfWeek + (rand(0, 6) * 24 * 60 * 60) + (rand(7, 20) * 60 * 60);
+    // Generate random date and time in the current week between 07:00 and 20:00
+    $dayOfWeek = rand(0, 5); // Changed from 0-6 to 0-5 to exclude Sundays
+    $hour = rand(7, 20);
+    $minute = rand(0, 59);
+    $second = rand(0, 59);
+    $startDate = strtotime("last Monday +$dayOfWeek days $hour:$minute:$second"); // Changed "this Monday" to "last Monday"
+    $endDate = $startDate + 7200; // Add 2 hours to start date
+
+    $subject = $subjects[array_rand($subjects)]; // Select a random subject
 
     $event = new \mod_bookit\local\entity\event(
-      $eventNames[$i],
+      'Exam ' . $subject,
       20241,
       'IT',
-      $eventTime,
-      $eventTime + 7200,
+      $startDate,
+      $endDate,
       90,
       85,
       '3 Zeitverlängerungen',
@@ -63,18 +43,13 @@ function xmldb_bookit_install() {
       'Internal lorem ipsum',
       'Lorem Ipsum dolor...',
       'Susi Support',
+      [
+        (object) ['resourceid' => $resource->id, 'amount' => 2]
+      ],
       null,
       2
     );
     $event->save(2);
-
-    $DB->insert_record('bookit_event_resources', [
-      'eventid' => $event->id,
-      'resourceid' => $resource->id,
-      'amount' => 1,
-      'usermodified' => 2,
-      'timecreated' => time(),
-      'timemodified' => time(),
-    ]);
+    $events[] = $event;
   }
 }
