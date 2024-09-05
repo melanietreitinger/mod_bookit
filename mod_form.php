@@ -58,7 +58,7 @@ class mod_bookit_mod_form extends moodleform_mod
 
     // -------------------------------------------------------------------------------
     // Adding the rest of mod_bookit settings, spreading all them into this fieldset.
-    $mform->addElement('header', 'bookitfieldset', get_string('bookitfieldset', 'mod_bookit'));
+    // $mform->addElement('header', 'bookitfieldset', get_string('bookitfieldset', 'mod_bookit'));
 
     // -------------------------------------------------------------------------------
 

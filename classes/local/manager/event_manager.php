@@ -19,7 +19,7 @@ class event_manager
     $starttimestamp = \DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
     $endtimestamp = \DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
     $records = $DB->get_records_sql(
-      'SELECT name, starttime, endtime FROM {bookit_event} ' .
+      'SELECT id, name, starttime, endtime FROM {bookit_event} ' .
         'WHERE endtime >= :starttime AND starttime <= :endtime',
       ['starttime' => $starttimestamp, 'endtime' => $endtimestamp]
     );

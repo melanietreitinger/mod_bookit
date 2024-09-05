@@ -131,22 +131,22 @@ class event {
                 $record->starttime,
                 $record->endtime,
                 $record->duration,
-                $record->participantsamount,
-                $record->compensationfordisadvantage,
+                $record->participantsamount ?? null,
+                $record->compensationfordisadvantage ?? null,
                 $record->status,
-                $record->personinchargeid,
+                $record->personinchargeid ?? null,
                 $record->personinchargename,
                 $record->personinchargeemail,
-                $record->coursetemplate,
-                $record->notes,
-                $record->internalnotes,
-                $record->support,
+                $record->coursetemplate ?? 0,
+                $record->notes ?? null,
+                $record->internalnotes ?? null,
+                $record->support ?? null,
                 $record->resources,
-                $record->refcourseid,
+                $record->refcourseid ?? null,
                 $record->usermodified ?? null,
                 $record->timecreated ?? null,
                 $record->timemodified ?? null,
-                $record->id
+                $record->id ?? null
         );
     }
 
@@ -159,7 +159,7 @@ class event {
         $this->timemodified = time();
 
 
-        $data = (object) clone $this;
+        $data = clone $this;
         $mappings = $data->resources;
         unset($data->resources);
 

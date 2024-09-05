@@ -92,23 +92,23 @@ class bookit_form extends \moodleform {
         $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
 
         // Add "amount of students" field.
-        $mform->addElement('text', 'students', get_string('event_students', 'mod_bookit'), array('size' => '4'));
-        $mform->setType('students', PARAM_INT);
-        $mform->addHelpButton('students', 'event_students', 'mod_bookit');
+        $mform->addElement('text', 'participantsamount', get_string('event_students', 'mod_bookit'), array('size' => '4'));
+        $mform->setType('participantsamount', PARAM_INT);
+        $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
 
         // Add the "person in charge" field.
-        $mform->addElement('text', 'person', get_string('event_person', 'mod_bookit'), array('size' => '64'));
-        $mform->setType('person', PARAM_TEXT);
-        $mform->addRule('person', null, 'required', null, 'client');
-        $mform->addRule('person', null, 'maxlength', 255, 'client');
-        $mform->addHelpButton('person', 'event_person', 'mod_bookit');
+        $mform->addElement('text', 'personinchargename', get_string('event_person', 'mod_bookit'), array('size' => '64'));
+        $mform->setType('personinchargename', PARAM_TEXT);
+        $mform->addRule('personinchargename', null, 'required', null, 'client');
+        $mform->addRule('personinchargename', null, 'maxlength', 255, 'client');
+        $mform->addHelpButton('personinchargename', 'event_person', 'mod_bookit');
 
         // Add the "email" field.
-        $mform->addElement('text', 'email', get_string('event_email', 'mod_bookit'), array('size' => '64'));
-        $mform->setType('email', PARAM_TEXT);
-        $mform->addRule('email', null, 'required', null, 'client');
-        $mform->addRule('email', null, 'maxlength', 255, 'client');
-        $mform->addHelpButton('email', 'event_email', 'mod_bookit');
+        $mform->addElement('text', 'personinchargeemail', get_string('event_email', 'mod_bookit'), array('size' => '64'));
+        $mform->setType('personinchargeemail', PARAM_TEXT);
+        $mform->addRule('personinchargeemail', null, 'required', null, 'client');
+        $mform->addRule('personinchargeemail', null, 'maxlength', 255, 'client');
+        $mform->addHelpButton('personinchargeemail', 'event_email', 'mod_bookit');
 
         // Add the "compensationfordisadvantages" field.
         $mform->addElement('textarea', 'compensationfordisadvantages', get_string('event_compensationfordisadvantages', 'mod_bookit'), ['size' => '64']);

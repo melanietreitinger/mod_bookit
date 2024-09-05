@@ -60,18 +60,21 @@ if ($form->is_cancelled()) {
 
 if ($data = $form->get_data()) {
     $mappings = [];
+    echo json_encode(categories_manager::get_categories());
+    echo json_encode($data);
     foreach (categories_manager::get_categories() as $category) {
 
         foreach ($category['resources'] as $resource) {
-            $checkboxname = 'checkbox' . $resource['id'];
-            if (isset($data->$checkboxname)) {
-                $mappings[] = [
+            $checkboxname = 'checkbox_' . $resource['id'];
+            if ($data->$checkboxname ?? false) {
+                $mappings[] = (object) [
                     'resourceid' => $resource['id'],
-                    'amount' => $data->{'amount' . $resource['id']},
+                    'amount' => $data->{'amount_' . $resource['id']},
                 ];
             }
         }
     }
+    echo json_encode($mappings);
     $data->resources = $mappings;
     $data->status = \mod_bookit\local\entity\event::STATUS_OPEN;
     $event = \mod_bookit\local\entity\event::from_record($data);
