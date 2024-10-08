@@ -88,6 +88,7 @@ export async function init(entryform, eventsource) {
         },
         dayMaxEvents: true,
         nowIndicator: true,
-        selectable: true
+        selectable: true,
+        eventStartEditable: false
     });
 }
