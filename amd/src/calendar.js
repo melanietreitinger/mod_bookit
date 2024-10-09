@@ -1,26 +1,5 @@
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * Implements reviewing functionality
- *
- * @module     mod_moodleoverflow/reviewing
- * @copyright  2022 Justus Dieckmann WWU
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 import {get_string as getString} from 'core/str';
+import ModalForm from 'core_form/modalform';
 import Prefetch from 'core/prefetch';
 
 const theGlobalProperty = (globalPropertyName) => {
@@ -37,11 +16,12 @@ const theGlobalProperty = (globalPropertyName) => {
 
 /**
  * Initializes the calendar.
- * @param {string} entryform
+ * @param {int} cmid
+ * @param {string} moduleinstanceid
  * @param {string} eventsource
  * @returns {Promise<void>}
  */
-export async function init(entryform, eventsource) {
+export async function init(cmid, moduleinstanceid, eventsource) {
     Prefetch.prefetchString('mod_bookit', 'addbooking');
     await theGlobalProperty('EventCalendar');
     const str_request_booking = await getString('addbooking', 'mod_bookit');
@@ -58,9 +38,34 @@ export async function init(entryform, eventsource) {
             addButton: {
                 text: str_request_booking,
                 click: function() {
-                    window.location.replace(entryform);
+                    const modalForm = new ModalForm({
+                                    formClass: "mod_bookit\\form\\edit_event_form",
+                                    args: {
+                                        cmid: cmid,
+                                    },
+                                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                                });
+                                modalForm.show();
                 }
             }
+        },
+        eventClick: function (info) {
+            id = info.event.id;
+            id = id.match(/generated-/) ? id.replace(/[{}generated-]/g, '')  : id;
+
+            console.log(info);
+            console.log("cmid: "+cmid);
+            console.log("id: "+id);
+
+            const modalForm = new ModalForm({
+                formClass: "mod_bookit\\form\\edit_event_form",
+                args: {
+                    cmid: cmid,
+                    id: id,
+                },
+                modalConfig: {title: getString('edit_event', 'mod_bookit')},
+            });
+            modalForm.show();
         },
         headerToolbar: {
             start: 'prev,next today, addButton',

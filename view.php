@@ -65,10 +65,10 @@ $PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
-$entryform = (new moodle_url('/mod/bookit/editevent.php', ['b' => $moduleinstance->id]))->out(false);
+//$entryform = (new moodle_url('/mod/bookit/editevent.php', ['b' => $moduleinstance->id]))->out(false);
 $eventsource =  (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
 
 echo '<div id="ec"></div>';
-$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$entryform, $eventsource]);
+$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $moduleinstance->id, $eventsource]);
 
 echo $OUTPUT->footer();
