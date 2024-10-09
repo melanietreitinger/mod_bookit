@@ -35,7 +35,7 @@ $string['modulename_link'] = 'mod/bookit/view';
 $string['modulenameplural'] = 'BookIt Instanzen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
-$string['addbooking'] = 'Antrag versenden';
+$string['addbooking'] = 'Event buchen';
 
 // Booking form.
 $string['event_name'] = 'Event-Name';
@@ -59,7 +59,7 @@ $string['event_person'] = 'Verantwortliche Person';
 $string['event_person_help'] = 'Tragen Sie die verantwortliche Person ein.';
 $string['event_email'] = 'E-Mail';
 $string['event_email_help'] = 'Tragen Sie die E-Mail der verantwortlichen Person ein.';
-$string['event_duration'] = 'Dauer des Events';
+$string['event_duration'] = 'Dauer des Events (in Minuten)';
 $string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
 $string['event_compensationfordisadvantages'] = 'Nachteilsausgleich';
 $string['event_compensationfordisadvantages_help'] = 'Tragen Sie hier die bereits bekannten Informationen zu Studierenden mit Nachteilsausgleich ein.';
