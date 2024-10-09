@@ -64,7 +64,7 @@
         <FIELD NAME="status" TYPE="int" LENGTH="6" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="personinchargeid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="personinchargename" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="personinchargemail" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="personinchargeemail" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="coursetemplate" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
