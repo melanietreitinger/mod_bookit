@@ -23,6 +23,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_bookit\local\entity\event;
 use mod_bookit\local\manager\categories_manager;
 
 require(__DIR__.'/../../config.php');
@@ -76,8 +77,8 @@ if ($data = $form->get_data()) {
     }
     echo json_encode($mappings);
     $data->resources = $mappings;
-    $data->status = \mod_bookit\local\entity\event::STATUS_OPEN;
-    $event = \mod_bookit\local\entity\event::from_record($data);
+    $data->status = event::STATUS_OPEN;
+    $event = event::from_record($data);
     $event->save();
     redirect($redirecturl);
 }
@@ -85,6 +86,5 @@ if ($data = $form->get_data()) {
 echo $OUTPUT->header();
 
 $form->display();
-
 
 echo $OUTPUT->footer();
