@@ -24,6 +24,8 @@
 
 namespace mod_bookit\local\entity;
 
+use dml_exception;
+
 /**
  * Database class for bookit_resources.
  *
@@ -31,7 +33,7 @@ namespace mod_bookit\local\entity;
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class resource {
+class bookit_resource {
     /** @var ?int id*/
     public ?int $id;
     /** @var string name*/
@@ -52,7 +54,7 @@ class resource {
     /**
      * Create a new instance of this class.
      * @param string $name
-     * @param string|null $description
+     * @param string $description
      * @param int $amount
      * @param int $categoryid
      * @param int|null $usermodified
@@ -77,8 +79,9 @@ class resource {
      *
      * @param int $id id of event to fetch.
      * @return self
+     * @throws dml_exception
      */
-    public static function from_database($id) {
+    public static function from_database(int $id): self {
         global $DB;
         $record = $DB->get_record("bookit_resource", ["id" => $id], '*', MUST_EXIST);
 
@@ -91,7 +94,7 @@ class resource {
      * @param array|object $record
      * @return self
      */
-    public static function from_record($record): self {
+    public static function from_record(array|object $record): self {
         $record = (object) $record;
         return new self(
                 $record->name,
@@ -108,11 +111,11 @@ class resource {
     /**
      * Save to database.
      *
-     * @param $userid
+     * @param int|null $userid
      * @return void
-     * @throws \dml_exception
+     * @throws dml_exception
      */
-    public function save($userid = null): void {
+    public function save(int|null $userid = null): void {
         global $DB, $USER;
         $this->usermodified = $userid ?? $USER->id;
         if (!$this->timecreated) {

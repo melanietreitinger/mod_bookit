@@ -173,7 +173,7 @@ class edit_event_form extends dynamic_form {
      * Checks if current user has access to this card, otherwise throws exception
      */
     protected function check_access_for_dynamic_submission(): void {
-        // @TODO
+        // ...@TODO.
     }
 
     /**
