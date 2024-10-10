@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * Database class for bookit_events.
+ *
+ * @package     mod_bookit
+ * @copyright   2024 Justus Dieckmann, Universität Münster
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace mod_bookit\local\entity;
 
 /**
@@ -24,36 +32,60 @@ namespace mod_bookit\local\entity;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class event {
-
+    /** const STATUS_OPEN */
     const STATUS_OPEN = 1;
+    /** const STATUS_ACCEPTED */
     const STATUS_ACCEPTED = 2;
+    /** const STATUS_REJECTED */
     const STATUS_REJECTED = 3;
 
-
+    /** @var ?int id */
     public ?int $id;
+    /** @var string name */
     public string $name;
+    /** @var ?int semester */
     public int $semester;
+    /** @var string department */
     public string $department;
+    /** @var ?int starttime */
     public int $starttime;
+    /** @var ?int endtime */
     public int $endtime;
+    /** @var ?int duration */
     public ?int $duration;
+    /** @var ?int participantsamount */
     public ?int $participantsamount;
+    /** @var ?string compensationfordisadvantage */
     public ?string $compensationfordisadvantage;
+    /** @var ?int status */
     public ?int $status;
+    /** @var ?int personinchargeid */
     public ?int $personinchargeid;
+    /** @var ?string personinchargename */
     public ?string $personinchargename;
+    /** @var ?string personinchargeemail */
     public ?string $personinchargeemail;
+    /** @var ?int coursetemplate */
     public ?int $coursetemplate;
+    /** @var ?string notes */
     public ?string $notes;
+    /** @var ?int internalnotes */
     public ?string $internalnotes;
+    /** @var ?string support */
     public ?string $support;
+    /** @var ?int resources */
     public array $resources;
+    /** @var ?int refcourseid */
     public ?int $refcourseid;
+    /** @var ?int usermodified */
     public ?int $usermodified;
+    /** @var ?int timecreated */
     public ?int $timecreated;
-    public ?Int $timemodified;
+    /** @var ?int timemodified */
+    public ?int $timemodified;
 
     /**
+     * Create a new instance of this class.
      * @param string $name
      * @param int $semester
      * @param int $starttime
@@ -101,12 +133,13 @@ class event {
     }
 
     /**
+     * Get record from database.
      * @param int $id id of event to fetch.
      * @return self
      */
     public static function from_database($id) {
         global $DB;
-        $record = $DB->get_record("bookit_event", array("id" => $id), '*', MUST_EXIST);
+        $record = $DB->get_record("bookit_event", ["id" => $id], '*', MUST_EXIST);
 
         $mappings = $DB->get_records('bookit_event_resources', ['eventid' => $record->id]);
         $map = [];
@@ -119,6 +152,8 @@ class event {
     }
 
     /**
+     * Create object from record.
+     *
      * @param array|object $record
      * @return self
      */
@@ -150,6 +185,13 @@ class event {
         );
     }
 
+    /**
+     * Save to database.
+     *
+     * @param $userid
+     * @return void
+     * @throws \dml_exception
+     */
     public function save($userid = null): void {
         global $DB, $USER;
         $this->usermodified = $userid ?? $USER->id;
@@ -157,7 +199,6 @@ class event {
             $this->timecreated = time();
         }
         $this->timemodified = time();
-
 
         $data = clone $this;
         $mappings = $data->resources;
@@ -172,9 +213,9 @@ class event {
 
         foreach ($mappings as $mapping) {
             $DB->insert_record('bookit_event_resources', [
-                'eventid' => $this->id,
-                'resourceid' => $mapping->resourceid,
-                'amount' => $mapping->amount
+                    'eventid' => $this->id,
+                    'resourceid' => $mapping->resourceid,
+                    'amount' => $mapping->amount,
             ]);
         }
     }

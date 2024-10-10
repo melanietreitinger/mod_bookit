@@ -34,13 +34,13 @@ $id = optional_param('id', 0, PARAM_INT);
 $b = optional_param('b', 0, PARAM_INT);
 
 if ($id) {
-  $cm = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
-  $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-  $moduleinstance = $DB->get_record('bookit', ['id' => $cm->instance], '*', MUST_EXIST);
+    $cm = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $moduleinstance = $DB->get_record('bookit', ['id' => $cm->instance], '*', MUST_EXIST);
 } else {
-  $moduleinstance = $DB->get_record('bookit', ['id' => $b], '*', MUST_EXIST);
-  $course = $DB->get_record('course', ['id' => $moduleinstance->course], '*', MUST_EXIST);
-  $cm = get_coursemodule_from_instance('bookit', $moduleinstance->id, $course->id, false, MUST_EXIST);
+    $moduleinstance = $DB->get_record('bookit', ['id' => $b], '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $moduleinstance->course], '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('bookit', $moduleinstance->id, $course->id, false, MUST_EXIST);
 }
 
 require_login($course, true, $cm);
@@ -48,8 +48,8 @@ require_login($course, true, $cm);
 $modulecontext = context_module::instance($cm->id);
 
 $event = course_module_viewed::create([
-  'objectid' => $moduleinstance->id,
-  'context' => $modulecontext,
+        'objectid' => $moduleinstance->id,
+        'context' => $modulecontext,
 ]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
@@ -65,8 +65,7 @@ $PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
-//$entryform = (new moodle_url('/mod/bookit/editevent.php', ['b' => $moduleinstance->id]))->out(false);
-$eventsource =  (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
+$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
 
 echo '<div id="ec"></div>';
 $PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $moduleinstance->id, $eventsource]);

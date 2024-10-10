@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-
+        // Add course module.
         'mod/bookit:addinstance' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
@@ -34,7 +34,7 @@ $capabilities = [
                 ],
                 'clonepermissionsfrom' => 'moodle/course:manageactivities',
         ],
-
+        // View course module.
         'mod/bookit:view' => [
                 'captype' => 'view',
                 'contextlevel' => CONTEXT_COURSE,
@@ -46,4 +46,41 @@ $capabilities = [
                         'manager' => CAP_ALLOW,
                 ],
         ],
+        // View all details of event.
+        'mod/bookit:viewalldetailsofevent' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+        // Add a new event.
+        'mod/bookit:addevent' => [
+                'captype' => 'write',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+        // Edit an existing event.
+        'mod/bookit:editevent' => [
+                'captype' => 'write',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+        // Add a new resource.
+        'mod/bookit:addresource' => [
+                'captype' => 'write',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+        // Edit an existing resource.
+        'mod/bookit:editresource' => [
+                'captype' => 'write',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+
+
 ];
