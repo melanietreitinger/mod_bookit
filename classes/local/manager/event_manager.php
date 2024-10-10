@@ -24,6 +24,9 @@
 
 namespace mod_bookit\local\manager;
 
+use DateTime;
+use dml_exception;
+
 /**
  * Manager for accessing and fetching events.
  *
@@ -35,17 +38,17 @@ class event_manager {
 
     /**
      * function get_events_in_timerange
-     * @param $starttime
-     * @param $endtime
-     * @param $instanceid
+     * @param string $starttime
+     * @param string $endtime
+     * @param int|null $instanceid
      * @return array
-     * @throws \dml_exception
+     * @throws dml_exception
      */
-    public static function get_events_in_timerange($starttime, $endtime, $instanceid): array {
+    public static function get_events_in_timerange(string $starttime, string $endtime, int|null $instanceid): array {
         global $DB;
         // ...@TODO use instance id.
-        $starttimestamp = \DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
-        $endtimestamp = \DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
+        $starttimestamp = DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
+        $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
         $records = $DB->get_records_sql(
                 'SELECT id, name, starttime, endtime FROM {bookit_event} ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime',
