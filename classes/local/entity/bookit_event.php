@@ -96,27 +96,27 @@ class bookit_event {
      * @param int $endtime
      * @param int $duration
      * @param int $participantsamount
-     * @param string $compensationfordisadvantage
+     * @param string|null $compensationfordisadvantage
      * @param string $status
-     * @param int $personinchargeid
+     * @param int|null $personinchargeid
      * @param string $personinchargename
      * @param string $personinchargeemail
      * @param int $coursetemplate
      * @param string $internalnotes
-     * @param string $notes
-     * @param string $support
+     * @param string|null $notes
+     * @param string|null $support
      * @param array $resources
-     * @param int $refcourseid
+     * @param int|null $refcourseid
      * @param int|null $usermodified
      * @param int|null $timecreated
      * @param int|null $timemodified
      * @param int|null $id
      */
     public function __construct(string $name, string $semester, string $department, int $starttime, int $endtime, int $duration,
-            int $participantsamount, string $compensationfordisadvantage, string $status, int $personinchargeid,
+            int $participantsamount, string|null $compensationfordisadvantage, string $status, int|null $personinchargeid,
             string $personinchargename,
-            string $personinchargeemail, int $coursetemplate, string $internalnotes, string $notes, string $support,
-            array $resources, int $refcourseid,
+            string $personinchargeemail, int $coursetemplate, string $internalnotes, string|null $notes, string|null $support,
+            array $resources, int|null $refcourseid,
             int|null $usermodified = null, int|null $timecreated = null, int|null $timemodified = null, int|null $id = null) {
         $this->id = $id;
         $this->name = $name;

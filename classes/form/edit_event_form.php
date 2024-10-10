@@ -28,7 +28,7 @@ use context;
 use context_module;
 use core\exception\moodle_exception;
 use core_form\dynamic_form;
-use mod_bookit\local\entity\event;
+use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\manager\categories_manager;
 use moodle_url;
 use stdClass;
@@ -203,8 +203,8 @@ class edit_event_form extends dynamic_form {
         }
         #echo json_encode($mappings);
         $formdata->resources = $mappings;
-        $formdata->status = event::STATUS_OPEN;
-        $event = event::from_record($formdata);
+        $formdata->status = bookit_event::STATUS_OPEN;
+        $event = bookit_event::from_record($formdata);
         $event->save();
 
         return [];

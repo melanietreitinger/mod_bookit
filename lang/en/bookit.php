@@ -58,6 +58,7 @@ $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
 $string['modulenameplural'] = 'BookIt instances';
 $string['please_select_and_enter'] = 'Please select or enter a number';
+$string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Amount';
 $string['select_semester'] = 'Term';

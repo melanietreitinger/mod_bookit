@@ -57,6 +57,7 @@ $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';
 $string['modulenameplural'] = 'BookIt Instanzen';
+$string['pluginadministration'] = 'BookIt Administration';
 $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Anzahl';
