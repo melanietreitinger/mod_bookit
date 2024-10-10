@@ -31,7 +31,9 @@ export async function init(cmid, moduleinstanceid, eventsource) {
         viewType = 'listWeek';
     }
 
-    new window.EventCalendar(document.getElementById('ec'), {
+    var calendar;
+
+    calendar = new window.EventCalendar(document.getElementById('ec'), {
         view: viewType,
         firstDay: 1,
         customButtons: {
@@ -44,6 +46,9 @@ export async function init(cmid, moduleinstanceid, eventsource) {
                                         cmid: cmid,
                                     },
                                     modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                                });
+                                modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                                    calendar.refetchEvents();
                                 });
                                 modalForm.show();
                 }
@@ -64,6 +69,9 @@ export async function init(cmid, moduleinstanceid, eventsource) {
                     id: id,
                 },
                 modalConfig: {title: getString('edit_event', 'mod_bookit')},
+            });
+            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                calendar.refetchEvents();
             });
             modalForm.show();
         },
