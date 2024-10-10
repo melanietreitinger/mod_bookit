@@ -16,6 +16,8 @@
 
 namespace mod_bookit\local\entity;
 
+use dml_exception;
+
 /**
  * Database class for bookit_resources.
  *
@@ -23,7 +25,7 @@ namespace mod_bookit\local\entity;
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class category {
+class bookit_category {
     /** @var ?int id */
     public ?int $id;
     /** @var string name */
@@ -42,9 +44,9 @@ class category {
      *
      * @param string $name
      * @param string|null $description
-     * @param int $usermodified
-     * @param int $timecreated
-     * @param int $timemodified
+     * @param int|null $usermodified
+     * @param int|null $timecreated
+     * @param int|null $timemodified
      * @param int|null $id
      */
     public function __construct(string $name, string|null $description, int|null $usermodified = null, int|null $timecreated = null,
@@ -59,10 +61,12 @@ class category {
 
     /**
      * Fetch from database.
+     *
      * @param int $id id of event to fetch.
      * @return self
+     * @throws dml_exception
      */
-    public static function from_database($id) {
+    public static function from_database(int $id): self {
         global $DB;
         $record = $DB->get_record("bookit_category", ["id" => $id], '*', MUST_EXIST);
 
@@ -71,10 +75,11 @@ class category {
 
     /**
      * Create object from record.
+     *
      * @param array|object $record
      * @return self
      */
-    public static function from_record($record): self {
+    public static function from_record(array|object $record): self {
         $record = (object) $record;
         return new self(
                 $record->name,
@@ -88,11 +93,12 @@ class category {
 
     /**
      * Save to database.
-     * @param $userid
+     *
+     * @param int|null $userid
      * @return void
-     * @throws \dml_exception
+     * @throws dml_exception
      */
-    public function save($userid = null): void {
+    public function save(int|null $userid = null): void {
         global $DB, $USER;
         $this->usermodified = $userid ?? $USER->id;
         if (!$this->timecreated) {

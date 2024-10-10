@@ -24,6 +24,8 @@
 
 namespace mod_bookit\local\entity;
 
+use dml_exception;
+
 /**
  * Database class for bookit_events.
  *
@@ -31,7 +33,7 @@ namespace mod_bookit\local\entity;
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class event {
+class bookit_event {
     /** const STATUS_OPEN */
     const STATUS_OPEN = 1;
     /** const STATUS_ACCEPTED */
@@ -43,13 +45,13 @@ class event {
     public ?int $id;
     /** @var string name */
     public string $name;
-    /** @var ?int semester */
+    /** @var int semester */
     public int $semester;
     /** @var string department */
     public string $department;
-    /** @var ?int starttime */
+    /** @var int starttime */
     public int $starttime;
-    /** @var ?int endtime */
+    /** @var int endtime */
     public int $endtime;
     /** @var ?int duration */
     public ?int $duration;
@@ -69,11 +71,11 @@ class event {
     public ?int $coursetemplate;
     /** @var ?string notes */
     public ?string $notes;
-    /** @var ?int internalnotes */
+    /** @var ?string internalnotes */
     public ?string $internalnotes;
     /** @var ?string support */
     public ?string $support;
-    /** @var ?int resources */
+    /** @var array resources */
     public array $resources;
     /** @var ?int refcourseid */
     public ?int $refcourseid;
@@ -86,28 +88,36 @@ class event {
 
     /**
      * Create a new instance of this class.
+     *
      * @param string $name
-     * @param int $semester
+     * @param string $semester
+     * @param string $department
      * @param int $starttime
      * @param int $endtime
      * @param int $duration
      * @param int $participantsamount
      * @param string $compensationfordisadvantage
-     * @param int|null $personinchargeid
-     * @param string|null $personinchargename
-     * @param string|null $personinchargeemail
-     * @param int|null $coursetemplate
+     * @param string $status
+     * @param int $personinchargeid
+     * @param string $personinchargename
+     * @param string $personinchargeemail
+     * @param int $coursetemplate
+     * @param string $internalnotes
      * @param string $notes
      * @param string $support
-     * @param int|null $refcourseid
+     * @param array $resources
+     * @param int $refcourseid
      * @param int|null $usermodified
      * @param int|null $timecreated
      * @param int|null $timemodified
+     * @param int|null $id
      */
-    public function __construct(string $name, $semester, $department, int $starttime, int $endtime, int $duration,
-            $participantsamount, $compensationfordisadvantage, $status, $personinchargeid, $personinchargename,
-            $personinchargeemail, $coursetemplate, $internalnotes, $notes, $support, $resources, $refcourseid,
-            $usermodified = null, $timecreated = null, $timemodified = null, $id = null) {
+    public function __construct(string $name, string $semester, string $department, int $starttime, int $endtime, int $duration,
+            int $participantsamount, string $compensationfordisadvantage, string $status, int $personinchargeid,
+            string $personinchargename,
+            string $personinchargeemail, int $coursetemplate, string $internalnotes, string $notes, string $support,
+            array $resources, int $refcourseid,
+            int|null $usermodified = null, int|null $timecreated = null, int|null $timemodified = null, int|null $id = null) {
         $this->id = $id;
         $this->name = $name;
         $this->semester = $semester;
@@ -134,10 +144,12 @@ class event {
 
     /**
      * Get record from database.
+     *
      * @param int $id id of event to fetch.
      * @return self
+     * @throws dml_exception
      */
-    public static function from_database($id) {
+    public static function from_database(int $id): self {
         global $DB;
         $record = $DB->get_record("bookit_event", ["id" => $id], '*', MUST_EXIST);
 
@@ -157,7 +169,7 @@ class event {
      * @param array|object $record
      * @return self
      */
-    public static function from_record($record): self {
+    public static function from_record(array|object $record): self {
         $record = (object) $record;
         return new self(
                 $record->name,
@@ -188,11 +200,11 @@ class event {
     /**
      * Save to database.
      *
-     * @param $userid
+     * @param int|null $userid
      * @return void
-     * @throws \dml_exception
+     * @throws dml_exception
      */
-    public function save($userid = null): void {
+    public function save(int|null $userid = null): void {
         global $DB, $USER;
         $this->usermodified = $userid ?? $USER->id;
         if (!$this->timecreated) {
