@@ -25,48 +25,42 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['addbooking'] = 'Termin buchen';
 $string['bookit:addinstance'] = 'BookIt Instanz hinzufügen';
 $string['bookit:view'] = 'BookIt Instanz anzeigen';
 $string['bookitfieldset'] = 'PLATZHALTER';
+$string['edit_event'] = "Termin bearbeiten";
+$string['event_compensationfordisadvantages'] = 'Nachteilsausgleiche';
+$string['event_compensationfordisadvantages_help'] = 'Tragen Sie hier die bereits bekannten Informationen zu Studierenden mit Nachteilsausgleich ein.';
+$string['event_department'] = 'Institution';
+$string['event_department_help'] = 'Tragen Sie die beantragende Institution ein.';
+$string['event_duration'] = 'Dauer des Termins (in Minuten)';
+$string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
+$string['event_email'] = 'E-Mail der verantwortlichen Person';
+$string['event_email_help'] = 'Tragen Sie die E-Mail der verantwortlichen Person ein.';
+$string['event_end'] = 'Ende';
+$string['event_end_help'] = 'Wählen Sie das Enddatum und -uhrzeit des Termins.';
+$string['event_name'] = 'Termin Name';
+$string['event_name_help'] = 'Tragen Sie den Namen des Termins ein.';
+$string['event_notes'] = 'Anmerkungen';
+$string['event_notes_help'] = 'Tragen Sie zusätzliche Informationen für den Support ein.';
+$string['event_person'] = 'Verantwortliche Person';
+$string['event_person_help'] = 'Tragen Sie die verantwortliche Person ein.';
+$string['event_resources'] = 'Ressourcen';
+$string['event_room'] = 'Raum';
+$string['event_room_help'] = 'Wählen Sie einen Raum für der Termin.';
+$string['event_start'] = 'Beginn';
+$string['event_start_help'] = 'Wählen Sie das Startdatum und -uhrzeit des Termins.';
+$string['event_students'] = 'Anzahl der Teilnehmenden';
+$string['event_students_help'] = 'Tragen Sie die erwartete Anzahl der Teilnehmenden ein.';
 $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';
-$string['modulename_link'] = 'mod/bookit/view';
 $string['modulenameplural'] = 'BookIt Instanzen';
-$string['pluginadministration'] = 'BookIt Administration';
+$string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginname'] = 'BookIt';
-$string['addbooking'] = 'Event buchen';
-
-// Booking form.
-$string['event_name'] = 'Event-Name';
-$string['event_name_help'] = 'Tragen Sie den Namen des Events ein.';
+$string['resource_amount'] = 'Anzahl';
+$string['select_semester'] = 'Semester';
+$string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
 $string['summer_semester'] = 'Sommersemester';
 $string['winter_semester'] = 'Wintersemester';
-$string['select_semester'] = 'Semester';
-$string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem das Event stattfindet';
-$string['event_department'] = 'Institution';
-$string['event_department_help'] = 'Tragen Sie die beantragende Institution ein.';
-$string['event_room'] = 'Raum';
-$string['event_room_help'] = 'Wählen Sie einen Raum für das Event.';
-$string['event_start'] = 'Beginn';
-$string['event_start_help'] = 'Wählen Sie das Startdatum des Events.';
-$string['event_end'] = 'Ende';
-$string['event_end_help'] = 'Wählen Sie das Enddatum und -uhrzeit.';
-$string['event_students'] = 'Studierendenanzahl';
-$string['event_students_help'] = 'Tragen Sie die erwartete Anzahl der Studierenden ein.';
-$string['resource_amount'] = 'Anzahl';
-$string['event_person'] = 'Verantwortliche Person';
-$string['event_person_help'] = 'Tragen Sie die verantwortliche Person ein.';
-$string['event_email'] = 'E-Mail';
-$string['event_email_help'] = 'Tragen Sie die E-Mail der verantwortlichen Person ein.';
-$string['event_duration'] = 'Dauer des Events (in Minuten)';
-$string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
-$string['event_compensationfordisadvantages'] = 'Nachteilsausgleich';
-$string['event_compensationfordisadvantages_help'] = 'Tragen Sie hier die bereits bekannten Informationen zu Studierenden mit Nachteilsausgleich ein.';
-$string['edit_event'] = "Event bearbeiten";
-$string['event_notes'] = 'Anmerkungen';
-$string['event_notes_help'] = 'Tragen Sie zusätzliche Informationen für den Support ein.';
-
-// Booking form headings.
-$string['event_resources'] = 'Ressourcen';
-

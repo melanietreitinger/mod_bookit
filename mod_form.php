@@ -33,39 +33,37 @@ require_once($CFG->dirroot . '/course/moodleform_mod.php');
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_bookit_mod_form extends moodleform_mod
-{
+class mod_bookit_mod_form extends moodleform_mod {
 
-  /**
-   * Defines forms elements
-   */
-  public function definition()
-  {
-    global $CFG;
+    /**
+     * Defines forms elements
+     */
+    public function definition() {
+        global $CFG;
 
-    $mform = &$this->_form;
+        $mform = &$this->_form;
 
-    // -------------------------------------------------------------------------------
-    // Adding the "general" fieldset, where all the common settings are shown.
-    $mform->addElement('header', 'general', get_string('general', 'form'));
+        // -------------------------------------------------------------------------------
+        // Adding the "general" fieldset, where all the common settings are shown.
+        $mform->addElement('header', 'general', get_string('general', 'form'));
 
-    $mform->addElement('text', 'name', get_string('instancename', 'mod_bookit'), ['size' => '64']);
-    $mform->setType('name', PARAM_TEXT);
-    $mform->addRule('name', null, 'required', null, 'client');
-    $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
+        $mform->addElement('text', 'name', get_string('instancename', 'mod_bookit'), ['size' => '64']);
+        $mform->setType('name', PARAM_TEXT);
+        $mform->addRule('name', null, 'required', null, 'client');
+        $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
 
-    $this->standard_intro_elements(get_string('description', 'feedback'));
+        $this->standard_intro_elements(get_string('description', 'feedback'));
 
-    // -------------------------------------------------------------------------------
-    // Adding the rest of mod_bookit settings, spreading all them into this fieldset.
-    // $mform->addElement('header', 'bookitfieldset', get_string('bookitfieldset', 'mod_bookit'));
+        // -------------------------------------------------------------------------------
+        // Adding more mod_bookit settings in a new fieldset.
+        // ...@TODO: remove if not needed!
 
-    // -------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------
 
-    // Add standard elements.
-    $this->standard_coursemodule_elements();
+        // Add standard elements.
+        $this->standard_coursemodule_elements();
 
-    // Add standard buttons.
-    $this->add_action_buttons();
-  }
+        // Add standard buttons.
+        $this->add_action_buttons();
+    }
 }

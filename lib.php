@@ -47,7 +47,7 @@ function bookit_supports(string $feature): ?bool {
  * @return int The id of the newly inserted record.
  * @throws dml_exception
  */
-function bookit_add_instance(object $moduleinstance, mod_bookit_mod_form $mform = null): int {
+function bookit_add_instance(object $moduleinstance, mod_bookit_mod_form|null $mform = null): int {
     global $DB;
 
     $moduleinstance->timecreated = time();

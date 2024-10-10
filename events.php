@@ -15,32 +15,33 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * The The endpoint for the event source request of the calendar component.
+ * The endpoint for the event source request of the calendar component.
  *
  * @package     mod_bookit
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require_once('../../config.php');
 require_once('lib.php');
 
 use mod_bookit\local\manager\event_manager;
 
 require_login();
-//TODO: capability check, check for sesskey
-//id of the instance should become required in future
+// ...@TODO: capability check, check for sesskey!
+// ...@TODO: The id of the instance should become required in future!
 $id = optional_param('id', 0, PARAM_INT);
 $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
 try {
-  $start = new DateTime($start);
-  $start = $start->format('Y-m-d H:i');
+    $start = new DateTime($start);
+    $start = $start->format('Y-m-d H:i');
 
-  $end = new DateTime($end);
-  $end = $end->format('Y-m-d H:i');
+    $end = new DateTime($end);
+    $end = $end->format('Y-m-d H:i');
 } catch (Exception $e) {
-  echo $e->getMessage();
-  exit(1);
+    echo $e->getMessage();
+    exit(1);
 }
 $events = event_manager::get_events_in_timerange($start, $end, $id);
 header('Content-Type: application/json');
