@@ -54,8 +54,25 @@ export async function init(cmid, moduleinstanceid, eventsource) {
                 }
             }
         },
+        dateClick: function(info) {
+            console.log(info.date);
+            console.log(info.dateStr);
+            let startdate = info.dateStr;
+            const modalForm = new ModalForm({
+                formClass: "mod_bookit\\form\\edit_event_form",
+                args: {
+                    cmid: cmid,
+                    startdate: startdate,
+                },
+                modalConfig: {title: getString('edit_event', 'mod_bookit')},
+            });
+            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                calendar.refetchEvents();
+            });
+            modalForm.show();
+        },
         eventClick: function (info) {
-            id = info.event.id;
+            let id = info.event.id;
             id = id.match(/generated-/) ? id.replace(/[{}generated-]/g, '')  : id;
 
             console.log(info);
