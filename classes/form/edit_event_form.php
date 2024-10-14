@@ -45,6 +45,8 @@ class edit_event_form extends dynamic_form {
      * Define the form
      */
     public function definition(): void {
+        global $CFG;
+        $config = get_config('mod_bookit');
         $mform =& $this->_form;
 
         $categories = categories_manager::get_categories();
@@ -95,11 +97,22 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
         // Add the "Bookingtimes" fields.
-        $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'));
+        // ...@TODO: make stopyear an admin setting issue#3!
+        $startarray = ['startyear' => date("Y"), 'stopyear' => date("Y") + ($config->eventmaxyears ?? 1),
+                'timezone' => 99, 'step' => 5, 'optional' => false,];
+        $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
+        $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $startarray);
+        $mform->setDefault('starttime', (strtotime($startdate) ?? time()));
         $mform->addRule('starttime', null, 'required', null, 'client');
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
-        $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'));
+        $stoparray = ['startyear' => date("Y"), 'stopyear' => date("Y") + 1,
+                'timezone' => 99, 'step' => 5, 'optional' => false,];
+        // ...@TODO: make default duration of event time an admin setting issue#3!
+        $defaultduration = ($config->eventdefaultduration ?? 60);
+        $stopdate = ($startdate ? strtotime($startdate) : time());
+        $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'), $stoparray);
+        $mform->setDefault('endtime', strtotime(' + '.$defaultduration.' minutes', $stopdate));
         $mform->addRule('endtime', null, 'required', null, 'client');
         $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
 
