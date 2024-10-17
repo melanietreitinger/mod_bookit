@@ -26,8 +26,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['addbooking'] = 'Termin buchen';
+$string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'BookIt Instanz hinzufügen';
+$string['bookit:addresource'] = 'Add a resource';
+$string['bookit:editevent'] = 'Edit an event';
+$string['bookit:editresource'] = 'Edit a resource';
 $string['bookit:view'] = 'BookIt Instanz anzeigen';
+$string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['edit_event'] = "Termin bearbeiten";
 $string['event_compensationfordisadvantages'] = 'Nachteilsausgleiche';
