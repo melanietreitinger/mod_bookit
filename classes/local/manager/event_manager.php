@@ -57,6 +57,7 @@ class event_manager {
         $events = [];
         foreach ($records as $record) {
             $events[] = [
+                    'id' => $record->id,
                     'title' => $record->name,
                     'start' => date('Y-m-d H:i', $record->starttime),
                     'end' => date('Y-m-d H:i', $record->endtime),

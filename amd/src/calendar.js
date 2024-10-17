@@ -73,7 +73,6 @@ export async function init(cmid, moduleinstanceid, eventsource) {
         },
         eventClick: function (info) {
             let id = info.event.id;
-            id = id.match(/generated-/) ? id.replace(/[{}generated-]/g, '')  : id;
 
             console.log(info);
             console.log("cmid: "+cmid);
