@@ -24,8 +24,8 @@
 
 namespace mod_bookit\form;
 
-use context;
-use context_module;
+use core\context;
+use core\context\module;
 use core\exception\moodle_exception;
 use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_event;
@@ -45,11 +45,12 @@ class edit_event_form extends dynamic_form {
      * Define the form
      */
     public function definition(): void {
-        global $CFG;
         $config = get_config('mod_bookit');
         $mform =& $this->_form;
 
         $categories = categories_manager::get_categories();
+        $context = $this->get_context_for_dynamic_submission();
+        $disabled = !has_capability('mod/bookit:editevent', $context);
 
         $mform->addElement('hidden', 'cmid');
         $mform->setType('cmid', PARAM_INT);
@@ -57,9 +58,13 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
+        $mform->addElement('hidden', 'editevent', $disabled);
+        $mform->setType('editevent', PARAM_BOOL);
+
         // Add the standard "name" field.
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), ['size' => '64']);
         $mform->setType('name', PARAM_TEXT);
+        $mform->disabledIf('name', 'editevent', 'eq');
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', null, 'maxlength', 255, 'client');
         $mform->addHelpButton('name', 'event_name', 'mod_bookit');
@@ -74,11 +79,13 @@ class edit_event_form extends dynamic_form {
             $semesters[($currentyear + $i) * 10 + 2] = get_string('winter_semester', 'mod_bookit') . " " . ($currentyear + $i);
         }
         $mform->addElement('select', 'semester', get_string('select_semester', 'mod_bookit'), $semesters);
+        $mform->disabledIf('semester', 'editevent', 'eq');
         $mform->addRule('semester', null, 'required', null, 'client');
         $mform->addHelpButton('semester', 'select_semester', 'mod_bookit');
 
         // Add the "department" field.
         $mform->addElement('text', 'department', get_string('event_department', 'mod_bookit'), ['size' => '64']);
+        $mform->disabledIf('department', 'editevent', 'eq');
         $mform->setType('department', PARAM_TEXT);
         $mform->addRule('department', null, 'required', null, 'client');
         $mform->addRule('department', null, 'maxlength', 255, 'client');
@@ -94,6 +101,7 @@ class edit_event_form extends dynamic_form {
             }
         }
         $mform->addElement('select', 'room', get_string('event_room', 'mod_bookit'), $rooms);
+        $mform->disabledIf('room', 'editevent', 'eq');
         $mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
         // Add the "Bookingtimes" fields.
@@ -102,7 +110,8 @@ class edit_event_form extends dynamic_form {
                 'timezone' => 99, 'step' => 5, 'optional' => false,];
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $startarray);
-        $mform->setDefault('starttime', (strtotime($startdate) ?? time()));
+        $mform->disabledIf('starttime', 'editevent', 'eq');
+        $mform->setDefault('starttime', (strtotime($startdate ?? '') ?? time()));
         $mform->addRule('starttime', null, 'required', null, 'client');
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
@@ -110,25 +119,30 @@ class edit_event_form extends dynamic_form {
                 'timezone' => 99, 'step' => 5, 'optional' => false,];
         // ...@TODO: make default duration of event time an admin setting issue#3!
         $defaultduration = ($config->eventdefaultduration ?? 60);
-        $stopdate = ($startdate ? strtotime($startdate) : time());
+        $stopdate = ($startdate ? strtotime($startdate ?? '') : time());
         $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'), $stoparray);
+        $mform->disabledIf('endtime', 'editevent', 'eq');
         $mform->setDefault('endtime', strtotime(' + '.$defaultduration.' minutes', $stopdate));
         $mform->addRule('endtime', null, 'required', null, 'client');
+        // ...@TODO: Restrict event duration according to $config->eventmaxduration!
         $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
 
         // Add the "duration" field.
         $mform->addElement('text', 'duration', get_string('event_duration', 'mod_bookit'), ['size' => '4']);
+        $mform->disabledIf('duration', 'editevent', 'eq');
         $mform->setType('duration', PARAM_INT);
         $mform->addRule('duration', null, 'maxlength', 255, 'client');
         $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
 
         // Add "amount of students" field.
         $mform->addElement('text', 'participantsamount', get_string('event_students', 'mod_bookit'), ['size' => '4']);
+        $mform->disabledIf('participantsamount', 'editevent', 'eq');
         $mform->setType('participantsamount', PARAM_INT);
         $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
 
         // Add the "person in charge" field.
         $mform->addElement('text', 'personinchargename', get_string('event_person', 'mod_bookit'), ['size' => '64']);
+        $mform->disabledIf('personinchargename', 'editevent', 'eq');
         $mform->setType('personinchargename', PARAM_TEXT);
         $mform->addRule('personinchargename', null, 'required', null, 'client');
         $mform->addRule('personinchargename', null, 'maxlength', 255, 'client');
@@ -136,6 +150,7 @@ class edit_event_form extends dynamic_form {
 
         // Add the "email" field.
         $mform->addElement('text', 'personinchargeemail', get_string('event_email', 'mod_bookit'), ['size' => '64']);
+        $mform->disabledIf('personinchargeemail', 'editevent', 'eq');
         $mform->setType('personinchargeemail', PARAM_TEXT);
         $mform->addRule('personinchargeemail', null, 'required', null, 'client');
         $mform->addRule('personinchargeemail', null, 'maxlength', 255, 'client');
@@ -144,10 +159,12 @@ class edit_event_form extends dynamic_form {
         // Add the "compensationfordisadvantages" field.
         $mform->addElement('textarea', 'compensationfordisadvantages',
                 get_string('event_compensationfordisadvantages', 'mod_bookit'), ['size' => '64']);
+        $mform->disabledIf('compensationfordisadvantages', 'editevent', 'eq');
         $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
 
         $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"), 'wrap="virtual" rows="20" cols="50"');
+        $mform->disabledIf('notes', 'editevent', 'eq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
         foreach (categories_manager::get_categories() as $category) {
@@ -158,18 +175,17 @@ class edit_event_form extends dynamic_form {
 
             foreach ($category['resources'] as $v) {
                 $preprocedure = [];
-                $preprocedure[] = $mform->createElement('advcheckbox', 'checkbox_' . $v['id'], '', $v['name'], ['group' => 1],
+                $preprocedure[] = $mform->createElement('advcheckbox', 'resourcecheckbox_' . $v['id'], '', $v['name'], ['group' => 1],
                         ['', $v['name']]);
-                $preprocedure[] = $mform->createElement('text', 'amount_' . $v['id'], get_string('resource_amount', 'mod_bookit'),
+                $mform->disabledIf('resourcecheckbox_' . $v['id'], 'editevent', 'eq');
+                $preprocedure[] = $mform->createElement('text', 'resourceamount_' . $v['id'], get_string('resource_amount', 'mod_bookit'),
                         ['size' => '4']);
-                $mform->setType('amount_' . $v['id'], PARAM_INT);
+                $mform->setType('resourceamount_' . $v['id'], PARAM_INT);
                 $mform->addGroup($preprocedure, 'preproceduregroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
                         false);
-                $mform->disabledIf('amount_' . $v['id'], 'checkbox_' . $v['id']);
+                $mform->disabledIf('resourceamount_' . $v['id'], 'resourcecheckbox_' . $v['id']);
             }
         }
-
-        $this->add_action_buttons(true, get_string('save'));
     }
 
     /**
@@ -179,7 +195,7 @@ class edit_event_form extends dynamic_form {
      */
     protected function get_context_for_dynamic_submission(): context {
         $cmid = $this->optional_param('cmid', null, PARAM_INT);
-        return context_module::instance($cmid);
+        return module::instance($cmid);
     }
 
     /**
@@ -205,11 +221,11 @@ class edit_event_form extends dynamic_form {
         #echo json_encode($formdata);
         foreach (categories_manager::get_categories() as $category) {
             foreach ($category['resources'] as $resource) {
-                $checkboxname = 'checkbox_' . $resource['id'];
+                $checkboxname = 'resourcecheckbox_' . $resource['id'];
                 if ($data->$checkboxname ?? false) {
                     $mappings[] = (object) [
                             'resourceid' => $resource['id'],
-                            'amount' => $formdata->{'amount_' . $resource['id']},
+                            'amount' => $formdata->{'resourceamount_' . $resource['id']},
                     ];
                 }
             }

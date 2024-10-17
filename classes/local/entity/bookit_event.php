@@ -57,8 +57,8 @@ class bookit_event {
     public ?int $duration;
     /** @var ?int participantsamount */
     public ?int $participantsamount;
-    /** @var ?string compensationfordisadvantage */
-    public ?string $compensationfordisadvantage;
+    /** @var ?string compensationfordisadvantages */
+    public ?string $compensationfordisadvantages;
     /** @var ?int status */
     public ?int $status;
     /** @var ?int personinchargeid */
@@ -96,14 +96,14 @@ class bookit_event {
      * @param int $endtime
      * @param int $duration
      * @param int $participantsamount
-     * @param string|null $compensationfordisadvantage
+     * @param string|null $compensationfordisadvantages
      * @param string $status
      * @param int|null $personinchargeid
      * @param string $personinchargename
      * @param string $personinchargeemail
      * @param int $coursetemplate
-     * @param string $internalnotes
      * @param string|null $notes
+     * @param string|null $internalnotes
      * @param string|null $support
      * @param array $resources
      * @param int|null $refcourseid
@@ -113,9 +113,9 @@ class bookit_event {
      * @param int|null $id
      */
     public function __construct(string $name, string $semester, string $department, int $starttime, int $endtime, int $duration,
-            int $participantsamount, string|null $compensationfordisadvantage, string $status, int|null $personinchargeid,
+            int $participantsamount, string|null $compensationfordisadvantages, string $status, int|null $personinchargeid,
             string $personinchargename,
-            string $personinchargeemail, int $coursetemplate, string $internalnotes, string|null $notes, string|null $support,
+            string $personinchargeemail, int $coursetemplate, string|null $notes, string|null $internalnotes, string|null $support,
             array $resources, int|null $refcourseid,
             int|null $usermodified = null, int|null $timecreated = null, int|null $timemodified = null, int|null $id = null) {
         $this->id = $id;
@@ -126,7 +126,7 @@ class bookit_event {
         $this->endtime = $endtime;
         $this->duration = $duration;
         $this->participantsamount = $participantsamount;
-        $this->compensationfordisadvantage = $compensationfordisadvantage;
+        $this->compensationfordisadvantages = $compensationfordisadvantages;
         $this->status = $status;
         $this->personinchargeid = $personinchargeid;
         $this->personinchargename = $personinchargename;
@@ -179,7 +179,7 @@ class bookit_event {
                 $record->endtime,
                 $record->duration,
                 $record->participantsamount ?? null,
-                $record->compensationfordisadvantage ?? null,
+                $record->compensationfordisadvantages ?? null,
                 $record->status,
                 $record->personinchargeid ?? null,
                 $record->personinchargename,

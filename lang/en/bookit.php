@@ -26,8 +26,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['addbooking'] = 'Request booking';
+$string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'Add BookIt instance';
+$string['bookit:addresource'] = 'Add a resource';
+$string['bookit:editevent'] = 'Edit an event';
+$string['bookit:editresource'] = 'Edit a resource';
 $string['bookit:view'] = 'View BookIt instance';
+$string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookitfieldset'] = 'PLACEHOLDER';
 $string['edit_event'] = "Edit event";
 $string['event_compensationfordisadvantages'] = 'Compensation of disadvantages';
