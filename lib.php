@@ -31,6 +31,7 @@
 function bookit_supports(string $feature): ?bool {
     return match ($feature) {
         FEATURE_MOD_INTRO, FEATURE_BACKUP_MOODLE2 => true,
+        FEATURE_MOD_PURPOSE => MOD_PURPOSE_ADMINISTRATION,
         default => null,
     };
 }
