@@ -22,7 +22,9 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use mod_bookit\local\entity\category;
+use mod_bookit\local\entity\bookit_event;
+use mod_bookit\local\entity\bookit_category;
+use mod_bookit\local\entity\bookit_resource;
 
 /**
  * This function is executed after the installation of the plugin.
@@ -31,7 +33,7 @@ use mod_bookit\local\entity\category;
 function xmldb_bookit_install() {
     global $DB;
 
-    $category = new category('Rooms', 'Examrooms');
+    $category = new bookit_category('Rooms', 'Examrooms');
     $category->save(2);
 
     $resources = [];
@@ -41,7 +43,7 @@ function xmldb_bookit_install() {
             'Psychology', 'Sociology'];
 
     for ($i = 1; $i <= 10; $i++) {
-        $resource = new \mod_bookit\local\entity\resource('Exam room ' . $i, 'Capacity 255 seats', 1, $category->id);
+        $resource = new bookit_resource('Exam room ' . $i, 'Capacity 255 seats', 1, $category->id);
         $resource->save(2);
         $resources[] = $resource;
 
@@ -58,7 +60,7 @@ function xmldb_bookit_install() {
         // Select a random subject.
         $subject = $subjects[array_rand($subjects)];
 
-        $event = new \mod_bookit\local\entity\event(
+        $event = new bookit_event(
                 'Exam ' . $subject,
                 20241,
                 'IT',
