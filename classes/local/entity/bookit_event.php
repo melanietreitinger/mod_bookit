@@ -54,7 +54,7 @@ class bookit_event {
      * @param int|null $participantsamount
      * @param int|null $timecompensation
      * @param string|null $compensationfordisadvantages
-     * @param int $bookingstatus
+     * @param ?int $bookingstatus
      * @param int|null $personinchargeid
      * @param ?string $otherexaminers
      * @param int|null $coursetemplate
@@ -72,8 +72,8 @@ class bookit_event {
         public int $id,
         /** @var string name */
         public string $name,
-        /** @var ?int semester */
-        public ?int $semester,
+        /** @var ?string semester */
+        public ?string $semester,
         /** @var string department */
         public string $department,
         /** @var int starttime */
@@ -88,8 +88,8 @@ class bookit_event {
         public ?int $timecompensation,
         /** @var ?string compensationfordisadvantages */
         public ?string $compensationfordisadvantages,
-        /** @var int bookingstatus */
-        public int $bookingstatus,
+        /** @var ?int bookingstatus */
+        public ?int $bookingstatus,
         /** @var ?int personinchargeid */
         public ?int $personinchargeid,
         /** @var ?string otherexaminers */
@@ -145,6 +145,7 @@ class bookit_event {
     public static function from_record(array|object $record): self {
         $record = (object) $record;
         return new self(
+                $record->id ?? null,
                 $record->name,
                 $record->semester,
                 $record->department,
@@ -156,7 +157,7 @@ class bookit_event {
                 $record->compensationfordisadvantages ?? null,
                 $record->bookingstatus,
                 $record->personinchargeid ?? null,
-                $record->otherexaminers,
+                implode(',',$record->otherexaminers),
                 $record->coursetemplate ?? 0,
                 $record->notes ?? null,
                 $record->internalnotes ?? null,
@@ -166,7 +167,6 @@ class bookit_event {
                 $record->usermodified ?? null,
                 $record->timecreated ?? null,
                 $record->timemodified ?? null,
-                $record->id ?? null
         );
     }
 
@@ -184,6 +184,9 @@ class bookit_event {
             $this->timecreated = time();
         }
         $this->timemodified = time();
+
+        // Set initial booking status.
+        $this->bookingstatus = self::STATUS_OPEN;
 
         $data = clone $this;
         $mappings = $data->resources;
