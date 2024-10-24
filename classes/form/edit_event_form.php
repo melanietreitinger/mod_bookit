@@ -45,6 +45,7 @@ class edit_event_form extends dynamic_form {
      * Define the form
      */
     public function definition(): void {
+        global $CFG;
         $config = get_config('mod_bookit');
         $mform =& $this->_form;
 
@@ -104,10 +105,10 @@ class edit_event_form extends dynamic_form {
         $mform->disabledIf('room', 'editevent', 'eq');
         $mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
-        // Add the "Bookingtimes" fields.
+        // Add the "bookingtimes" fields.
         // ...@TODO: make stopyear an admin setting issue#3!
         $startarray = ['startyear' => date("Y"), 'stopyear' => date("Y") + ($config->eventmaxyears ?? 1),
-                'timezone' => 99, 'step' => 5, 'optional' => false,];
+                'timezone' => 99, 'step' => 5, 'optional' => false, ];
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $startarray);
         $mform->disabledIf('starttime', 'editevent', 'eq');
@@ -116,13 +117,13 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
         $stoparray = ['startyear' => date("Y"), 'stopyear' => date("Y") + 1,
-                'timezone' => 99, 'step' => 5, 'optional' => false,];
+                'timezone' => 99, 'step' => 5, 'optional' => false, ];
         // ...@TODO: make default duration of event time an admin setting issue#3!
         $defaultduration = ($config->eventdefaultduration ?? 60);
         $stopdate = ($startdate ? strtotime($startdate ?? '') : time());
         $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'), $stoparray);
         $mform->disabledIf('endtime', 'editevent', 'eq');
-        $mform->setDefault('endtime', strtotime(' + '.$defaultduration.' minutes', $stopdate));
+        $mform->setDefault('endtime', strtotime(' + ' . $defaultduration . ' minutes', $stopdate));
         $mform->addRule('endtime', null, 'required', null, 'client');
         // ...@TODO: Restrict event duration according to $config->eventmaxduration!
         $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
@@ -141,7 +142,16 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
 
         // Add the "person in charge" field.
-        $mform->addElement('text', 'personinchargename', get_string('event_person', 'mod_bookit'), ['size' => '64']);
+        $options = array(
+                'ajax' => 'enrol_manual/form-potential-user-selector',
+                'multiple' => true,
+                'courseid' => 1,
+                'enrolid' => 0,
+                'perpage' => $CFG->maxusersperpage,
+                'userfields' => implode(',', \core_user\fields::get_identity_fields($context, true))
+        );
+        $mform->addElement('autocomplete', 'personinchargename',
+                get_string('event_person', 'mod_bookit'), [], $options);
         $mform->disabledIf('personinchargename', 'editevent', 'eq');
         $mform->setType('personinchargename', PARAM_TEXT);
         $mform->addRule('personinchargename', null, 'required', null, 'client');
@@ -149,12 +159,19 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('personinchargename', 'event_person', 'mod_bookit');
 
         // Add the "email" field.
-        $mform->addElement('text', 'personinchargeemail', get_string('event_email', 'mod_bookit'), ['size' => '64']);
-        $mform->disabledIf('personinchargeemail', 'editevent', 'eq');
-        $mform->setType('personinchargeemail', PARAM_TEXT);
-        $mform->addRule('personinchargeemail', null, 'required', null, 'client');
-        $mform->addRule('personinchargeemail', null, 'maxlength', 255, 'client');
-        $mform->addHelpButton('personinchargeemail', 'event_email', 'mod_bookit');
+        $mform->addElement('text', 'otherexaminers', get_string('event_otherexaminers', 'mod_bookit'), ['size' => '64']);
+        $mform->disabledIf('otherexaminers', 'editevent', 'eq');
+        $mform->setType('otherexaminers', PARAM_TEXT);
+        $mform->addRule('otherexaminers', null, 'required', null, 'client');
+        $mform->addRule('otherexaminers', null, 'maxlength', 255, 'client');
+        $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
+
+        // Add the "timecompensation" field.
+        $mform->addElement('advcheckbox', 'timecompensation',
+                get_string('event_timecompensation', 'mod_bookit'), get_string('yes'));
+        $mform->disabledIf('timecompensation', 'editevent', 'eq');
+        $mform->setType('timecompensation', PARAM_BOOL);
+        $mform->addHelpButton('timecompensation', 'event_timecompensation', 'mod_bookit');
 
         // Add the "compensationfordisadvantages" field.
         $mform->addElement('textarea', 'compensationfordisadvantages',
@@ -163,7 +180,7 @@ class edit_event_form extends dynamic_form {
         $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
 
-        $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"), 'wrap="virtual" rows="20" cols="50"');
+        $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"), 'wrap="virtual" rows="5" cols="50"');
         $mform->disabledIf('notes', 'editevent', 'eq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
@@ -175,11 +192,13 @@ class edit_event_form extends dynamic_form {
 
             foreach ($category['resources'] as $v) {
                 $preprocedure = [];
-                $preprocedure[] = $mform->createElement('advcheckbox', 'resourcecheckbox_' . $v['id'], '', $v['name'], ['group' => 1],
-                        ['', $v['name']]);
+                $preprocedure[] =
+                        $mform->createElement('advcheckbox', 'resourcecheckbox_' . $v['id'], '', $v['name'], ['group' => 1],
+                                ['', $v['name']]);
                 $mform->disabledIf('resourcecheckbox_' . $v['id'], 'editevent', 'eq');
-                $preprocedure[] = $mform->createElement('text', 'resourceamount_' . $v['id'], get_string('resource_amount', 'mod_bookit'),
-                        ['size' => '4']);
+                $preprocedure[] =
+                        $mform->createElement('text', 'resourceamount_' . $v['id'], get_string('resource_amount', 'mod_bookit'),
+                                ['size' => '4']);
                 $mform->setType('resourceamount_' . $v['id'], PARAM_INT);
                 $mform->addGroup($preprocedure, 'preproceduregroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
                         false);
