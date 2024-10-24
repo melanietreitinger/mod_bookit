@@ -144,26 +144,26 @@ class edit_event_form extends dynamic_form {
         // Add the "person in charge" field.
         $options = array(
                 'ajax' => 'enrol_manual/form-potential-user-selector',
-                'multiple' => true,
+                'multiple' => false,
                 'courseid' => 1,
                 'enrolid' => 0,
                 'perpage' => $CFG->maxusersperpage,
                 'userfields' => implode(',', \core_user\fields::get_identity_fields($context, true))
         );
-        $mform->addElement('autocomplete', 'personinchargename',
+        $mform->addElement('autocomplete', 'personinchargeid',
                 get_string('event_person', 'mod_bookit'), [], $options);
-        $mform->disabledIf('personinchargename', 'editevent', 'eq');
-        $mform->setType('personinchargename', PARAM_TEXT);
-        $mform->addRule('personinchargename', null, 'required', null, 'client');
-        $mform->addRule('personinchargename', null, 'maxlength', 255, 'client');
-        $mform->addHelpButton('personinchargename', 'event_person', 'mod_bookit');
+        $mform->disabledIf('personinchargeid', 'editevent', 'eq');
+        $mform->setType('personinchargeid', PARAM_TEXT);
+        $mform->addRule('personinchargeid', null, 'required', null, 'client');
+        $mform->addHelpButton('personinchargeid', 'event_person', 'mod_bookit');
 
-        // Add the "email" field.
-        $mform->addElement('text', 'otherexaminers', get_string('event_otherexaminers', 'mod_bookit'), ['size' => '64']);
+        // Add the "otherexaminers" field.
+        $options['multiple'] = true;
+        $mform->addElement('autocomplete', 'otherexaminers',
+                get_string('event_otherexaminers', 'mod_bookit'), [], $options);
         $mform->disabledIf('otherexaminers', 'editevent', 'eq');
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addRule('otherexaminers', null, 'required', null, 'client');
-        $mform->addRule('otherexaminers', null, 'maxlength', 255, 'client');
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
 
         // Add the "timecompensation" field.
