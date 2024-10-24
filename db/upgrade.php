@@ -25,8 +25,16 @@
 // @codingStandardsIgnoreLine
 defined('MOODLE_INTERNAL') || die(); // @codeCoverageIgnore
 
-
-function xmldb_bookit_upgrade($oldversion) {
+/**
+ * Upgrade script.
+ *
+ * @param int $oldversion
+ * @return true
+ * @throws ddl_exception
+ * @throws ddl_field_missing_exception
+ * @throws ddl_table_missing_exception
+ */
+function xmldb_bookit_upgrade(int $oldversion): bool {
     global $DB;
 
     if ($oldversion < 2024102204) {
@@ -36,7 +44,8 @@ function xmldb_bookit_upgrade($oldversion) {
         $table = new xmldb_table('bookit_event');
 
         // Rename fields.
-        $field1 = new xmldb_field('status', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, null, 'compensationfordisadvantages');
+        $field1 =
+                new xmldb_field('status', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, null, 'compensationfordisadvantages');
         if ($dbman->field_exists($table, $field1)) {
             $dbman->rename_field($table, $field1, 'bookingstatus');
         }
