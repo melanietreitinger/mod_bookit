@@ -4,6 +4,7 @@ about: Suggest an idea for this project
 title: ''
 labels: ''
 assignees: ''
+projects: '/melanietreitinger/projects/1'
 
 ---
 
