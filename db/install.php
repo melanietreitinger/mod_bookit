@@ -21,11 +21,9 @@
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\entity\bookit_category;
 use mod_bookit\local\entity\bookit_resource;
-
 /**
  * This function is executed after the installation of the plugin.
  * @return void
@@ -36,16 +34,12 @@ function xmldb_bookit_install() {
     $category = new bookit_category('Rooms', 'Examrooms');
     $category->save(2);
 
-    $resources = [];
-    $events = [];
-
     $subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'History', 'Geography', 'English Literature',
             'Psychology', 'Sociology'];
 
     for ($i = 1; $i <= 10; $i++) {
         $resource = new bookit_resource('Exam room ' . $i, 'Capacity 255 seats', 1, $category->id);
         $resource->save(2);
-        $resources[] = $resource;
 
         // Generate random date and time in the current week between 07:00 and 20:00.
         // Changed from 0-6 to 0-5 to exclude Sundays.
@@ -61,6 +55,7 @@ function xmldb_bookit_install() {
         $subject = $subjects[array_rand($subjects)];
 
         $event = new bookit_event(
+                0,
                 'Exam ' . $subject,
                 20241,
                 'IT',
@@ -68,22 +63,24 @@ function xmldb_bookit_install() {
                 $enddate,
                 90,
                 85,
-                '3 Zeitverlängerungen',
+                1,
+                '1 Zeitverlängerung; 1 blinde Person',
                 1,
                 2,
-                'Prof. Superprof',
-                'superprof@example.com',
+                '3,4',
                 4,
-                'Internal lorem ipsum',
-                'Lorem Ipsum dolor...',
+                'External lorem ipsum',
+                'Internal Lorem Ipsum dolor...',
                 'Susi Support',
                 [
-                        (object) ['resourceid' => $resource->id, 'amount' => 2],
+                        (object) ['resourceid' => $resource->id, 'amount' => 1],
                 ],
                 null,
-                2
+                2,
+                time(),
+                time()
         );
+
         $event->save(2);
-        $events[] = $event;
     }
 }
