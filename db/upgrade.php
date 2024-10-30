@@ -66,6 +66,10 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $field5 = new xmldb_field('otherexaminers', XMLDB_TYPE_TEXT, null, null, null, null, null, 'personinchargeid');
         $dbman->add_field($table, $field5);
 
+        // Rename table bookit_category to bookit_resource_categories.
+        $table = new xmldb_table('bookit_category');
+        $dbman->rename_table($table, 'bookit_resource_categories');
+
         // Bookit savepoint reached.
         upgrade_mod_savepoint(true, 2024102204, 'bookit');
     }

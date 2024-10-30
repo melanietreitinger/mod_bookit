@@ -51,7 +51,7 @@
     <KEY NAME="even_ref_fk" TYPE="foreign" FIELDS="refcourseid" REFTABLE="course" REFFIELDS="id"/>
   </KEYS>
 </TABLE>
-    <TABLE NAME="bookit_category" COMMENT="Stores the categories of resources">
+    <TABLE NAME="bookit_resource_categories" COMMENT="Stores the categories of resources">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
