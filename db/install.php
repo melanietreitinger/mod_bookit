@@ -22,25 +22,43 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 use mod_bookit\local\entity\bookit_event;
-use mod_bookit\local\entity\bookit_category;
+use mod_bookit\local\entity\bookit_resource_categories;
 use mod_bookit\local\entity\bookit_resource;
 /**
  * This function is executed after the installation of the plugin.
  * @return void
  */
 function xmldb_bookit_install() {
-    global $DB;
 
-    $category = new bookit_category('Rooms', 'Examrooms');
+    // Create categories and resources.
+    $category = new bookit_resource_categories('Rooms', 'Examrooms');
     $category->save(2);
+    for ($i = 1; $i <= 5; $i++) {
+        $resource = new bookit_resource('Exam room ' . $i, 'Capacity ' . rand(20, 255) . ' seats', 1, $category->id);
+        $resource->save(2);
+    }
+
+    $category = new bookit_resource_categories('Hardware', 'Hardware Resources');
+    $category->save(2);
+    $resource = new bookit_resource('Keyboard', 'Cherry Ultra Silent', 255, $category->id);
+    $resource->save(2);
+    $resource = new bookit_resource('Headphone', 'Sennheiser Best Listening', 177, $category->id);
+    $resource->save(2);
+
+    $category = new bookit_resource_categories('Magic Creatures', 'For a little magic...');
+    $category->save(2);
+    $resource = new bookit_resource('Unicorn', 'Rainbow colored unicorns', 13, $category->id);
+    $resource->save(2);
+    $resource = new bookit_resource('Moodlicorn', 'Just fabulous aaand magic!', 99, $category->id);
+    $resource->save(2);
+    $resource = new bookit_resource('Fairy', 'For extra luck and glitter!', 199, $category->id);
+    $resource->save(2);
 
     $subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'History', 'Geography', 'English Literature',
             'Psychology', 'Sociology'];
 
+    // Create events.
     for ($i = 1; $i <= 10; $i++) {
-        $resource = new bookit_resource('Exam room ' . $i, 'Capacity 255 seats', 1, $category->id);
-        $resource->save(2);
-
         // Generate random date and time in the current week between 07:00 and 20:00.
         // Changed from 0-6 to 0-5 to exclude Sundays.
         $dayofweek = rand(0, 5);
@@ -73,7 +91,8 @@ function xmldb_bookit_install() {
                 'Internal Lorem Ipsum dolor...',
                 'Susi Support',
                 [
-                        (object) ['resourceid' => $resource->id, 'amount' => 1],
+                        (object) ['resourceid' => rand(1,5), 'amount' => 1], // Rooms.
+                        (object) ['resourceid' => rand(6,10), 'amount' => 1], // Other resources.
                 ],
                 null,
                 2,

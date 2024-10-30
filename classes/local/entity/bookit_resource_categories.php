@@ -19,13 +19,13 @@ namespace mod_bookit\local\entity;
 use dml_exception;
 
 /**
- * Database class for bookit_resources.
+ * Database class for bookit_resource_categories.
  *
  * @package     mod_bookit
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class bookit_category {
+class bookit_resource_categories {
     /** @var ?int id */
     public ?int $id;
     /** @var string name */
@@ -68,7 +68,7 @@ class bookit_category {
      */
     public static function from_database(int $id): self {
         global $DB;
-        $record = $DB->get_record("bookit_category", ["id" => $id], '*', MUST_EXIST);
+        $record = $DB->get_record("bookit_resource_categories", ["id" => $id], '*', MUST_EXIST);
 
         return self::from_record($record);
     }
@@ -98,7 +98,7 @@ class bookit_category {
      * @return void
      * @throws dml_exception
      */
-    public function save(int|null $userid = null): void {
+    final public function save(int|null $userid = null): void {
         global $DB, $USER;
         $this->usermodified = $userid ?? $USER->id;
         if (!$this->timecreated) {
@@ -106,9 +106,9 @@ class bookit_category {
         }
         $this->timemodified = time();
         if ($this->id) {
-            $DB->update_record('bookit_category', $this);
+            $DB->update_record('bookit_resource_categories', $this);
         } else {
-            $this->id = $DB->insert_record('bookit_category', $this);
+            $this->id = $DB->insert_record('bookit_resource_categories', $this);
         }
     }
 }

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Categories manager class.
+ * Resource manager class.
  *
  * @package     mod_bookit
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
@@ -23,76 +23,52 @@
  */
 namespace mod_bookit\local\manager;
 
+use dml_exception;
+
 /**
- * Categories manager class.
+ * Resource manager class.
  *
  * @package     mod_bookit
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class categories_manager {
+class resource_manager {
 
     /**
-     * Get categories.
+     * Get resources.
+     *
      * @return array[]
+     * @throws dml_exception
      */
-    public static function get_categories() {
-        return [
-                ['name' => 'Rooms',
-                        'description' => 'Specific rooms for e-assessments',
-                        'id' => 1,
-                        'resources' => [
-                                ['id' => 1,
-                                        'name' => 'E-Assessment-Center - Room 1',
-                                        'description' => 'Room capacity: 168 seats',
-                                        'amount' => 1,
-                                ],
-                                ['id' => 2,
-                                        'name' => 'E-Assessment-Center - Room 2',
-                                        'description' => 'Room capacity: 85 seats',
-                                        'amount' => 1,
-                                ],
-                                ['id' => 3,
-                                        'name' => 'E-Assessment-Center - Room 3',
-                                        'description' => 'Room capacity: 7 seats',
-                                        'amount' => 1,
-                                ],
+    public static function get_resources(): array {
+        global $DB;
+        $records = $DB->get_records_sql(
+                'SELECT r.id resource_id, r.name resource_name, r.description resource_desc, r.amount resource_amount,
+                     c.id category_id, c.name category_name, c.description category_desc
+                     FROM {bookit_resource} r LEFT JOIN {bookit_resource_categories} c ON c.id = r.categoryid'
+        );
+        $resources = [];
+        foreach ($records as $record) {
+            if (!isset($resources[$record->category_name])) {
+                $resources[$record->category_name] = [
+                        'category_id' => $record->category_id,
+                        'category_desc' => $record->category_desc,
+                        'resources' => [[
+                                'resource_id' => $record->resource_id,
+                                'resource_name' => $record->resource_name,
+                                'resource_desc' => $record->resource_desc,
+                                'resource_amount' => $record->resource_amount,
                         ]],
-                ['name' => 'Hardware',
-                        'description' => 'Specific hardware for e-assessments',
-                        'id' => 2,
-                        'resources' => [
-                                ['id' => 4,
-                                        'name' => 'Headphones',
-                                        'description' => 'Sennheiser ULTRASOUND 2000 XXL',
-                                        'amount' => 270,
-                                ],
-                                ['id' => 5,
-                                        'name' => 'Keyboard',
-                                        'description' => 'Typemaster 1337 Haxx0r',
-                                        'amount' => 270,
-                                ],
-                        ]],
-                ['name' => 'Magic Creatures',
-                        'description' => 'For a little magic...',
-                        'id' => 3,
-                        'resources' => [
-                                ['id' => 6,
-                                        'name' => 'Unicorn',
-                                        'description' => 'Just fabulous!',
-                                        'amount' => 270,
-                                ],
-                                ['id' => 7,
-                                        'name' => 'Moodlicorn',
-                                        'description' => 'Just fabulous aaand magic!',
-                                        'amount' => 270,
-                                ],
-                                ['id' => 8,
-                                        'name' => 'Fairy',
-                                        'description' => 'For extra luck and glitter.',
-                                        'amount' => 270,
-                                ],
-                        ]],
-        ];
+                ];
+            } else {
+                $resources[$record->category_name]['resources'][] = [
+                        'resource_id' => $record->resource_id,
+                        'resource_name' => $record->resource_name,
+                        'resource_desc' => $record->resource_desc,
+                        'resource_amount' => $record->resource_amount,
+                ];
+            }
+        }
+        return $resources;
     }
 }

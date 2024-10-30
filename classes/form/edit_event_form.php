@@ -30,6 +30,7 @@ use core\exception\moodle_exception;
 use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\manager\categories_manager;
+use mod_bookit\local\manager\resource_manager;
 use moodle_url;
 use stdClass;
 
@@ -45,11 +46,13 @@ class edit_event_form extends dynamic_form {
      * Define the form
      */
     public function definition(): void {
-        global $CFG;
+        global $DB, $CFG;
         $config = get_config('mod_bookit');
         $mform =& $this->_form;
 
-        $categories = categories_manager::get_categories();
+        $resourceslist = resource_manager::get_resources();
+        //$mform->addElement('static', 'resources', "<pre>".print_r($resourceslist, true)."</pre>", true);
+
         $context = $this->get_context_for_dynamic_submission();
         $disabled = !has_capability('mod/bookit:editevent', $context);
 
@@ -74,6 +77,7 @@ class edit_event_form extends dynamic_form {
         $currentyear = date('Y');
         // Generate semesters dynamically.
         $semesters = [];
+        // ...@TODO: Make range of semester terms an admin option.
         for ($i = -1; $i < 2; $i++) {
 
             $semesters[($currentyear + $i) * 10 + 1] = get_string('summer_semester', 'mod_bookit') . " " . ($currentyear + $i);
@@ -94,10 +98,10 @@ class edit_event_form extends dynamic_form {
 
         // Add the "room" field.
         $rooms = [];
-        foreach ($categories as $category) {
-            if ($category['name'] === 'Rooms') {
-                foreach ($category['resources'] as $resource) {
-                    $rooms[$resource['id']] = $resource['name'];
+        foreach ($resourceslist as $category => $value) {
+            if ($category === 'Rooms') {
+                foreach ($value['resources'] as $resource) {
+                    $rooms[$resource['resource_id']] = $resource['resource_name'];
                 }
             }
         }
@@ -142,16 +146,27 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
 
         // Add the "person in charge" field.
-        $options = array(
+        $options = [
                 'ajax' => 'enrol_manual/form-potential-user-selector',
                 'multiple' => false,
                 'courseid' => 1,
                 'enrolid' => 0,
                 'perpage' => $CFG->maxusersperpage,
-                'userfields' => implode(',', \core_user\fields::get_identity_fields($context, true))
-        );
+                'userfields' => implode(',', \core_user\fields::get_identity_fields($context, true)),
+        ];
+        $examinerlist = [];
+        // ...@TODO: Find better query to select users!
+        $sql = "SELECT DISTINCT u.*
+                  FROM {user} u
+                  WHERE u.deleted = 0 AND u.suspended = 0
+                  ORDER BY lastname, firstname";
+
+        $users = $DB->get_records_sql($sql, []);
+        foreach ($users as $id => $user) {
+            $examinerlist[$id] = fullname($user) . ' | ' . $user->email;
+        }
         $mform->addElement('autocomplete', 'personinchargeid',
-                get_string('event_person', 'mod_bookit'), [], $options);
+                get_string('event_person', 'mod_bookit'), $examinerlist, $options);
         $mform->disabledIf('personinchargeid', 'editevent', 'eq');
         $mform->setType('personinchargeid', PARAM_TEXT);
         $mform->addRule('personinchargeid', null, 'required', null, 'client');
@@ -160,7 +175,7 @@ class edit_event_form extends dynamic_form {
         // Add the "otherexaminers" field.
         $options['multiple'] = true;
         $mform->addElement('autocomplete', 'otherexaminers',
-                get_string('event_otherexaminers', 'mod_bookit'), [], $options);
+                get_string('event_otherexaminers', 'mod_bookit'), $examinerlist, $options);
         $mform->disabledIf('otherexaminers', 'editevent', 'eq');
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addRule('otherexaminers', null, 'required', null, 'client');
@@ -184,25 +199,29 @@ class edit_event_form extends dynamic_form {
         $mform->disabledIf('notes', 'editevent', 'eq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
-        foreach (categories_manager::get_categories() as $category) {
-            if ($category['name'] === 'Rooms') {
+        foreach ($resourceslist as $category => $value) {
+            if ($category === 'Rooms') {
                 continue;
             }
-            $mform->addElement('header', 'header_' . $category['id'], $category['name']);
+            $mform->addElement('header', 'header_' . $value['category_id'], $category);
 
-            foreach ($category['resources'] as $v) {
+            foreach ($value['resources'] as $v) {
                 $preprocedure = [];
                 $preprocedure[] =
-                        $mform->createElement('advcheckbox', 'resourcecheckbox_' . $v['id'], '', $v['name'], ['group' => 1],
-                                ['', $v['name']]);
-                $mform->disabledIf('resourcecheckbox_' . $v['id'], 'editevent', 'eq');
+                        $mform->createElement('advcheckbox', 'resourcecheckbox_' . $v['resource_id'], '', $v['resource_name'],
+                                ['group' => 1],
+                                ['', $v['resource_name']]);
+                $mform->disabledIf('resourcecheckbox_' . $v['resource_id'], 'editevent', 'eq');
+
                 $preprocedure[] =
-                        $mform->createElement('text', 'resourceamount_' . $v['id'], get_string('resource_amount', 'mod_bookit'),
+                        $mform->createElement('text', 'resourceamount_' . $v['resource_id'],
+                                get_string('resource_amount', 'mod_bookit'),
                                 ['size' => '4']);
-                $mform->setType('resourceamount_' . $v['id'], PARAM_INT);
+                $mform->setType('resourceamount_' . $v['resource_id'], PARAM_INT);
+                $mform->disabledIf('resourceamount_' . $v['resource_id'], 'resourcecheckbox_' . $v['resource_id']);
+
                 $mform->addGroup($preprocedure, 'preproceduregroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
                         false);
-                $mform->disabledIf('resourceamount_' . $v['id'], 'resourcecheckbox_' . $v['id']);
             }
         }
     }

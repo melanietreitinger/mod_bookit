@@ -26,12 +26,17 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['addbooking'] = 'Termin buchen';
+// ...@TODO: translate.
 $string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'BookIt Instanz hinzufügen';
+// ...@TODO: translate.
 $string['bookit:addresource'] = 'Add a resource';
+// ...@TODO: translate.
 $string['bookit:editevent'] = 'Edit an event';
+// ...@TODO: translate.
 $string['bookit:editresource'] = 'Edit a resource';
 $string['bookit:view'] = 'BookIt Instanz anzeigen';
+// ...@TODO: translate.
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['edit_event'] = "Termin bearbeiten";
@@ -45,10 +50,10 @@ $string['event_end'] = 'Ende';
 $string['event_end_help'] = 'Wählen Sie das Enddatum und -uhrzeit des Termins.';
 $string['event_name'] = 'Termin Name';
 $string['event_name_help'] = 'Tragen Sie den Namen des Termins ein.';
-$string['event_otherexaminers'] = 'Other examiners of this exam';
-$string['event_otherexaminers_help'] = 'Enter other examiners of this exam.';
 $string['event_notes'] = 'Anmerkungen';
 $string['event_notes_help'] = 'Tragen Sie zusätzliche Informationen für den Support ein.';
+$string['event_otherexaminers'] = 'Other examiners of this exam';
+$string['event_otherexaminers_help'] = 'Enter other examiners of this exam.';
 $string['event_person'] = 'Verantwortliche Person';
 $string['event_person_help'] = 'Tragen Sie die verantwortliche Person ein.';
 $string['event_resources'] = 'Ressourcen';

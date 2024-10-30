@@ -46,7 +46,7 @@ class bookit_event {
      *
      * @param int $id
      * @param string $name
-     * @param int|null $semester
+     * @param string|null $semester
      * @param string $department
      * @param int $starttime
      * @param int $endtime
@@ -157,7 +157,7 @@ class bookit_event {
                 $record->compensationfordisadvantages ?? null,
                 $record->bookingstatus,
                 $record->personinchargeid ?? null,
-                implode(',',$record->otherexaminers),
+                implode(',', $record->otherexaminers),
                 $record->coursetemplate ?? 0,
                 $record->notes ?? null,
                 $record->internalnotes ?? null,
