@@ -36,6 +36,24 @@ use dml_exception;
  */
 class event_manager {
 
+    public static function get_event(int $id) {
+        global $DB;
+        $event = $DB->get_record('bookit_event', ['id' => $id]);
+        $eventresources = resource_manager::get_resources_of_event($id);
+        foreach ($eventresources as $rid => $amount) {
+            if ($rid <= 5) {
+                $event->room = $rid;
+            }
+            else {
+                $r = 'resource_'.$rid;
+                $c = 'checkbox_'.$rid;
+                $event->$r = $amount;
+                $event->$c = 1;
+            }
+        }
+        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (get_event) '.print_r($event, true) . "\n", FILE_APPEND);
+        return $event;
+    }
     /**
      * function get_events_in_timerange
      * @param string $starttime

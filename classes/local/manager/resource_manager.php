@@ -34,6 +34,14 @@ use dml_exception;
  */
 class resource_manager {
 
+    public static function get_resources_of_event(int $eventid) {
+        global $DB;
+        //$resources = $DB->get_records('bookit_event_resources', ['eventid' => $eventid], '', 'id, resourceid, amount');
+        $resources = $DB->get_records_menu('bookit_event_resources', ['eventid' => $eventid], '', 'resourceid, amount');
+        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (get_resources_of_event) '.print_r($resources, true) . "\n", FILE_APPEND);
+        return $resources;
+    }
+
     /**
      * Get resources.
      *
@@ -53,19 +61,17 @@ class resource_manager {
                 $resources[$record->category_name] = [
                         'category_id' => $record->category_id,
                         'category_desc' => $record->category_desc,
-                        'resources' => [[
-                                'resource_id' => $record->resource_id,
-                                'resource_name' => $record->resource_name,
-                                'resource_desc' => $record->resource_desc,
-                                'resource_amount' => $record->resource_amount,
+                        'resources' => [$record->resource_id => [
+                                'name' => $record->resource_name,
+                                'desc' => $record->resource_desc,
+                                'amount' => $record->resource_amount,
                         ]],
                 ];
             } else {
-                $resources[$record->category_name]['resources'][] = [
-                        'resource_id' => $record->resource_id,
-                        'resource_name' => $record->resource_name,
-                        'resource_desc' => $record->resource_desc,
-                        'resource_amount' => $record->resource_amount,
+                $resources[$record->category_name]['resources'][$record->resource_id] = [
+                        'name' => $record->resource_name,
+                        'desc' => $record->resource_desc,
+                        'amount' => $record->resource_amount,
                 ];
             }
         }

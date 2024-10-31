@@ -30,6 +30,7 @@ use core\exception\moodle_exception;
 use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\manager\categories_manager;
+use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
 use moodle_url;
 use stdClass;
@@ -50,8 +51,8 @@ class edit_event_form extends dynamic_form {
         $config = get_config('mod_bookit');
         $mform =& $this->_form;
 
-        $resourceslist = resource_manager::get_resources();
-        //$mform->addElement('static', 'resources', "<pre>".print_r($resourceslist, true)."</pre>", true);
+        $catresourceslist = resource_manager::get_resources();
+        //$mform->addElement('static', 'resources', "<pre>".print_r($catresourceslist, true)."</pre>", true);
 
         $context = $this->get_context_for_dynamic_submission();
         $disabled = !has_capability('mod/bookit:editevent', $context);
@@ -98,10 +99,10 @@ class edit_event_form extends dynamic_form {
 
         // Add the "room" field.
         $rooms = [];
-        foreach ($resourceslist as $category => $value) {
+        foreach ($catresourceslist as $category => $value) {
             if ($category === 'Rooms') {
-                foreach ($value['resources'] as $resource) {
-                    $rooms[$resource['resource_id']] = $resource['resource_name'];
+                foreach ($value['resources'] as $rid => $catresource) {
+                    $rooms[$rid] = $catresource['name'];
                 }
             }
         }
@@ -182,8 +183,12 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
 
         // Add the "timecompensation" field.
-        $mform->addElement('advcheckbox', 'timecompensation',
-                get_string('event_timecompensation', 'mod_bookit'), get_string('yes'));
+        $mform->addElement(
+                'advcheckbox', 
+                'timecompensation',
+                get_string('event_timecompensation', 'mod_bookit'), 
+                get_string('yes')
+        );
         $mform->disabledIf('timecompensation', 'editevent', 'eq');
         $mform->setType('timecompensation', PARAM_BOOL);
         $mform->addHelpButton('timecompensation', 'event_timecompensation', 'mod_bookit');
@@ -199,28 +204,37 @@ class edit_event_form extends dynamic_form {
         $mform->disabledIf('notes', 'editevent', 'eq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
-        foreach ($resourceslist as $category => $value) {
+        foreach ($catresourceslist as $category => $c) {
             if ($category === 'Rooms') {
                 continue;
             }
-            $mform->addElement('header', 'header_' . $value['category_id'], $category);
+            $mform->addElement('header', 'header_' . $c['category_id'], $category);
 
-            foreach ($value['resources'] as $v) {
-                $preprocedure = [];
-                $preprocedure[] =
-                        $mform->createElement('advcheckbox', 'resourcecheckbox_' . $v['resource_id'], '', $v['resource_name'],
+            foreach ($c['resources'] as $rid => $v) {
+                $bla = 'resource_' . $rid;
+                $groupelements = [];
+                $groupelements[] =
+                        $mform->createElement(
+                                'advcheckbox', 
+                                'checkbox_' . $rid,
+                                '',
+                                $v['name'],
                                 ['group' => 1],
-                                ['', $v['resource_name']]);
-                $mform->disabledIf('resourcecheckbox_' . $v['resource_id'], 'editevent', 'eq');
+                                [0, !0] // "array of values that will be associated with the checked/unchecked state of the checkbox"
+                        );
+                $mform->disabledIf('checkbox_' . $rid, 'editevent', 'eq');
 
-                $preprocedure[] =
-                        $mform->createElement('text', 'resourceamount_' . $v['resource_id'],
+                $groupelements[] =
+                        $mform->createElement(
+                                'text',
+                                'resource_' . $rid,
                                 get_string('resource_amount', 'mod_bookit'),
-                                ['size' => '4']);
-                $mform->setType('resourceamount_' . $v['resource_id'], PARAM_INT);
-                $mform->disabledIf('resourceamount_' . $v['resource_id'], 'resourcecheckbox_' . $v['resource_id']);
+                                ['size' => '4']
+                        );
+                $mform->setType('resource_' . $rid, PARAM_INT);
+                $mform->disabledIf('resource_' . $rid, 'checkbox_' . $rid);
 
-                $mform->addGroup($preprocedure, 'preproceduregroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
+                $mform->addGroup($groupelements, 'resourcegroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
                         false);
             }
         }
@@ -258,12 +272,12 @@ class edit_event_form extends dynamic_form {
         #echo json_encode(categories_manager::get_categories());
         #echo json_encode($formdata);
         foreach (categories_manager::get_categories() as $category) {
-            foreach ($category['resources'] as $resource) {
-                $checkboxname = 'resourcecheckbox_' . $resource['id'];
+            foreach ($category['resources'] as $catresource) {
+                $checkboxname = 'resourcecheckbox_' . $catresource['id'];
                 if ($data->$checkboxname ?? false) {
                     $mappings[] = (object) [
-                            'resourceid' => $resource['id'],
-                            'amount' => $formdata->{'resourceamount_' . $resource['id']},
+                            'resourceid' => $catresource['id'],
+                            'amount' => $formdata->{'resourceamount_' . $catresource['id']},
                     ];
                 }
             }
@@ -286,7 +300,7 @@ class edit_event_form extends dynamic_form {
         $context = $this->get_context_for_dynamic_submission();
         $id = $this->optional_param('id', null, PARAM_INT);
         if (!empty($id)) {
-            $event = $DB->get_record('bookit_event', ['id' => $id]);
+            $event = event_manager::get_event($id);
         }
         $event->cmid = $this->optional_param('cmid', null, PARAM_INT);
 
