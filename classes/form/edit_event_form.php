@@ -267,23 +267,40 @@ class edit_event_form extends dynamic_form {
         $id = $this->optional_param('id', null, PARAM_INT);
         $context = $this->get_context_for_dynamic_submission();
         $formdata = $this->get_data();
+        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (process_dynamic_submission) '.print_r($formdata, true) . "\n", FILE_APPEND);
 
         $mappings = [];
-        #echo json_encode(categories_manager::get_categories());
-        #echo json_encode($formdata);
-        foreach (categories_manager::get_categories() as $category) {
-            foreach ($category['resources'] as $catresource) {
-                $checkboxname = 'resourcecheckbox_' . $catresource['id'];
-                if ($data->$checkboxname ?? false) {
-                    $mappings[] = (object) [
-                            'resourceid' => $catresource['id'],
-                            'amount' => $formdata->{'resourceamount_' . $catresource['id']},
-                    ];
+        foreach (resource_manager::get_resources() as $category => $catresource) {
+            // Rooms.
+            foreach ($catresource['resources'] as $id => $v) {
+                if ('Rooms' == $category) {
+                    file_put_contents('/tmp/event.log',
+                            date("Y-m-d H:i:s") . ': (Room) ' . serialize($formdata->room) . ' / ' . serialize($v) . "\n",
+                            FILE_APPEND);
+                    if ($formdata->room == $id) {
+                        $mappings[] = (object) [
+                                'resourceid' => $formdata->room,
+                                'amount' => 1,
+                        ];
+                    }
+
+                } else {
+                    // Other Resources.
+                    $checkboxname = 'checkbox_' . $id;
+                    file_put_contents('/tmp/event.log', date("Y-m-d H:i:s") . ': (get_categories) ' . $checkboxname . ' / ' .
+                            print_r($formdata->$checkboxname, true) . "\n", FILE_APPEND);
+                    if ($formdata->$checkboxname ?? false) {
+                        $mappings[] = (object) [
+                                'resourceid' => $id,
+                                'amount' => $formdata->{'resource_' . $id},
+                        ];
+                    }
                 }
             }
         }
-        #echo json_encode($mappings);
+        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (mappings) '.print_r($mappings, true) . "\n", FILE_APPEND);
         $formdata->resources = $mappings;
+
         $formdata->status = bookit_event::STATUS_OPEN;
         $event = bookit_event::from_record($formdata);
         $event->save();
