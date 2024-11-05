@@ -147,7 +147,7 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
 
         // Add the "person in charge" field.
-        $options = [
+        $userselectoroptions = [
                 'ajax' => 'enrol_manual/form-potential-user-selector',
                 'multiple' => false,
                 'courseid' => 1,
@@ -167,20 +167,39 @@ class edit_event_form extends dynamic_form {
             $examinerlist[$id] = fullname($user) . ' | ' . $user->email;
         }
         $mform->addElement('autocomplete', 'personinchargeid',
-                get_string('event_person', 'mod_bookit'), $examinerlist, $options);
+                get_string('event_personincharge', 'mod_bookit'), $examinerlist, $userselectoroptions);
         $mform->disabledIf('personinchargeid', 'editevent', 'eq');
         $mform->setType('personinchargeid', PARAM_TEXT);
         $mform->addRule('personinchargeid', null, 'required', null, 'client');
-        $mform->addHelpButton('personinchargeid', 'event_person', 'mod_bookit');
+        $mform->addHelpButton('personinchargeid', 'event_personincharge', 'mod_bookit');
 
         // Add the "otherexaminers" field.
-        $options['multiple'] = true;
+        $userselectoroptions['multiple'] = true;
         $mform->addElement('autocomplete', 'otherexaminers',
-                get_string('event_otherexaminers', 'mod_bookit'), $examinerlist, $options);
+                get_string('event_otherexaminers', 'mod_bookit'), $examinerlist, $userselectoroptions);
         $mform->disabledIf('otherexaminers', 'editevent', 'eq');
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addRule('otherexaminers', null, 'required', null, 'client');
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
+
+        // Add the coursetemplate field.
+        // ...@TODO: Implement course template administration in admin settings and query them here.
+        $coursetemplates = [0 => get_string('default')];
+        $mform->addElement('select', 'coursetemplate', get_string('select_coursetemplate', 'mod_bookit'), $coursetemplates);
+        $mform->disabledIf('coursetemplate', 'editevent', 'eq');
+        $mform->addRule('coursetemplate', null, 'required', null, 'client');
+        $mform->addHelpButton('coursetemplate', 'select_coursetemplate', 'mod_bookit');
+
+        // Add the "refcourseid" field.
+        // ...@TODO: make category to select courses an admin option for 'exclude'.
+        // ...@TODO: exclude current course.
+        // ...@TODO: make use of capabilities to show courses ???
+        $mform->addElement('course', 'refcourseid', get_string('event_refcourseid', 'mod_bookit'),
+                ['multiple' => false, 'showhidden' => true, 'exclude' => '']);
+        $mform->setType('refcourseid', PARAM_INT);
+        $mform->disabledIf('refcourseid', 'editevent', 'eq');
+        $mform->setType('refcourseid', PARAM_TEXT);
+        $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
 
         // Add the "timecompensation" field.
         $mform->addElement(
@@ -200,10 +219,35 @@ class edit_event_form extends dynamic_form {
         $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
 
+        // Add the "notes" field.
         $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"), 'wrap="virtual" rows="5" cols="50"');
         $mform->disabledIf('notes', 'editevent', 'eq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
+        // Add the "internalnotes" field.
+        $mform->addElement('textarea', 'internalnotes', get_string("event_internalnotes", "mod_bookit"), 'wrap="virtual" rows="5" cols="50"');
+        $mform->disabledIf('internalnotes', 'editevent', 'eq');
+        $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
+
+        // Add the "supportpersons" field.
+        $supportpersons = [];
+        // ...@TODO: Find better query to select users!
+        $sqlsupport = "SELECT DISTINCT u.*
+                  FROM {user} u
+                  WHERE u.deleted = 0 AND u.suspended = 0
+                  ORDER BY lastname, firstname";
+
+        $users = $DB->get_records_sql($sqlsupport, []);
+        foreach ($users as $id => $user) {
+            $supportpersons[$id] = fullname($user);
+        }
+        $mform->addElement('autocomplete', 'supportpersons',
+                get_string('event_supportperson', 'mod_bookit'), $supportpersons, $userselectoroptions);
+        $mform->disabledIf('supportpersons', 'editevent', 'eq');
+        $mform->setType('supportpersons', PARAM_TEXT);
+        $mform->addHelpButton('supportpersons', 'event_supportperson', 'mod_bookit');
+
+        // Add the additional resources.
         foreach ($catresourceslist as $category => $c) {
             if ($category === 'Rooms') {
                 continue;

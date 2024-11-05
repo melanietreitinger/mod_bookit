@@ -60,7 +60,7 @@ class bookit_event {
      * @param int|null $coursetemplate
      * @param string|null $notes
      * @param string|null $internalnotes
-     * @param string|null $supportpersons
+     * @param ?string $supportpersons
      * @param array $resources
      * @param int|null $refcourseid
      * @param int|null $usermodified
@@ -161,7 +161,7 @@ class bookit_event {
                 $record->coursetemplate ?? 0,
                 $record->notes ?? null,
                 $record->internalnotes ?? null,
-                $record->supportpersons ?? null,
+                implode(',', $record->supportpersons),
                 $record->resources,
                 $record->refcourseid ?? null,
                 $record->usermodified ?? null,

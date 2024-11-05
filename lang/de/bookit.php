@@ -48,14 +48,22 @@ $string['event_duration'] = 'Dauer des Termins (in Minuten)';
 $string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
 $string['event_end'] = 'Ende';
 $string['event_end_help'] = 'Wählen Sie das Enddatum und -uhrzeit des Termins.';
+// ...@TODO: translate.
+$string['event_internalnotes'] = 'Internal notes';
+// ...@TODO: translate.
+$string['event_internalnotes_help'] = 'These notes are just for internal use and not shown to the booking person.';
 $string['event_name'] = 'Termin Name';
 $string['event_name_help'] = 'Tragen Sie den Namen des Termins ein.';
 $string['event_notes'] = 'Anmerkungen';
 $string['event_notes_help'] = 'Tragen Sie zusätzliche Informationen für den Support ein.';
 $string['event_otherexaminers'] = 'Other examiners of this exam';
 $string['event_otherexaminers_help'] = 'Enter other examiners of this exam.';
-$string['event_person'] = 'Verantwortliche Person';
-$string['event_person_help'] = 'Tragen Sie die verantwortliche Person ein.';
+$string['event_personincharge'] = 'Verantwortliche Person';
+$string['event_personincharge_help'] = 'Tragen Sie die verantwortliche Person ein.';
+// ...@TODO: translate.
+$string['event_refcourseid'] = 'Exam course';
+// ...@TODO: translate.
+$string['event_refcourseid_help'] = 'Exam course associated with this exam';
 $string['event_resources'] = 'Ressourcen';
 $string['event_room'] = 'Raum';
 $string['event_room_help'] = 'Wählen Sie einen Raum für der Termin.';
@@ -63,7 +71,13 @@ $string['event_start'] = 'Beginn';
 $string['event_start_help'] = 'Wählen Sie das Startdatum und -uhrzeit des Termins.';
 $string['event_students'] = 'Anzahl der Teilnehmenden';
 $string['event_students_help'] = 'Tragen Sie die erwartete Anzahl der Teilnehmenden ein.';
+// ...@TODO: translate.
+$string['event_supportperson'] = 'Support persons';
+// ...@TODO: translate.
+$string['event_supportperson_help'] = 'Support persons assigned to this event.';
+// ...@TODO: translate.
 $string['event_timecompensation'] = 'Time compensation';
+// ...@TODO: translate.
 $string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
 $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';
@@ -75,5 +89,9 @@ $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Anzahl';
 $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
+// ...@TODO: translate.
+$string['select_coursetemplate'] = 'Select a course template';
+// ...@TODO: translate.
+$string['select_coursetemplate_help'] = 'Select a course template for the course in which your exam will take place.';
 $string['summer_semester'] = 'Sommersemester';
 $string['winter_semester'] = 'Wintersemester';
