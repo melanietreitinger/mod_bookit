@@ -71,7 +71,7 @@ function xmldb_bookit_install() {
 
         // Select a random subject.
         $subject = $subjects[array_rand($subjects)];
-        $tc = rand(2,7);
+        $tc = rand(2, 7);
         $event = new bookit_event(
                 0,
                 'Exam ' . $subject,
@@ -80,10 +80,10 @@ function xmldb_bookit_install() {
                 $startdate,
                 $enddate,
                 90,
-                rand(20,250),
+                rand(20, 250),
                 $tc,
                 $tc.' Zeitverlängerungen',
-                1,
+                rand(0, 2),
                 2,
                 '',
                 0,
@@ -91,9 +91,9 @@ function xmldb_bookit_install() {
                 'Internal Lorem Ipsum dolor...',
                 'Susi Support',
                 [
-                        (object) ['resourceid' => rand(1,5), 'amount' => 1], // Rooms.
-                        (object) ['resourceid' => rand(6,10), 'amount' => rand(2,85)], // Other resources.
-                        (object) ['resourceid' => rand(6,10), 'amount' => rand(2,85)], // Other resources.
+                        (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
+                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
+                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
                 ],
                 null,
                 2,

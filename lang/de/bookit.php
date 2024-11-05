@@ -40,6 +40,10 @@ $string['bookit:view'] = 'BookIt Instanz anzeigen';
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['edit_event'] = "Termin bearbeiten";
+// ...@TODO: translate.
+$string['event_bookingstatus'] = 'Booking status';
+// ...@TODO: translate.
+$string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced';
 $string['event_compensationfordisadvantages'] = 'Weitere Nachteilsausgleiche';
 $string['event_compensationfordisadvantages_help'] = 'Tragen Sie hier die bereits bekannten Informationen zu Studierenden mit Nachteilsausgleich ein.';
 $string['event_department'] = 'Institution';
@@ -87,11 +91,11 @@ $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Anzahl';
-$string['select_semester'] = 'Semester';
-$string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
 // ...@TODO: translate.
 $string['select_coursetemplate'] = 'Select a course template';
 // ...@TODO: translate.
 $string['select_coursetemplate_help'] = 'Select a course template for the course in which your exam will take place.';
+$string['select_semester'] = 'Semester';
+$string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
 $string['summer_semester'] = 'Sommersemester';
 $string['winter_semester'] = 'Wintersemester';

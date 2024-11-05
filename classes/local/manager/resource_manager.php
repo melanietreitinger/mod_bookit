@@ -34,11 +34,15 @@ use dml_exception;
  */
 class resource_manager {
 
+    /**
+     * Get resources of event.
+     * @param int $eventid
+     * @return array
+     * @throws dml_exception
+     */
     public static function get_resources_of_event(int $eventid) {
         global $DB;
-        //$resources = $DB->get_records('bookit_event_resources', ['eventid' => $eventid], '', 'id, resourceid, amount');
         $resources = $DB->get_records_menu('bookit_event_resources', ['eventid' => $eventid], '', 'resourceid, amount');
-        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (get_resources_of_event) '.print_r($resources, true) . "\n", FILE_APPEND);
         return $resources;
     }
 

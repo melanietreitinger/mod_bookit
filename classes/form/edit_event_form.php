@@ -203,9 +203,9 @@ class edit_event_form extends dynamic_form {
 
         // Add the "timecompensation" field.
         $mform->addElement(
-                'advcheckbox', 
+                'advcheckbox',
                 'timecompensation',
-                get_string('event_timecompensation', 'mod_bookit'), 
+                get_string('event_timecompensation', 'mod_bookit'),
                 get_string('yes')
         );
         $mform->disabledIf('timecompensation', 'editevent', 'eq');
@@ -220,12 +220,14 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
 
         // Add the "notes" field.
-        $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"), 'wrap="virtual" rows="5" cols="50"');
+        $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"),
+                'wrap="virtual" rows="5" cols="50"');
         $mform->disabledIf('notes', 'editevent', 'eq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
         // Add the "internalnotes" field.
-        $mform->addElement('textarea', 'internalnotes', get_string("event_internalnotes", "mod_bookit"), 'wrap="virtual" rows="5" cols="50"');
+        $mform->addElement('textarea', 'internalnotes', get_string("event_internalnotes", "mod_bookit"),
+                'wrap="virtual" rows="5" cols="50"');
         $mform->disabledIf('internalnotes', 'editevent', 'eq');
         $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
 
@@ -247,6 +249,12 @@ class edit_event_form extends dynamic_form {
         $mform->setType('supportpersons', PARAM_TEXT);
         $mform->addHelpButton('supportpersons', 'event_supportperson', 'mod_bookit');
 
+        // Add the "bookingstatus" field.
+        $mform->addElement('select', 'bookingstatus', get_string('event_bookingstatus', 'mod_bookit'),
+                explode(',', get_string('event_bookingstatus_list', 'mod_bookit')));
+        $mform->disabledIf('bookingstatus', 'editevent', 'eq');
+        $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
+
         // Add the additional resources.
         foreach ($catresourceslist as $category => $c) {
             if ($category === 'Rooms') {
@@ -259,12 +267,12 @@ class edit_event_form extends dynamic_form {
                 $groupelements = [];
                 $groupelements[] =
                         $mform->createElement(
-                                'advcheckbox', 
+                                'advcheckbox',
                                 'checkbox_' . $rid,
                                 '',
                                 $v['name'],
                                 ['group' => 1],
-                                [0, !0] // "array of values that will be associated with the checked/unchecked state of the checkbox"
+                                [0, !0] // ..."array of values associated with the checked/unchecked state of the checkbox".
                         );
                 $mform->disabledIf('checkbox_' . $rid, 'editevent', 'eq');
 
@@ -311,16 +319,12 @@ class edit_event_form extends dynamic_form {
         $id = $this->optional_param('id', null, PARAM_INT);
         $context = $this->get_context_for_dynamic_submission();
         $formdata = $this->get_data();
-        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (process_dynamic_submission) '.print_r($formdata, true) . "\n", FILE_APPEND);
 
         $mappings = [];
         foreach (resource_manager::get_resources() as $category => $catresource) {
             // Rooms.
             foreach ($catresource['resources'] as $id => $v) {
                 if ('Rooms' == $category) {
-                    file_put_contents('/tmp/event.log',
-                            date("Y-m-d H:i:s") . ': (Room) ' . serialize($formdata->room) . ' / ' . serialize($v) . "\n",
-                            FILE_APPEND);
                     if ($formdata->room == $id) {
                         $mappings[] = (object) [
                                 'resourceid' => $formdata->room,
@@ -331,8 +335,6 @@ class edit_event_form extends dynamic_form {
                 } else {
                     // Other Resources.
                     $checkboxname = 'checkbox_' . $id;
-                    file_put_contents('/tmp/event.log', date("Y-m-d H:i:s") . ': (get_categories) ' . $checkboxname . ' / ' .
-                            print_r($formdata->$checkboxname, true) . "\n", FILE_APPEND);
                     if ($formdata->$checkboxname ?? false) {
                         $mappings[] = (object) [
                                 'resourceid' => $id,
@@ -342,10 +344,8 @@ class edit_event_form extends dynamic_form {
                 }
             }
         }
-        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (mappings) '.print_r($mappings, true) . "\n", FILE_APPEND);
         $formdata->resources = $mappings;
 
-        $formdata->status = bookit_event::STATUS_OPEN;
         $event = bookit_event::from_record($formdata);
         $event->save();
 

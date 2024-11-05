@@ -34,12 +34,6 @@ use dml_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_event {
-    /** const STATUS_OPEN */
-    const STATUS_OPEN = 1;
-    /** const STATUS_ACCEPTED */
-    const STATUS_ACCEPTED = 2;
-    /** const STATUS_REJECTED */
-    const STATUS_REJECTED = 3;
 
     /**
      * Create a new instance of this class.
@@ -184,9 +178,6 @@ class bookit_event {
             $this->timecreated = time();
         }
         $this->timemodified = time();
-
-        // Set initial booking status.
-        $this->bookingstatus = self::STATUS_OPEN;
 
         $data = clone $this;
         $mappings = $data->resources;

@@ -36,6 +36,12 @@ use dml_exception;
  */
 class event_manager {
 
+    /**
+     * Get event from id.
+     * @param int $id
+     * @return false|mixed|\stdClass
+     * @throws dml_exception
+     */
     public static function get_event(int $id) {
         global $DB;
         $event = $DB->get_record('bookit_event', ['id' => $id]);
@@ -43,15 +49,13 @@ class event_manager {
         foreach ($eventresources as $rid => $amount) {
             if ($rid <= 5) {
                 $event->room = $rid;
-            }
-            else {
+            } else {
                 $r = 'resource_'.$rid;
                 $c = 'checkbox_'.$rid;
                 $event->$r = $amount;
                 $event->$c = 1;
             }
         }
-        file_put_contents('/tmp/event.log', date("Y-m-d H:i:s"). ': (get_event) '.print_r($event, true) . "\n", FILE_APPEND);
         return $event;
     }
     /**
