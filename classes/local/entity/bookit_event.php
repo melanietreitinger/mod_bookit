@@ -98,8 +98,8 @@ class bookit_event {
         public ?string $supportpersons,
         /** @var array resources */
         public array $resources,
-        /** @var ?int refcourseid */
-        public ?int $refcourseid,
+        /** @var mixed refcourseid */
+        public mixed $refcourseid,
         /** @var ?int usermodified */
         public ?int $usermodified,
         /** @var ?int timecreated */
@@ -138,6 +138,7 @@ class bookit_event {
      */
     public static function from_record(array|object $record): self {
         $record = (object) $record;
+
         return new self(
                 $record->id ?? null,
                 $record->name,
@@ -155,9 +156,9 @@ class bookit_event {
                 $record->coursetemplate ?? 0,
                 $record->notes ?? null,
                 $record->internalnotes ?? null,
-                implode(',', $record->supportpersons),
+                $record->supportpersons,
                 $record->resources,
-                $record->refcourseid ?? null,
+                $record->refcourseid ?? 0,
                 $record->usermodified ?? null,
                 $record->timecreated ?? null,
                 $record->timemodified ?? null,
@@ -178,6 +179,10 @@ class bookit_event {
             $this->timecreated = time();
         }
         $this->timemodified = time();
+
+        if (!isset($this->bookingstatus)) {
+            $this->bookingstatus = 0;
+        }
 
         $data = clone $this;
         $mappings = $data->resources;

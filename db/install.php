@@ -81,7 +81,7 @@ function xmldb_bookit_install() {
                 $enddate,
                 90,
                 rand(20, 250),
-                $tc,
+                1,
                 $tc.' Zeitverlängerungen',
                 rand(0, 2),
                 2,

@@ -34,6 +34,8 @@ $string['bookit:addresource'] = 'Add a resource';
 // ...@TODO: translate.
 $string['bookit:editevent'] = 'Edit an event';
 // ...@TODO: translate.
+$string['bookit:editinternal'] = 'Edit an internal field';
+// ...@TODO: translate.
 $string['bookit:editresource'] = 'Edit a resource';
 $string['bookit:view'] = 'BookIt Instanz anzeigen';
 // ...@TODO: translate.
@@ -83,6 +85,8 @@ $string['event_supportperson_help'] = 'Support persons assigned to this event.';
 $string['event_timecompensation'] = 'Time compensation';
 // ...@TODO: translate.
 $string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
+// ...@TODO: translate.
+$string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';

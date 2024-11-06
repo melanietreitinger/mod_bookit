@@ -67,6 +67,14 @@ $capabilities = [
                 'archetypes' => [
                 ],
         ],
+        // Edit an internal field.
+        'mod/bookit:editinternal' => [
+                'captype' => 'write',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+
+        ],
         // Add a new resource.
         'mod/bookit:addresource' => [
                 'captype' => 'write',
