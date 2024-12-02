@@ -68,6 +68,6 @@ echo $OUTPUT->header();
 $eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
 
 echo '<div id="ec"></div>';
-$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $moduleinstance->id, $eventsource]);
+$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $moduleinstance->id, $eventsource, current_language()]);
 
 echo $OUTPUT->footer();

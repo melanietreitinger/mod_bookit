@@ -19,12 +19,18 @@ const theGlobalProperty = (globalPropertyName) => {
  * @param {int} cmid
  * @param {string} moduleinstanceid
  * @param {string} eventsource
+ * @param {string} lang
  * @returns {Promise<void>}
  */
-export async function init(cmid, moduleinstanceid, eventsource) {
+export async function init(cmid, moduleinstanceid, eventsource, lang) {
     Prefetch.prefetchString('mod_bookit', 'addbooking');
     await theGlobalProperty('EventCalendar');
     const str_request_booking = await getString('addbooking', 'mod_bookit');
+    const str_today = await getString('today');
+    const str_month = await getString('month');
+    const str_week = await getString('week');
+    const str_day = await getString('day', 'calendar');
+    const str_list = await getString('upcomingevents', 'calendar');
 
     let viewType = 'timeGridWeek';
     if (window.screen.width <= 1000) {
@@ -34,8 +40,17 @@ export async function init(cmid, moduleinstanceid, eventsource) {
     var calendar;
 
     calendar = new window.EventCalendar(document.getElementById('ec'), {
+        locale: lang,
         view: viewType,
         firstDay: 1,
+        buttonText: function (text) {
+            text.today = str_today;
+            text.dayGridMonth = str_month;
+            text.timeGridWeek = str_week;
+            text.timeGridDay = str_day;
+            text.listWeek = str_list;
+            return text;
+        },
         customButtons: {
             addButton: {
                 text: str_request_booking,
@@ -94,7 +109,7 @@ export async function init(cmid, moduleinstanceid, eventsource) {
         headerToolbar: {
             start: 'prev,next today, addButton',
             center: 'title',
-            end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek resourceTimeGridWeek,resourceTimelineWeek'
+            end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
         resources: [],
         eventSources: [
