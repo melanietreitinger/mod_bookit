@@ -118,6 +118,7 @@ export async function init(cmid, moduleinstanceid, eventsource) {
         dayMaxEvents: true,
         nowIndicator: true,
         selectable: true,
-        eventStartEditable: false
+        eventStartEditable: false,
+        eventDurationEditable: false,
     });
 }
