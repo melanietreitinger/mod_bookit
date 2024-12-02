@@ -65,7 +65,7 @@ class edit_event_form extends dynamic_form {
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
-        $mform->addElement('static', 'checkid', serialize($mform->_customdata));
+        //$mform->addElement('static', 'checkid', serialize($mform->_customdata));
 
         $mform->addElement('hidden', 'editevent', 1);
         $mform->setType('editevent', PARAM_BOOL);
