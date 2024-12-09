@@ -52,25 +52,28 @@ class edit_event_form extends dynamic_form {
         $mform =& $this->_form;
 
         $catresourceslist = resource_manager::get_resources();
+        // @TODO: remove debug output field.
         //$mform->addElement('static', 'resources', "<pre>".print_r($catresourceslist, true)."</pre>", true);
 
         // Get capabilities.
         $context = $this->get_context_for_dynamic_submission();
-        $canedit = has_capability('mod/bookit:editevent', $context);
-        $canviewinternal = has_capability('mod/bookit:editinternal', $context);
+        $caneditevent = has_capability('mod/bookit:editevent', $context);
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
 
-        // Set hidden fields.
+        // Set hidden field course module id.
         $mform->addElement('hidden', 'cmid');
         $mform->setType('cmid', PARAM_INT);
 
+        // Set hidden field event id.
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
-        //$mform->addElement('static', 'checkid', serialize($mform->_customdata));
 
-        $mform->addElement('hidden', 'editevent', 1);
+        // Set hidden field editevent capability.
+        $mform->addElement('hidden', 'editevent', $caneditevent);
         $mform->setType('editevent', PARAM_BOOL);
 
-        $mform->addElement('hidden', 'editinternal', $canviewinternal);
+        // Set hidden field editinternal capability.
+        $mform->addElement('hidden', 'editinternal', $caneditinternal);
         $mform->setType('editinternal', PARAM_BOOL);
 
         // Add the standard "name" field.
@@ -223,7 +226,7 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
         // Internal fields.
-        if ($canviewinternal) {
+        if ($caneditinternal) {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
         }
@@ -239,7 +242,7 @@ class edit_event_form extends dynamic_form {
         $mform->hideIf('refcourseid', 'editinternal', 'neq');
         $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
 
-        if ($canviewinternal) {
+        if ($caneditinternal) {
             // Add the "supportpersons" field.
             $supportpersons = [];
             // ...@TODO: Find better query to select users!

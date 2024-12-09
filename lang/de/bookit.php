@@ -40,6 +40,10 @@ $string['bookit:editresource'] = 'Edit a resource';
 $string['bookit:view'] = 'BookIt Instanz anzeigen';
 // ...@TODO: translate.
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
+// ...@TODO: translate.
+$string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
+// ...@TODO: translate.
+$string['bookit:viewalldetailsofassignedevent'] = 'View all details of assigned event';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['edit_event'] = "Termin bearbeiten";
 // ...@TODO: translate.
@@ -70,6 +74,7 @@ $string['event_personincharge_help'] = 'Tragen Sie die verantwortliche Person ei
 $string['event_refcourseid'] = 'Exam course';
 // ...@TODO: translate.
 $string['event_refcourseid_help'] = 'Exam course associated with this exam';
+$string['event_reserved'] = 'Gebucht';
 $string['event_resources'] = 'Ressourcen';
 $string['event_room'] = 'Raum';
 $string['event_room_help'] = 'Wählen Sie einen Raum für der Termin.';
