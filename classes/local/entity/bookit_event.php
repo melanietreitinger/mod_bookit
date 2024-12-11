@@ -48,15 +48,15 @@ class bookit_event {
      * @param int|null $participantsamount
      * @param int|null $timecompensation
      * @param string|null $compensationfordisadvantages
-     * @param ?int $bookingstatus
+     * @param int|null $bookingstatus
      * @param int|null $personinchargeid
-     * @param ?string $otherexaminers
+     * @param string|null $otherexaminers
      * @param int|null $coursetemplate
      * @param string|null $notes
      * @param string|null $internalnotes
-     * @param ?string $supportpersons
+     * @param string|null $supportpersons
      * @param array $resources
-     * @param int|null $refcourseid
+     * @param mixed $refcourseid
      * @param int|null $usermodified
      * @param int|null $timecreated
      * @param int|null $timemodified

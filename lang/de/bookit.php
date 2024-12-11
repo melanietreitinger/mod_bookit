@@ -42,8 +42,6 @@ $string['bookit:view'] = 'BookIt Instanz anzeigen';
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 // ...@TODO: translate.
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
-// ...@TODO: translate.
-$string['bookit:viewalldetailsofassignedevent'] = 'View all details of assigned event';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['edit_event'] = "Termin bearbeiten";
 // ...@TODO: translate.

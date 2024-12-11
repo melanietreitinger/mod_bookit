@@ -79,7 +79,6 @@ class event_manager {
         $context = context_module::instance($instanceid);
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-        $viewalldetailsofassignedevent = has_capability('mod/bookit:viewalldetailsofassignedevent', $context);
         $reserved = get_string('event_reserved', 'bookit');
 
         $sqlreserved = 'SELECT id, "'.$reserved.'" as name, starttime, endtime FROM {bookit_event} ' .
@@ -90,37 +89,20 @@ class event_manager {
             $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event} ' .
                     'WHERE endtime >= :starttime AND starttime <= :endtime';
             $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
-        }
-
-
-        // ...@TODO: combine viewalldetailsofownevent and viewalldetailsofassignedevent!!!
-        elseif ($viewalldetailsofassignedevent) {
-            // Examiners: can view assigned events in detail.
-            $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
+        } else if ($viewalldetailsofownevent) {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
-            $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event} ' .
-                    'WHERE endtime >= :starttime1 AND starttime <= :endtime1 
-                     AND (personinchargeid = :personinchargeid1 OR '.$otherexaminers1.')
-                     UNION '.$sqlreserved.' AND personinchargeid != :personinchargeid AND NOT '.$otherexaminers;
-            $params = ['starttime1' => $starttimestamp, 'endtime1' => $endtimestamp,
-                       'personinchargeid1' => $USER->id, 'otherexaminers1' => $USER->id,
-                       'starttime' => $starttimestamp, 'endtime' => $endtimestamp,
-                       'personinchargeid' => $USER->id, 'otherexaminers' => $USER->id
-            ];
-        }
-
-
-        else if ($viewalldetailsofownevent) {
+            $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
             // Every user: can view own events in detail.
-            $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event} ' .
-                    'WHERE endtime >= :starttime1 AND starttime <= :endtime1 AND usermodified = :usermodified1
-                     UNION '.$sqlreserved.' AND usermodified != :usermodified';
-            $params = ['starttime1' => $starttimestamp, 'endtime1' => $endtimestamp, 'usermodified1' => $USER->id,
-                       'starttime' => $starttimestamp, 'endtime' => $endtimestamp, 'usermodified' => $USER->id];
-        }
-
-
-        else {
+            $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event}
+                    WHERE endtime >= :starttime1 AND starttime <= :endtime1
+                    AND (usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
+                    UNION ' . $sqlreserved . '
+                    AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
+            $params = ['starttime1' => $starttimestamp, 'endtime1' => $endtimestamp,
+                       'usermodified1' => $USER->id, 'personinchargeid1' => $USER->id, 'otherexaminers1' => $USER->id,
+                       'starttime' => $starttimestamp, 'endtime' => $endtimestamp,
+                       'usermodified' => $USER->id, 'personinchargeid' => $USER->id, 'otherexaminers' => $USER->id];
+        } else {
             // Every user: can view no details.
             $sql = $sqlreserved;
             $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];

@@ -53,15 +53,8 @@ $capabilities = [
                 'archetypes' => [
                 ],
         ],
-    // View all details of own event.
+        // View all details of own event.
         'mod/bookit:viewalldetailsofownevent' => [
-                'captype' => 'view',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
-        ],
-    // View all details of assigned event.
-        'mod/bookit:viewalldetailsofassignedevent' => [
                 'captype' => 'view',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [

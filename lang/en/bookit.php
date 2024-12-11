@@ -35,7 +35,6 @@ $string['bookit:editresource'] = 'Edit a resource';
 $string['bookit:view'] = 'View BookIt instance';
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
-$string['bookit:viewalldetailsofassignedevent'] = 'View all details of assigned event';
 $string['bookitfieldset'] = 'PLACEHOLDER';
 $string['edit_event'] = "Edit event";
 $string['event_bookingstatus'] = 'Booking status';

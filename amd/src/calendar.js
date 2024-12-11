@@ -99,23 +99,27 @@ export async function init(cmid, moduleinstanceid, eventsource, lang) {
         },
         eventClick: function (info) {
             let id = info.event.id;
+            let title = info.event.title;
 
             console.log(info);
             console.log("cmid: "+cmid);
             console.log("id: "+id);
+            console.log("title: "+title);
 
-            const modalForm = new ModalForm({
-                formClass: "mod_bookit\\form\\edit_event_form",
-                args: {
-                    cmid: cmid,
-                    id: id,
-                },
-                modalConfig: {title: getString('edit_event', 'mod_bookit')},
-            });
-            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-                calendar.refetchEvents();
-            });
-            modalForm.show();
+            if ("reserved" != title.toLowerCase()) {
+                const modalForm = new ModalForm({
+                    formClass: "mod_bookit\\form\\edit_event_form",
+                    args: {
+                        cmid: cmid,
+                        id: id,
+                    },
+                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                });
+                modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                    calendar.refetchEvents();
+                });
+                modalForm.show();
+            }
         },
         headerToolbar: {
             start: 'prev,next today, addButton',

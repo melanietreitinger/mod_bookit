@@ -24,6 +24,7 @@
 
 namespace mod_bookit\form;
 
+use context_course;
 use core\context;
 use core\context\module;
 use core\exception\moodle_exception;
@@ -52,12 +53,17 @@ class edit_event_form extends dynamic_form {
         $mform =& $this->_form;
 
         $catresourceslist = resource_manager::get_resources();
-        // @TODO: remove debug output field.
-        //$mform->addElement('static', 'resources', "<pre>".print_r($catresourceslist, true)."</pre>", true);
+        // ...@TODO: remove debug output field.
+        // $mform->addElement('static', 'resources', "<pre>".print_r($this->_ajaxformdata['cmid'], true)."</pre>");
 
-        // Get capabilities.
+        $id = !$this->_ajaxformdata['id'];
+        $cmid = $this->_ajaxformdata['cmid'] ?? false;
+        $course = get_course_and_cm_from_cmid($cmid);
+
+        // Get context and capabilities.
         $context = $this->get_context_for_dynamic_submission();
-        $caneditevent = has_capability('mod/bookit:editevent', $context);
+        $contextcourse = context_course::instance($course[0]->id);
+        $caneditevent = (has_capability('mod/bookit:editevent', $context) || $id);
         $caneditinternal = has_capability('mod/bookit:editinternal', $context);
 
         // Set hidden field course module id.
@@ -123,7 +129,7 @@ class edit_event_form extends dynamic_form {
         // Add the "bookingtimes" fields.
         // ...@TODO: make stopyear an admin setting issue#3!
         $startarray = ['startyear' => date("Y"), 'stopyear' => date("Y") + ($config->eventmaxyears ?? 1),
-                'timezone' => 99, 'step' => 5, 'optional' => false,];
+                'timezone' => 99, 'step' => 5, 'optional' => false];
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $startarray);
         $mform->disabledIf('starttime', 'editevent', 'neq');
@@ -132,7 +138,7 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
         $stoparray = ['startyear' => date("Y"), 'stopyear' => date("Y") + 1,
-                'timezone' => 99, 'step' => 5, 'optional' => false,];
+                'timezone' => 99, 'step' => 5, 'optional' => false];
         // ...@TODO: make default duration of event time an admin setting issue#3!
         $defaultduration = ($config->eventdefaultduration ?? 60);
         $stopdate = ($startdate ? strtotime($startdate ?? '') : time());
@@ -161,10 +167,10 @@ class edit_event_form extends dynamic_form {
         $userselectoroptions = [
                 'ajax' => 'enrol_manual/form-potential-user-selector',
                 'multiple' => false,
-                'courseid' => 1,
+                'courseid' => $course[0]->id,
                 'enrolid' => 0,
                 'perpage' => $CFG->maxusersperpage,
-                'userfields' => implode(',', \core_user\fields::get_identity_fields($context, true)),
+                'userfields' => implode(',', \core_user\fields::get_identity_fields($contextcourse, true)),
         ];
         $examinerlist = [];
         // ...@TODO: Find better query to select users!
@@ -238,7 +244,6 @@ class edit_event_form extends dynamic_form {
                 ['multiple' => false, 'showhidden' => true, 'exclude' => '']);
         $mform->setType('refcourseid', PARAM_INT);
         $mform->setDefault('refcourseid', 0);
-        //$mform->disabledIf('refcourseid', 'editevent', 'neq');
         $mform->hideIf('refcourseid', 'editinternal', 'neq');
         $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
 
@@ -257,8 +262,6 @@ class edit_event_form extends dynamic_form {
             }
             $mform->addElement('autocomplete', 'supportpersons',
                     get_string('event_supportperson', 'mod_bookit'), $supportpersons, $userselectoroptions);
-            //$mform->disabledIf('supportpersons', 'editevent', 'neq');
-            //$mform->hideIf('supportpersons', 'editinternal', 'neq');
             $mform->setType('supportpersons', PARAM_TEXT);
             $mform->addHelpButton('supportpersons', 'event_supportperson', 'mod_bookit');
         } else {
@@ -268,14 +271,12 @@ class edit_event_form extends dynamic_form {
         // Add the "bookingstatus" field.
         $mform->addElement('select', 'bookingstatus', get_string('event_bookingstatus', 'mod_bookit'),
                 explode(',', get_string('event_bookingstatus_list', 'mod_bookit')));
-        //$mform->disabledIf('bookingstatus', 'editevent', 'neq');
         $mform->hideIf('bookingstatus', 'editinternal', 'neq');
         $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
 
         // Add the "internalnotes" field.
         $mform->addElement('textarea', 'internalnotes', get_string("event_internalnotes", "mod_bookit"),
                 'wrap="virtual" rows="5" cols="50"');
-        //$mform->disabledIf('internalnotes', 'editevent', 'neq');
         $mform->hideIf('internalnotes', 'editinternal', 'neq');
         $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
 
@@ -297,7 +298,7 @@ class edit_event_form extends dynamic_form {
                                 '',
                                 $v['name'],
                                 ['group' => 1],
-                                [0, !0] // ..."array of values associated with the checked/unchecked state of the checkbox".
+                                [0, !0] // Array of values associated with the checked/unchecked state of the checkbox.
                         );
                 $mform->disabledIf('checkbox_' . $rid, 'editevent', 'neq');
 
@@ -317,6 +318,12 @@ class edit_event_form extends dynamic_form {
         }
     }
 
+    /**
+     * This method is called after definition(), data submission and set_data().
+     * All form setup that is dependent on form values should go in here.
+     *
+     * @return void
+     */
     public function definition_after_data() {
 
     }
@@ -360,7 +367,6 @@ class edit_event_form extends dynamic_form {
                                 'amount' => 1,
                         ];
                     }
-
                 } else {
                     // Other Resources.
                     $checkboxname = 'checkbox_' . $id;
@@ -393,7 +399,6 @@ class edit_event_form extends dynamic_form {
      * Load in existing data as form defaults
      */
     public function set_data_for_dynamic_submission(): void {
-        global $DB;
         $event = new StdClass;
         $context = $this->get_context_for_dynamic_submission();
         $id = $this->optional_param('id', null, PARAM_INT);
