@@ -26,12 +26,12 @@
  * Return if the plugin supports $feature.
  *
  * @param string $feature Constant representing the feature.
- * @return true | null True if the feature is supported, null otherwise.
+ * @return bool|string|null True if the feature is supported, null otherwise.
  */
-function bookit_supports(string $feature): ?bool {
+function bookit_supports(string $feature): bool|string|null {
     return match ($feature) {
         FEATURE_MOD_INTRO, FEATURE_BACKUP_MOODLE2 => true,
-        FEATURE_MOD_PURPOSE => MOD_PURPOSE_ADMINISTRATION,
+        // Note: do not define FEATURE_MOD_PURPOSE or icon background will be colored, @see https://moodledev.io/docs/4.1/devupdate#activity-icons.
         default => null,
     };
 }
