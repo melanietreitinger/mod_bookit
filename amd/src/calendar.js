@@ -1,6 +1,6 @@
-import {get_string as getString} from 'core/str';
+import {getString} from 'core/str';
 import ModalForm from 'core_form/modalform';
-import Prefetch from 'core/prefetch';
+import {prefetchStrings} from 'core/prefetch';
 
 const theGlobalProperty = (globalPropertyName) => {
     return new Promise((resolve) => {
@@ -26,15 +26,22 @@ export async function init(cmid, moduleinstanceid, eventsource, lang) {
     await theGlobalProperty('EventCalendar');
 
     // String variables.
-    Prefetch.prefetchString('mod_bookit', ['addbooking']);
-    Prefetch.prefetchString('core', ['today', 'month', 'week']);
-    Prefetch.prefetchString('calendar', ['day', 'upcomingevents']);
+    prefetchStrings('mod_bookit', ['addbooking']);
+    prefetchStrings('core', ['today', 'month', 'week']);
+    prefetchStrings('calendar', ['day', 'upcomingevents']);
     const str_request_booking   = await getString('addbooking', 'mod_bookit');
     const str_today             = await getString('today');
     const str_month             = await getString('month');
     const str_week              = await getString('week');
     const str_day               = await getString('day', 'calendar');
     const str_list              = await getString('upcomingevents', 'calendar');
+    /*const str_request_booking = 'XXX';
+    const str_today             = 'XXX';
+    const str_month             = 'XXX';
+    const str_week              = 'XXX';
+    const str_day               = 'XXX';
+    const str_list              = 'XXX';*/
+
 
     let viewType = 'timeGridWeek';
     if (window.screen.width <= 1000) {
