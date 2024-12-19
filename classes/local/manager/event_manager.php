@@ -75,13 +75,13 @@ class event_manager {
         // ...@TODO use instance id.
         $starttimestamp = DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
         $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
+        $reserved = get_string('event_reserved', 'bookit');
 
         $context = context_module::instance($instanceid);
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-        $reserved = get_string('event_reserved', 'bookit');
 
-        $sqlreserved = 'SELECT id, "'.$reserved.'" as name, starttime, endtime FROM {bookit_event} ' .
+        $sqlreserved = 'SELECT id, NULL as name, starttime, endtime FROM {bookit_event} ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
 
         // Service-Team: can view all events in detail.
@@ -113,7 +113,7 @@ class event_manager {
         foreach ($records as $record) {
             $events[] = [
                     'id' => $record->id,
-                    'title' => $record->name,
+                    'title' => $record->name ?? $reserved,
                     'start' => date('Y-m-d H:i', $record->starttime),
                     'end' => date('Y-m-d H:i', $record->endtime),
             ];
