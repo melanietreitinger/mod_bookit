@@ -19,11 +19,18 @@ const theGlobalProperty = (globalPropertyName) => {
  * @param {int} cmid
  * @param {string} moduleinstanceid
  * @param {string} eventsource
+ * @param {array} capabilities
  * @param {string} lang
  * @returns {Promise<void>}
  */
-export async function init(cmid, moduleinstanceid, eventsource, lang) {
+export async function init(cmid, moduleinstanceid, eventsource, capabilities, lang) {
     await theGlobalProperty('EventCalendar');
+
+    let toolbarbuttons = 'prev,next today';
+    if (capabilities.addevent) {
+        toolbarbuttons = 'prev,next today, addButton';
+        console.log(capabilities);
+    }
 
     // String variables.
     prefetchStrings('mod_bookit', ['addbooking']);
@@ -88,21 +95,21 @@ export async function init(cmid, moduleinstanceid, eventsource, lang) {
             }
         },
         dateClick: function(info) {
-            console.log(info.date);
-            console.log(info.dateStr);
-            let startdate = info.dateStr;
-            const modalForm = new ModalForm({
-                formClass: "mod_bookit\\form\\edit_event_form",
-                args: {
-                    cmid: cmid,
-                    startdate: startdate,
-                },
-                modalConfig: {title: getString('edit_event', 'mod_bookit')},
-            });
-            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-                calendar.refetchEvents();
-            });
-            modalForm.show();
+            if (capabilities.addevent) {
+                let startdate = info.dateStr;
+                const modalForm = new ModalForm({
+                    formClass: "mod_bookit\\form\\edit_event_form",
+                    args: {
+                        cmid: cmid,
+                        startdate: startdate,
+                    },
+                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                });
+                modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                    calendar.refetchEvents();
+                });
+                modalForm.show();
+            }
         },
         eventClick: function (info) {
             let id = info.event.id;
@@ -129,7 +136,7 @@ export async function init(cmid, moduleinstanceid, eventsource, lang) {
             }
         },
         headerToolbar: {
-            start: 'prev,next today, addButton',
+            start: toolbarbuttons,
             center: 'title',
             end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
