@@ -95,8 +95,10 @@ export async function init(cmid, moduleinstanceid, eventsource, capabilities, la
             }
         },
         dateClick: function(info) {
-            if (capabilities.addevent) {
-                let startdate = info.dateStr;
+            let d = new Date();
+            let dateoff = new Date(d.setMinutes(d.getMinutes() - d.getTimezoneOffset()));
+            let startdate = info.dateStr;
+            if (capabilities.addevent && startdate > dateoff.toISOString()) {
                 const modalForm = new ModalForm({
                     formClass: "mod_bookit\\form\\edit_event_form",
                     args: {
