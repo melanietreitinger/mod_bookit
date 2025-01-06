@@ -71,7 +71,7 @@ class edit_event_form extends dynamic_form {
         $contextcourse = context_course::instance($course[0]->id);
 
         // ...@TODO: remove debug output field.
-        // $mform->addElement('static', 'dummy', "<pre>".print_r($cmid, true)."</pre>");
+        // $mform->addElement('static', 'dummy', "<pre>".print_r(usertimezone(), true)."</pre>");
 
         // Set hidden field course module id.
         $mform->addElement('hidden', 'cmid');
@@ -128,22 +128,24 @@ class edit_event_form extends dynamic_form {
         // Add the "bookingtimes" fields.
         // ...@TODO: make stopyear an admin setting issue#3!
         $startarray = ['startyear' => date("Y"), 'stopyear' => date("Y") + ($config->eventmaxyears ?? 1),
-                'timezone' => 99, 'step' => 5, 'optional' => false];
+                'timezone' => usertimezone(), 'step' => 5, 'optional' => false];
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
+        $date = new \DateTimeImmutable('+ 1 hour');
+        $starttime = ($startdate ? strtotime($startdate) : $date->getTimestamp());
+
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $startarray);
         $mform->disabledIf('starttime', 'editevent', 'neq');
-        $mform->setDefault('starttime', (strtotime($startdate ?? '') ?? time()));
+        $mform->setDefault('starttime', $starttime);
         $mform->addRule('starttime', null, 'required', null, 'client');
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
         $stoparray = ['startyear' => date("Y"), 'stopyear' => date("Y") + 1,
-                'timezone' => 99, 'step' => 5, 'optional' => false];
+                'timezone' => usertimezone(), 'step' => 5, 'optional' => false];
         // ...@TODO: make default duration of event time an admin setting issue#3!
         $defaultduration = ($config->eventdefaultduration ?? 60);
-        $stopdate = ($startdate ? strtotime($startdate ?? '') : time());
         $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'), $stoparray);
         $mform->disabledIf('endtime', 'editevent', 'neq');
-        $mform->setDefault('endtime', strtotime(' + ' . $defaultduration . ' minutes', $stopdate));
+        $mform->setDefault('endtime', strtotime(' + ' . $defaultduration . ' minutes', $starttime));
         $mform->addRule('endtime', null, 'required', null, 'client');
         // ...@TODO: Restrict event duration according to $config->eventmaxduration!
         $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
