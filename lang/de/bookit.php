@@ -89,6 +89,8 @@ $string['event_timecompensation'] = 'Time compensation';
 // ...@TODO: translate.
 $string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
 // ...@TODO: translate.
+$string['event_usermodified'] = 'Created by user';
+// ...@TODO: translate.
 $string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';

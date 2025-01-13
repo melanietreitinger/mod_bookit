@@ -81,6 +81,12 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
+        // Show the user who created the entry.
+        $mform->addElement('text', 'usermodified', get_string('event_usermodified', 'mod_bookit'));
+        $mform->setType('usermodified', PARAM_TEXT);
+        $mform->disabledIf('usermodified', 'id', 'neq', 0);
+        $mform->hideIf('usermodified', 'id', 'eq', '');
+
         // Add the standard "name" field.
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), ['size' => '64']);
         $mform->setType('name', PARAM_TEXT);
@@ -323,15 +329,29 @@ class edit_event_form extends dynamic_form {
      * @return void
      */
     public function definition_after_data() {
+        global $DB, $USER;
         $mform =& $this->_form;
 
+        $context = $this->get_context_for_dynamic_submission();
         $id = $this->_form->getElementValue('id');
         $bookingstatus = $this->_form->getElementValue('bookingstatus');
+        $usermodified = $this->_form->getElementValue('usermodified');
+        $examiner = $this->_form->getElementValue('personinchargeid');
+        $otherexaminers = $this->_form->getElementValue('otherexaminers') ?? [];
+        array_push($otherexaminers, $usermodified, $examiner);
+
+        // Show the user who created the entry.
+        $user = $DB->get_record('user', ['id' => $usermodified]);
+        $mform->getElement('usermodified')->setValue(
+                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // @TODO: ???
+        );
 
         // Get context and capabilities.
         $context = $this->get_context_for_dynamic_submission();
         // Event can be edited if capability is set, a new event is created or event is unprocessed.
-        $caneditevent = (has_capability('mod/bookit:editevent', $context) || !$id || self::BOOKINGSTATUS_NEW == (int) $bookingstatus[0]);
+        $caneditevent = (has_capability('mod/bookit:editevent', $context) || !$id ||
+                (self::BOOKINGSTATUS_NEW == (int) $bookingstatus[0] && in_array($USER->id, $otherexaminers))
+        );
         $caneditinternal = has_capability('mod/bookit:editinternal', $context);
 
         // Set hidden field editevent capability.
