@@ -25,11 +25,68 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->libdir . '/moodlelib.php');
+require_once($CFG->dirroot . '/lib/formslib.php');
+
+
+global $ADMIN, $CFG;
+
 if ($hassiteconfig) {
     $settings = new admin_settingpage('mod_bookit_settings', new lang_string('pluginname', 'mod_bookit'));
 
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ADMIN->fulltree) {
-        // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
+        // Zeitslot-Einstellungen
+        $settings->add(new admin_setting_heading(
+            'mod_bookit/timeslots',
+            new lang_string('timeslots_settings', 'mod_bookit'),
+            new lang_string('timeslots_settings_desc', 'mod_bookit')
+        ));
+
+        // Früheste Startzeit
+        $settings->add(new admin_setting_configtime(
+            'mod_bookit/min_time_hour',
+            'mod_bookit/min_time_minute',
+            new lang_string('min_time', 'mod_bookit'),
+            new lang_string('min_time_desc', 'mod_bookit'),
+            ['h' => 7, 'm' => 0]
+        ));
+
+        // Späteste Endzeit
+        $settings->add(new admin_setting_configtime(
+            'mod_bookit/max_time_hour',
+            'mod_bookit/max_time_minute',
+            new lang_string('max_time', 'mod_bookit'),
+            new lang_string('max_time_desc', 'mod_bookit'),
+            ['h' => 20, 'm' => 0]
+        ));
+
+        // Standard-Zeitslotdauer in Minuten
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/default_duration',
+            new lang_string('default_duration', 'mod_bookit'),
+            new lang_string('default_duration_desc', 'mod_bookit'),
+            60,
+            PARAM_INT
+        ));
+
+        // Minimale Zeitslotdauer in Minuten
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/min_duration',
+            new lang_string('min_duration', 'mod_bookit'),
+            new lang_string('min_duration_desc', 'mod_bookit'),
+            30,
+            PARAM_INT
+        ));
+
+        // Maximale Zeitslotdauer in Minuten
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/max_duration',
+            new lang_string('max_duration', 'mod_bookit'),
+            new lang_string('max_duration_desc', 'mod_bookit'),
+            240,
+            PARAM_INT
+        ));
     }
 }

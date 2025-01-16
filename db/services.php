@@ -15,17 +15,24 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * External functions and service definitions.
  *
  * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @category    external
+ * @copyright   2025 Alexander Mikasch, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_bookit';
-$plugin->release = '0.1.0';
-$plugin->version = 2025011602;
-$plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_ALPHA;
+$functions = array_merge($functions ?? [], [
+    'mod_bookit_get_config' => [
+        'classname'     => 'mod_bookit\external\get_config',
+        'methodname'    => 'execute',
+        'description'   => 'Get BookIt module configuration',
+        'type'         => 'read',
+        'ajax'         => true,
+        'loginrequired' => true,
+        'capabilities' => 'mod/bookit:view'
+    ]
+]); 

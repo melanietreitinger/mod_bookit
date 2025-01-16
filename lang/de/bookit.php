@@ -93,3 +93,28 @@ $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
 $string['summer_semester'] = 'Sommersemester';
 $string['winter_semester'] = 'Wintersemester';
+
+// Zeitslot-Einstellungen
+$string['timeslots_settings'] = 'Zeitslot-Einstellungen';
+$string['timeslots_settings_desc'] = 'Konfigurieren Sie hier die Einstellungen für die Zeitslots.';
+$string['min_time'] = 'Früheste Startzeit';
+$string['min_time_desc'] = 'Die früheste Zeit, zu der ein Zeitslot beginnen kann.';
+$string['max_time'] = 'Späteste Endzeit';
+$string['max_time_desc'] = 'Die späteste Zeit, zu der ein Zeitslot enden kann.';
+$string['default_duration'] = 'Standard-Zeitslotdauer';
+$string['default_duration_desc'] = 'Die Standard-Dauer eines Zeitslots in Minuten.';
+$string['min_duration'] = 'Minimale Zeitslotdauer';
+$string['min_duration_desc'] = 'Die minimale Dauer eines Zeitslots in Minuten.';
+$string['max_duration'] = 'Maximale Zeitslotdauer';
+$string['max_duration_desc'] = 'Die maximale Dauer eines Zeitslots in Minuten.';
+
+// Fehlermeldungen
+$string['invalidaction'] = 'Ungültige Aktion';
+
+// Zeitslot-Validierung
+$string['error_duration_too_short'] = 'Die Dauer des Zeitslots muss mindestens {$a} Minuten betragen.';
+$string['error_duration_too_long'] = 'Die Dauer des Zeitslots darf maximal {$a} Minuten betragen.';
+
+// Zeitvalidierung
+$string['error_start_time_too_early'] = 'Die Startzeit darf nicht vor {$a} liegen.';
+$string['error_end_time_too_late'] = 'Die Endzeit darf nicht nach {$a} liegen.';

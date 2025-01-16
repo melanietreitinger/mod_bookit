@@ -86,3 +86,28 @@ $string['select_semester'] = 'Term';
 $string['select_semester_help'] = 'Select term of event.';
 $string['summer_semester'] = 'Summer Term';
 $string['winter_semester'] = 'Winter Term';
+
+// Time slot settings
+$string['timeslots_settings'] = 'Time slot settings';
+$string['timeslots_settings_desc'] = 'Configure the settings for time slots.';
+$string['min_time'] = 'Earliest start time';
+$string['min_time_desc'] = 'The earliest time a time slot can start.';
+$string['max_time'] = 'Latest end time';
+$string['max_time_desc'] = 'The latest time a time slot can end.';
+$string['default_duration'] = 'Default time slot duration';
+$string['default_duration_desc'] = 'The default duration of a time slot in minutes.';
+$string['min_duration'] = 'Minimum time slot duration';
+$string['min_duration_desc'] = 'The minimum duration of a time slot in minutes.';
+$string['max_duration'] = 'Maximum time slot duration';
+$string['max_duration_desc'] = 'The maximum duration of a time slot in minutes.';
+
+// Error messages
+$string['invalidaction'] = 'Invalid action';
+
+// Time slot validation
+$string['error_duration_too_short'] = 'The duration of the time slot must be at least {$a} minutes.';
+$string['error_duration_too_long'] = 'The duration of the time slot must not exceed {$a} minutes.';
+
+// Time validation
+$string['error_start_time_too_early'] = 'The start time must not be before {$a}.';
+$string['error_end_time_too_late'] = 'The end time must not be after {$a}.';

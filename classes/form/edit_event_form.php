@@ -35,14 +35,8 @@ use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
 use moodle_url;
 use stdClass;
+use mod_bookit\local\validator\timeslot_validator;
 
-/**
- * Form for creating and editing an event.
- *
- * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 class edit_event_form extends dynamic_form {
     /**
      * Define the form
@@ -422,5 +416,23 @@ class edit_event_form extends dynamic_form {
                 'cmid' => $this->optional_param('cmid', null, PARAM_INT),
         ];
         return new moodle_url('/mod/bookit/view.php', $params);
+    }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        // Validate start and end time
+        $validation_result = timeslot_validator::validate_time_range($data['starttime'], $data['endtime']);
+        if (!$validation_result['valid']) {
+            $errors['starttime'] = $validation_result['error'];
+        }
+
+        // Validate duration
+        $validation_result = timeslot_validator::validate_duration($data['duration']);
+        if (!$validation_result['valid']) {
+            $errors['duration'] = $validation_result['error'];
+        }
+
+        return $errors;
     }
 }
