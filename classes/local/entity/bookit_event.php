@@ -25,6 +25,9 @@
 namespace mod_bookit\local\entity;
 
 use dml_exception;
+use core_course\external\course_summary_exporter;
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Database class for bookit_events.
@@ -34,6 +37,18 @@ use dml_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_event {
+
+    /** @var int Status für offene Buchungen */
+    public const STATUS_OPEN = 0;
+    
+    /** @var int Status für bestätigte Buchungen */
+    public const STATUS_CONFIRMED = 1;
+    
+    /** @var int Status für abgelehnte Buchungen */
+    public const STATUS_REJECTED = 2;
+    
+    /** @var int Status für stornierte Buchungen */
+    public const STATUS_CANCELLED = 3;
 
     /**
      * Create a new instance of this class.
@@ -118,7 +133,7 @@ class bookit_event {
      */
     public static function from_database(int $id): self {
         global $DB;
-        $record = $DB->get_record("bookit_event", ["id" => $id], '*', MUST_EXIST);
+        $record = $DB->get_record("bookit_event", ["id" => $id], '*', \MUST_EXIST);
 
         $mappings = $DB->get_records('bookit_event_resources', ['eventid' => $record->id]);
         $map = [];

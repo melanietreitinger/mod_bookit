@@ -235,7 +235,24 @@ class edit_event_form extends dynamic_form {
         if ($caneditinternal) {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
+
+            // Add the "bookingstatus" field.
+            $statuslist = get_string('event_bookingstatus_list', 'mod_bookit');
+            $statusoptions = [];
+            $statuses = array_map('trim', explode(',', $statuslist));
+            for ($i = 0; $i < count($statuses); $i++) {
+                $statusoptions[(string)$i] = $statuses[$i];
+            }
+            $mform->addElement('select', 'bookingstatus', get_string('event_bookingstatus', 'mod_bookit'), $statusoptions);
+            $mform->setType('bookingstatus', PARAM_INT);
+            $mform->setDefault('bookingstatus', 0);
+            $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
+        } else {
+            $mform->addElement('hidden', 'bookingstatus');
+            $mform->setType('bookingstatus', PARAM_INT);
+            $mform->setDefault('bookingstatus', 0);
         }
+
         // Add the "refcourseid" field.
         // ...@TODO: make category to select courses an admin option for 'exclude'.
         // ...@TODO: exclude current course.
@@ -268,12 +285,6 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('hidden', 'supportpersons');
             $mform->setType('supportpersons', PARAM_TEXT);
         }
-        // Add the "bookingstatus" field.
-        $mform->addElement('select', 'bookingstatus', get_string('event_bookingstatus', 'mod_bookit'),
-                explode(',', get_string('event_bookingstatus_list', 'mod_bookit')));
-        $mform->hideIf('bookingstatus', 'editinternal', 'neq');
-        $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
-
         // Add the "internalnotes" field.
         $mform->addElement('textarea', 'internalnotes', get_string("event_internalnotes", "mod_bookit"),
                 'wrap="virtual" rows="5" cols="50"');
@@ -312,7 +323,7 @@ class edit_event_form extends dynamic_form {
                 $mform->setType('resource_' . $rid, PARAM_INT);
                 $mform->disabledIf('resource_' . $rid, 'checkbox_' . $rid);
 
-                $mform->addGroup($groupelements, 'resourcegroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
+                $mform->addGroup($groupelements, 'resourcegroup', get_string('all_entries', 'mod_bookit'), ['<br>'],
                         false);
             }
         }

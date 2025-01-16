@@ -27,6 +27,17 @@ namespace mod_bookit\local\manager;
 use context_module;
 use DateTime;
 use dml_exception;
+use function get_string;
+use function has_capability;
+use function optional_param;
+
+defined('MOODLE_INTERNAL') || die();
+global $CFG;
+require_once($CFG->libdir . '/weblib.php');
+
+// Constants for parameter types
+use const PARAM_INT;
+use const PARAM_TEXT;
 
 /**
  * Manager for accessing and fetching events.
@@ -72,7 +83,7 @@ class event_manager {
      */
     public static function get_events_in_timerange(string $starttime, string $endtime, int|null $instanceid): array {
         global $DB, $USER;
-        // ...@TODO use instance id.
+        
         $starttimestamp = DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
         $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
 
@@ -81,23 +92,75 @@ class event_manager {
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
         $reserved = get_string('event_reserved', 'bookit');
 
-        $sqlreserved = 'SELECT id, "'.$reserved.'" as name, starttime, endtime FROM {bookit_event} ' .
-                'WHERE endtime >= :starttime AND starttime <= :endtime';
+        // Get filter parameters from request
+        $roomid = optional_param('roomid', 0, PARAM_INT);
+        $facultyid = optional_param('facultyid', 0, PARAM_INT);
+        $status = optional_param('status', null, PARAM_INT);
+        $search = optional_param('search', '', PARAM_TEXT);
+        $timeslot = optional_param('timeslot', '', PARAM_TEXT);
 
-        // Service-Team: can view all events in detail.
+        // Base WHERE clause
+        $where = 'endtime >= :starttime AND starttime <= :endtime';
+        $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
+
+        // Add filters
+        if ($roomid) {
+            $where .= ' AND id IN (SELECT eventid FROM {bookit_event_resources} WHERE resourceid = :roomid)';
+            $params['roomid'] = $roomid;
+        }
+        if ($facultyid) {
+            $where .= ' AND facultyid = :facultyid';
+            $params['facultyid'] = $facultyid;
+        }
+        if ($status !== null && $status !== '') {
+            $where .= ' AND bookingstatus = :status';
+            $params['status'] = $status;
+        }
+        if ($search) {
+            $where .= ' AND ' . $DB->sql_like('name', ':search', false);
+            $params['search'] = '%' . $DB->sql_like_escape($search) . '%';
+        }
+        if ($timeslot) {
+            // Implement timeslot filter
+            $morning_start = strtotime('07:00');
+            $morning_end = strtotime('12:00');
+            $afternoon_start = strtotime('12:00');
+            $afternoon_end = strtotime('17:00');
+            $evening_start = strtotime('17:00');
+            $evening_end = strtotime('22:00');
+
+            switch($timeslot) {
+                case 'morning':
+                    $where .= ' AND (TIME(FROM_UNIXTIME(starttime)) >= :slot_start AND TIME(FROM_UNIXTIME(starttime)) < :slot_end)';
+                    $params['slot_start'] = date('H:i', $morning_start);
+                    $params['slot_end'] = date('H:i', $morning_end);
+                    break;
+                case 'afternoon':
+                    $where .= ' AND (TIME(FROM_UNIXTIME(starttime)) >= :slot_start AND TIME(FROM_UNIXTIME(starttime)) < :slot_end)';
+                    $params['slot_start'] = date('H:i', $afternoon_start);
+                    $params['slot_end'] = date('H:i', $afternoon_end);
+                    break;
+                case 'evening':
+                    $where .= ' AND (TIME(FROM_UNIXTIME(starttime)) >= :slot_start AND TIME(FROM_UNIXTIME(starttime)) < :slot_end)';
+                    $params['slot_start'] = date('H:i', $evening_start);
+                    $params['slot_end'] = date('H:i', $evening_end);
+                    break;
+            }
+        }
+
+        // Service-Team: can view all events in detail
         if ($viewalldetailsofevent) {
-            $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event} ' .
-                    'WHERE endtime >= :starttime AND starttime <= :endtime';
-            $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
+            $sql = "SELECT id, name, starttime, endtime FROM {bookit_event} WHERE $where";
         } else if ($viewalldetailsofownevent) {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
-            // Every user: can view own events in detail.
-            $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event}
-                    WHERE endtime >= :starttime1 AND starttime <= :endtime1
-                    AND (usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
-                    UNION ' . $sqlreserved . '
-                    AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
+            
+            // Every user: can view own events in detail
+            $sql = "SELECT id, name, starttime, endtime FROM {bookit_event}
+                    WHERE $where AND (usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR $otherexaminers1)
+                    UNION 
+                    SELECT id, '$reserved' as name, starttime, endtime FROM {bookit_event}
+                    WHERE $where AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT $otherexaminers";
             $params = ['starttime1' => $starttimestamp, 'endtime1' => $endtimestamp,
                        'usermodified1' => $USER->id, 'personinchargeid1' => $USER->id, 'otherexaminers1' => $USER->id,
                        'starttime' => $starttimestamp, 'endtime' => $endtimestamp,
@@ -115,7 +178,7 @@ class event_manager {
                     'id' => $record->id,
                     'title' => $record->name,
                     'start' => date('Y-m-d H:i', $record->starttime),
-                    'end' => date('Y-m-d H:i', $record->endtime),
+                    'end' => date('Y-m-d H:i', $record->endtime)
             ];
         }
         return $events;

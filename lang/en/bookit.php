@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Plugin strings are defined here.
@@ -37,8 +37,7 @@ $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLACEHOLDER';
 $string['edit_event'] = "Edit event";
-$string['event_bookingstatus'] = 'Booking status';
-$string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced';
+$string['event_bookingstatus'] = 'Status';
 $string['event_compensationfordisadvantages'] = 'Other compensations of disadvantages';
 $string['event_compensationfordisadvantages_help'] = 'Enter here information on compensation of disadvantages.';
 $string['event_department'] = 'Department';
@@ -76,7 +75,7 @@ $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
 $string['modulenameplural'] = 'BookIt instances';
-$string['please_select_and_enter'] = 'Please select or enter a number';
+$string['all_entries'] = 'All entries';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Amount';
@@ -86,3 +85,35 @@ $string['select_semester'] = 'Term';
 $string['select_semester_help'] = 'Select term of event.';
 $string['summer_semester'] = 'Summer Term';
 $string['winter_semester'] = 'Winter Term';
+
+// Status strings
+$string['status_new'] = 'New';
+$string['status_inprogress'] = 'In Progress';
+$string['status_confirmed'] = 'Confirmed';
+$string['status_cancelled'] = 'Cancelled';
+$string['status_rejected'] = 'Rejected';
+
+// Booking status list
+$string['event_bookingstatus_list'] = 'New, In Progress, Confirmed, Cancelled, Rejected';
+
+// Filter strings
+$string['filter_room'] = 'Room';
+$string['filter_timeslot'] = 'Time slot';
+$string['filter_faculty'] = 'Faculty';
+$string['filter_status'] = 'Status';
+$string['filter_search'] = 'Search';
+$string['filter_search_placeholder'] = 'Enter search term...';
+$string['morning'] = 'Morning (07:00 - 12:00)';
+$string['afternoon'] = 'Afternoon (12:00 - 17:00)';
+$string['evening'] = 'Evening (17:00 - 22:00)';
+
+// Calendar strings
+$string['prev_month'] = 'Previous month';
+$string['next_month'] = 'Next month';
+$string['today'] = 'Today';
+$string['month_view'] = 'Month';
+$string['week_view'] = 'Week';
+$string['day_view'] = 'Day';
+$string['add_event'] = 'New booking';
+$string['delete_event'] = 'Delete booking';
+$string['event_details'] = 'Booking details';

@@ -1,0 +1,53 @@
+{{!
+    Filter UI Template
+}}
+<div class="filter-container mb-3">
+    <div class="row">
+        <!-- Search input -->
+        <div class="col-md-12 mb-2">
+            <div class="form-group">
+                <label for="search-input">{{#str}}filter_search, mod_bookit{{/str}}</label>
+                <input type="text" class="form-control" id="search-input" name="search"
+                       placeholder="{{#str}}filter_search_placeholder, mod_bookit{{/str}}">
+            </div>
+        </div>
+        <!-- Room filter -->
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="room-select">{{#str}}filter_room, mod_bookit{{/str}}</label>
+                <select class="form-control" id="room-select" name="room">
+                    <option value="">{{#str}}all_entries, mod_bookit{{/str}}</option>
+                </select>
+            </div>
+        </div>
+        <!-- Time slot filter -->
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="timeslot-select">{{#str}}filter_timeslot, mod_bookit{{/str}}</label>
+                <select class="form-control" id="timeslot-select" name="timeslot">
+                    <option value="">{{#str}}all_entries, mod_bookit{{/str}}</option>
+                </select>
+            </div>
+        </div>
+        <!-- Faculty filter -->
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="faculty-select">{{#str}}filter_faculty, mod_bookit{{/str}}</label>
+                <select class="form-control" id="faculty-select" name="faculty">
+                    <option value="">{{#str}}all_entries, mod_bookit{{/str}}</option>
+                </select>
+            </div>
+        </div>
+        <!-- Status filter (only visible for admin/service team) -->
+        {{#hasAdminAccess}}
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="status-select">{{#str}}filter_status, mod_bookit{{/str}}</label>
+                <select class="form-control" id="status-select" name="status">
+                    <option value="">{{#str}}all_entries, mod_bookit{{/str}}</option>
+                </select>
+            </div>
+        </div>
+        {{/hasAdminAccess}}
+    </div>
+</div> 

@@ -23,9 +23,12 @@
  */
 
 use mod_bookit\event\course_module_viewed;
+use core\output\notification;
 
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->libdir . '/accesslib.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
@@ -47,6 +50,10 @@ require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
 
+// Berechtigungsprüfung für Admin und Service-Team
+$isAdmin = is_siteadmin();
+$isServiceTeam = has_capability('mod/bookit:manageevents', $modulecontext);
+
 // Log view event of calendar.
 $event = course_module_viewed::create([
         'objectid' => $moduleinstance->id,
@@ -67,9 +74,21 @@ $PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
+// Filter-Container hinzufügen
+echo '<div id="bookit-filters"></div>';
+
+// Kalender-Container
+echo '<div id="ec"></div>';
+
 $eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
 
-echo '<div id="ec"></div>';
-$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $moduleinstance->id, $eventsource, current_language()]);
+// Initialisiere den Kalender mit Berechtigungsinformationen
+$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [
+    $cm->id, 
+    $moduleinstance->id, 
+    $eventsource, 
+    current_language(),
+    ['isAdmin' => $isAdmin, 'isServiceTeam' => $isServiceTeam]
+]);
 
 echo $OUTPUT->footer();
