@@ -348,7 +348,7 @@ class edit_event_form extends dynamic_form {
 
         // Get context and capabilities.
         $context = $this->get_context_for_dynamic_submission();
-        // Event can be edited if capability is set, a new event is created or event is unprocessed.
+        // Event can be edited if capability is set, a new event is created or event is unprocessed (own events).
         $caneditevent = (has_capability('mod/bookit:editevent', $context) || !$id ||
                 (self::BOOKINGSTATUS_NEW == (int) $bookingstatus[0] && in_array($USER->id, $otherexaminers))
         );
@@ -435,6 +435,10 @@ class edit_event_form extends dynamic_form {
         if (is_array($formdata->refcourseid)) {
             $r = $formdata->refcourseid;
             $formdata->refcourseid = $r[0];
+        }
+
+        if(empty($formdata->usermodified)) {
+            unset($formdata->usermodified);
         }
 
         $event = bookit_event::from_record($formdata);
