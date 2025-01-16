@@ -21,30 +21,44 @@
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-use mod_bookit\local\entity\category;
-
+use mod_bookit\local\entity\bookit_event;
+use mod_bookit\local\entity\bookit_resource_categories;
+use mod_bookit\local\entity\bookit_resource;
 /**
  * This function is executed after the installation of the plugin.
  * @return void
  */
 function xmldb_bookit_install() {
-    global $DB;
 
-    $category = new category('Rooms', 'Examrooms');
+    // Create categories and resources.
+    $category = new bookit_resource_categories('Rooms', 'Examrooms');
     $category->save(2);
+    for ($i = 1; $i <= 5; $i++) {
+        $resource = new bookit_resource('Exam room ' . $i, 'Capacity ' . rand(20, 255) . ' seats', 1, $category->id);
+        $resource->save(2);
+    }
 
-    $resources = [];
-    $events = [];
+    $category = new bookit_resource_categories('Hardware', 'Hardware Resources');
+    $category->save(2);
+    $resource = new bookit_resource('Keyboard', 'Cherry Ultra Silent', 255, $category->id);
+    $resource->save(2);
+    $resource = new bookit_resource('Headphone', 'Sennheiser Best Listening', 177, $category->id);
+    $resource->save(2);
+
+    $category = new bookit_resource_categories('Magic Creatures', 'For a little magic...');
+    $category->save(2);
+    $resource = new bookit_resource('Unicorn', 'Rainbow colored unicorns', 13, $category->id);
+    $resource->save(2);
+    $resource = new bookit_resource('Moodlicorn', 'Just fabulous aaand magic!', 99, $category->id);
+    $resource->save(2);
+    $resource = new bookit_resource('Fairy', 'For extra luck and glitter!', 199, $category->id);
+    $resource->save(2);
 
     $subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'History', 'Geography', 'English Literature',
             'Psychology', 'Sociology'];
 
+    // Create events.
     for ($i = 1; $i <= 10; $i++) {
-        $resource = new \mod_bookit\local\entity\resource('Exam room ' . $i, 'Capacity 255 seats', 1, $category->id);
-        $resource->save(2);
-        $resources[] = $resource;
-
         // Generate random date and time in the current week between 07:00 and 20:00.
         // Changed from 0-6 to 0-5 to exclude Sundays.
         $dayofweek = rand(0, 5);
@@ -57,31 +71,36 @@ function xmldb_bookit_install() {
 
         // Select a random subject.
         $subject = $subjects[array_rand($subjects)];
-
-        $event = new \mod_bookit\local\entity\event(
+        $tc = rand(2, 7);
+        $event = new bookit_event(
+                0,
                 'Exam ' . $subject,
                 20241,
                 'IT',
                 $startdate,
                 $enddate,
                 90,
-                85,
-                '3 Zeitverlängerungen',
+                rand(20, 250),
                 1,
+                $tc.' Zeitverlängerungen',
+                rand(0, 2),
                 2,
-                'Prof. Superprof',
-                'superprof@example.com',
-                4,
-                'Internal lorem ipsum',
-                'Lorem Ipsum dolor...',
+                '',
+                0,
+                'External lorem ipsum',
+                'Internal Lorem Ipsum dolor...',
                 'Susi Support',
                 [
-                        (object) ['resourceid' => $resource->id, 'amount' => 2],
+                        (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
+                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
+                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
                 ],
                 null,
-                2
+                2,
+                time(),
+                time()
         );
+
         $event->save(2);
-        $events[] = $event;
     }
 }

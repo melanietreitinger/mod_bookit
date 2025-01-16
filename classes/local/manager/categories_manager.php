@@ -42,17 +42,20 @@ class categories_manager {
                         'description' => 'Specific rooms for e-assessments',
                         'id' => 1,
                         'resources' => [
-                                ['id' => 1,
+                                [
+                                        'id' => 1,
                                         'name' => 'E-Assessment-Center - Room 1',
                                         'description' => 'Room capacity: 168 seats',
                                         'amount' => 1,
                                 ],
-                                ['id' => 2,
+                                [
+                                        'id' => 2,
                                         'name' => 'E-Assessment-Center - Room 2',
                                         'description' => 'Room capacity: 85 seats',
                                         'amount' => 1,
                                 ],
-                                ['id' => 3,
+                                [
+                                        'id' => 3,
                                         'name' => 'E-Assessment-Center - Room 3',
                                         'description' => 'Room capacity: 7 seats',
                                         'amount' => 1,
@@ -62,12 +65,14 @@ class categories_manager {
                         'description' => 'Specific hardware for e-assessments',
                         'id' => 2,
                         'resources' => [
-                                ['id' => 4,
+                                [
+                                        'id' => 4,
                                         'name' => 'Headphones',
                                         'description' => 'Sennheiser ULTRASOUND 2000 XXL',
                                         'amount' => 270,
                                 ],
-                                ['id' => 5,
+                                [
+                                        'id' => 5,
                                         'name' => 'Keyboard',
                                         'description' => 'Typemaster 1337 Haxx0r',
                                         'amount' => 270,
@@ -77,17 +82,20 @@ class categories_manager {
                         'description' => 'For a little magic...',
                         'id' => 3,
                         'resources' => [
-                                ['id' => 6,
+                                [
+                                        'id' => 6,
                                         'name' => 'Unicorn',
                                         'description' => 'Just fabulous!',
                                         'amount' => 270,
                                 ],
-                                ['id' => 7,
+                                [
+                                        'id' => 7,
                                         'name' => 'Moodlicorn',
                                         'description' => 'Just fabulous aaand magic!',
                                         'amount' => 270,
                                 ],
-                                ['id' => 8,
+                                [
+                                        'id' => 8,
                                         'name' => 'Fairy',
                                         'description' => 'For extra luck and glitter.',
                                         'amount' => 270,

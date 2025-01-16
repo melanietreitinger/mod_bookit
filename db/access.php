@@ -53,6 +53,13 @@ $capabilities = [
                 'archetypes' => [
                 ],
         ],
+        // View all details of own event.
+        'mod/bookit:viewalldetailsofownevent' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
         // Add a new event.
         'mod/bookit:addevent' => [
                 'captype' => 'write',
@@ -66,6 +73,14 @@ $capabilities = [
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
+        ],
+        // Edit an internal field.
+        'mod/bookit:editinternal' => [
+                'captype' => 'write',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+
         ],
         // Add a new resource.
         'mod/bookit:addresource' => [
