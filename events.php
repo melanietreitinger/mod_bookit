@@ -25,14 +25,33 @@
 require_once('../../config.php');
 require_once('lib.php');
 
+use context_module;
 use mod_bookit\local\manager\event_manager;
 
+// Import Moodle core functions
+require_once($CFG->libdir . '/weblib.php');
+
+// Import constants
+use const PARAM_INT;
+use const PARAM_TEXT;
+use const MUST_EXIST;
+use const DEBUG_DEVELOPER;
+
 require_login();
-// ...@TODO: capability check, check for sesskey!
-// ...@TODO: The id of the instance should become required in future!
-$id = optional_param('id', 0, PARAM_INT);
+
+// Get the module instance id
+$id = required_param('id', PARAM_INT);
+$cm = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
+$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+$moduleinstance = $DB->get_record('bookit', array('id' => $cm->instance), '*', MUST_EXIST);
+
+// Check capabilities
+require_capability('mod/bookit:view', context_module::instance($cm->id));
+
+// Get the calendar parameters
 $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
+
 try {
     $start = new DateTime($start);
     $start = $start->format('Y-m-d H:i');
@@ -40,9 +59,14 @@ try {
     $end = new DateTime($end);
     $end = $end->format('Y-m-d H:i');
 } catch (Exception $e) {
-    echo $e->getMessage();
-    exit(1);
+    debugging('Error parsing dates: ' . $e->getMessage(), DEBUG_DEVELOPER);
+    header('HTTP/1.0 400 Bad Request');
+    die();
 }
+
+// Get events from the manager
 $events = event_manager::get_events_in_timerange($start, $end, $id);
+
+// Send JSON response
 header('Content-Type: application/json');
 echo json_encode($events);

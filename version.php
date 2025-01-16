@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_bookit';
-$plugin->release = '0.1.0';
-$plugin->version = 2024102208;
+$plugin->release = 'v0.1.0';
+$plugin->version = 2025010105;
 $plugin->requires = 2022112800;
 $plugin->maturity = MATURITY_ALPHA;

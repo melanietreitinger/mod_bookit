@@ -44,8 +44,7 @@ $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['edit_event'] = "Termin bearbeiten";
-$string['event_bookingstatus'] = 'Buchungsstatus';
-$string['event_bookingstatus_list'] = 'Neu, In Bearbeitung, Bestätigt, Storniert, Abgelehnt';
+$string['event_bookingstatus'] = 'Status';
 $string['event_compensationfordisadvantages'] = 'Weitere Nachteilsausgleiche';
 $string['event_compensationfordisadvantages_help'] = 'Tragen Sie hier die bereits bekannten Informationen zu Studierenden mit Nachteilsausgleich ein.';
 $string['event_department'] = 'Institution';
@@ -83,7 +82,7 @@ $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';
 $string['modulenameplural'] = 'BookIt Instanzen';
-$string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
+$string['all_entries'] = 'Alle Einträge';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Anzahl';
@@ -93,3 +92,36 @@ $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
 $string['summer_semester'] = 'Sommersemester';
 $string['winter_semester'] = 'Wintersemester';
+
+// Status strings
+$string['status_new'] = 'Neu';
+$string['status_inprogress'] = 'In Bearbeitung';
+$string['status_confirmed'] = 'Bestätigt';
+$string['status_cancelled'] = 'Storniert';
+$string['status_rejected'] = 'Abgelehnt';
+
+// Booking status list
+$string['event_bookingstatus_list'] = 'Neu, In Bearbeitung, Bestätigt, Storniert, Abgelehnt';
+
+// Filter strings
+$string['filter_room'] = 'Raum';
+$string['filter_timeslot'] = 'Zeitfenster';
+$string['filter_faculty'] = 'Fakultät/Abteilung';
+$string['filter_status'] = 'Status';
+$string['filter_search'] = 'Suche';
+$string['filter_search_placeholder'] = 'Suchbegriff eingeben...';
+$string['morning'] = 'Vormittag (07:00 - 12:00)';
+$string['afternoon'] = 'Nachmittag (12:00 - 17:00)';
+$string['evening'] = 'Abend (17:00 - 22:00)';
+
+// Calendar strings
+$string['prev_month'] = 'Vorheriger Monat';
+$string['next_month'] = 'Nächster Monat';
+$string['today'] = 'Heute';
+$string['month_view'] = 'Monat';
+$string['week_view'] = 'Woche';
+$string['day_view'] = 'Tag';
+$string['add_event'] = 'Neue Buchung';
+$string['delete_event'] = 'Buchung löschen';
+$string['event_details'] = 'Buchungsdetails';
+
