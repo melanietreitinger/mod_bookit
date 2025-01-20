@@ -30,7 +30,7 @@ class behat_mod_bookit_generator extends behat_generator_base {
         return [
                 'events' => [ // Refers to 'Given the following "mod_bookit > events" exist'
                     'datagenerator' => 'event', // Refers to create_event() method in the generator class.
-                    'required' => ['name', 'date', 'bookingstatus'],
+                    'required' => ['name', 'startdate', 'enddate', 'bookingstatus', 'department'],
                 ]
         ];
     }
