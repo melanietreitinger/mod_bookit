@@ -44,27 +44,34 @@ use stdClass;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_event_form extends dynamic_form {
+
+    /**
+     * @var int BOOKINGSTATUS_NEW: event is not processed yet and can be edited by the creator.
+     */
+    public const BOOKINGSTATUS_NEW = 0;
+
     /**
      * Define the form
      */
     public function definition(): void {
         global $DB, $CFG;
-        $config = get_config('mod_bookit');
         $mform =& $this->_form;
 
-        $catresourceslist = resource_manager::get_resources();
-        // ...@TODO: remove debug output field.
-        // $mform->addElement('static', 'resources', "<pre>".print_r($this->_ajaxformdata['cmid'], true)."</pre>");
+        // Get the plugin config.
+        $config = get_config('mod_bookit');
 
-        $id = !$this->_ajaxformdata['id'];
+        // Get the ressources.
+        $catresourceslist = resource_manager::get_resources();
+
+        // Define variables.
+        $context = $this->get_context_for_dynamic_submission();
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
         $cmid = $this->_ajaxformdata['cmid'] ?? false;
         $course = get_course_and_cm_from_cmid($cmid);
-
-        // Get context and capabilities.
-        $context = $this->get_context_for_dynamic_submission();
         $contextcourse = context_course::instance($course[0]->id);
-        $caneditevent = (has_capability('mod/bookit:editevent', $context) || $id);
-        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
+
+        // ...@TODO: remove debug output field.
+        // $mform->addElement('static', 'dummy', "<pre>".print_r(usertimezone(), true)."</pre>");
 
         // Set hidden field course module id.
         $mform->addElement('hidden', 'cmid');
@@ -74,13 +81,11 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        // Set hidden field editevent capability.
-        $mform->addElement('hidden', 'editevent', $caneditevent);
-        $mform->setType('editevent', PARAM_BOOL);
-
-        // Set hidden field editinternal capability.
-        $mform->addElement('hidden', 'editinternal', $caneditinternal);
-        $mform->setType('editinternal', PARAM_BOOL);
+        // Show the user who created the entry.
+        $mform->addElement('text', 'usermodified', get_string('event_usermodified', 'mod_bookit'));
+        $mform->setType('usermodified', PARAM_TEXT);
+        $mform->disabledIf('usermodified', 'id', 'neq', 0);
+        $mform->hideIf('usermodified', 'id', 'eq', '');
 
         // Add the standard "name" field.
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), ['size' => '64']);
@@ -129,22 +134,24 @@ class edit_event_form extends dynamic_form {
         // Add the "bookingtimes" fields.
         // ...@TODO: make stopyear an admin setting issue#3!
         $startarray = ['startyear' => date("Y"), 'stopyear' => date("Y") + ($config->eventmaxyears ?? 1),
-                'timezone' => 99, 'step' => 5, 'optional' => false];
+                'timezone' => usertimezone(), 'step' => 5, 'optional' => false];
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
+        $date = new \DateTimeImmutable('+ 1 hour');
+        $starttime = ($startdate ? strtotime($startdate) : $date->getTimestamp());
+
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $startarray);
         $mform->disabledIf('starttime', 'editevent', 'neq');
-        $mform->setDefault('starttime', (strtotime($startdate ?? '') ?? time()));
+        $mform->setDefault('starttime', $starttime);
         $mform->addRule('starttime', null, 'required', null, 'client');
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
         $stoparray = ['startyear' => date("Y"), 'stopyear' => date("Y") + 1,
-                'timezone' => 99, 'step' => 5, 'optional' => false];
+                'timezone' => usertimezone(), 'step' => 5, 'optional' => false];
         // ...@TODO: make default duration of event time an admin setting issue#3!
         $defaultduration = ($config->eventdefaultduration ?? 60);
-        $stopdate = ($startdate ? strtotime($startdate ?? '') : time());
         $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'), $stoparray);
         $mform->disabledIf('endtime', 'editevent', 'neq');
-        $mform->setDefault('endtime', strtotime(' + ' . $defaultduration . ' minutes', $stopdate));
+        $mform->setDefault('endtime', strtotime(' + ' . $defaultduration . ' minutes', $starttime));
         $mform->addRule('endtime', null, 'required', null, 'client');
         // ...@TODO: Restrict event duration according to $config->eventmaxduration!
         $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
@@ -178,7 +185,6 @@ class edit_event_form extends dynamic_form {
                   FROM {user} u
                   WHERE u.deleted = 0 AND u.suspended = 0
                   ORDER BY lastname, firstname";
-
         $users = $DB->get_records_sql($sql, []);
         foreach ($users as $id => $user) {
             $examinerlist[$id] = fullname($user) . ' | ' . $user->email;
@@ -255,7 +261,6 @@ class edit_event_form extends dynamic_form {
                   FROM {user} u
                   WHERE u.deleted = 0 AND u.suspended = 0
                   ORDER BY lastname, firstname";
-
             $users = $DB->get_records_sql($sqlsupport, []);
             foreach ($users as $id => $user) {
                 $supportpersons[$id] = fullname($user);
@@ -289,7 +294,6 @@ class edit_event_form extends dynamic_form {
             $mform->setExpanded('header_' . $c['category_id'], true);
 
             foreach ($c['resources'] as $rid => $v) {
-                $bla = 'resource_' . $rid;
                 $groupelements = [];
                 $groupelements[] =
                         $mform->createElement(
@@ -325,7 +329,54 @@ class edit_event_form extends dynamic_form {
      * @return void
      */
     public function definition_after_data() {
+        global $DB, $USER;
+        $mform =& $this->_form;
 
+        $context = $this->get_context_for_dynamic_submission();
+        $id = $this->_form->getElementValue('id');
+        $bookingstatus = $this->_form->getElementValue('bookingstatus');
+        $usermodified = $this->_form->getElementValue('usermodified');
+        $examiner = $this->_form->getElementValue('personinchargeid');
+        $otherexaminers = $this->_form->getElementValue('otherexaminers') ?? [];
+        array_push($otherexaminers, $usermodified, $examiner);
+
+        // Show the user who created the entry.
+        $user = $DB->get_record('user', ['id' => $usermodified]);
+        $mform->getElement('usermodified')->setValue(
+                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // @TODO: ???
+        );
+
+        // Get context and capabilities.
+        $context = $this->get_context_for_dynamic_submission();
+        // Event can be edited if capability is set, a new event is created or event is unprocessed (own events).
+        $caneditevent = (has_capability('mod/bookit:editevent', $context) || !$id ||
+                (self::BOOKINGSTATUS_NEW == (int) $bookingstatus[0] && in_array($USER->id, $otherexaminers))
+        );
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
+
+        // Set hidden field editevent capability.
+        $e1 = $this->_form->createElement('hidden', 'editevent', $caneditevent);
+        $this->_form->setType('editevent', PARAM_BOOL);
+        $mform->insertElementBefore($e1, 'name');
+
+        // Set hidden field editinternal capability.
+        $e2 = $this->_form->createElement('hidden', 'editinternal', $caneditinternal);
+        $this->_form->setType('editinternal', PARAM_BOOL);
+        $mform->insertElementBefore($e2, 'name');
+    }
+
+    /**
+     * Load in existing data as form defaults
+     */
+    public function set_data_for_dynamic_submission(): void {
+        $event = new StdClass;
+        $id = $this->optional_param('id', null, PARAM_INT);
+        if (!empty($id)) {
+            $event = event_manager::get_event($id);
+        }
+        $event->cmid = $this->optional_param('cmid', null, PARAM_INT);
+
+        $this->set_data($event);
     }
 
     /**
@@ -339,7 +390,7 @@ class edit_event_form extends dynamic_form {
     }
 
     /**
-     * Checks if current user has access to this card, otherwise throws exception
+     * Checks if current user has access to this form, otherwise throws exception
      */
     protected function check_access_for_dynamic_submission(): void {
         // ...@TODO.
@@ -351,9 +402,6 @@ class edit_event_form extends dynamic_form {
      * @return array ...
      */
     public function process_dynamic_submission(): array {
-        $cmid = $this->optional_param('cmid', null, PARAM_INT);
-        $id = $this->optional_param('id', null, PARAM_INT);
-        $context = $this->get_context_for_dynamic_submission();
         $formdata = $this->get_data();
 
         $mappings = [];
@@ -389,25 +437,14 @@ class edit_event_form extends dynamic_form {
             $formdata->refcourseid = $r[0];
         }
 
+        if(empty($formdata->usermodified)) {
+            unset($formdata->usermodified);
+        }
+
         $event = bookit_event::from_record($formdata);
         $event->save();
 
         return [];
-    }
-
-    /**
-     * Load in existing data as form defaults
-     */
-    public function set_data_for_dynamic_submission(): void {
-        $event = new StdClass;
-        $context = $this->get_context_for_dynamic_submission();
-        $id = $this->optional_param('id', null, PARAM_INT);
-        if (!empty($id)) {
-            $event = event_manager::get_event($id);
-        }
-        $event->cmid = $this->optional_param('cmid', null, PARAM_INT);
-
-        $this->set_data($event);
     }
 
     /**

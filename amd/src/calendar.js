@@ -1,6 +1,6 @@
-import {get_string as getString} from 'core/str';
+import {getString} from 'core/str';
 import ModalForm from 'core_form/modalform';
-import Prefetch from 'core/prefetch';
+import {prefetchStrings} from 'core/prefetch';
 
 const theGlobalProperty = (globalPropertyName) => {
     return new Promise((resolve) => {
@@ -19,22 +19,36 @@ const theGlobalProperty = (globalPropertyName) => {
  * @param {int} cmid
  * @param {string} moduleinstanceid
  * @param {string} eventsource
+ * @param {array} capabilities
  * @param {string} lang
  * @returns {Promise<void>}
  */
-export async function init(cmid, moduleinstanceid, eventsource, lang) {
+export async function init(cmid, moduleinstanceid, eventsource, capabilities, lang) {
     await theGlobalProperty('EventCalendar');
 
+    let toolbarbuttons = 'prev,next today';
+    if (capabilities.addevent) {
+        toolbarbuttons = 'prev,next today, addButton';
+        console.log(capabilities);
+    }
+
     // String variables.
-    Prefetch.prefetchString('mod_bookit', ['addbooking']);
-    Prefetch.prefetchString('core', ['today', 'month', 'week']);
-    Prefetch.prefetchString('calendar', ['day', 'upcomingevents']);
+    prefetchStrings('mod_bookit', ['addbooking']);
+    prefetchStrings('core', ['today', 'month', 'week']);
+    prefetchStrings('calendar', ['day', 'upcomingevents']);
     const str_request_booking   = await getString('addbooking', 'mod_bookit');
     const str_today             = await getString('today');
     const str_month             = await getString('month');
     const str_week              = await getString('week');
     const str_day               = await getString('day', 'calendar');
     const str_list              = await getString('upcomingevents', 'calendar');
+    /*const str_request_booking = 'XXX';
+    const str_today             = 'XXX';
+    const str_month             = 'XXX';
+    const str_week              = 'XXX';
+    const str_day               = 'XXX';
+    const str_list              = 'XXX';*/
+
 
     let viewType = 'timeGridWeek';
     if (window.screen.width <= 1000) {
@@ -81,21 +95,23 @@ export async function init(cmid, moduleinstanceid, eventsource, lang) {
             }
         },
         dateClick: function(info) {
-            console.log(info.date);
-            console.log(info.dateStr);
+            let d = new Date();
+            let dateoff = new Date(d.setMinutes(d.getMinutes() - d.getTimezoneOffset()));
             let startdate = info.dateStr;
-            const modalForm = new ModalForm({
-                formClass: "mod_bookit\\form\\edit_event_form",
-                args: {
-                    cmid: cmid,
-                    startdate: startdate,
-                },
-                modalConfig: {title: getString('edit_event', 'mod_bookit')},
-            });
-            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-                calendar.refetchEvents();
-            });
-            modalForm.show();
+            if (capabilities.addevent && startdate > dateoff.toISOString()) {
+                const modalForm = new ModalForm({
+                    formClass: "mod_bookit\\form\\edit_event_form",
+                    args: {
+                        cmid: cmid,
+                        startdate: startdate,
+                    },
+                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                });
+                modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                    calendar.refetchEvents();
+                });
+                modalForm.show();
+            }
         },
         eventClick: function (info) {
             let id = info.event.id;
@@ -122,7 +138,7 @@ export async function init(cmid, moduleinstanceid, eventsource, lang) {
             }
         },
         headerToolbar: {
-            start: 'prev,next today, addButton',
+            start: toolbarbuttons,
             center: 'title',
             end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },

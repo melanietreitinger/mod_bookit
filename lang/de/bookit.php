@@ -74,11 +74,18 @@ $string['event_start'] = 'Beginn';
 $string['event_start_help'] = 'Wählen Sie das Startdatum und -uhrzeit des Termins.';
 $string['event_students'] = 'Anzahl der Teilnehmenden';
 $string['event_students_help'] = 'Tragen Sie die erwartete Anzahl der Teilnehmenden ein.';
-$string['event_supportperson'] = 'Support vor Ort';
-$string['event_supportperson_help'] = 'Für diese Veranstaltung zugewiesene Person, die den Support vor Ort durchführt.';
-$string['event_timecompensation'] = 'Nachteilsausgleich';
-$string['event_timecompensation_help'] = 'Aktivieren Sie den Haken, wenn Sie Studierende in der Prüfung haben, die Anspruch auf einen Nachteilsausgleich haben. In der Regel wird eine längere Schreibzeit gewährt';
-$string['header_internal'] = 'Bereich Service-Team';
+// ...@TODO: translate.
+$string['event_supportperson'] = 'Support persons';
+// ...@TODO: translate.
+$string['event_supportperson_help'] = 'Support persons assigned to this event.';
+// ...@TODO: translate.
+$string['event_timecompensation'] = 'Time compensation';
+// ...@TODO: translate.
+$string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
+// ...@TODO: translate.
+$string['event_usermodified'] = 'Created by user';
+// ...@TODO: translate.
+$string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';

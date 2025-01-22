@@ -26,7 +26,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-        // Add course module.
+    // Add a new event.
+        'mod/bookit:addevent' => [
+                'captype' => 'write',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+    // Add course module (mandatory capability).
         'mod/bookit:addinstance' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
@@ -34,47 +41,21 @@ $capabilities = [
                 ],
                 'clonepermissionsfrom' => 'moodle/course:manageactivities',
         ],
-        // View course module.
-        'mod/bookit:view' => [
-                'captype' => 'view',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                        'guest' => CAP_ALLOW,
-                        'student' => CAP_ALLOW,
-                        'teacher' => CAP_ALLOW,
-                        'editingteacher' => CAP_ALLOW,
-                        'manager' => CAP_ALLOW,
-                ],
-        ],
-        // View all details of event.
-        'mod/bookit:viewalldetailsofevent' => [
-                'captype' => 'view',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
-        ],
-        // View all details of own event.
-        'mod/bookit:viewalldetailsofownevent' => [
-                'captype' => 'view',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
-        ],
-        // Add a new event.
-        'mod/bookit:addevent' => [
+    // Add a new resource.
+        'mod/bookit:addresource' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-        // Edit an existing event.
+    // Edit an existing event.
         'mod/bookit:editevent' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-        // Edit an internal field.
+    // Edit an internal field.
         'mod/bookit:editinternal' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
@@ -82,20 +63,32 @@ $capabilities = [
                 ],
 
         ],
-        // Add a new resource.
-        'mod/bookit:addresource' => [
-                'captype' => 'write',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
-        ],
-        // Edit an existing resource.
+    // Edit an existing resource.
         'mod/bookit:editresource' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-
-
+    // View course module.
+        'mod/bookit:view' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+    // View all details of event.
+        'mod/bookit:viewalldetailsofevent' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
+    // View all details of own event.
+        'mod/bookit:viewalldetailsofownevent' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [
+                ],
+        ],
 ];

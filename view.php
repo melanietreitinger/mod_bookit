@@ -47,6 +47,11 @@ require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
 
+// Capabilities of current user.
+$capabilities = [
+        'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
+];
+
 // Log view event of calendar.
 $event = course_module_viewed::create([
         'objectid' => $moduleinstance->id,
@@ -70,6 +75,6 @@ echo $OUTPUT->header();
 $eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
 
 echo '<div id="ec"></div>';
-$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $moduleinstance->id, $eventsource, current_language()]);
+$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $moduleinstance->id, $eventsource, $capabilities, current_language()]);
 
 echo $OUTPUT->footer();
