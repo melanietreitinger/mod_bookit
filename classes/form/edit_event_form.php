@@ -437,7 +437,7 @@ class edit_event_form extends dynamic_form {
             $formdata->refcourseid = $r[0];
         }
 
-        if(empty($formdata->usermodified)) {
+        if(!is_int($formdata->usermodified)) {
             unset($formdata->usermodified);
         }
 
