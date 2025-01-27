@@ -8,10 +8,32 @@
 		<level>course</level>
 		<level>module</level>
 	</contextlevels>
-	<allowassign/>
-	<allowoverride/>
-	<allowswitch/>
-	<allowview/>
+	<allowassign>
+		<shortname>serviceteam</shortname>
+		<shortname>bookingperson</shortname>
+		<shortname>examiner</shortname>
+		<shortname>supportonside</shortname>
+		<shortname>observer</shortname>
+	</allowassign>
+	<allowoverride>
+		<shortname>bookingperson</shortname>
+		<shortname>examiner</shortname>
+		<shortname>supportonside</shortname>
+		<shortname>observer</shortname>
+	</allowoverride>
+	<allowswitch>
+		<shortname>bookingperson</shortname>
+		<shortname>examiner</shortname>
+		<shortname>supportonside</shortname>
+		<shortname>observer</shortname>
+	</allowswitch>
+	<allowview>
+		<shortname>serviceteam</shortname>
+		<shortname>bookingperson</shortname>
+		<shortname>examiner</shortname>
+		<shortname>supportonside</shortname>
+		<shortname>observer</shortname>
+	</allowview>
 	<permissions>
 		<inherit>aiplacement/courseassist:summarise_text</inherit>
 		<inherit>aiplacement/editor:generate_image</inherit>
@@ -724,7 +746,6 @@
 		<inherit>moodle/restore:uploadfile</inherit>
 		<inherit>moodle/restore:userinfo</inherit>
 		<inherit>moodle/restore:viewautomatedfilearea</inherit>
-		<inherit>moodle/role:assign</inherit>
 		<inherit>moodle/role:manage</inherit>
 		<inherit>moodle/role:override</inherit>
 		<inherit>moodle/role:review</inherit>
@@ -933,6 +954,7 @@
 		<allow>mod/bookit:viewalldetailsofevent</allow>
 		<allow>mod/bookit:viewalldetailsofownevent</allow>
 		<allow>moodle/course:enrolreview</allow>
+		<allow>moodle/role:assign</allow>
 		<allow>moodle/user:viewdetails</allow>
 	</permissions>
 </role>
