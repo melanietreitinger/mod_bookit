@@ -343,7 +343,7 @@ class edit_event_form extends dynamic_form {
         // Show the user who created the entry.
         $user = $DB->get_record('user', ['id' => $usermodified]);
         $mform->getElement('usermodified')->setValue(
-                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // @TODO: ???
+                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // ...@TODO: ???
         );
 
         // Get context and capabilities.
@@ -437,7 +437,7 @@ class edit_event_form extends dynamic_form {
             $formdata->refcourseid = $r[0];
         }
 
-        if(!is_int($formdata->usermodified)) {
+        if (!is_int($formdata->usermodified)) {
             unset($formdata->usermodified);
         }
 

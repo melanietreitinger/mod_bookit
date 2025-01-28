@@ -43,7 +43,7 @@ class resource_manager {
     public static function get_resources_of_event(int $eventid) {
         global $DB;
         $resources = $DB->get_records_sql('
-            SELECT er.resourceid, er.amount, r.name, r.categoryid 
+            SELECT er.resourceid, er.amount, r.name, r.categoryid
             FROM {bookit_resource} r JOIN {bookit_event_resources} er ON er.resourceid = r.id
             WHERE er.eventid = :eventid', ['eventid' => $eventid]);
         return $resources;

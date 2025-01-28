@@ -31,7 +31,8 @@
 function bookit_supports(string $feature): bool|string|null {
     return match ($feature) {
         FEATURE_MOD_INTRO, FEATURE_BACKUP_MOODLE2 => true,
-        // Note: do not define FEATURE_MOD_PURPOSE or icon background will be colored, @see https://moodledev.io/docs/4.1/devupdate#activity-icons.
+        // Note: do not define FEATURE_MOD_PURPOSE or icon background will be colored,
+        // @see https://moodledev.io/docs/4.1/devupdate#activity-icons.
         default => null,
     };
 }

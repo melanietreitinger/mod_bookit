@@ -45,7 +45,6 @@ if ($hassiteconfig) {
         foreach ($catresourceslist as $category => $value) {
             if ($category === 'Rooms') {
                 foreach ($value['resources'] as $rid => $catresource) {
-                    // $rooms[$rid] = $catresource['name'];
                     $name = 'mod_bookit/roomcolor_'.$rid;
                     $title = get_string('roomcolor', 'mod_bookit', $catresource['name'], true);
                     $description = get_string('roomcolor_desc', 'mod_bookit', null, true);
