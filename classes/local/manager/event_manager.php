@@ -48,13 +48,13 @@ class event_manager {
         global $DB;
         $event = $DB->get_record('bookit_event', ['id' => $id]);
         $eventresources = resource_manager::get_resources_of_event($id);
-        foreach ($eventresources as $rid => $amount) {
-            if ($rid <= 5) {
+        foreach ($eventresources as $rid => $res) {
+            if (1 == $res->categoryid) {
                 $event->room = $rid;
             } else {
                 $r = 'resource_' . $rid;
                 $c = 'checkbox_' . $rid;
-                $event->$r = $amount;
+                $event->$r = $res->amount;
                 $event->$c = 1;
             }
         }
@@ -80,6 +80,8 @@ class event_manager {
         $context = context_module::instance($instanceid);
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
+        $color = ''; // Default background color of event.
+        $roomname = ''; // Default room name = empty.
 
         $sqlreserved = 'SELECT id, NULL as name, starttime, endtime FROM {bookit_event} ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
@@ -110,12 +112,32 @@ class event_manager {
 
         $records = $DB->get_records_sql($sql, $params);
         $events = [];
+
+        // Get room colors from plugin config.
+        $config = get_config('mod_bookit');
+        $roomcolors = [];
+        foreach ($config as $key => $value) {
+            if (false !== preg_match('/roomcolor_/', $key)) {
+                $roomcolors[substr($key, 10)] = $value;
+            }
+        }
+
         foreach ($records as $record) {
+            $eventresources = resource_manager::get_resources_of_event($record->id);
+            foreach ($eventresources as $object) {
+                if (1 == $object->categoryid) {
+                    $color = $roomcolors[$object->resourceid] ?? '';
+                    $roomname = $object->name;
+                }
+            }
             $events[] = [
-                    'id' => $record->id,
-                    'title' => $record->name ?? $reserved,
-                    'start' => date('Y-m-d H:i', $record->starttime),
-                    'end' => date('Y-m-d H:i', $record->endtime),
+                'id' => $record->id,
+                'title' => ($record->name ?? $reserved).' ('.$roomname.')',
+                'start' => date('Y-m-d H:i', $record->starttime),
+                'end' => date('Y-m-d H:i', $record->endtime),
+                'backgroundColor' => $color,
+                'extendedProps' => (object)['reserved' => !$record->name],
+
             ];
         }
         return $events;

@@ -18,10 +18,11 @@
  * Plugin administration pages are defined here.
  *
  * @package     mod_bookit
- * @category    admin
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+use mod_bookit\local\manager\resource_manager;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -31,5 +32,29 @@ if ($hassiteconfig) {
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ADMIN->fulltree) {
         // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
+
+        // Room colors heading.
+        $name = 'mod_bookit/roomcolorheading';
+        $title = get_string('roomcolorheading', 'mod_bookit', null, true);
+        $setting = new admin_setting_heading($name, $title, null);
+        $settings->add($setting);
+
+        // Set a color for each room defined in resources - at least one.
+        // Get the ressources.
+        $catresourceslist = resource_manager::get_resources();
+        foreach ($catresourceslist as $category => $value) {
+            if ($category === 'Rooms') {
+                foreach ($value['resources'] as $rid => $catresource) {
+                    $name = 'mod_bookit/roomcolor_'.$rid;
+                    $title = get_string('roomcolor', 'mod_bookit', $catresource['name'], true);
+                    $description = get_string('roomcolor_desc', 'mod_bookit', null, true);
+                    $setting = new admin_setting_configcolourpicker($name, $title, $description, '');
+                    $settings->add($setting);
+                }
+            }
+        }
+
+
+
     }
 }

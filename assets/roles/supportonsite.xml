@@ -11,7 +11,10 @@
 	<allowassign/>
 	<allowoverride/>
 	<allowswitch/>
-	<allowview/>
+	<allowview>
+		<shortname>serviceteam</shortname>
+		<shortname>examiner</shortname>
+	</allowview>
 	<permissions>
 		<inherit>aiplacement/courseassist:summarise_text</inherit>
 		<inherit>aiplacement/editor:generate_image</inherit>
@@ -732,7 +735,6 @@
 		<inherit>moodle/restore:uploadfile</inherit>
 		<inherit>moodle/restore:userinfo</inherit>
 		<inherit>moodle/restore:viewautomatedfilearea</inherit>
-		<inherit>moodle/role:assign</inherit>
 		<inherit>moodle/role:manage</inherit>
 		<inherit>moodle/role:override</inherit>
 		<inherit>moodle/role:review</inherit>
@@ -933,5 +935,6 @@
 		<inherit>webservice/rest:use</inherit>
 		<inherit>webservice/soap:use</inherit>
 		<allow>mod/bookit:view</allow>
+		<allow>moodle/role:assign</allow>
 	</permissions>
 </role>

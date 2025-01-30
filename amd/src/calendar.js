@@ -17,13 +17,12 @@ const theGlobalProperty = (globalPropertyName) => {
 /**
  * Initializes the calendar.
  * @param {int} cmid
- * @param {string} moduleinstanceid
  * @param {string} eventsource
  * @param {array} capabilities
  * @param {string} lang
  * @returns {Promise<void>}
  */
-export async function init(cmid, moduleinstanceid, eventsource, capabilities, lang) {
+export async function init(cmid, eventsource, capabilities, lang) {
     await theGlobalProperty('EventCalendar');
 
     let toolbarbuttons = 'prev,next today';
@@ -115,14 +114,13 @@ export async function init(cmid, moduleinstanceid, eventsource, capabilities, la
         },
         eventClick: function (info) {
             let id = info.event.id;
-            let title = info.event.title;
 
             console.log(info);
             console.log("cmid: "+cmid);
             console.log("id: "+id);
-            console.log("title: "+title);
+            console.log(info.event.extendedProps.reserved);
 
-            if ("reserved" != title.toLowerCase()) {
+            if (!info.event.extendedProps.reserved) {
                 const modalForm = new ModalForm({
                     formClass: "mod_bookit\\form\\edit_event_form",
                     args: {

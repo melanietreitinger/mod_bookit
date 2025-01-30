@@ -94,6 +94,12 @@ $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Anzahl';
+// ...@TODO: translate.
+$string['roomcolor'] = 'Color for room {$a}';
+// ...@TODO: translate.
+$string['roomcolor_desc'] = 'Select a color to be used for the calendar view.';
+// ...@TODO: translate.
+$string['roomcolorheading'] = 'Room colors';
 $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';
 $string['select_semester'] = 'Semester';

@@ -26,14 +26,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-    // Add a new event.
+       // Add a new event.
         'mod/bookit:addevent' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-    // Add course module (mandatory capability).
+        // Add course module (mandatory capability).
         'mod/bookit:addinstance' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
@@ -41,21 +41,21 @@ $capabilities = [
                 ],
                 'clonepermissionsfrom' => 'moodle/course:manageactivities',
         ],
-    // Add a new resource.
+        // Add a new resource.
         'mod/bookit:addresource' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-    // Edit an existing event.
+        // Edit an existing event.
         'mod/bookit:editevent' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-    // Edit an internal field.
+        // Edit an internal field.
         'mod/bookit:editinternal' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
@@ -63,28 +63,28 @@ $capabilities = [
                 ],
 
         ],
-    // Edit an existing resource.
+        // Edit an existing resource.
         'mod/bookit:editresource' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-    // View course module.
+        // View course module.
         'mod/bookit:view' => [
                 'captype' => 'view',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-    // View all details of event.
+        // View all details of event.
         'mod/bookit:viewalldetailsofevent' => [
                 'captype' => 'view',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [
                 ],
         ],
-    // View all details of own event.
+        // View all details of own event.
         'mod/bookit:viewalldetailsofownevent' => [
                 'captype' => 'view',
                 'contextlevel' => CONTEXT_COURSE,
