@@ -157,10 +157,16 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
 
         // Add the "duration" field.
-        $mform->addElement('text', 'duration', get_string('event_duration', 'mod_bookit'), ['size' => '4']);
+        $duration = [];
+        $eventdefaultduration = ($config->eventdefaultduration ?? 60);
+        $eventdurationstepwidth = ($config->eventdurationstepwidth ?? 15);
+        $eventmaxduration = ($config->eventmaxduration ?? 480);
+        for ($i = $eventdurationstepwidth; $i <= $eventmaxduration; $i+=$eventdurationstepwidth) {
+            $duration[$i] = $i;
+        }
+        $select = $mform->addElement('select', 'duration', get_string('event_duration', 'mod_bookit'), $duration);
+        $select->setSelected($eventdefaultduration);
         $mform->disabledIf('duration', 'editevent', 'neq');
-        $mform->setType('duration', PARAM_INT);
-        $mform->addRule('duration', null, 'required', null, 'client');
         $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
 
         // Add "amount of students" field.
