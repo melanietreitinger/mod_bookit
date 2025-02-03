@@ -99,6 +99,10 @@ $string['roomcolor'] = 'Color for room {$a}';
 // ...@TODO: translate.
 $string['roomcolor_desc'] = 'Select a color to be used for the calendar view.';
 // ...@TODO: translate.
+$string['roomcolor_wcagcheck'] = 'Color contrast check for room {$a}';
+// ...@TODO: translate.
+$string['roomcolor_wcagcheck_desc'] = 'Contrast check for color <i>#{$a->bcolor}</i> and text <i>#{$a->fcolor}</i>: ';
+// ...@TODO: translate.
 $string['roomcolorheading'] = 'Room colors';
 $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';

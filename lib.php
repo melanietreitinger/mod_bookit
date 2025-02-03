@@ -54,9 +54,7 @@ function bookit_add_instance(object $moduleinstance, mod_bookit_mod_form|null $m
 
     $moduleinstance->timecreated = time();
 
-    $id = $DB->insert_record('bookit', $moduleinstance);
-
-    return $id;
+    return $DB->insert_record('bookit', $moduleinstance);
 }
 
 /**
@@ -96,4 +94,117 @@ function bookit_delete_instance(int $id): bool {
     $DB->delete_records('bookit', ['id' => $id]);
 
     return true;
+}
+
+/**
+ * Calculates the luminosity of an given RGB color.
+ * The color code must be in the format of RRGGBB.
+ * The luminosity equations are from the WCAG 2 requirements.
+ * https://www.w3.org/TR/WCAG22/#dfn-relative-luminance
+ *
+ * @copyright gdkraus https://github.com/gdkraus/wcag2-color-contrast
+ *
+ * @param string $color
+ * @return float
+ */
+function calculateluminosity(string $color): float {
+
+    $r = hexdec(substr($color, 0, 2)) / 255; // Red value.
+    $g = hexdec(substr($color, 2, 2)) / 255; // Green value.
+    $b = hexdec(substr($color, 4, 2)) / 255; // Blue value.
+    if ($r <= 0.03928) {
+        $r = $r / 12.92;
+    } else {
+        $r = pow((($r + 0.055) / 1.055), 2.4);
+    }
+
+    if ($g <= 0.03928) {
+        $g = $g / 12.92;
+    } else {
+        $g = pow((($g + 0.055) / 1.055), 2.4);
+    }
+
+    if ($b <= 0.03928) {
+        $b = $b / 12.92;
+    } else {
+        $b = pow((($b + 0.055) / 1.055), 2.4);
+    }
+
+    return 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+}
+
+/**
+ * Calculates the luminosity ratio of two colors.
+ * The luminosity ratio equations are from the WCAG 2 requirements.
+ * https://www.w3.org/TR/WCAG22/#dfn-contrast-ratio
+ *
+ * @copyright gdkraus https://github.com/gdkraus/wcag2-color-contrast
+ *
+ * @param string $color1
+ * @param string $color2
+ * @return float
+ */
+function calculateluminosityratio(string $color1, string $color2): float {
+    $l1 = calculateluminosity($color1);
+    $l2 = calculateluminosity($color2);
+
+    if ($l1 > $l2) {
+        $ratio = (($l1 + 0.05) / ($l2 + 0.05));
+    } else {
+        $ratio = (($l2 + 0.05) / ($l1 + 0.05));
+    }
+    return $ratio;
+}
+
+/**
+ * Returns an array with the results of the color contrast analysis
+ * It returns akey for each level (AA and AAA, both for normal and large or bold text).
+ * It also returns the calculated contrast ratio.
+ * The ratio levels are from the WCAG 2 requirements.
+ * https://www.w3.org/WAI/WCAG22/quickref/#contrast-minimum
+ * https://www.w3.org/WAI/WCAG22/quickref/#contrast-enhanced
+ *
+ * @copyright gdkraus https://github.com/gdkraus/wcag2-color-contrast
+ *
+ * @param string $color1
+ * @param string $color2
+ * @return array
+ */
+function evaluatecolorcontrast(string $color1, string $color2): array {
+    $ratio = calculateluminosityratio($color1, $color2);
+
+    $colorevaluation["AA normal"] = ($ratio >= 4.5 ? 'pass' : 'fail');
+    $colorevaluation["AA large"] = ($ratio >= 3 ? 'pass' : 'fail');
+    $colorevaluation["AA medium bold"] = ($ratio >= 3 ? 'pass' : 'fail');
+    $colorevaluation["AAA normal"] = ($ratio >= 7 ? 'pass' : 'fail');
+    $colorevaluation["AAA large"] = ($ratio >= 4.5 ? 'pass' : 'fail');
+    $colorevaluation["AAA medium bold"] = ($ratio >= 4.5 ? 'pass' : 'fail');
+    $colorevaluation["Ratio"] = round($ratio, 2);
+
+    return $colorevaluation;
+}
+
+/**
+ * Print color evaluation for normal text.
+ * @param string $color
+ * @param string $color2
+ * @return string
+ */
+function printcolorevaluation(string $color, string $color2): string {
+    $checkstring = '';
+    $check = evaluatecolorcontrast($color, $color2);
+    foreach ($check as $key => $value) {
+        if (str_contains($key, 'normal') || 'Ratio' == $key) {
+            if ('pass' == $value) {
+                $value = '<i class="fa fa-circle-check text-success" aria-hidden="true"></i> ';
+            } else if ('fail' == $value) {
+                $value = '<i class="fa fa-circle-xmark text-danger" aria-hidden="true"></i> ';
+            }
+
+            $checkstring .= $key . ': <strong>' . $value . '</strong> ';
+        }
+    }
+    return $checkstring . ' <br>' . '<i class="fa fa-circle-info text-info"></i>
+            WCAG 2.2 <a href="https://www.w3.org/TR/WCAG22/#contrast-minimum">AA</a> /
+            <a href="https://www.w3.org/TR/WCAG22/#contrast-enhanced">AAA</a>.<br><br>';
 }
