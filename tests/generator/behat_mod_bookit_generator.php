@@ -22,16 +22,25 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Behat data generator for mod_bookit
+ *
+ * @package     mod_bookit
+ * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class behat_mod_bookit_generator extends behat_generator_base {
 
-    protected function get_creatable_entities(): array {
+    /**
+     * Define the entities that can be created.
+     * @return array[]
+     */
+    final protected function get_creatable_entities(): array {
         return [
-                'events' => [ // Refers to 'Given the following "mod_bookit > events" exist'
+                'events' => [ // Refers to 'Given the following "mod_bookit > events" exist'.
                     'datagenerator' => 'event', // Refers to create_event() method in the generator class.
                     'required' => ['name', 'startdate', 'enddate', 'bookingstatus', 'department'],
-                ]
+                ],
         ];
     }
 }

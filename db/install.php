@@ -92,8 +92,8 @@ function xmldb_bookit_install() {
                 'Susi Support',
                 [
                         (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
-                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
-                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
+                        (object) ['resourceid' => rand(6, 7), 'amount' => rand(2, 85)], // Other resources.
+                        (object) ['resourceid' => rand(8, 10), 'amount' => rand(2, 85)], // Other resources.
                 ],
                 null,
                 2,

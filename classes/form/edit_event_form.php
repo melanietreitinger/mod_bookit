@@ -161,7 +161,7 @@ class edit_event_form extends dynamic_form {
         $eventdefaultduration = ($config->eventdefaultduration ?? 60);
         $eventdurationstepwidth = ($config->eventdurationstepwidth ?? 15);
         $eventmaxduration = ($config->eventmaxduration ?? 480);
-        for ($i = $eventdurationstepwidth; $i <= $eventmaxduration; $i+=$eventdurationstepwidth) {
+        for ($i = $eventdurationstepwidth; $i <= $eventmaxduration; $i += $eventdurationstepwidth) {
             $duration[$i] = $i;
         }
         $select = $mform->addElement('select', 'duration', get_string('event_duration', 'mod_bookit'), $duration);
