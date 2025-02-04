@@ -65,6 +65,7 @@ export async function init(cmid, eventsource, capabilities, lang) {
         dayMaxEvents: true,
         nowIndicator: true,
         selectable: false,
+        eventBackgroundColor: '#035AA3',
         eventStartEditable: false,
         eventDurationEditable: false,
         buttonText: function (text) {
