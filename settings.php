@@ -37,9 +37,18 @@ if ($hassiteconfig) {
 
         // Room colors heading.
         $name = 'mod_bookit/roomcolorheading';
-        $title = get_string('roomcolorheading', 'mod_bookit', null, true);
+        $title = get_string('settings_roomcolorheading', 'mod_bookit', null, true);
         $setting = new admin_setting_heading($name, $title, null);
         $settings->add($setting);
+
+        // Set text color to black or white (default).
+        $name = 'mod_bookit/textcolor';
+        $title = get_string('settings_textcolor', 'mod_bookit');
+        $description = get_string('settings_textcolor_desc', 'mod_bookit');
+        $choices = ['#ffffff' => 'white', '#000000' => 'black'];
+        $setting = new admin_setting_configselect($name, $title, $description, '#ffffff', $choices);
+        $settings->add($setting);
+
 
         // Set a color for each room defined in resources - at least one.
         // Get the ressources.
@@ -48,13 +57,13 @@ if ($hassiteconfig) {
             if ($category === 'Rooms') {
                 foreach ($value['resources'] as $rid => $catresource) {
                     $name = 'mod_bookit/roomcolor_' . $rid;
-                    $title = get_string('roomcolor', 'mod_bookit', $catresource['name'], true);
-                    $description = get_string('roomcolor_desc', 'mod_bookit', null, true);
+                    $title = get_string('settings_roomcolor', 'mod_bookit', $catresource['name'], true);
+                    $description = get_string('settings_roomcolor_desc', 'mod_bookit', null, true);
                     $setting = new admin_setting_configcolourpicker($name, $title, $description, '');
                     $settings->add($setting);
 
                     // Add color contrast check.
-                    $fcolor = get_config('mod_bookit', 'roomcolortext');
+                    $fcolor = get_config('mod_bookit', 'textcolor');
                     $fcolor = (!empty($fcolor) ? substr($fcolor, 1) : 'FFFFFF');
                     $bcolor = get_config('mod_bookit', 'roomcolor_' . $rid);
                     $bcolor = (!empty($bcolor) ? substr($bcolor, 1) : false);
@@ -64,8 +73,8 @@ if ($hassiteconfig) {
                         $a->fcolor = $fcolor;
                         $a->bcolor = $bcolor;
                         $setting = new admin_setting_description($name . '_wcag',
-                                get_string('roomcolor_wcagcheck', 'mod_bookit', $rid),
-                                get_string('roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check);
+                                get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
+                                get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check);
                         $settings->add($setting);
                     }
                 }

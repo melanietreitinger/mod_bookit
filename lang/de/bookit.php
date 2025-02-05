@@ -94,19 +94,24 @@ $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Anzahl';
-// ...@TODO: translate.
-$string['roomcolor'] = 'Color for room {$a}';
-// ...@TODO: translate.
-$string['roomcolor_desc'] = 'Select a color to be used for the calendar view.';
-// ...@TODO: translate.
-$string['roomcolor_wcagcheck'] = 'Color contrast check for room {$a}';
-// ...@TODO: translate.
-$string['roomcolor_wcagcheck_desc'] = 'Contrast check for color <i>#{$a->bcolor}</i> and text <i>#{$a->fcolor}</i>: ';
-// ...@TODO: translate.
 $string['roomcolorheading'] = 'Room colors';
 $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';
 $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
+// ...@TODO: translate.
+$string['settings_roomcolor'] = 'Color for room {$a}';
+// ...@TODO: translate.
+$string['settings_roomcolor_desc'] = 'Select a color to be used for the calendar view.';
+// ...@TODO: translate.
+$string['settings_roomcolor_wcagcheck'] = 'Color contrast check for room {$a}';
+// ...@TODO: translate.
+$string['settings_roomcolor_wcagcheck_desc'] = 'Contrast check for color <i>#{$a->bcolor}</i> and text <i>#{$a->fcolor}</i>: ';
+// ...@TODO: translate.
+$string['settings_roomcolorheading'] = 'Room colors';
+// ...@TODO: translate.
+$string['settings_textcolor'] = 'Event text color';
+// ...@TODO: translate.
+$string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
 $string['summer_semester'] = 'Sommersemester';
 $string['winter_semester'] = 'Wintersemester';
