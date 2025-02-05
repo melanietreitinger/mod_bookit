@@ -27,7 +27,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     await theGlobalProperty('EventCalendar');
 
     // Set textcolor.
-    let textcolor = '#ffff00';
+    let textcolor = '#ffffff';
     if (Object.hasOwn(config, 'textcolor')) {
         textcolor = config.textcolor;
         console.log('textcolor set to '+textcolor);
