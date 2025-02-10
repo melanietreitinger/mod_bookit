@@ -935,6 +935,7 @@
 		<inherit>webservice/rest:use</inherit>
 		<inherit>webservice/soap:use</inherit>
 		<allow>mod/bookit:view</allow>
+		<allow>mod/bookit:viewalldetailsofevent</allow>
 		<allow>moodle/role:assign</allow>
 	</permissions>
 </role>
