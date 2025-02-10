@@ -152,7 +152,7 @@ class bookit_event {
                 $record->compensationfordisadvantages ?? null,
                 $record->bookingstatus,
                 $record->personinchargeid ?? null,
-                implode(',', $record->otherexaminers),
+                ltrim(implode(',', $record->otherexaminers), ','),
                 $record->coursetemplate ?? 0,
                 $record->notes ?? null,
                 $record->internalnotes ?? null,
