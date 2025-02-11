@@ -35,6 +35,13 @@ if ($hassiteconfig) {
     if ($ADMIN->fulltree) {
         // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
 
+        // Event settings.
+        $name = 'mod_bookit/extratime';
+        $title = get_string('settings_extratime', 'mod_bookit');
+        $description = get_string('settings_extratime_desc', 'mod_bookit');
+        $setting = new admin_setting_configtext($name, $title, $description, 30, PARAM_INT, 5);
+        $settings->add($setting);
+
         // Room colors heading.
         $name = 'mod_bookit/roomcolorheading';
         $title = get_string('settings_roomcolorheading', 'mod_bookit', null, true);

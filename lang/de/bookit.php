@@ -52,8 +52,10 @@ $string['event_department'] = 'Institution';
 $string['event_department_help'] = 'Tragen Sie die beantragende Institution ein.';
 $string['event_duration'] = 'Dauer des Termins (in Minuten)';
 $string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
-$string['event_end'] = 'Ende';
-$string['event_end_help'] = 'Wählen Sie das Enddatum und -uhrzeit des Termins.';
+// ...@TODO: translate.
+$string['event_extratime_label'] = '<i>Extra time for the event</i>';
+// ...@TODO: translate.
+$string['event_extratime_description'] = '<i>Note that an extra time of {$a} minutes is automatically added to each event to allow preparation and wrap-up works to be done.</i>';
 $string['event_internalnotes'] = 'Interne Hinweise';
 $string['event_internalnotes_help'] = 'Diese Notizen sind nur für den internen Gebrauch bestimmt und werden der buchenden Person nicht angezeigt.';
 $string['event_name'] = 'Termin Name';
@@ -99,6 +101,10 @@ $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';
 $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
+// ...@TODO: translate.
+$string['settings_extratime'] = 'Extra time for event';
+// ...@TODO: translate.
+$string['settings_extratime_desc'] = 'Extra time which will be added automatically to each event to allow preparation and wrap-up works to be done.';
 // ...@TODO: translate.
 $string['settings_roomcolor'] = 'Color for room {$a}';
 // ...@TODO: translate.
