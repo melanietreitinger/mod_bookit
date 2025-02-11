@@ -138,17 +138,20 @@ class edit_event_form extends dynamic_form {
         // Add the "bookingtimes" fields.
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
         $curdate = new \DateTimeImmutable('+ 1 hour');
-        $defaultstarttime = ($startdate ? strtotime($startdate) : $curdate->getTimestamp());
         $starttimearray = [
-            'defaulttime' => $defaultstarttime,
-            'step' => 5, // Step to increment minutes by.
+            'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
+            'step' => 15, // Step to increment minutes by.
             'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
         ];
         // Set time restrictions based on "editinternal" capability.
-        if (!$caneditinternal) {
-            $starttimearray['startyear'] = date("Y");
-            $starttimearray['stopyear'] = date("Y") + ($config->eventmaxyears ?? 1); // ...@TODO: remove fallback value if stopyear is an admin setting - issue#3!
+        if ($caneditinternal) {
+            $starttimearray['startyear'] = $config->eventminyears;
         }
+        else {
+            $starttimearray['startyear'] = date("Y");
+
+        }
+        $starttimearray['stopyear'] = $config->eventmaxyears;
 
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('starttime', 'editevent', 'neq');

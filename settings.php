@@ -35,11 +35,33 @@ if ($hassiteconfig) {
     if ($ADMIN->fulltree) {
         // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
 
-        // Event settings.
+        // Event setting extra time.
         $name = 'mod_bookit/extratime';
         $title = get_string('settings_extratime', 'mod_bookit');
         $description = get_string('settings_extratime_desc', 'mod_bookit');
         $setting = new admin_setting_configtext($name, $title, $description, 30, PARAM_INT, 5);
+        $settings->add($setting);
+
+        // Event setting eventminyears.
+        $name = 'mod_bookit/eventminyears';
+        $title = get_string('settings_eventminyears', 'mod_bookit');
+        $description = get_string('settings_eventminyears_desc', 'mod_bookit');
+        $minyearlist = [];
+        for ($i = date('Y'); $i >=  date('Y', strtotime('-10 year')); $i--) {
+            $minyearlist[$i] = $i;
+        }
+        $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('-1 year')), $minyearlist);
+        $settings->add($setting);
+
+        // Event setting eventmaxyears.
+        $name = 'mod_bookit/eventmaxyears';
+        $title = get_string('settings_eventmaxyears', 'mod_bookit');
+        $description = get_string('settings_eventmaxyears_desc', 'mod_bookit');
+        $minyearlist = [];
+        for ($i = date('Y'); $i <=  date('Y', strtotime('+10 year')); $i++) {
+            $minyearlist[$i] = $i;
+        }
+        $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
         $settings->add($setting);
 
         // Room colors heading.

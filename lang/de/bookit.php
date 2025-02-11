@@ -102,6 +102,14 @@ $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den K
 $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
 // ...@TODO: translate.
+$string['settings_eventmaxyears'] = 'Maxmum year to select for event';
+// ...@TODO: translate.
+$string['settings_eventmaxyears_desc'] = 'Set the maxmum year to select for event. Note: this only applies to roles with the capability <code>caneditinternal</code>.';
+// ...@TODO: translate.
+$string['settings_eventminyears'] = 'Minimum year to select for event';
+// ...@TODO: translate.
+$string['settings_eventminyears_desc'] = 'Set the minimum year to select for event. Note: this only applies to roles with the capability <code>caneditinternal</code>.';
+// ...@TODO: translate.
 $string['settings_extratime'] = 'Extra time for event';
 // ...@TODO: translate.
 $string['settings_extratime_desc'] = 'Extra time which will be added automatically to each event to allow preparation and wrap-up works to be done.';
