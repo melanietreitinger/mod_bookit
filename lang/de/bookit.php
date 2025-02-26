@@ -53,9 +53,11 @@ $string['event_department_help'] = 'Tragen Sie die beantragende Institution ein.
 $string['event_duration'] = 'Dauer des Termins (in Minuten)';
 $string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
 // ...@TODO: translate.
-$string['event_extratime_label'] = '<i>Extra time for the event</i>';
+$string['event_error_mintime'] = 'You cannot enter events in the past.';
 // ...@TODO: translate.
 $string['event_extratime_description'] = '<i>Note that an extra time of {$a} minutes is automatically added to each event to allow preparation and wrap-up works to be done.</i>';
+// ...@TODO: translate.
+$string['event_extratime_label'] = '<i>Extra time for the event</i>';
 $string['event_internalnotes'] = 'Interne Hinweise';
 $string['event_internalnotes_help'] = 'Diese Notizen sind nur für den internen Gebrauch bestimmt und werden der buchenden Person nicht angezeigt.';
 $string['event_name'] = 'Termin Name';

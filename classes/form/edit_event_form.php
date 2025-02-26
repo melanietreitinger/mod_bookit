@@ -139,23 +139,35 @@ class edit_event_form extends dynamic_form {
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
         $curdate = new \DateTimeImmutable('+ 1 hour');
         $starttimearray = [
-            'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
-            'step' => 15, // Step to increment minutes by.
-            'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
+                'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
+                'step' => 15, // Step to increment minutes by.
+                'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
         ];
         // Set time restrictions based on "editinternal" capability.
         if ($caneditinternal) {
             $starttimearray['startyear'] = $config->eventminyears;
-        }
-        else {
+        } else {
             $starttimearray['startyear'] = date("Y");
 
         }
         $starttimearray['stopyear'] = $config->eventmaxyears;
 
+        // Closure function to check that no date in the past is selected.
+        $checkmindate = function($val) use ($curdate) {
+            $checkdate = mktime($val['hour'], $val['minute'], '00', $val['month'], $val['day'], $val['year']);
+            if ($checkdate < $curdate->getTimestamp()) {
+                return false;
+            }
+            return true;
+        };
+
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('starttime', 'editevent', 'neq');
         $mform->addRule('starttime', null, 'required', null, 'client');
+        if (!$caneditinternal) {
+            $mform->addRule('starttime', get_string('event_error_mintime', 'mod_bookit'), 'callback', $checkmindate, 'server',
+                    false, true);
+        }
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
         // Add the "duration" field.
@@ -443,7 +455,7 @@ class edit_event_form extends dynamic_form {
         $formdata->resources = $mappings;
 
         // Calculate endtime.
-        $formdata->endtime = $formdata->starttime + $formdata->duration*60 + $formdata->extratime*60;
+        $formdata->endtime = $formdata->starttime + $formdata->duration * 60 + $formdata->extratime * 60;
 
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));

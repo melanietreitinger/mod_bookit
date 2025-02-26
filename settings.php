@@ -47,7 +47,7 @@ if ($hassiteconfig) {
         $title = get_string('settings_eventminyears', 'mod_bookit');
         $description = get_string('settings_eventminyears_desc', 'mod_bookit');
         $minyearlist = [];
-        for ($i = date('Y'); $i >=  date('Y', strtotime('-10 year')); $i--) {
+        for ($i = date('Y'); $i >= date('Y', strtotime('-10 year')); $i--) {
             $minyearlist[$i] = $i;
         }
         $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('-1 year')), $minyearlist);
@@ -58,7 +58,7 @@ if ($hassiteconfig) {
         $title = get_string('settings_eventmaxyears', 'mod_bookit');
         $description = get_string('settings_eventmaxyears_desc', 'mod_bookit');
         $minyearlist = [];
-        for ($i = date('Y'); $i <=  date('Y', strtotime('+10 year')); $i++) {
+        for ($i = date('Y'); $i <= date('Y', strtotime('+10 year')); $i++) {
             $minyearlist[$i] = $i;
         }
         $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
@@ -77,7 +77,6 @@ if ($hassiteconfig) {
         $choices = ['#ffffff' => 'white', '#000000' => 'black'];
         $setting = new admin_setting_configselect($name, $title, $description, '#ffffff', $choices);
         $settings->add($setting);
-
 
         // Set a color for each room defined in resources - at least one.
         // Get the ressources.
