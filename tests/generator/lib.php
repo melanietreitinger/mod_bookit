@@ -22,15 +22,24 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 use mod_bookit\local\entity\bookit_event;
 
+/**
+ * Data generator for mod_bookit
+ *
+ * @package     mod_bookit
+ * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class mod_bookit_generator extends testing_module_generator {
 
-    public function create_event($event) {
-        //global $DB;
-        //$DB->insert_record('bookit_event', $event);
+    /**
+     * Create a new event.
+     * @param array $event
+     * @return void
+     * @throws dml_exception
+     */
+    final public function create_event(array $event) {
         $e = new bookit_event(
                 0,
                 $event['name'],
@@ -51,8 +60,8 @@ class mod_bookit_generator extends testing_module_generator {
                 'Susi Support',
                 [
                         (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
-                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
-                        (object) ['resourceid' => rand(6, 10), 'amount' => rand(2, 85)], // Other resources.
+                        (object) ['resourceid' => rand(6, 7), 'amount' => rand(2, 85)], // Other resources.
+                        (object) ['resourceid' => rand(8, 10), 'amount' => rand(2, 85)], // Other resources.
                 ],
                 null,
                 2,

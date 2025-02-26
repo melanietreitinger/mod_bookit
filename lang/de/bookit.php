@@ -52,8 +52,12 @@ $string['event_department'] = 'Institution';
 $string['event_department_help'] = 'Tragen Sie die beantragende Institution ein.';
 $string['event_duration'] = 'Dauer des Termins (in Minuten)';
 $string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
-$string['event_end'] = 'Ende';
-$string['event_end_help'] = 'Wählen Sie das Enddatum und -uhrzeit des Termins.';
+// ...@TODO: translate.
+$string['event_error_mintime'] = 'You cannot enter events in the past.';
+// ...@TODO: translate.
+$string['event_extratime_description'] = '<i>Note that an extra time of {$a} minutes is automatically added to each event to allow preparation and wrap-up works to be done.</i>';
+// ...@TODO: translate.
+$string['event_extratime_label'] = '<i>Extra time for the event</i>';
 $string['event_internalnotes'] = 'Interne Hinweise';
 $string['event_internalnotes_help'] = 'Diese Notizen sind nur für den internen Gebrauch bestimmt und werden der buchenden Person nicht angezeigt.';
 $string['event_name'] = 'Termin Name';
@@ -94,15 +98,36 @@ $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
 $string['resource_amount'] = 'Anzahl';
-// ...@TODO: translate.
-$string['roomcolor'] = 'Color for room {$a}';
-// ...@TODO: translate.
-$string['roomcolor_desc'] = 'Select a color to be used for the calendar view.';
-// ...@TODO: translate.
 $string['roomcolorheading'] = 'Room colors';
 $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';
 $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
+// ...@TODO: translate.
+$string['settings_eventmaxyears'] = 'Maxmum year to select for event';
+// ...@TODO: translate.
+$string['settings_eventmaxyears_desc'] = 'Set the maxmum year to select for event. Note: this only applies to roles with the capability <code>caneditinternal</code>.';
+// ...@TODO: translate.
+$string['settings_eventminyears'] = 'Minimum year to select for event';
+// ...@TODO: translate.
+$string['settings_eventminyears_desc'] = 'Set the minimum year to select for event. Note: this only applies to roles with the capability <code>caneditinternal</code>.';
+// ...@TODO: translate.
+$string['settings_extratime'] = 'Extra time for event';
+// ...@TODO: translate.
+$string['settings_extratime_desc'] = 'Extra time which will be added automatically to each event to allow preparation and wrap-up works to be done.';
+// ...@TODO: translate.
+$string['settings_roomcolor'] = 'Color for room {$a}';
+// ...@TODO: translate.
+$string['settings_roomcolor_desc'] = 'Select a color to be used for the calendar view.';
+// ...@TODO: translate.
+$string['settings_roomcolor_wcagcheck'] = 'Color contrast check for room {$a}';
+// ...@TODO: translate.
+$string['settings_roomcolor_wcagcheck_desc'] = 'Contrast check for color <i>#{$a->bcolor}</i> and text <i>#{$a->fcolor}</i>: ';
+// ...@TODO: translate.
+$string['settings_roomcolorheading'] = 'Room colors';
+// ...@TODO: translate.
+$string['settings_textcolor'] = 'Event text color';
+// ...@TODO: translate.
+$string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
 $string['summer_semester'] = 'Sommersemester';
 $string['winter_semester'] = 'Wintersemester';

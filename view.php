@@ -55,6 +55,19 @@ $capabilities = [
         'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
 ];
 
+// Get the plugin config.
+$config = get_config('mod_bookit');
+$configcalendar = [];
+foreach ($config as $key => $value) {
+    switch ($key) {
+        case 'textcolor':
+            $configcalendar[$key] = $value;
+            break;
+        default:
+            break;
+    }
+}
+
 // Log view event of calendar.
 $event = course_module_viewed::create([
         'objectid' => $moduleinstance->id,
@@ -77,6 +90,13 @@ $PAGE->set_context($modulecontext);
 echo $OUTPUT->header();
 
 echo '<div id="ec"></div>';
-$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [$cm->id, $eventsource, $capabilities, current_language()]);
+$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init',
+        [
+                $cm->id,
+                $eventsource,
+                $capabilities,
+                current_language(),
+                $configcalendar,
+        ]);
 
 echo $OUTPUT->footer();

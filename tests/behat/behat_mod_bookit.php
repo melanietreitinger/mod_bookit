@@ -66,23 +66,9 @@ class behat_mod_bookit extends behat_base {
                 return new moodle_url('/mod/bookit/view.php',
                         ['b' => $moduleinstance->id]);
 
-            /*case 'edit':
-                return new moodle_url('/course/modedit.php', [
-                        'update' => $this->get_cm_by_bookit_name($identifier)->id]);
-
-            case 'choices':
-                return new moodle_url('/mod/bookit/view.php', [
-                        'id' => $this->get_cm_by_bookit_name($identifier)->id, 'action' => ACTION_SHOW_CHOICES,
-                ]);
-
-            case 'reports':
-                return new moodle_url('/mod/bookit/view.php', [
-                        'id' => $this->get_cm_by_bookit_name($identifier)->id,
-                        'action' => ACTION_SHOW_RATINGS_AND_ALLOCATION_TABLE,
-                ]);*/
-
             default:
-                throw new Exception('Unrecognised bookit page type "' . $type . '" with identifier "'.$identifier.'" and id "'.$moduleinstance->id.'".');
+                throw new Exception('Unrecognised bookit page type "' . $type . '"
+                                                with identifier "'.$identifier.'" and id "'.$moduleinstance->id.'".');
         }
     }
 }

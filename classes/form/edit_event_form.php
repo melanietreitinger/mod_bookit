@@ -81,6 +81,10 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
+        // Set hidden field extra time.
+        $mform->addElement('hidden', 'extratime', $config->extratime);
+        $mform->setType('extratime', PARAM_INT);
+
         // Show the user who created the entry.
         $mform->addElement('text', 'usermodified', get_string('event_usermodified', 'mod_bookit'));
         $mform->setType('usermodified', PARAM_TEXT);
@@ -132,36 +136,57 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
         // Add the "bookingtimes" fields.
-        // ...@TODO: make stopyear an admin setting issue#3!
-        $startarray = ['startyear' => date("Y"), 'stopyear' => date("Y") + ($config->eventmaxyears ?? 1),
-                'timezone' => usertimezone(), 'step' => 5, 'optional' => false];
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
-        $date = new \DateTimeImmutable('+ 1 hour');
-        $starttime = ($startdate ? strtotime($startdate) : $date->getTimestamp());
+        $curdate = new \DateTimeImmutable('+ 1 hour');
+        $starttimearray = [
+                'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
+                'step' => 15, // Step to increment minutes by.
+                'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
+        ];
+        // Set time restrictions based on "editinternal" capability.
+        if ($caneditinternal) {
+            $starttimearray['startyear'] = $config->eventminyears;
+        } else {
+            $starttimearray['startyear'] = date("Y");
 
-        $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $startarray);
+        }
+        $starttimearray['stopyear'] = $config->eventmaxyears;
+
+        // Closure function to check that no date in the past is selected.
+        $checkmindate = function($val) use ($curdate) {
+            $checkdate = mktime($val['hour'], $val['minute'], '00', $val['month'], $val['day'], $val['year']);
+            if ($checkdate < $curdate->getTimestamp()) {
+                return false;
+            }
+            return true;
+        };
+
+        $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('starttime', 'editevent', 'neq');
-        $mform->setDefault('starttime', $starttime);
         $mform->addRule('starttime', null, 'required', null, 'client');
+        if (!$caneditinternal) {
+            $mform->addRule('starttime', get_string('event_error_mintime', 'mod_bookit'), 'callback', $checkmindate, 'server',
+                    false, true);
+        }
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
 
-        $stoparray = ['startyear' => date("Y"), 'stopyear' => date("Y") + 1,
-                'timezone' => usertimezone(), 'step' => 5, 'optional' => false];
-        // ...@TODO: make default duration of event time an admin setting issue#3!
-        $defaultduration = ($config->eventdefaultduration ?? 60);
-        $mform->addElement('date_time_selector', 'endtime', get_string('event_end', 'mod_bookit'), $stoparray);
-        $mform->disabledIf('endtime', 'editevent', 'neq');
-        $mform->setDefault('endtime', strtotime(' + ' . $defaultduration . ' minutes', $starttime));
-        $mform->addRule('endtime', null, 'required', null, 'client');
-        // ...@TODO: Restrict event duration according to $config->eventmaxduration!
-        $mform->addHelpButton('endtime', 'event_end', 'mod_bookit');
-
         // Add the "duration" field.
-        $mform->addElement('text', 'duration', get_string('event_duration', 'mod_bookit'), ['size' => '4']);
+        $duration = [];
+        // ...@TODO: remove fallback values if these values are admin settings - see issue#3!
+        $eventdefaultduration = ($config->eventdefaultduration ?? 60);
+        $eventdurationstepwidth = ($config->eventdurationstepwidth ?? 15);
+        $eventmaxduration = ($config->eventmaxduration ?? 480);
+        for ($i = $eventdurationstepwidth; $i <= $eventmaxduration; $i += $eventdurationstepwidth) {
+            $duration[$i] = $i;
+        }
+        $select = $mform->addElement('select', 'duration', get_string('event_duration', 'mod_bookit'), $duration);
+        $select->setSelected($eventdefaultduration);
         $mform->disabledIf('duration', 'editevent', 'neq');
-        $mform->setType('duration', PARAM_INT);
-        $mform->addRule('duration', null, 'required', null, 'client');
         $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
+
+        // Add a static field to explain extra time.
+        $mform->addElement('static', 'extratime_label', get_string('event_extratime_label', 'mod_bookit'),
+                get_string('event_extratime_description', 'mod_bookit', $config->extratime));
 
         // Add "amount of students" field.
         $mform->addElement('text', 'participantsamount', get_string('event_students', 'mod_bookit'), ['size' => '4']);
@@ -428,6 +453,9 @@ class edit_event_form extends dynamic_form {
             }
         }
         $formdata->resources = $mappings;
+
+        // Calculate endtime.
+        $formdata->endtime = $formdata->starttime + $formdata->duration * 60 + $formdata->extratime * 60;
 
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));

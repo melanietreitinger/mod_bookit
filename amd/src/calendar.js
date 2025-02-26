@@ -20,11 +20,20 @@ const theGlobalProperty = (globalPropertyName) => {
  * @param {string} eventsource
  * @param {array} capabilities
  * @param {string} lang
+ * @param {array} config
  * @returns {Promise<void>}
  */
-export async function init(cmid, eventsource, capabilities, lang) {
+export async function init(cmid, eventsource, capabilities, lang, config) {
     await theGlobalProperty('EventCalendar');
 
+    // Set textcolor.
+    let textcolor = '#ffffff';
+    if (Object.hasOwn(config, 'textcolor')) {
+        textcolor = config.textcolor;
+        console.log('textcolor set to '+textcolor);
+    }
+
+    // Define toolbarbuttons.
     let toolbarbuttons = 'prev,next today';
     if (capabilities.addevent) {
         toolbarbuttons = 'prev,next today, addButton';
@@ -48,7 +57,7 @@ export async function init(cmid, eventsource, capabilities, lang) {
     const str_day               = 'XXX';
     const str_list              = 'XXX';*/
 
-
+    // Define viewtype.
     let viewType = 'timeGridWeek';
     if (window.screen.width <= 1000) {
         viewType = 'listWeek';
@@ -65,6 +74,8 @@ export async function init(cmid, eventsource, capabilities, lang) {
         dayMaxEvents: true,
         nowIndicator: true,
         selectable: false,
+        eventTextColor: textcolor,
+        eventBackgroundColor: '#035AA3',
         eventStartEditable: false,
         eventDurationEditable: false,
         buttonText: function (text) {
