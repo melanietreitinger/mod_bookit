@@ -61,7 +61,7 @@ function xmldb_bookit_install() {
     for ($i = 1; $i <= 10; $i++) {
         // Generate random date and time in the current week between 07:00 and 20:00.
         // Changed from 0-6 to 0-5 to exclude Sundays.
-        $dayofweek = rand(0, 5);
+        $dayofweek = rand(0, 4);
         $hour = rand(7, 20);
         $minute = rand(0, 59);
         $second = rand(0, 59);
