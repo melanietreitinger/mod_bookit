@@ -29,7 +29,9 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
-    $settings = new admin_settingpage('mod_bookit_settings', new lang_string('pluginname', 'mod_bookit'));
+
+    $ADMIN->add('modsettings', new admin_category('mod_bookit_category', new lang_string('pluginname', 'mod_bookit')));
+    $settings = new admin_settingpage('mod_bookit_settings', new lang_string('general_settings', 'mod_bookit'));
 
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ADMIN->fulltree) {
@@ -108,6 +110,16 @@ if ($hassiteconfig) {
                 }
             }
         }
-
     }
+
+    $ADMIN->add('mod_bookit_category', $settings);
+    $settings = null; // Otherwise, the $settings would be added a second time.
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_define_institutions',
+        get_string('define_institutions', 'mod_bookit'),
+        new moodle_url('/mod/bookit/define_institutions.php'),
+        // TODO specify required capability.
+    ));
+
 }
