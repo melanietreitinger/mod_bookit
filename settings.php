@@ -109,7 +109,6 @@ if ($hassiteconfig) {
                 }
             }
         }
-
     }
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
@@ -119,5 +118,13 @@ if ($hassiteconfig) {
         ));
 
     $ADMIN->add('mod_bookit_category', $settings);
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_define_institutions',
+        get_string('define_institutions', 'mod_bookit'),
+        new moodle_url('/mod/bookit/define_institutions.php'),
+        // TODO specify required capability.
+    ));
+
     $settings = null;
 }

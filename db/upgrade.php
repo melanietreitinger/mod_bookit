@@ -74,6 +74,32 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2024102204, 'bookit');
     }
 
+    if ($oldversion < 2025040300) {
+        $dbman = $DB->get_manager();
+
+        // Define table bookit_institution to be created.
+        $table = new xmldb_table('bookit_institution');
+
+        // Adding fields to table bookit_institution.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('internalnotes', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('hidden', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table bookit_institution.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for bookit_institution.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025040300, 'bookit');
+    }
+
+
+
     if ($oldversion < 2025050500) {
         $dbman = $DB->get_manager();
 

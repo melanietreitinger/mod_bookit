@@ -43,6 +43,7 @@ $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 // ...@TODO: translate.
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLATZHALTER';
+$string['define_institutions'] = 'Institutionen definieren';
 $string['category_name'] = 'Kategoriename';
 $string['checklistcategory'] = 'Checklisten-Kategorie';
 $string['checklistcategorydeleted'] = 'Checklisten-Kategorie erfolgreich gelöscht.';
@@ -99,6 +100,7 @@ $string['event_start'] = 'Beginn';
 $string['event_start_help'] = 'Wählen Sie das Startdatum und -uhrzeit des Termins.';
 $string['event_students'] = 'Anzahl der Teilnehmenden';
 $string['event_students_help'] = 'Tragen Sie die erwartete Anzahl der Teilnehmenden ein.';
+$string['general_settings'] = 'Allgemeine Einstellungen';
 // ...@TODO: translate.
 $string['event_supportperson'] = 'Support persons';
 // ...@TODO: translate.
@@ -112,6 +114,13 @@ $string['event_usermodified'] = 'Created by user';
 // ...@TODO: translate.
 $string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
+$string['institution'] = 'Institution';
+$string['institution_hidden'] = 'Versteckt';
+$string['institution_hidden_help'] = 'Wenn ja, können buchende Personen diese Institution nicht auswahlen.';
+$string['institution_name'] = 'Name der Institution';
+$string['institutions'] = 'Institutionen';
+$string['internalnotes'] = 'Interne Hinweise';
+$string['internalnotes_help'] = 'Diese Notizen sind nur für den internen Gebrauch bestimmt und werden der buchenden Person nicht angezeigt.';
 $string['item_state_done'] = 'Erledigt';
 $string['item_state_open'] = 'Offen';
 $string['item_state_processing'] = 'In Bearbeitung';
@@ -120,6 +129,7 @@ $string['master_checklist'] = 'Haupt-Checkliste';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';
 $string['modulenameplural'] = 'BookIt Instanzen';
+$string['new_institution'] = 'Neue Institution';
 $string['new_checklistcategory'] = 'Neue Checklisten-Kategorie';
 $string['new_checklistitem'] = 'Neues Checklisten-Element';
 $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
@@ -163,6 +173,7 @@ $string['settings_textcolor'] = 'Event text color';
 $string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
 $string['sort'] = 'Sortieren';
 $string['summer_semester'] = 'Sommersemester';
+$string['tools'] = 'Werkzeuge';
 $string['time'] = 'Zeit';
 $string['type_before_due'] = 'Vor Fälligkeit';
 $string['type_before_due_date'] = 'Vor Fälligkeitsdatum';
@@ -172,3 +183,4 @@ $string['type_when_done'] = 'Wenn erledigt';
 $string['type_when_due'] = 'Wenn fällig';
 $string['type_when_due'] = 'Wenn fällig';
 $string['winter_semester'] = 'Wintersemester';
+
