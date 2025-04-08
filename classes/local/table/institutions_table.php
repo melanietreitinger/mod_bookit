@@ -44,7 +44,7 @@ class institutions_table extends \table_sql {
         global $PAGE;
         parent::__construct('mod_bookit-institutions_table');
         $this->define_baseurl($PAGE->url);
-        $this->set_sql('id, name, internalnotes, hidden', '{bookit_institution}', 'true');
+        $this->set_sql('id, name, internalnotes, active', '{bookit_institution}', 'true');
         $this->column_nosort = ['internalnotes', 'tools'];
         $this->define_columns(['name', 'internalnotes', 'tools']);
         $this->define_headers([
@@ -81,7 +81,7 @@ class institutions_table extends \table_sql {
      * @return string added to the class="" attribute of the tr.
      */
     public function get_row_class($row) {
-        if ($row->hidden) {
+        if (!$row->active) {
             return 'text-muted';
         }
         return '';

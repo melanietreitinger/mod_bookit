@@ -43,6 +43,5 @@ echo $OUTPUT->render(new \core\output\single_button(
 
 $table->out(48, false);
 
-
 echo $OUTPUT->footer();
 
