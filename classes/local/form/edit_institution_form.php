@@ -38,7 +38,10 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class edit_institution_form extends \moodleform {
+class edit_institution_form extends \core\form\persistent {
+
+    /** @var string The related persistent class. */
+    protected static $persistentclass = 'mod_bookit\\local\\persistent\\institution';
 
     /**
      * Defines forms elements
@@ -46,18 +49,13 @@ class edit_institution_form extends \moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
-
         $mform->addElement('text', 'name', get_string('institution_name', 'mod_bookit'));
-        $mform->setType('name', PARAM_TEXT);
 
         $mform->addElement('textarea', 'internalnotes', get_string('internalnotes', 'mod_bookit'));
-        $mform->setType('internalnotes', PARAM_TEXT);
         $mform->addHelpButton('internalnotes', 'internalnotes', 'mod_bookit');
 
-        $mform->addElement('checkbox', 'hidden', get_string('institution_hidden', 'mod_bookit'));
-        $mform->addHelpButton('hidden', 'institution_hidden', 'mod_bookit');
+        $mform->addElement('checkbox', 'active', get_string('institution_active', 'mod_bookit'));
+        $mform->addHelpButton('active', 'institution_active', 'mod_bookit');
 
         $this->add_action_buttons();
     }
@@ -71,7 +69,8 @@ class edit_institution_form extends \moodleform {
     public function get_data() {
         $data = parent::get_data();
         if ($data) {
-            $data->hidden = $data->hidden ?? false;
+            // Unchecked checkboxes are not set at all by default.
+            $data->active = $data->active ?? false;
         }
         return $data;
     }

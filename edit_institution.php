@@ -34,7 +34,7 @@ $params = [];
 $institution = null;
 if ($id) {
     $params['id'] = $id;
-    $institution = $DB->get_record('bookit_institution', ['id' => $id]);
+    $institution = \mod_bookit\local\persistent\institution::get_record(['id' => $id]);
 }
 
 $PAGE->set_url(new moodle_url('/mod/bookit/edit_institution.php', $params));
@@ -43,16 +43,19 @@ $PAGE->set_heading($title);
 $PAGE->set_title($title);
 $returnurl = new moodle_url('/mod/bookit/define_institutions.php');
 
-$mform = new \mod_bookit\local\form\edit_institution_form();
-$mform->set_data($institution);
+$mform = new \mod_bookit\local\form\edit_institution_form($PAGE->url, [
+    'persistent' => $institution,
+]);
 
 if ($mform->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $mform->get_data()) {
     if ($data->id) {
-        $DB->update_record('bookit_institution', $data);
+        $institution->from_record($data);
+        $institution->update();
     } else {
-        $DB->insert_record('bookit_institution', $data);
+        $institution = new \mod_bookit\local\persistent\institution(0, $data);
+        $institution->create();
     }
     redirect($returnurl);
 } // Else display form.
