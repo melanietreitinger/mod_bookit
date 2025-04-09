@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A moodle form for institutions.
+ * A moodle form for rooms.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
@@ -29,16 +29,16 @@ global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
 /**
- * A moodle form for institutions.
+ * A moodle form for rooms.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class edit_institution_form extends \core\form\persistent {
+class edit_room_form extends \core\form\persistent {
 
     /** @var string The related persistent class. */
-    protected static $persistentclass = 'mod_bookit\\local\\persistent\\institution';
+    protected static $persistentclass = 'mod_bookit\\local\\persistent\\room';
 
     /**
      * Defines forms elements
@@ -46,30 +46,14 @@ class edit_institution_form extends \core\form\persistent {
     public function definition() {
         $mform = $this->_form;
 
-        $mform->addElement('text', 'name', get_string('institution_name', 'mod_bookit'));
+        $mform->addElement('text', 'name', get_string('name'));
 
-        $mform->addElement('textarea', 'internalnotes', get_string('internalnotes', 'mod_bookit'));
-        $mform->addHelpButton('internalnotes', 'internalnotes', 'mod_bookit');
+        $mform->addElement('textarea', 'description', get_string('description'));
 
-        $mform->addElement('checkbox', 'active', get_string('institution_active', 'mod_bookit'));
-        $mform->addHelpButton('active', 'institution_active', 'mod_bookit');
+        // TODO use a proper color picker.
+        $mform->addElement('text', 'eventcolor', get_string('color', 'mod_bookit'));
 
         $this->add_action_buttons();
-    }
-
-    /**
-     * Return submitted data if properly submitted or returns NULL if validation fails or
-     * if there is no submitted data.
-     *
-     * @return \stdClass|null submitted data; NULL if not valid or not submitted or cancelled
-     */
-    public function get_data() {
-        $data = parent::get_data();
-        if ($data) {
-            // Unchecked checkboxes are not set at all by default.
-            $data->active = $data->active ?? false;
-        }
-        return $data;
     }
 
 }

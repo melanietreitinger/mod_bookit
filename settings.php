@@ -121,8 +121,22 @@ if ($hassiteconfig) {
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
         'mod_bookit_define_institutions',
-        get_string('define_institutions', 'mod_bookit'),
+        get_string('institutions', 'mod_bookit'),
         new moodle_url('/mod/bookit/define_institutions.php'),
+        // TODO specify required capability.
+    ));
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_rooms',
+        get_string('rooms', 'mod_bookit'),
+        new moodle_url('/mod/bookit/rooms.php'),
+        // TODO specify required capability.
+    ));
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_timeslots',
+        get_string('timeslots', 'mod_bookit'),
+        new moodle_url('/mod/bookit/weekplans.php'),
         // TODO specify required capability.
     ));
 
