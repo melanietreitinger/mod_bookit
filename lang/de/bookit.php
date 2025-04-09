@@ -57,14 +57,14 @@ $string['checklistitemsuccess'] = 'Checklisten-Element erfolgreich erstellt.';
 $string['checklistitemupdatesuccess'] = 'Checklisten-Element erfolgreich aktualisiert.';
 $string['customtemplate'] = 'Nachricht';
 $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
-.'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
-.'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
-.'<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
-.'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
-.'<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
-.'###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
-.'<p>Nulla vitae elit libero,<br>'
-.'Cras justo odio.</p>';
+. '<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
+. 'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
+. '<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
+. 'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
+. '<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
+. '###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
+. '<p>Nulla vitae elit libero,<br>'
+. 'Cras justo odio.</p>';
 $string['edit'] = 'Bearbeiten';
 $string['edit_event'] = "Termin bearbeiten";
 $string['event_bookingstatus'] = 'Buchungsstatus';
@@ -135,6 +135,7 @@ $string['new_checklistcategory'] = 'Neue Checklisten-Kategorie';
 $string['new_checklistitem'] = 'Neues Checklisten-Element';
 $string['new_room'] = 'Neuer Raum';
 $string['new_timeslot'] = 'Neue timeslot';
+$string['new_weekplan'] = 'Neuer Wochenplan';
 $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
@@ -187,4 +188,6 @@ $string['type_overdue_date'] = 'Nach Überfälligkeitsdatum';
 $string['type_when_done'] = 'Wenn erledigt';
 $string['type_when_due'] = 'Wenn fällig';
 $string['type_when_due'] = 'Wenn fällig';
+$string['weekplan'] = 'Wochenplan';
+$string['weekplans'] = 'Wochenpläne';
 $string['winter_semester'] = 'Wintersemester';

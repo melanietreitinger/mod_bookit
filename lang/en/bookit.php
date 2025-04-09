@@ -36,8 +36,6 @@ $string['bookit:view'] = 'View BookIt instance';
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLACEHOLDER';
-$string['color'] = 'Color';
-$string['define_institutions'] = 'Define institutions';
 $string['category_name'] = 'Category name';
 $string['checklistcategory'] = 'Checklist category';
 $string['checklistcategorydeleted'] = 'Checklist category deleted successfully.';
@@ -48,16 +46,18 @@ $string['checklistitemdeleted'] = 'Checklist item deleted successfully.';
 $string['checklistitemname'] = 'Checklist item name';
 $string['checklistitemsuccess'] = 'Checklist item created successfully.';
 $string['checklistitemupdatesuccess'] = 'Checklist item updated successfully.';
+$string['color'] = 'Color';
 $string['customtemplate'] = 'Message';
 $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
-.'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
-.'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
-.'<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
-.'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
-.'<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
-.'###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
-.'<p>Nulla vitae elit libero,<br>'
-.'Cras justo odio.</p>';
+. '<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
+. 'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
+. '<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
+. 'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
+. '<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
+. '###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
+. '<p>Nulla vitae elit libero,<br>'
+. 'Cras justo odio.</p>';
+$string['define_institutions'] = 'Define institutions';
 $string['edit'] = 'Edit';
 $string['edit_event'] = "Edit event";
 $string['event_bookingstatus'] = 'Booking status';
@@ -99,11 +99,6 @@ $string['event_usermodified'] = 'Created by user';
 $string['general_settings'] = 'General Settings';
 $string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
-$string['item_state_done'] = 'Done';
-$string['item_state_open'] = 'Open';
-$string['item_state_processing'] = 'Processing';
-$string['item_state_unknown'] = 'Unknown';
-$string['master_checklist'] = 'Master checklist';
 $string['institution'] = 'Institution';
 $string['institution_active'] = 'Active';
 $string['institution_active_help'] = 'If this institution will be available to select in new events.';
@@ -111,14 +106,20 @@ $string['institution_name'] = 'Institution name';
 $string['institutions'] = 'Institutions';
 $string['internalnotes'] = 'Internal notes';
 $string['internalnotes_help'] = 'These notes are just for internal use and not shown to the booking person.';
+$string['item_state_done'] = 'Done';
+$string['item_state_open'] = 'Open';
+$string['item_state_processing'] = 'Processing';
+$string['item_state_unknown'] = 'Unknown';
+$string['master_checklist'] = 'Master checklist';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
 $string['modulenameplural'] = 'BookIt instances';
-$string['new_institution'] = 'New institution';
 $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
+$string['new_institution'] = 'New institution';
 $string['new_room'] = 'New room';
 $string['new_timeslot'] = 'New time slot';
+$string['new_weekplan'] = 'New week plan';
 $string['please_select_and_enter'] = 'Please select or enter a number';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
@@ -148,4 +149,6 @@ $string['settings_textcolor_desc'] = 'Set the text color of the event in the cal
 $string['sort'] = 'Sort';
 $string['summer_semester'] = 'Summer Term';
 $string['tools'] = 'Tools';
+$string['weekplan'] = 'Week plan';
+$string['weekplans'] = 'Week plans';
 $string['winter_semester'] = 'Winter Term';

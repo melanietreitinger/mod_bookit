@@ -135,7 +135,7 @@ if ($hassiteconfig) {
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
         'mod_bookit_timeslots',
-        get_string('timeslots', 'mod_bookit'),
+        get_string('weekplans', 'mod_bookit'),
         new moodle_url('/mod/bookit/weekplans.php'),
         // TODO specify required capability.
     ));
