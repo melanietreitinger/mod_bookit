@@ -74,7 +74,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2024102204, 'bookit');
     }
 
-    if ($oldversion < 2025040300) {
+    if ($oldversion < 2025042200) {
         $dbman = $DB->get_manager();
 
         // Define table bookit_institution to be created.
@@ -180,50 +180,31 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        // Define table bookit_globalblocker to be created.
-        $table = new xmldb_table('bookit_globalblocker');
+        // Define table bookit_blocker to be created.
+        $table = new xmldb_table('bookit_blocker');
 
-        // Adding fields to table bookit_globalblocker.
+        // Adding fields to table bookit_blocker.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_TEXT, null, null, null, null, null);
         $table->add_field('starttime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
         $table->add_field('endtime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('roomid', XMLDB_TYPE_INTEGER, '11', null, null, null, null);
         $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
-        // Adding keys to table bookit_globalblocker.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
-
-        // Conditionally launch create table for bookit_globalblocker.
-        if (!$dbman->table_exists($table)) {
-            $dbman->create_table($table);
-        }
-
-        // Define table bookit_roomblocker to be created.
-        $table = new xmldb_table('bookit_roomblocker');
-
-        // Adding fields to table bookit_roomblocker.
-        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('starttime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('endtime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('roomid', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-
-        // Adding keys to table bookit_roomblocker.
+        // Adding keys to table bookit_blocker.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('roomid', XMLDB_KEY_FOREIGN, ['roomid'], 'bookit_room', ['id']);
         $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
 
-        // Conditionally launch create table for bookit_roomblocker.
+        // Conditionally launch create table for bookit_blocker.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
 
         // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025040300, 'bookit');
+        upgrade_mod_savepoint(true, 2025042200, 'bookit');
     }
 
     if ($oldversion < 2025050500) {

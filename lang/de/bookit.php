@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['add_blocker'] = 'Blocker hinzufügen';
 $string['addbooking'] = 'Termin buchen';
 // ...@TODO: translate.
 $string['bookit:addevent'] = 'Add an event';
@@ -45,6 +46,7 @@ $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['color'] = 'Farbe';
 $string['define_institutions'] = 'Institutionen definieren';
+$string['edit_blocker'] = 'Blocker bearbeiten';
 $string['category_name'] = 'Kategoriename';
 $string['checklistcategory'] = 'Checklisten-Kategorie';
 $string['checklistcategorydeleted'] = 'Checklisten-Kategorie erfolgreich gelöscht.';
@@ -67,6 +69,9 @@ $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIE
 . 'Cras justo odio.</p>';
 $string['edit'] = 'Bearbeiten';
 $string['edit_event'] = "Termin bearbeiten";
+$string['end'] = 'Ende';
+$string['end_before_start'] = 'Der Endzeitpunkt muss nach dem Anfangszeitpunkt liegen!';
+$string['end_of_period'] = 'Ende des Zeitraums';
 $string['event_bookingstatus'] = 'Buchungsstatus';
 $string['event_bookingstatus_list'] = 'Neu, In Bearbeitung, Bestätigt, Storniert, Abgelehnt';
 $string['event_compensationfordisadvantages'] = 'Weitere Nachteilsausgleiche';
@@ -101,7 +106,6 @@ $string['event_start'] = 'Beginn';
 $string['event_start_help'] = 'Wählen Sie das Startdatum und -uhrzeit des Termins.';
 $string['event_students'] = 'Anzahl der Teilnehmenden';
 $string['event_students_help'] = 'Tragen Sie die erwartete Anzahl der Teilnehmenden ein.';
-$string['general_settings'] = 'Allgemeine Einstellungen';
 // ...@TODO: translate.
 $string['event_supportperson'] = 'Support persons';
 // ...@TODO: translate.
@@ -114,6 +118,8 @@ $string['event_timecompensation_help'] = 'Check if you have participants entitle
 $string['event_usermodified'] = 'Created by user';
 // ...@TODO: translate.
 $string['header_internal'] = 'Internal fields';
+$string['general_settings'] = 'Allgemeine Einstellungen';
+$string['globally'] = 'Global';
 $string['instancename'] = 'Name';
 $string['institution'] = 'Institution';
 $string['institution_active'] = 'Aktiv';
@@ -136,6 +142,8 @@ $string['new_checklistitem'] = 'Neues Checklisten-Element';
 $string['new_room'] = 'Neuer Raum';
 $string['new_timeslot'] = 'Neue timeslot';
 $string['new_weekplan'] = 'Neuer Wochenplan';
+$string['new_weekplan_room'] = 'Neue Wochenplan-Zuweisung';
+$string['period'] = 'Zeitraum';
 $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
@@ -176,6 +184,8 @@ $string['settings_roomcolorheading'] = 'Room colors';
 $string['settings_textcolor'] = 'Event text color';
 // ...@TODO: translate.
 $string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
+$string['start'] = 'Anfang';
+$string['start_of_period'] = 'Anfang des Zeitraums';
 $string['sort'] = 'Sortieren';
 $string['summer_semester'] = 'Sommersemester';
 $string['timeslots'] = 'Zeitslots';
@@ -189,5 +199,7 @@ $string['type_when_done'] = 'Wenn erledigt';
 $string['type_when_due'] = 'Wenn fällig';
 $string['type_when_due'] = 'Wenn fällig';
 $string['weekplan'] = 'Wochenplan';
+$string['weekplan_assignment_overlaps'] = 'Der eingegebene Zeitraum überschneidet eine bereits existierende Wochenplanzuweisung.';
+$string['weekplan_room'] = 'Wochenplan-Zuweisungen';
 $string['weekplans'] = 'Wochenpläne';
 $string['winter_semester'] = 'Wintersemester';

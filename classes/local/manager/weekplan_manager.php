@@ -77,10 +77,12 @@ class weekplan_manager {
                             self::parse_time($endtime) + self::SECONDS_PER_DAY * $dayofweekindex,
                         ];
                     } catch (\Exception $e) {
+                        $e;
                         // That's ok, we'll just skip the period.
                     }
                 }
             } catch (\Exception $e) {
+                $e;
                 // That's ok, we'll just skip the line.
             }
         }

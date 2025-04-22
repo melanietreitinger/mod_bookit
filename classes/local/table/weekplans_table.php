@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Table listing all rooms
+ * Table listing all weekplans.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir . '/tablelib.php');
 
 /**
- * Table listing all rooms
+ * Table listing all weekplans.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
@@ -37,8 +37,7 @@ require_once($CFG->libdir . '/tablelib.php');
 class weekplans_table extends \table_sql {
 
     /**
-     * Constructor for workflow_table.
-     * @param int $uniqueid Unique id of this table.
+     * Constructor.
      */
     public function __construct() {
         global $PAGE;
