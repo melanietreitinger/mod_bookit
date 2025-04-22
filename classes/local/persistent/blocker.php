@@ -15,41 +15,50 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A moodle form for weekplans.
+ * Class for loading/storing blockers from the DB.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace mod_bookit\local\persistent;
 
-namespace mod_bookit\local\form;
-
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->libdir . '/formslib.php');
+use core\persistent;
 
 /**
- * A moodle form for weekplans.
+ * Class for loading/storing blockers from the DB.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class edit_weekplan_form extends \moodleform {
+class blocker extends persistent {
+
+    /** Table name for the persistent. */
+    const TABLE = 'bookit_blocker';
 
     /**
-     * Defines forms elements
+     * Return the definition of the properties of this model.
+     * @return array
      */
-    public function definition() {
-        $mform = $this->_form;
-
-        $mform->addElement('text', 'name', get_string('name'));
-        $mform->setType('name', PARAM_TEXT);
-
-        $mform->addElement('textarea', 'weekplan', get_string('weekplan', 'mod_bookit'));
-
-        $this->add_action_buttons();
+    protected static function define_properties() {
+        return [
+            'name' => [
+                'type' => PARAM_TEXT,
+                'null' => NULL_ALLOWED,
+                'default' => null,
+            ],
+            'starttime' => [
+                'type' => PARAM_INT,
+            ],
+            'endtime' => [
+                'type' => PARAM_INT,
+            ],
+            'roomid' => [
+                'type' => PARAM_INT,
+                'null' => NULL_ALLOWED,
+                'default' => null,
+            ],
+        ];
     }
-
 }

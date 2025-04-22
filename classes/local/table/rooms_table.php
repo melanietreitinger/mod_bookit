@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Table listing all rooms
+ * Table listing all rooms.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
@@ -25,10 +25,11 @@ namespace mod_bookit\local\table;
 
 defined('MOODLE_INTERNAL') || die;
 
+global $CFG;
 require_once($CFG->libdir . '/tablelib.php');
 
 /**
- * Table listing all rooms
+ * Table listing all rooms.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
@@ -37,8 +38,7 @@ require_once($CFG->libdir . '/tablelib.php');
 class rooms_table extends \table_sql {
 
     /**
-     * Constructor for workflow_table.
-     * @param int $uniqueid Unique id of this table.
+     * Constructor.
      */
     public function __construct() {
         global $PAGE;
@@ -70,6 +70,12 @@ class rooms_table extends \table_sql {
         $url = new \moodle_url('/mod/bookit/edit_room.php', ['id' => $row->id]);
         $output .= $OUTPUT->action_icon($url, new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
             null, ['title' => $alt]);
+
+        $output .= $OUTPUT->action_icon(
+            new \moodle_url('/mod/bookit/view_room.php', ['id' => $row->id]),
+            new \pix_icon('t/view', get_string('view', 'moodle'), 'moodle'),
+            null,
+        );
 
         return $output;
     }
