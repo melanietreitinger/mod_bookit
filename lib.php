@@ -107,7 +107,7 @@ function bookit_delete_instance(int $id): bool {
  * @param string $color
  * @return float
  */
-function calculateluminosity(string $color): float {
+function bookit_calculateluminosity(string $color): float {
 
     $r = hexdec(substr($color, 0, 2)) / 255; // Red value.
     $g = hexdec(substr($color, 2, 2)) / 255; // Green value.
@@ -144,7 +144,7 @@ function calculateluminosity(string $color): float {
  * @param string $color2
  * @return float
  */
-function calculateluminosityratio(string $color1, string $color2): float {
+function bookit_calculateluminosityratio(string $color1, string $color2): float {
     $l1 = calculateluminosity($color1);
     $l2 = calculateluminosity($color2);
 
@@ -170,8 +170,8 @@ function calculateluminosityratio(string $color1, string $color2): float {
  * @param string $color2
  * @return array
  */
-function evaluatecolorcontrast(string $color1, string $color2): array {
-    $ratio = calculateluminosityratio($color1, $color2);
+function bookit_evaluatecolorcontrast(string $color1, string $color2): array {
+    $ratio = bookit_calculateluminosityratio($color1, $color2);
 
     $colorevaluation["AA normal"] = ($ratio >= 4.5 ? 'pass' : 'fail');
     $colorevaluation["AA large"] = ($ratio >= 3 ? 'pass' : 'fail');
@@ -190,9 +190,9 @@ function evaluatecolorcontrast(string $color1, string $color2): array {
  * @param string $color2
  * @return string
  */
-function printcolorevaluation(string $color, string $color2): string {
+function bookit_printcolorevaluation(string $color, string $color2): string {
     $checkstring = '';
-    $check = evaluatecolorcontrast($color, $color2);
+    $check = bookit_evaluatecolorcontrast($color, $color2);
     foreach ($check as $key => $value) {
         if (str_contains($key, 'normal') || 'Ratio' == $key) {
             if ('pass' == $value) {

@@ -96,7 +96,7 @@ if ($hassiteconfig) {
                     $bcolor = get_config('mod_bookit', 'roomcolor_' . $rid);
                     $bcolor = (!empty($bcolor) ? substr($bcolor, 1) : false);
                     if (!empty($bcolor)) {
-                        $check = printcolorevaluation($fcolor, $bcolor);
+                        $check = bookit_printcolorevaluation($fcolor, $bcolor);
                         $a = new StdClass();
                         $a->fcolor = $fcolor;
                         $a->bcolor = $bcolor;
