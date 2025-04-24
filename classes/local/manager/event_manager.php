@@ -94,16 +94,26 @@ class event_manager {
         } else if ($viewalldetailsofownevent) {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
+            $supportpersons = $DB->sql_like('supportpersons', ':supportpersons');
+            $supportpersons1 = $DB->sql_like('supportpersons', ':supportpersons1');
             // Every user: can view own events in detail.
             $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event}
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
-                    AND (usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
+                    AND (
+                        usermodified = :usermodified1 OR 
+                        personinchargeid = :personinchargeid1 OR 
+                        ' . $otherexaminers1 . ' OR 
+                        ' . $supportpersons1 . ')
                     UNION ' . $sqlreserved . '
-                    AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
+                    AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers . '
+                    AND NOT ' . $supportpersons . '';
             $params = ['starttime1' => $starttimestamp, 'endtime1' => $endtimestamp,
                        'usermodified1' => $USER->id, 'personinchargeid1' => $USER->id, 'otherexaminers1' => $USER->id,
+                       'supportpersons1' => $USER->id,
                        'starttime' => $starttimestamp, 'endtime' => $endtimestamp,
-                       'usermodified' => $USER->id, 'personinchargeid' => $USER->id, 'otherexaminers' => $USER->id];
+                       'usermodified' => $USER->id, 'personinchargeid' => $USER->id, 'otherexaminers' => $USER->id,
+                       'supportpersons' => $USER->id
+            ];
         } else {
             // Every user: can view no details.
             $sql = $sqlreserved;
