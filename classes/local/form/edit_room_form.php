@@ -23,6 +23,9 @@
  */
 namespace mod_bookit\local\form;
 
+use mod_bookit\local\formelement\colorpicker;
+use mod_bookit\local\formelement\colorpicker_rule;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -50,8 +53,10 @@ class edit_room_form extends \core\form\persistent {
 
         $mform->addElement('textarea', 'description', get_string('description'));
 
-        // TODO use a proper color picker.
-        $mform->addElement('text', 'eventcolor', get_string('color', 'mod_bookit'));
+        colorpicker::register();
+        colorpicker_rule::register();
+        $mform->addElement('mod_bookit_colorpicker', 'eventcolor', get_string('color', 'mod_bookit'));
+        $mform->addRule('eventcolor', get_string('validateerror', 'admin'), 'mod_bookit_colorpicker_rule');
 
         $this->add_action_buttons();
     }
