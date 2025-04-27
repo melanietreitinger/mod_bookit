@@ -53,18 +53,26 @@ class weekplans_table extends \table_sql {
     }
 
     /**
+     * Render name column.
+     * @param object $row Row data.
+     * @return string.
+     */
+    public function col_name($row) {
+        $url = new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]);
+        return \html_writer::link($url, $row->name);
+    }
+
+    /**
      * Render tools column.
      * @param object $row Row data.
-     * @return string action buttons for workflows
-     * @throws \coding_exception
-     * @throws \moodle_exception
+     * @return string action buttons for workflows.
      */
     public function col_tools($row) {
         global $OUTPUT;
         $output = '';
 
-        $alt = get_string('edit');
-        $icon = 't/edit';
+        $alt = get_string('view');
+        $icon = 'a/search';
         $url = new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]);
         $output .= $OUTPUT->action_icon($url, new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
             null, ['title' => $alt]);

@@ -42,7 +42,10 @@ class weekplan_room_table extends \table_sql {
      * Constructor for weekplan_room_table.
      * @param int $roomid ID of room to create table for.
      */
-    public function __construct(private int $roomid) {
+    public function __construct(
+        /** @var int ID of room to create table for. */
+        private int $roomid
+    ) {
         global $PAGE;
         parent::__construct('mod_bookit-room_weekplan_table');
         $this->define_baseurl($PAGE->url);

@@ -55,6 +55,16 @@ class rooms_table extends \table_sql {
     }
 
     /**
+     * Render name column.
+     * @param object $row Row data.
+     * @return string.
+     */
+    public function col_name($row) {
+        $url = new \moodle_url('/mod/bookit/view_room.php', ['id' => $row->id]);
+        return \html_writer::link($url, $row->name);
+    }
+
+    /**
      * Render tools column.
      * @param object $row Row data.
      * @return string action buttons for workflows
@@ -73,7 +83,7 @@ class rooms_table extends \table_sql {
 
         $output .= $OUTPUT->action_icon(
             new \moodle_url('/mod/bookit/view_room.php', ['id' => $row->id]),
-            new \pix_icon('t/view', get_string('view', 'moodle'), 'moodle'),
+            new \pix_icon('a/search', get_string('view', 'moodle'), 'moodle'),
             null,
         );
 

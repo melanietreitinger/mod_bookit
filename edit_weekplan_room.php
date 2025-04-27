@@ -26,6 +26,8 @@ require_once(__DIR__ . '/../../config.php');
 global $CFG, $DB, $OUTPUT, $PAGE;
 require_once($CFG->libdir . '/adminlib.php');
 
+// Override active url for admin tree / breadcrumbs.
+navigation_node::override_active_url(new moodle_url('/mod/bookit/rooms.php'));
 admin_externalpage_setup('mod_bookit_rooms');
 
 $id = optional_param('id', null, PARAM_INT);
@@ -40,10 +42,17 @@ if ($id) {
 }
 
 $PAGE->set_url(new moodle_url('/mod/bookit/edit_weekplan_room.php', $params));
-$title = get_string('weekplan_room', 'mod_bookit');
+$returnurl = new moodle_url('/mod/bookit/view_room.php', ['id' => $roomid]);
+
+if ($id) {
+    $title = get_string('edit_weekplan_assignment', 'mod_bookit');
+} else {
+    $title = get_string('new_weekplan_assignment', 'mod_bookit');
+}
 $PAGE->set_heading($title);
 $PAGE->set_title($title);
-$returnurl = new moodle_url('/mod/bookit/view_room.php', ['id' => $roomid]);
+$PAGE->navbar->add($room->get('name'), $returnurl);
+$PAGE->navbar->add($title, new moodle_url($PAGE->url));
 
 $mform = new \mod_bookit\local\form\edit_weekplan_room_form($PAGE->url, [
     'persistent' => $weekplanroom,

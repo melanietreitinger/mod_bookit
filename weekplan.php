@@ -26,7 +26,9 @@ require_once(__DIR__ . '/../../config.php');
 global $CFG, $DB, $OUTPUT, $PAGE;
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('mod_bookit_timeslots');
+// Override active url for admin tree / breadcrumbs.
+navigation_node::override_active_url(new moodle_url('/mod/bookit/weekplans.php'));
+admin_externalpage_setup('mod_bookit_weekplans');
 
 $id = required_param('id', PARAM_INT);
 $weekplan = $DB->get_record('bookit_weekplan', ['id' => $id], '*', MUST_EXIST);
@@ -37,6 +39,8 @@ $eventsbyday = \mod_bookit\local\manager\weekplan_manager::group_events_by_day($
 $PAGE->set_url(new moodle_url('/mod/bookit/weekplan.php', ['id' => $id]));
 $PAGE->set_heading($weekplan->name);
 $PAGE->set_title($weekplan->name);
+
+$PAGE->navbar->add($weekplan->name, new moodle_url($PAGE->url));
 
 echo $OUTPUT->header();
 

@@ -23,10 +23,10 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-global $CFG, $OUTPUT;
+global $CFG, $OUTPUT, $PAGE;
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('mod_bookit_timeslots');
+admin_externalpage_setup('mod_bookit_weekplans');
 $PAGE->set_url(new moodle_url('/mod/bookit/weekplans.php'));
 $PAGE->set_heading(get_string('weekplans', 'mod_bookit'));
 

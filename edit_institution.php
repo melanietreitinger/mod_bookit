@@ -26,7 +26,9 @@ require_once(__DIR__ . '/../../config.php');
 global $CFG, $DB, $OUTPUT, $PAGE;
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('mod_bookit_define_institutions');
+// Override active url for admin tree / breadcrumbs.
+navigation_node::override_active_url(new moodle_url('/mod/bookit/institutions.php'));
+admin_externalpage_setup('mod_bookit_institutions');
 
 $id = optional_param('id', null, PARAM_INT);
 
@@ -34,14 +36,21 @@ $params = [];
 $institution = null;
 if ($id) {
     $params['id'] = $id;
-    $institution = \mod_bookit\local\persistent\institution::get_record(['id' => $id]);
+    $institution = \mod_bookit\local\persistent\institution::get_record(['id' => $id], MUST_EXIST);
 }
 
 $PAGE->set_url(new moodle_url('/mod/bookit/edit_institution.php', $params));
-$title = get_string('institutions', 'mod_bookit');
+if ($id) {
+    $title = get_string('edit_institution', 'mod_bookit');
+} else {
+    $title = get_string('new_institution', 'mod_bookit');
+}
+
 $PAGE->set_heading($title);
 $PAGE->set_title($title);
-$returnurl = new moodle_url('/mod/bookit/define_institutions.php');
+$PAGE->navbar->add($title, new moodle_url($PAGE->url));
+
+$returnurl = new moodle_url('/mod/bookit/institutions.php');
 
 $mform = new \mod_bookit\local\form\edit_institution_form($PAGE->url, [
     'persistent' => $institution,
