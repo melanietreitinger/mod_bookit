@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Define institutions for mod_bookit.
+ * List nstitutions for mod_bookit.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
@@ -23,11 +23,11 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-global $CFG, $OUTPUT;
+global $CFG, $OUTPUT, $PAGE;
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('mod_bookit_define_institutions');
-$PAGE->set_url(new moodle_url('/mod/bookit/define_institutions.php'));
+admin_externalpage_setup('mod_bookit_institutions');
+$PAGE->set_url(new moodle_url('/mod/bookit/institutions.php'));
 $PAGE->set_heading(get_string('institutions', 'mod_bookit'));
 
 $table = new \mod_bookit\local\table\institutions_table();

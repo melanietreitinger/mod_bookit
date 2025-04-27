@@ -48,8 +48,7 @@ class colorpicker extends MoodleQuickForm_text implements \core\output\templatab
     /**
      * Registers the element.
      */
-    public static function register(): void
-    {
+    public static function register(): void {
         global $CFG;
 
         \MoodleQuickForm::registerElementType(

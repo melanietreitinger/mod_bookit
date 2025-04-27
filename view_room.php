@@ -23,9 +23,11 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-global $CFG, $OUTPUT;
+global $CFG, $OUTPUT, $PAGE;
 require_once($CFG->libdir . '/adminlib.php');
 
+// Override active url for admin tree / breadcrumbs.
+navigation_node::override_active_url(new moodle_url('/mod/bookit/rooms.php'));
 admin_externalpage_setup('mod_bookit_rooms');
 
 $id = required_param('id', PARAM_INT);
@@ -36,13 +38,16 @@ $url = new moodle_url('/mod/bookit/view_room.php', ['id' => $id]);
 $action = optional_param('action', null, PARAM_ALPHANUMEXT);
 if ($action === 'delete') {
     $weekplanroomid = required_param('weekplanroomid', PARAM_INT);
-    $record = \mod_bookit\local\persistent\weekplan_room::get_record(['id' => $weekplanroomid]);
+    $record = \mod_bookit\local\persistent\weekplan_room::get_record(['id' => $weekplanroomid], MUST_EXIST);
     $record->delete();
     redirect($url);
 }
 
 $PAGE->set_url($url);
-$PAGE->set_heading(get_string('weekplan_room', 'mod_bookit'));
+$title = $room->get('name');
+$PAGE->set_heading($title);
+$PAGE->set_title($title);
+$PAGE->navbar->add($title, new moodle_url($PAGE->url));
 
 $PAGE->requires->js(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.js'), true);
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.css'));
@@ -64,7 +69,7 @@ echo '<div id="ec" class="mb-3"></div>';
 
 echo $OUTPUT->render(new \core\output\single_button(
     new moodle_url('/mod/bookit/edit_weekplan_room.php', ['roomid' => $room->get('id')]),
-    get_string('new_weekplan_room', 'mod_bookit'),
+    get_string('new_weekplan_assignment', 'mod_bookit'),
     'post',
     single_button::BUTTON_PRIMARY
 )) . '<br><br>';
