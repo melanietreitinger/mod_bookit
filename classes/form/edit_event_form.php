@@ -345,7 +345,6 @@ class edit_event_form extends dynamic_form {
                         false);
             }
         }
-        $this->add_action_buttons();
     }
 
     /**

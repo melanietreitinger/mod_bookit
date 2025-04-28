@@ -91,16 +91,16 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 text: str_request_booking,
                 click: function() {
                     const modalForm = new ModalForm({
-                                    formClass: "mod_bookit\\form\\edit_event_form",
-                                    args: {
-                                        cmid: cmid,
-                                    },
-                                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
-                                });
-                                modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-                                    calendar.refetchEvents();
-                                });
-                                modalForm.show();
+                        formClass: "mod_bookit\\form\\edit_event_form",
+                        args: {
+                            cmid: cmid,
+                        },
+                        modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                    });
+                    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                        calendar.refetchEvents();
+                    });
+                    modalForm.show();
                 }
             }
         },
@@ -129,7 +129,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             console.log(info);
             console.log("cmid: "+cmid);
             console.log("id: "+id);
-            console.log(info.event.extendedProps.reserved);
+            console.log("extendedProps reserved: "+info.event.extendedProps.reserved);
 
             if (!info.event.extendedProps.reserved) {
                 const modalForm = new ModalForm({
@@ -144,6 +144,13 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     calendar.refetchEvents();
                 });
                 modalForm.show();
+
+
+
+                if (!capabilities.addevent) {
+                    // @TODO: this is hacky... :-/
+                    setTimeout(disableButtons, 500);
+                }
             }
         },
         headerToolbar: {
@@ -169,4 +176,12 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             }
         },
     });
+}
+
+/**
+ * Disable the save button
+ */
+function disableButtons() {
+    console.log("Disable save button");
+    document.querySelectorAll('button[data-action="save"]').forEach(el => el.setAttribute('disabled', true));
 }
