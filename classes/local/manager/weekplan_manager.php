@@ -72,10 +72,14 @@ class weekplan_manager {
                 foreach (explode(",", $timeperiods) as $timeperiod) {
                     try {
                         list($starttime, $endtime) = explode('-', $timeperiod);
-                        $parsedperiods[] = [
-                            self::parse_time($starttime) + self::SECONDS_PER_DAY * $dayofweekindex,
-                            self::parse_time($endtime) + self::SECONDS_PER_DAY * $dayofweekindex,
-                        ];
+                        $starttime = self::parse_time($starttime);
+                        $endtime = self::parse_time($endtime);
+                        if ($starttime <= $endtime) {
+                            $parsedperiods[] = [
+                                $starttime + self::SECONDS_PER_DAY * $dayofweekindex,
+                                $endtime + self::SECONDS_PER_DAY * $dayofweekindex,
+                            ];
+                        }
                     } catch (\Exception $e) {
                         $e;
                         // That's ok, we'll just skip the period.
@@ -167,7 +171,6 @@ class weekplan_manager {
     /**
      * Saves the weekplan to the DB based on the given textual representation.
      * @param int $weekplanid
-     * @return string
      */
     public static function save_string_weekplan_to_db(string $weekplan, int $weekplanid) {
         global $DB;
@@ -181,6 +184,29 @@ class weekplan_manager {
                 'endtime' => $weekplanevent[1],
             ]);
         }
+    }
+
+    /**
+     * Returns all weekplanslots for a weekday.
+     * @param int $weekplanid
+     * @param int $dayofweek 0 for Monday through 6 for Sunday.
+     * @return array asdf
+     */
+    public static function get_weekplanslots_for_weekday(int $weekplanid, int $dayofweek): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'bookit_weekplanslot',
+            'weekplanid = :weekplanid AND starttime >= :daystart AND starttime < :dayend',
+            [
+                'weekplanid' => $weekplanid,
+                'daystart' => $dayofweek * self::SECONDS_PER_DAY,
+                'dayend' => ($dayofweek + 1) * self::SECONDS_PER_DAY,
+            ],
+            'starttime'
+        );
+
+        return $records;
     }
 
 }

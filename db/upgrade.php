@@ -22,9 +22,6 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// @codingStandardsIgnoreLine
-defined('MOODLE_INTERNAL') || die(); // @codeCoverageIgnore
-
 /**
  * Upgrade script.
  *
@@ -205,6 +202,49 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
 
         // Bookit savepoint reached.
         upgrade_mod_savepoint(true, 2025042200, 'bookit');
+    }
+
+    if ($oldversion < 2025042800) {
+        $dbman = $DB->get_manager();
+
+        // Define field active to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 1, 'eventcolor');
+
+        // Conditionally launch add field active.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field roommode to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('roommode', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0, 'active');
+
+        // Conditionally launch add field roommode.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field department to be dropped from bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('department');
+
+        // Conditionally launch drop field department.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Define field institutionid to be added to bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('institutionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'department');
+
+        // Conditionally launch add field institutionid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025042800, 'bookit');
     }
 
     return true;
