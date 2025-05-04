@@ -41,7 +41,7 @@ class bookit_event {
      * @param int $id
      * @param string $name
      * @param string|null $semester
-     * @param string $department
+     * @param string $institutionid
      * @param int $starttime
      * @param int $endtime
      * @param int|null $duration
@@ -68,8 +68,8 @@ class bookit_event {
         public string $name,
         /** @var ?string semester */
         public ?string $semester,
-        /** @var string department */
-        public string $department,
+        /** @var int institutionid */
+        public int $institutionid,
         /** @var int starttime */
         public int $starttime,
         /** @var int endtime */
@@ -143,7 +143,7 @@ class bookit_event {
                 $record->id ?? null,
                 $record->name,
                 $record->semester,
-                $record->department,
+                $record->institutionid,
                 $record->starttime,
                 $record->endtime,
                 $record->duration,

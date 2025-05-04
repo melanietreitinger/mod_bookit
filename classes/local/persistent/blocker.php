@@ -24,6 +24,7 @@
 namespace mod_bookit\local\persistent;
 
 use core\persistent;
+use mod_bookit\local\timeline;
 
 /**
  * Class for loading/storing blockers from the DB.
@@ -60,5 +61,23 @@ class blocker extends persistent {
                 'default' => null,
             ],
         ];
+    }
+
+    /**
+     * Returns all blockers for the room in the specified timeframe.
+     * @param int $roomid
+     * @param string $starttime
+     * @param string $endtime
+     * @return blocker[]
+     */
+    public static function get_blockers_for_room(int $roomid, string $starttime, string $endtime): array {
+        return self::get_records_select(
+            '(roomid = :roomid OR roomid IS NULL) AND endtime >= :starttime AND starttime <= :endtime',
+            [
+                'roomid' => $roomid,
+                'starttime' => $starttime,
+                'endtime' => $endtime,
+            ]
+        );
     }
 }

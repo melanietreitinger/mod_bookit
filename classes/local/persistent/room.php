@@ -37,6 +37,12 @@ class room extends persistent {
     /** Table name for the persistent. */
     const TABLE = 'bookit_room';
 
+    /** @var int Constant for allowing free placement inside slots. */
+    const MODE_FREE = 0;
+
+    /** @var int Constant for only allowing events to start at starts of slots. */
+    const MODE_SLOTS = 1;
+
     /**
      * Return the definition of the properties of this model.
      * @return array
@@ -52,6 +58,14 @@ class room extends persistent {
             ],
             'eventcolor' => [
                 'type' => PARAM_TEXT,
+            ],
+            'active' => [
+                'type' => PARAM_BOOL,
+                'default' => false,
+            ],
+            'roommode' => [
+                'type' => PARAM_INT,
+                'choices' => [0, 1],
             ],
         ];
     }

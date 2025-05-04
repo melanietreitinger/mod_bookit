@@ -31,4 +31,10 @@ $functions = [
         'type'        => 'write',
         'ajax'        => true,
     ],
+    'mod_bookit_get_possible_starttimes' => [
+        'classname'   => 'mod_bookit\external\get_possible_starttimes',
+        'description' => 'Gets all possible start times.',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
 ];

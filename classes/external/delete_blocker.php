@@ -31,7 +31,7 @@ use mod_bookit\local\persistent\blocker;
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once("{$CFG->libdir}/externallib.php");
+require_once($CFG->libdir . "/externallib.php");
 
 /**
  * External API for deleting a blocker.

@@ -150,7 +150,7 @@ class event_manager {
      * @param int $weektime Timestamp of the start of a week.
      * @return int
      */
-    private static function place_weekly_time_into_week(int $weeklytime, int $weektime): int {
+    public static function place_weekly_time_into_week(int $weeklytime, int $weektime): int {
         $week = (new DateTime())->setTimestamp($weektime);
         $actual = (new DateTime())->setTimestamp($weektime + $weeklytime);
         return $actual->getTimestamp() + ($week->getOffset() - $actual->getOffset());

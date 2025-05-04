@@ -80,4 +80,23 @@ class weekplan_room extends persistent {
         return $DB->record_exists_sql($sql, $params);
     }
 
+    /**
+     * Returns the applicable weekplanid, if any, for the given timestamp and room.
+     * @param int $timestamp
+     * @param int $roomid
+     * @return int|null
+     */
+    public static function get_applicable_weekplanid(int $timestamp, int $roomid): int|null {
+        $records = self::get_records_select('starttime <= :time1 AND endtime >= :time2 AND roomid = :roomid', [
+            'time1' => $timestamp,
+            'time2' => $timestamp,
+            'roomid' => $roomid,
+        ]);
+        if (count($records) == 0) {
+            return null;
+        }
+
+        return array_pop($records)->get('weekplanid');
+    }
+
 }

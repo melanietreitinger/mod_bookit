@@ -24,6 +24,7 @@
 import {getString} from 'core/str';
 import ModalForm from 'core_form/modalform';
 import {prefetchStrings} from 'core/prefetch';
+import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
 
 export const theGlobalProperty = (globalPropertyName) => {
     return new Promise((resolve) => {
@@ -53,14 +54,12 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     let textcolor = '#ffffff';
     if (Object.hasOwn(config, 'textcolor')) {
         textcolor = config.textcolor;
-        console.log('textcolor set to '+textcolor);
     }
 
     // Define toolbarbuttons.
     let toolbarbuttons = 'prev,next today';
     if (capabilities.addevent) {
         toolbarbuttons = 'prev,next today, addButton';
-        console.log(capabilities);
     }
 
     // String variables.
@@ -123,6 +122,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                                     calendar.refetchEvents();
                                 });
+                                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
                                 modalForm.show();
                 }
             }
@@ -136,23 +136,19 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     formClass: "mod_bookit\\form\\edit_event_form",
                     args: {
                         cmid: cmid,
-                        startdate: startdate,
+                        initialstartdate: startdate,
                     },
                     modalConfig: {title: getString('edit_event', 'mod_bookit')},
                 });
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
                 });
+                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
                 modalForm.show();
             }
         },
         eventClick: function (info) {
             let id = info.event.id;
-
-            console.log(info);
-            console.log("cmid: "+cmid);
-            console.log("id: "+id);
-            console.log(info.event.extendedProps.reserved);
 
             if (!info.event.extendedProps.reserved) {
                 const modalForm = new ModalForm({
@@ -166,6 +162,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
                 });
+                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
                 modalForm.show();
             }
         },
