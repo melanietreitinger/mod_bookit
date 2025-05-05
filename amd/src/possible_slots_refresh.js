@@ -33,7 +33,7 @@ export function initPossibleStarttimesRefresh() {
         return;
     }
 
-    const roomEl = formEl.querySelector('select[name="room"]');
+    const roomEl = formEl.querySelector('select[name="roomid"]');
     const durationEl = formEl.querySelector('select[name="duration"]');
     const dateDayEl = formEl.querySelector('select[name="startdate[day]"]');
     const dateMonthEl = formEl.querySelector('select[name="startdate[month]"]');
@@ -77,5 +77,5 @@ export function initPossibleStarttimesRefresh() {
     for (let el of [roomEl, durationEl, dateDayEl, dateMonthEl, dateYearEl]) {
         el.addEventListener('change', refreshStarttimes);
     }
-    // void refreshStarttimes();
+    void refreshStarttimes();
 }

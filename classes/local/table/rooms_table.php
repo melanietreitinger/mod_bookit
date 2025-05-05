@@ -44,7 +44,7 @@ class rooms_table extends \table_sql {
         global $PAGE;
         parent::__construct('mod_bookit-rooms_table');
         $this->define_baseurl($PAGE->url);
-        $this->set_sql('id, name, description, eventcolor', '{bookit_room}', 'true');
+        $this->set_sql('id, name, active, description, eventcolor', '{bookit_room}', 'true');
         $this->column_nosort = ['internalnotes', 'tools'];
         $this->define_columns(['name', 'description', 'tools']);
         $this->define_headers([
@@ -88,5 +88,18 @@ class rooms_table extends \table_sql {
         );
 
         return $output;
+    }
+
+    /**
+     * Get any extra classes names to add to this row in the HTML.
+     *
+     * @param \stdClass $row the data for this row.
+     * @return string added to the class="" attribute of the tr.
+     */
+    public function get_row_class($row) {
+        if (!$row->active) {
+            return 'text-muted';
+        }
+        return '';
     }
 }

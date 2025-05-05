@@ -53,7 +53,7 @@ class edit_event_form extends dynamic_form {
     public const BOOKINGSTATUS_NEW = 0;
 
     /** @var bookit_event|null An event, if an existing one is getting edited. */
-    private bookit_event|null $event;
+    private $event = null;
 
     /**
      * Define the form
@@ -126,16 +126,16 @@ class edit_event_form extends dynamic_form {
         $mform->addRule('institutionid', null, 'required', null, 'client');
         $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
 
-        // Add the "room" field.
+        // Add the "roomid" field.
         $rooms = room::get_records(['active' => true]);
         $roomoptions = [];
         foreach ($rooms as $room) {
             $roomoptions[$room->get('id')] = $room->get('name');
         }
 
-        $mform->addElement('select', 'room', get_string('event_room', 'mod_bookit'), $roomoptions);
-        $mform->disabledIf('room', 'editevent', 'neq');
-        $mform->addHelpButton('room', 'event_room', 'mod_bookit');
+        $mform->addElement('select', 'roomid', get_string('event_room', 'mod_bookit'), $roomoptions);
+        $mform->disabledIf('roomid', 'editevent', 'neq');
+        $mform->addHelpButton('roomid', 'event_room', 'mod_bookit');
 
         // Add the "duration" field.
         $duration = [];
@@ -180,12 +180,6 @@ class edit_event_form extends dynamic_form {
             }
             return true;
         };
-
-        $modname = 'mod_bookit/possible_slots_refresh';
-
-        $mform->addElement('html',
-            \html_writer::script("M.util.js_pending('{$modname}'); " .
-                "require(['{$modname}'], function(amd) { M.util.js_complete('{$modname}'); });"));
 
         // Add a static field to explain extra time.
         $mform->addElement('static', 'extratime_label', get_string('event_extratime_label', 'mod_bookit'),
@@ -398,7 +392,7 @@ class edit_event_form extends dynamic_form {
             $starttimeel = $mform->getElement('starttime');
             $starttimeel->removeOptions();
             $starttimeel->loadArray(get_possible_starttimes::list_possible_starttimes(
-                (new \DateTime())->setTimestamp($data->startdate), $data->duration, $data->room
+                (new \DateTime())->setTimestamp($data->startdate), $data->duration, $data->roomid
             ));
         }
     }

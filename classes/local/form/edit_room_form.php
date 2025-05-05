@@ -58,7 +58,7 @@ class edit_room_form extends \core\form\persistent {
         $mform->addElement('mod_bookit_colorpicker', 'eventcolor', get_string('color', 'mod_bookit'));
         $mform->addRule('eventcolor', get_string('validateerror', 'admin'), 'mod_bookit_colorpicker_rule');
 
-        $mform->addElement('checkbox', 'active', get_string('active', 'mod_bookit'));
+        $mform->addElement('checkbox', 'active', get_string('room_active', 'mod_bookit'));
 
         $mform->addElement('select', 'roommode', get_string('roommode', 'mod_bookit'), [
             0 => get_string('roommode_free', 'mod_bookit'),
