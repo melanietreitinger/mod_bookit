@@ -367,5 +367,21 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025042800, 'bookit');
     }
 
+    if ($oldversion < 2025050500) {
+        $dbman = $DB->get_manager();
+
+        // Define field room to be added to bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('roomid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'duration');
+
+        // Conditionally launch add field room.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025050500, 'bookit');
+    }
+
     return true;
 }

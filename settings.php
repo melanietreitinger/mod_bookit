@@ -78,37 +78,6 @@ if ($hassiteconfig) {
         $choices = ['#ffffff' => 'white', '#000000' => 'black'];
         $setting = new admin_setting_configselect($name, $title, $description, '#ffffff', $choices);
         $settings->add($setting);
-
-        // Set a color for each room defined in resources - at least one.
-        // Get the ressources.
-        $catresourceslist = resource_manager::get_resources();
-        foreach ($catresourceslist as $category => $value) {
-            if ($category === 'Rooms') {
-                foreach ($value['resources'] as $rid => $catresource) {
-                    $name = 'mod_bookit/roomcolor_' . $rid;
-                    $title = get_string('settings_roomcolor', 'mod_bookit', $catresource['name'], true);
-                    $description = get_string('settings_roomcolor_desc', 'mod_bookit', null, true);
-                    $setting = new admin_setting_configcolourpicker($name, $title, $description, '');
-                    $settings->add($setting);
-
-                    // Add color contrast check.
-                    $fcolor = get_config('mod_bookit', 'textcolor');
-                    $fcolor = (!empty($fcolor) ? substr($fcolor, 1) : 'FFFFFF');
-                    $bcolor = get_config('mod_bookit', 'roomcolor_' . $rid);
-                    $bcolor = (!empty($bcolor) ? substr($bcolor, 1) : false);
-                    if (!empty($bcolor)) {
-                        $check = printcolorevaluation($fcolor, $bcolor);
-                        $a = new StdClass();
-                        $a->fcolor = $fcolor;
-                        $a->bcolor = $bcolor;
-                        $setting = new admin_setting_description($name . '_wcag',
-                                get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
-                                get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check);
-                        $settings->add($setting);
-                    }
-                }
-            }
-        }
     }
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(

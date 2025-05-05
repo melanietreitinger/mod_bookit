@@ -70,6 +70,8 @@ class bookit_event {
         public ?string $semester,
         /** @var int institutionid */
         public int $institutionid,
+        /** @var int roomid */
+        public int $roomid,
         /** @var int starttime */
         public int $starttime,
         /** @var int endtime */
@@ -144,6 +146,7 @@ class bookit_event {
                 $record->name,
                 $record->semester,
                 $record->institutionid,
+                $record->roomid,
                 $record->starttime,
                 $record->endtime,
                 $record->duration,
