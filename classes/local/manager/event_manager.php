@@ -124,6 +124,7 @@ class event_manager {
                 'start' => date('Y-m-d H:i', $record->starttime),
                 'end' => date('Y-m-d H:i', $record->endtime),
                 'backgroundColor' => $record->eventcolor,
+                'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
                 'extendedProps' => (object)['reserved' => !$record->name],
 
             ];

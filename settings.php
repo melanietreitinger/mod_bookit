@@ -64,20 +64,6 @@ if ($hassiteconfig) {
         }
         $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
         $settings->add($setting);
-
-        // Room colors heading.
-        $name = 'mod_bookit/roomcolorheading';
-        $title = get_string('settings_roomcolorheading', 'mod_bookit', null, true);
-        $setting = new admin_setting_heading($name, $title, null);
-        $settings->add($setting);
-
-        // Set text color to black or white (default).
-        $name = 'mod_bookit/textcolor';
-        $title = get_string('settings_textcolor', 'mod_bookit');
-        $description = get_string('settings_textcolor_desc', 'mod_bookit');
-        $choices = ['#ffffff' => 'white', '#000000' => 'black'];
-        $setting = new admin_setting_configselect($name, $title, $description, '#ffffff', $choices);
-        $settings->add($setting);
     }
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
