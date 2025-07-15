@@ -64,6 +64,35 @@ if ($hassiteconfig) {
         $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
         $settings->add($setting);
 
+                // Set a color for each room defined in resources - at least one.
+        // Get the ressources.
+        $catresourceslist = resource_manager::get_resources();
+       
+        //New Settings: Weekday choices
+        $weekdaychoices = [
+            1 => get_string('monday',    'calendar'),
+            2 => get_string('tuesday',   'calendar'),
+            3 => get_string('wednesday', 'calendar'),
+            4 => get_string('thursday',  'calendar'),
+            5 => get_string('friday',    'calendar'),
+            6 => get_string('saturday',  'calendar'),
+            0 => get_string('sunday',    'calendar'),
+        ];
+        $settings->add(new admin_setting_configmulticheckbox(
+            'mod_bookit/weekdaysvisible',
+            get_string('config_weekdaysvisible', 'mod_bookit'),
+            get_string('config_weekdaysvisible_desc', 'mod_bookit'),
+            [  // Default: Monday‑Friday
+                1 => 1,
+                2 => 2,
+                3 => 3,
+                4 => 4,
+                5 => 5
+            ],
+            $weekdaychoices
+        ));
+        //New end
+
         // Room colors heading.
         $name = 'mod_bookit/roomcolorheading';
         $title = get_string('settings_roomcolorheading', 'mod_bookit', null, true);
@@ -79,28 +108,7 @@ if ($hassiteconfig) {
         $settings->add($setting);
 
 
-        // Set a color for each room defined in resources - at least one.
-        // Get the ressources.
-        $catresourceslist = resource_manager::get_resources();
-       
-        //NEU ANFANG
-        $weekdaychoices = [
-            1 => get_string('monday',    'calendar'),
-            2 => get_string('tuesday',   'calendar'),
-            3 => get_string('wednesday', 'calendar'),
-            4 => get_string('thursday',  'calendar'),
-            5 => get_string('friday',    'calendar'),
-            6 => get_string('saturday',  'calendar'),
-            0 => get_string('sunday',    'calendar'),
-        ];
-        $settings->add(new admin_setting_configmulticheckbox(
-            'mod_bookit/weekdaysvisible',
-            get_string('config_weekdaysvisible', 'mod_bookit'),
-            get_string('config_weekdaysvisible_desc', 'mod_bookit'),
-            [1,2,3,4,5],          // default Mon-Fri
-            $weekdaychoices
-        ));
-        //NEU ENDE
+
        
        
         foreach ($catresourceslist as $category => $value) {
