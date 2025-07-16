@@ -112,7 +112,7 @@ $sql = "SELECT e.id,
           FROM {bookit_event} e
      LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
      LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-         WHERE e.examinerid = ?
+         WHERE e.personinchargeid = ?
       GROUP BY e.id";
 $events = $DB->get_records_sql($sql, [$USER->id]);
 
