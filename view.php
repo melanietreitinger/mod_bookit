@@ -1,8 +1,26 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * BookIT – calendar page with filters and “Export events”.
+ * Plugin capabilities are defined here.
  *
  * @package     mod_bookit
+ * @category    access
+ * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 use mod_bookit\event\course_module_viewed;
@@ -14,8 +32,8 @@ require_once(__DIR__ . '/lib.php');
 /* =====================================================================
    0.  Resolve module / course / context
    ===================================================================== */
-$id = optional_param('id', 0, PARAM_INT);   // course-module id
-$b  = optional_param('b',  0, PARAM_INT);   // activity instance id
+$id = optional_param('id', 0, PARAM_INT);          // course‑module id
+$b  = optional_param('b',  0, PARAM_INT);          // activity instance id
 
 if ($id) {
     $cm             = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
@@ -54,58 +72,86 @@ $faculties = $DB->get_fieldset_sql("
 ");
 
 /* =====================================================================
-   2.  JS snippets – filters & export logic  
+   2.  JavaScript – filter communication + Export‑modal logic
    ===================================================================== */
-$tablefilterjs = "
+$PAGE->requires->jquery();
+
+/* -------- send filter changes to the AMD calendar -------------------- */
+$PAGE->requires->js_init_code("
     (function() {
-        function send() {
+        function pushFilters() {
             const p = {};
-            const r = document.getElementById('filter-room').value;
-            const f = document.getElementById('filter-faculty').value;
-            const s = document.getElementById('filter-status').value;
+            const r = $('#filter-room').val();
+            const f = $('#filter-faculty').val();
+            const s = $('#filter-status').val();
             if (r) p.room    = r;
             if (f) p.faculty = f;
             if (s) p.status  = s;
             window.currentFilterParams = p;
             if (window.bookitCalendarUpdate) { window.bookitCalendarUpdate(p); }
         }
-        ['filter-room','filter-faculty','filter-status'].forEach(id =>
-            document.addEventListener('change', e => {
-                if (e.target.id === id) { send(); }
-            })
-        );
-    })();";
+        $('#filter-room, #filter-faculty, #filter-status').on('change', pushFilters);
+    })();
+");
 
-$exportjs = "
+/* -------- Export modal ------------------------------------------------ */
+$PAGE->requires->js_init_code("
 require(['jquery'], function($) {
 
-    // open modal & load ALL events that match current filters
+    /* open modal & load events --------------------------------------- */
     $('#bookit-export').on('click', function () {
 
+        // build query string with current filters (but ALL dates)
         const qs = { id: {$cm->id}, start:'1970-01-01T00:00', end:'2100-01-01T00:00' };
         if (window.currentFilterParams) { Object.assign(qs, window.currentFilterParams); }
 
-        $('#bookit-export-list').html('<div class=\"text-center p-3\"><i class=\"fa fa-spinner fa-spin\"></i></div>');
+        // show spinner while loading
+        const list = $('#bookit-export-list');
+        list.html('<div class=\"text-center p-3\"><i class=\"fa fa-spinner fa-spin\"></i></div>');
         $('#bookit-export-modal').modal('show');
 
+        // load events JSON
         $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function(data){
-            const list = $('#bookit-export-list').empty();
+            list.empty();
             if (!data.length) {
                 list.append('<div class=\"text-muted\">".get_string('noevents', 'mod_bookit')."</div>');
                 return;
             }
+
             data.forEach(function(e){
-                const label = $('<label class=\"list-group-item d-flex gap-2 align-items-start\"></label>');
-                label.append('<input class=\"form-check-input mt-1\" type=\"checkbox\" value=\"'+e.id+'\">')
-                     .append('<span>'+e.title +
-                             ' <small class=\"text-muted\">('+e.location+
-                             ', '+e.start.substr(0,16).replace(\"T\",\" \")+')</small></span>');
-                list.append(label);
+                // Fallbacks: room → e.location OR e.room
+                const loc = e.location || e.room || '';
+                const item = $('<label class=\"list-group-item d-flex gap-2 align-items-start\"></label>');
+                item.append('<input class=\"form-check-input mt-1\" type=\"checkbox\" value=\"'+e.id+'\">')
+                    .append('<span>'+e.title+
+                            ' <small class=\"text-muted\">('+loc+
+                            ', '+e.start.substr(0,16).replace(\"T\",\" \")+')</small></span>');
+                list.append(item);
             });
         });
     });
 
-    // download .ics for checked ids
+    /* check‑all / uncheck‑all buttons -------------------------------- */
+    $('#bookit-check-all').on('click',   function(){ $('#bookit-export-list input').prop('checked', true);  });
+    $('#bookit-uncheck-all').on('click', function(){ $('#bookit-export-list input').prop('checked', false); });
+
+    /* live filter inside modal --------------------------------------- */
+    $('#bookit-modal-room, #bookit-modal-faculty, #bookit-modal-status').on('change', function () {
+        const r = $('#bookit-modal-room').val();
+        const f = $('#bookit-modal-faculty').val();
+        const s = $('#bookit-modal-status').val();
+
+        $('#bookit-export-list label').each(function(){
+            const txt = $(this).text().toLowerCase();
+            const show =
+                (!r || txt.indexOf('('+r.toLowerCase()) !== -1) &&
+                (!f || txt.indexOf(f.toLowerCase())          !== -1) &&
+                (!s || txt.indexOf('('+s.toLowerCase()+')')  !== -1);
+            $(this).toggle(show);
+        });
+    });
+
+    /* Confirm‑Export → redirect to export_events.php ----------------- */
     $('#bookit-export-confirm').on('click', function () {
         const ids = $('#bookit-export-list input:checked').map(function(){return this.value;}).get();
         if (!ids.length) { alert('".get_string('chooseevent', 'mod_bookit')."'); return; }
@@ -117,17 +163,14 @@ require(['jquery'], function($) {
         window.location = M.cfg.wwwroot + '/mod/bookit/export_events.php?' + qs.toString();
         $('#bookit-export-modal').modal('hide');
     });
-});";
-
-$PAGE->requires->jquery();
-$PAGE->requires->js_init_code($tablefilterjs);
-$PAGE->requires->js_init_code($exportjs);
+});
+");
 
 /* =====================================================================
    3.  Calendar feed URL & caps passed to AMD module
    ===================================================================== */
-$eventsource   = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
-$capabilities  = ['addevent' => has_capability('mod/bookit:addevent', $context)];
+$eventsource    = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
+$capabilities   = ['addevent' => has_capability('mod_bookit:addevent', $context)];
 $configcalendar = [];
 if ($tc = get_config('mod_bookit', 'textcolor')) { $configcalendar['textcolor'] = $tc; }
 
@@ -159,39 +202,45 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendar.min.css'
 echo $OUTPUT->header();
 
 /* =====================================================================
-   7.  Filter bar + Export button markup
+   7.  Filter bar + Export button
    ===================================================================== */
 echo html_writer::start_div('bookit-filters d-flex gap-2 mb-3');
 
 /* room select */
 echo html_writer::start_tag('select',['id'=>'filter-room','class'=>'form-select w-auto']);
 echo html_writer::tag('option', get_string('allrooms', 'mod_bookit'), ['value'=>'']);
-foreach ($rooms as $rid=>$rname) { echo html_writer::tag('option', format_string($rname), ['value'=>$rid]); }
+foreach ($rooms as $rid=>$rname) {
+    echo html_writer::tag('option', format_string($rname), ['value'=>$rid]);
+}
 echo html_writer::end_tag('select');
 
 /* faculty select */
 echo html_writer::start_tag('select',['id'=>'filter-faculty','class'=>'form-select w-auto']);
 echo html_writer::tag('option', get_string('allfaculties', 'mod_bookit'), ['value'=>'']);
-foreach ($faculties as $fac) { echo html_writer::tag('option', format_string($fac), ['value'=>$fac]); }
+foreach ($faculties as $fac) {
+    echo html_writer::tag('option', format_string($fac), ['value'=>$fac]);
+}
 echo html_writer::end_tag('select');
 
 /* status select */
 echo html_writer::start_tag('select',['id'=>'filter-status','class'=>'form-select w-auto']);
 echo html_writer::tag('option', get_string('allstatuses', 'mod_bookit'), ['value'=>'']);
-foreach ($statusmap as $scode=>$label) { echo html_writer::tag('option', $label, ['value'=>$scode]); }
+foreach ($statusmap as $scode=>$label) {
+    echo html_writer::tag('option', $label, ['value'=>$scode]);
+}
 echo html_writer::end_tag('select');
 
-echo html_writer::end_div(); 
+echo html_writer::end_div(); // .bookit-filters
 
-/* export button (new) */
+/* export button */
 echo html_writer::tag('button', get_string('exportevents', 'mod_bookit'),
     ['id'=>'bookit-export','class'=>'btn btn-secondary mb-3']);
 
-/* calendar container */
+/* calendar */
 echo html_writer::div('', '', ['id'=>'ec']);
 
 /* =====================================================================
-   8.  Export-selection modal
+   8.  Export‑selection modal
    ===================================================================== */
 echo '
 <div class="modal fade" id="bookit-export-modal" tabindex="-1" aria-hidden="true">
@@ -199,14 +248,51 @@ echo '
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">'.get_string('exportevents', 'mod_bookit').'</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
+
       <div class="modal-body">
-        <p>'.get_string('selectevents', 'mod_bookit').'</p>
+
+        <!-- modal‑filters ------------------------------------------------>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <select id="bookit-modal-room"    class="custom-select w-auto">
+            <option value="">'.get_string('allrooms','mod_bookit').'</option>';
+            foreach ($rooms as $rid=>$name) {
+                echo '<option value="'.$name.'">'.format_string($name).'</option>';
+            }
+echo    '</select>
+
+          <select id="bookit-modal-faculty" class="custom-select w-auto">
+            <option value="">'.get_string('allfaculties','mod_bookit').'</option>';
+            foreach ($faculties as $fac) {
+                echo '<option value="'.$fac.'">'.format_string($fac).'</option>';
+            }
+echo    '</select>
+
+          <select id="bookit-modal-status"  class="custom-select w-auto">
+            <option value="">'.get_string('allstatuses','mod_bookit').'</option>';
+            foreach ($statusmap as $scode=>$label) {
+                echo '<option value="'.$label.'">'.format_string($label).'</option>';
+            }
+echo    '</select>
+        </div>
+
+        <!-- check/uncheck buttons --------------------------------------->
+        <div class="mb-2">
+          <button type="button" class="btn btn-sm btn-light mr-1" id="bookit-check-all">'
+            .get_string('selectall').'</button>
+          <button type="button" class="btn btn-sm btn-light"       id="bookit-uncheck-all">'
+            .get_string('deselectall').'</button>
+        </div>
+
+        <!-- list of events --------------------------------------------->
         <div id="bookit-export-list" class="list-group small"></div>
       </div>
+
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">'
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">'
             .get_string('cancel').'</button>
         <button type="button" class="btn btn-primary" id="bookit-export-confirm">'
             .get_string('export', 'mod_bookit').'</button>
@@ -216,7 +302,7 @@ echo '
 </div>';
 
 /* =====================================================================
-   9.  Start AMD calendar
+   9.  Initialise AMD calendar
    ===================================================================== */
 $PAGE->requires->js_call_amd('mod_bookit/calendar', 'init', [
     $cm->id,
