@@ -40,7 +40,6 @@ use HTML_QuickForm_Rule;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class colorpicker_rule extends HTML_QuickForm_Rule {
-
     /**
      * Registers the rule.
      */
@@ -51,7 +50,7 @@ class colorpicker_rule extends HTML_QuickForm_Rule {
             'mod_bookit_colorpicker_rule',
             null,
             '\mod_bookit\local\formelement\colorpicker_rule',
-            $CFG->dirroot.'/mod/bookit/classes/local/formelement/colorpicker_rule.php'
+            $CFG->dirroot . '/mod/bookit/classes/local/formelement/colorpicker_rule.php'
         );
     }
 
@@ -101,7 +100,7 @@ class colorpicker_rule extends HTML_QuickForm_Rule {
 
         if (preg_match('/^#?([[:xdigit:]]{3}){1,2}$/', $value)) {
             if (strpos($value, '#') !== 0) {
-                $value = '#'.$value;
+                $value = '#' . $value;
             }
             return $value;
         } else if (in_array(strtolower($value), $colornames)) {

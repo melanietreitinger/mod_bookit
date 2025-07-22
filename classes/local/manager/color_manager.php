@@ -32,7 +32,6 @@ namespace mod_bookit\local\manager;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class color_manager {
-
     private static $colorcache = [];
 
     public static function get_textcolor_for_background(string $color): string {
@@ -161,5 +160,4 @@ class color_manager {
             WCAG 2.2 <a href="https://www.w3.org/TR/WCAG22/#contrast-minimum">AA</a> /
             <a href="https://www.w3.org/TR/WCAG22/#contrast-enhanced">AAA</a>.<br><br>';
     }
-
 }

@@ -61,4 +61,3 @@ foreach ($eventsbyday as $weekdayindex => $events) {
 }
 
 echo $OUTPUT->footer();
-

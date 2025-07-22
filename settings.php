@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
-
     $ADMIN->add('modsettings', new admin_category('mod_bookit_category', new lang_string('pluginname', 'mod_bookit')));
     $settings = new admin_settingpage('mod_bookit_settings', new lang_string('general_settings', 'mod_bookit'));
 
@@ -90,5 +89,4 @@ if ($hassiteconfig) {
 
     $ADMIN->add('mod_bookit_category', $settings);
     $settings = null; // Otherwise, the $settings would be added a second time.
-
 }

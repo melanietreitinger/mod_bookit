@@ -37,7 +37,6 @@ require_once($CFG->libdir . '/tablelib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class weekplan_room_table extends \table_sql {
-
     /**
      * Constructor for weekplan_room_table.
      * @param int $roomid ID of room to create table for.
@@ -49,7 +48,8 @@ class weekplan_room_table extends \table_sql {
         global $PAGE;
         parent::__construct('mod_bookit-room_weekplan_table');
         $this->define_baseurl($PAGE->url);
-        $this->set_sql('wr.id, wr.weekplanid, w.name as weekplanname, wr.starttime, wr.endtime',
+        $this->set_sql(
+            'wr.id, wr.weekplanid, w.name as weekplanname, wr.starttime, wr.endtime',
             '{bookit_weekplan_room} wr ' .
             'JOIN {bookit_weekplan} w ON wr.weekplanid = w.id ',
             'wr.roomid = :roomid',
@@ -97,8 +97,12 @@ class weekplan_room_table extends \table_sql {
         $alt = get_string('edit');
         $icon = 't/edit';
         $url = new \moodle_url('/mod/bookit/edit_weekplan_room.php', ['id' => $row->id, 'roomid' => $this->roomid]);
-        $output .= $OUTPUT->action_icon($url, new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
-            null, ['title' => $alt]);
+        $output .= $OUTPUT->action_icon(
+            $url,
+            new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
+            null,
+            ['title' => $alt]
+        );
 
         $alt = get_string('delete');
         $output .= $OUTPUT->action_icon(new \moodle_url('/mod/bookit/view_room.php', [

@@ -36,7 +36,6 @@ use dml_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class event_manager {
-
     /**
      * Get event from id.
      *
@@ -120,7 +119,7 @@ class event_manager {
         foreach ($records as $record) {
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved).' ('.$record->roomname.')',
+                'title' => ($record->name ?? $reserved) . ' (' . $record->roomname . ')',
                 'start' => date('Y-m-d H:i', $record->starttime),
                 'end' => date('Y-m-d H:i', $record->endtime),
                 'backgroundColor' => $record->eventcolor,
@@ -190,12 +189,11 @@ class event_manager {
         foreach ($records as $record) {
             $weekplanstart = max($starttime, (int) $record->weekplanstart);
             $weekplanend = min($endtime, (int) $record->weekplanend + weekplan_manager::SECONDS_PER_DAY);
-            list($yearstart, $weekstart) = explode('-', date('Y-W', $weekplanstart));
+            [$yearstart, $weekstart] = explode('-', date('Y-W', $weekplanstart));
 
             $weekstartdt = new DateTime("$yearstart-W$weekstart");
 
             while ($weekstartdt->getTimestamp() < $weekplanend) {
-
                 $eventstart = self::place_weekly_time_into_week($record->slotstart, $weekstartdt->getTimestamp());
                 $eventend = self::place_weekly_time_into_week($record->slotend, $weekstartdt->getTimestamp());
 

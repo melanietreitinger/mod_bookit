@@ -38,7 +38,6 @@ use moodle_url;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_blocker_form extends dynamic_form {
-
     /**
      * Define the form
      */
