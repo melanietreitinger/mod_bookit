@@ -73,7 +73,9 @@ echo $OUTPUT->render(new \core\output\single_button(
 
 $table->out(48, false);
 
-echo '<div id="ec" class="mt-6"></div>';
+echo '<div id="ec" class="mt-6 mb-2"></div>';
+
+echo $OUTPUT->render_from_template('mod_bookit/admin_calendar_legend', []);
 
 echo $OUTPUT->footer();
 
