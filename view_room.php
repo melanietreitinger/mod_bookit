@@ -64,9 +64,6 @@ $table = new \mod_bookit\local\table\weekplan_room_table($id);
 
 echo $OUTPUT->header();
 
-echo '<div id="ec" class="mb-3"></div>';
-
-
 echo $OUTPUT->render(new \core\output\single_button(
     new moodle_url('/mod/bookit/edit_weekplan_room.php', ['roomid' => $room->get('id')]),
     get_string('new_weekplan_assignment', 'mod_bookit'),
@@ -75,6 +72,8 @@ echo $OUTPUT->render(new \core\output\single_button(
 )) . '<br><br>';
 
 $table->out(48, false);
+
+echo '<div id="ec" class="mt-6"></div>';
 
 echo $OUTPUT->footer();
 
