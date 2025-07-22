@@ -39,7 +39,6 @@ require_once($CFG->libdir . '/formslib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_room_form extends \core\form\persistent {
-
     /** @var string The related persistent class. */
     protected static $persistentclass = 'mod_bookit\\local\\persistent\\room';
 
@@ -67,5 +66,4 @@ class edit_room_form extends \core\form\persistent {
 
         $this->add_action_buttons();
     }
-
 }

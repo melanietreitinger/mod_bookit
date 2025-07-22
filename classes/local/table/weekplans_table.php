@@ -35,7 +35,6 @@ require_once($CFG->libdir . '/tablelib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class weekplans_table extends \table_sql {
-
     /**
      * Constructor.
      */
@@ -74,8 +73,12 @@ class weekplans_table extends \table_sql {
         $alt = get_string('view');
         $icon = 'a/search';
         $url = new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]);
-        $output .= $OUTPUT->action_icon($url, new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
-            null, ['title' => $alt]);
+        $output .= $OUTPUT->action_icon(
+            $url,
+            new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
+            null,
+            ['title' => $alt]
+        );
 
         return $output;
     }

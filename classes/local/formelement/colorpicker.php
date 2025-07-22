@@ -29,8 +29,8 @@ use renderer_base;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/lib/form/templatable_form_element.php');
-require_once($CFG->dirroot.'/lib/form/text.php');
+require_once($CFG->dirroot . '/lib/form/templatable_form_element.php');
+require_once($CFG->dirroot . '/lib/form/text.php');
 
 /**
  * Form element for color picker, copied from boost union.
@@ -40,7 +40,6 @@ require_once($CFG->dirroot.'/lib/form/text.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class colorpicker extends MoodleQuickForm_text implements \core\output\templatable {
-
     use \templatable_form_element {
         export_for_template as export_for_template_base;
     }
@@ -53,7 +52,7 @@ class colorpicker extends MoodleQuickForm_text implements \core\output\templatab
 
         \MoodleQuickForm::registerElementType(
             'mod_bookit_colorpicker',
-            $CFG->dirroot.'/mod/bookit/classes/local/formelement/colorpicker.php',
+            $CFG->dirroot . '/mod/bookit/classes/local/formelement/colorpicker.php',
             '\mod_bookit\local\formelement\colorpicker'
         );
     }
@@ -65,7 +64,7 @@ class colorpicker extends MoodleQuickForm_text implements \core\output\templatab
      * @param string $elementlabel (optional) Text field label.
      * @param string $attributes (optional) Either a typical HTML attribute string or an associative array.
      */
-    public function __construct($elementname=null, $elementlabel=null, $attributes=null) {
+    public function __construct($elementname = null, $elementlabel = null, $attributes = null) {
         parent::__construct($elementname, $elementlabel, $attributes);
         $this->setType('text');
 
@@ -74,7 +73,7 @@ class colorpicker extends MoodleQuickForm_text implements \core\output\templatab
         if (empty($class)) {
             $class = '';
         }
-        $this->updateAttributes(['class' => $class.' mod_bookit-form-color-picker ']);
+        $this->updateAttributes(['class' => $class . ' mod_bookit-form-color-picker ']);
     }
 
     /**

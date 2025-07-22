@@ -77,4 +77,3 @@ if ($mform->is_cancelled()) {
 echo $OUTPUT->header();
 $mform->display();
 echo $OUTPUT->footer();
-

@@ -31,7 +31,6 @@ namespace mod_bookit\local\manager;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class weekplan_manager {
-
     /** @var string[] Array of Weekdays. */
     const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
@@ -71,7 +70,7 @@ class weekplan_manager {
 
                 foreach (explode(",", $timeperiods) as $timeperiod) {
                     try {
-                        list($starttime, $endtime) = explode('-', $timeperiod);
+                        [$starttime, $endtime] = explode('-', $timeperiod);
                         $starttime = self::parse_time($starttime);
                         $endtime = self::parse_time($endtime);
                         if ($starttime <= $endtime) {
@@ -100,7 +99,7 @@ class weekplan_manager {
      */
     private static function parse_time(string $time) {
         if (str_contains($time, ':')) {
-            list($hour, $minute) = explode(':', $time);
+            [$hour, $minute] = explode(':', $time);
             $hour = intval($hour);
             $minute = intval($minute);
         } else {
@@ -208,5 +207,4 @@ class weekplan_manager {
 
         return $records;
     }
-
 }

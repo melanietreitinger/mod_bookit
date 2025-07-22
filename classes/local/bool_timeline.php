@@ -30,7 +30,6 @@ namespace mod_bookit\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bool_timeline {
-
     /**
      * @var array[] Array of pairs [time, value]. Every value is valid from the specified time until the next value
      * is defined.

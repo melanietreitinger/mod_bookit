@@ -41,8 +41,6 @@ require_once($CFG->libdir . '/formslib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_weekplan_room_form extends persistent {
-
-
     /** @var string The related persistent class. */
     protected static $persistentclass = 'mod_bookit\local\persistent\weekplan_room';
 

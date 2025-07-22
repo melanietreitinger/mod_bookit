@@ -48,7 +48,6 @@ require_once($CFG->libdir . "/externallib.php");
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class get_possible_starttimes extends external_api {
-
     /**
      * Description for get_possible_slots parameters.
      * @return external_function_parameters

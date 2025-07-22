@@ -34,7 +34,6 @@ use mod_bookit\local\timeline;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class blocker extends persistent {
-
     /** Table name for the persistent. */
     const TABLE = 'bookit_blocker';
 

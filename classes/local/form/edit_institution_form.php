@@ -36,7 +36,6 @@ require_once($CFG->libdir . '/formslib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_institution_form extends \core\form\persistent {
-
     /** @var string The related persistent class. */
     protected static $persistentclass = 'mod_bookit\\local\\persistent\\institution';
 
@@ -71,5 +70,4 @@ class edit_institution_form extends \core\form\persistent {
         }
         return $data;
     }
-
 }

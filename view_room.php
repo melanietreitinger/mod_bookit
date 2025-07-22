@@ -53,12 +53,15 @@ $PAGE->requires->js(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/ev
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.css'));
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/custom-calendar.min.css'));
 $eventsource = (new moodle_url('/mod/bookit/events_available.php', ['roomid' => $room->get('id')]))->out(false);
-$PAGE->requires->js_call_amd('mod_bookit/available_calendar', 'init',
+$PAGE->requires->js_call_amd(
+    'mod_bookit/available_calendar',
+    'init',
     [
         $eventsource,
         current_language(),
         [],
-    ]);
+    ]
+);
 
 $table = new \mod_bookit\local\table\weekplan_room_table($id);
 
@@ -78,4 +81,3 @@ echo '<div id="ec" class="mt-6 mb-2"></div>';
 echo $OUTPUT->render_from_template('mod_bookit/admin_calendar_legend', []);
 
 echo $OUTPUT->footer();
-
