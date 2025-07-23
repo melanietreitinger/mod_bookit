@@ -125,7 +125,7 @@ require(['jquery'], function($) {
                 item.append('<input class=\"form-check-input mt-1\" type=\"checkbox\" value=\"'+e.id+'\">')
                     .append('<span>'+e.title+
                             ' <small class=\"text-muted\">('+loc+
-                            ', '+e.start.substr(0,16).replace(\"T\",\" \")+')</small></span>');
+                            e.start.substr(0,16).replace(\"T\",\" \")+')</small></span>');
                 list.append(item);
             });
         });
