@@ -118,16 +118,26 @@ require(['jquery'], function($) {
                 return;
             }
 
-            data.forEach(function(e){
-                // Fallbacks: room → e.location OR e.room
-                const loc = e.location || e.room || '';
-                const item = $('<label class=\"list-group-item d-flex gap-2 align-items-start\"></label>');
-                item.append('<input class=\"form-check-input mt-1\" type=\"checkbox\" value=\"'+e.id+'\">')
-                    .append('<span>'+e.title+
-                            ' <small class=\"text-muted\">('+loc+
-                            e.start.substr(0,16).replace(\"T\",\" \")+')</small></span>');
-                list.append(item);
-            });
+           data.forEach(function (e) {
+            var roomTxt   = (e.location || e.room || \"\").trim();
+            var faculty   = (e.department || \"\").trim();
+            var statusMap = {0:\"New\",1:\"In progress\",2:\"Accepted\",3:\"Cancelled\",4:\"Rejected\"};
+            var statusTxt = statusMap[e.bookingstatus] || \"\";
+
+            var dateTxt   = e.start.substr(0,16).replace(\"T\",\" \");
+            var metaLine  = roomTxt ? roomTxt + \" \" + dateTxt : dateTxt;
+
+            var row = $(\"<label class=\\\"list-group-item d-flex gap-2 align-items-start\\\" \" +
+                    \"data-room=\\\"\"+roomTxt.toLowerCase()+\"\\\" \" +
+                    \"data-faculty=\\\"\"+faculty.toLowerCase()+\"\\\" \" +
+                    \"data-status=\\\"\"+statusTxt.toLowerCase()+\"\\\">\" +
+                        \"<input class=\\\"form-check-input mt-1\\\" type=\\\"checkbox\\\" value=\\\"\"+e.id+\"\\\">\" +
+                        \"<span>\"+e.title+\" <small class=\\\"text-muted\\\">(\"+metaLine+\")</small></span>\" +
+                    \"</label>\");
+            list.append(row);
+        });
+        filterExportList();
+
         });
     });
 
@@ -135,21 +145,35 @@ require(['jquery'], function($) {
     $('#bookit-check-all').on('click',   function(){ $('#bookit-export-list input').prop('checked', true);  });
     $('#bookit-uncheck-all').on('click', function(){ $('#bookit-export-list input').prop('checked', false); });
 
-    /* live filter inside modal --------------------------------------- */
-    $('#bookit-modal-room, #bookit-modal-faculty, #bookit-modal-status').on('change', function () {
-        const r = $('#bookit-modal-room').val();
-        const f = $('#bookit-modal-faculty').val();
-        const s = $('#bookit-modal-status').val();
+    /* ---------- live search inside modal -------------------------------- */
+function filterExportList() {
+    const val = $('#bookit-modal-search').val().toLowerCase().trim();
+    console.log('[BookIT] filterExportList(), query = \"' + val + '\"');
 
-        $('#bookit-export-list label').each(function(){
-            const txt = $(this).text().toLowerCase();
-            const show =
-                (!r || txt.indexOf('('+r.toLowerCase()) !== -1) &&
-                (!f || txt.indexOf(f.toLowerCase())          !== -1) &&
-                (!s || txt.indexOf('('+s.toLowerCase()+')')  !== -1);
-            $(this).toggle(show);
-        });
+    $('#bookit-export-list label').each(function () {
+        const \$row = $(this);                           // \$ = escaped for PHP
+        const show = \$row.text().toLowerCase().includes(val);
+
+        // keep Bootstrap’s flex layout when visible, or switch to d-none when hidden
+        \$row.toggleClass('d-flex',  show)
+             .toggleClass('d-none', !show);
     });
+}
+
+
+
+
+    /* fire on every keystroke in the search box ------------------------- */
+    $('#bookit-modal-search').on('input', function () {
+        console.log('[BookIT] input event from search box');
+        filterExportList();
+    });
+
+
+
+
+
+
 
     /* Confirm‑Export → redirect to export_events.php ----------------- */
     $('#bookit-export-confirm').on('click', function () {
@@ -255,29 +279,17 @@ echo '
 
       <div class="modal-body">
 
-        <!-- modal‑filters ------------------------------------------------>
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <select id="bookit-modal-room"    class="custom-select w-auto">
-            <option value="">'.get_string('allrooms','mod_bookit').'</option>';
-            foreach ($rooms as $rid=>$name) {
-                echo '<option value="'.$name.'">'.format_string($name).'</option>';
-            }
-echo    '</select>
+        <!-- searchbar ------------------------------------------------>
+    <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
+        <label for="bookit-modal-search" class="mb-0">
+        '.get_string('search').':
+        </label>
 
-          <select id="bookit-modal-faculty" class="custom-select w-auto">
-            <option value="">'.get_string('allfaculties','mod_bookit').'</option>';
-            foreach ($faculties as $fac) {
-                echo '<option value="'.$fac.'">'.format_string($fac).'</option>';
-            }
-echo    '</select>
+        <input type="text" id="bookit-modal-search"
+            class="form-control w-auto d-inline">
+    </div>
 
-          <select id="bookit-modal-status"  class="custom-select w-auto">
-            <option value="">'.get_string('allstatuses','mod_bookit').'</option>';
-            foreach ($statusmap as $scode=>$label) {
-                echo '<option value="'.$label.'">'.format_string($label).'</option>';
-            }
-echo    '</select>
-        </div>
+
 
         <!-- check/uncheck buttons --------------------------------------->
         <div class="mb-2">
