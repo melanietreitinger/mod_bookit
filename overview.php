@@ -102,19 +102,25 @@ echo $OUTPUT->header();
 /* =======================================================================
    3.  Fetch examiner’s events
    ======================================================================= */
+/* =======================================================================
+   3.  Fetch examiner’s events   (one row per event)
+   ======================================================================= */
 global $DB, $USER;
 
 $sql = "SELECT e.id,
                e.name,
                e.bookingstatus,
                e.starttime,
-               r.name AS room
-          FROM {bookit_event} e
-     LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-     LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
+               MIN(r.name) AS room          -- pick the first room name
+          FROM {bookit_event}            e
+     LEFT JOIN {bookit_event_resources} er ON er.eventid   = e.id
+     LEFT JOIN {bookit_resource}        r  ON r.id         = er.resourceid
          WHERE e.personinchargeid = ?
-      GROUP BY e.id";
+      GROUP BY e.id, e.name, e.bookingstatus, e.starttime
+      ORDER BY e.starttime";
+
 $events = $DB->get_records_sql($sql, [$USER->id]);
+
 
 /* ----- status → label / colours -------------------------------------- */
 $statusmap = [
