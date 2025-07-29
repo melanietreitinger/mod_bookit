@@ -194,7 +194,7 @@ function filterExportList() {
    3.  Calendar feed URL & caps passed to AMD module
    ===================================================================== */
 $eventsource    = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
-$capabilities   = ['addevent' => has_capability('mod_bookit:addevent', $context)];
+$capabilities   = ['addevent' => has_capability('mod/bookit:addevent', $context)];
 $configcalendar = [];
 if ($tc = get_config('mod_bookit', 'textcolor')) { $configcalendar['textcolor'] = $tc; }
 
