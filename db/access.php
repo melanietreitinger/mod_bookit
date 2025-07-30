@@ -101,6 +101,7 @@ $capabilities['mod/bookit:viewownoverview'] = [
             'editingteacher' => CAP_ALLOW,
             'teacher'        => CAP_ALLOW,
             'manager'        => CAP_ALLOW,
+            'noneditingteacher' => CAP_ALLOW,
         ],
     ];
     
