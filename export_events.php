@@ -1,12 +1,26 @@
 <?php
 // This file is part of Moodle – https://moodle.org/
 //
-// Export selected BookIT events as an .ics file.
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// @package     mod_bookit
-// @copyright   2024 Melanie Treitinger
-// @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ *  Export selected BookIT events as an .ics file.
+ *
+ * @package     mod_bookit
+ * @copyright   2025 Vadym Kuzyak
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 declare(strict_types=1);
 
 require('../../config.php');
@@ -59,10 +73,26 @@ if (!$events) {
     print_error('noevents', 'mod_bookit');
 }
 
+
+//Add the event room
+if ($events) {
+    $eventids = array_keys($events);
+    list($in, $p) = $DB->get_in_or_equal($eventids, SQL_PARAMS_NAMED);
+    $sql = "SELECT er.eventid, MIN(r.name) AS room
+              FROM {bookit_event_resources} er
+         JOIN {bookit_resource}        r  ON r.id = er.resourceid
+             WHERE er.eventid $in
+          GROUP BY er.eventid";
+
+    foreach ($DB->get_records_sql($sql, $p) as $rec) {
+        $events[$rec->eventid]->room = $rec->room ?? '';
+    }
+}
+
 /* ------------------------------------------------------------------
    2.  Build VCALENDAR
    ------------------------------------------------------------------ */
-$lines = [
+   $lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//BookIT//Export//EN'
@@ -74,27 +104,43 @@ foreach ($events as $ev) {
     $end   = gmdate('Ymd\THis\Z', (int)($ev->endtime ?? ($ev->starttime + 3600)));
 
     $summary = ics_escape($ev->name);
-    $loc     = ics_escape($ev->room        ?? '');
-    $descArr = [];
-    if (!empty($ev->department))         { $descArr[] = 'Faculty: '       . $ev->department; }
-    if (!empty($ev->technicalneeds))     { $descArr[] = 'Requirements: '  . $ev->technicalneeds; }
-    if (!empty($ev->participantsamount)) { $descArr[] = 'Participants: '  . $ev->participantsamount; }
-    $description = ics_escape(implode('\n', $descArr));
+    $loc     = ics_escape($ev->room ?? '');
 
-    $lines = array_merge($lines, [
+    // human‑readable description 
+    $descrRows = [];
+    if (!empty($ev->department))         { $descrRows[] = 'Faculty: '      . $ev->department; .'|'. }
+    if (!empty($ev->technicalneeds))     { $descrRows[] = 'Requirements: ' . $ev->technicalneeds; .'|'. }
+    if (!empty($ev->participantsamount)) { $descrRows[] = 'Participants: ' . $ev->participantsamount; }
+
+    $evlines = [
         'BEGIN:VEVENT',
-        'UID:'       . $uid,
-        'DTSTAMP:'   . gmdate('Ymd\THis\Z'),
-        'DTSTART:'   . $start,
-        'DTEND:'     . $end,
-        'SUMMARY:'   . $summary,
-        'LOCATION:'  . $loc,
-        'DESCRIPTION:' . $description,
-        'END:VEVENT'
-    ]);
+        'UID:'      . $uid,
+        'DTSTAMP:'  . gmdate('Ymd\THis\Z'),
+        'DTSTART:'  . $start,
+        'DTEND:'    . $end,
+        'SUMMARY:'  . $summary,
+        'LOCATION:' . $loc,
+    ];
+
+    if ($descrRows) {
+        $evlines[] = 'DESCRIPTION:' . ics_escape(array_shift($descrRows));
+        // continuation lines: leading space = folded line
+        foreach ($descrRows as $row) {
+            $evlines[] = ' ' . ics_escape($row);
+        }
+    } else {
+        $evlines[] = 'DESCRIPTION:';
+    }
+
+    $evlines[] = 'END:VEVENT';
+
+    // append to calendar 
+    $lines = array_merge($lines, $evlines);
 }
 
 $lines[] = 'END:VCALENDAR';
+
+
 $ics = implode("\r\n", $lines);
 
 /* ------------------------------------------------------------------
@@ -110,10 +156,10 @@ exit;
 /* ==================================================================
    Helper: escape newline / comma / semicolon according to RFC 5545
    ================================================================== */
-function ics_escape(string $s): string {
+   function ics_escape(string $s): string {
     return str_replace(
         ['\\',   ',',  ';',  "\r", "\n"],
-        ['\\\\', '\,', '\;', '',   '\n'],
+        ['\\\\', '\,', '\;', '',   '\N'],  
         $s
     );
 }
