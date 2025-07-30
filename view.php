@@ -228,7 +228,7 @@ $PAGE->set_context($context);
 
 $PAGE->requires->js (new moodle_url('/mod/bookit/assets/event-calendar.min.js'), true);
 $PAGE->requires->css(new moodle_url('/mod/bookit/assets/event-calendar.min.css'), true);
-$PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendar.min.css'), true);
+$PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendarv2.min.css'), true);
 
 echo $OUTPUT->header();
 
