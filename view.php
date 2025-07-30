@@ -142,8 +142,15 @@ require(['jquery'], function($) {
     });
 
     /* check‑all / uncheck‑all buttons -------------------------------- */
-    $('#bookit-check-all').on('click',   function(){ $('#bookit-export-list input').prop('checked', true);  });
-    $('#bookit-uncheck-all').on('click', function(){ $('#bookit-export-list input').prop('checked', false); });
+    $('#bookit-check-all').on('click', function () {
+        // check only those check‑boxes whose row is currently visible
+        $('#bookit-export-list label:visible input').prop('checked', true);
+    });
+
+    $('#bookit-uncheck-all').on('click', function () {
+        // uncheck only the boxes of visible rows (keeps hidden‑row state intact)
+        $('#bookit-export-list label:visible input').prop('checked', false);
+    });
 
     /* ---------- live search inside modal -------------------------------- */
 function filterExportList() {
