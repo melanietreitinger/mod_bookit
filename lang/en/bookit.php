@@ -113,8 +113,15 @@ $string['bookit:viewownoverview'] = 'View own events overview';
 
 //NEU
 $string['config_weekdaysvisible']      = 'Weekdays shown in calendar';
-$string['config_weekdaysvisible_desc'] = 'Choose which weekdays appear in the BookIT calendar and may be selected for events.';
+$string['config_weekdaysvisible_desc'] =
+    'Choose which weekdays appear in the BookIT calendar and may be selected for events.
+     <br><em>Default: Monday, Tuesday, Wednesday, Thursday, Friday</em><br>
+     <span style="color:#b50000;">
+         Please note that by hiding weekdays, events that have already been booked
+         on those days will no longer be displayed.
+     </span>';
 $string['invalidweekday'] = 'This weekday is not allowed for booking.';
+
 
 
 $string['backtooverview'] = 'Back to overview';
