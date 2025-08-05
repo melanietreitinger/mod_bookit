@@ -108,9 +108,9 @@ foreach ($events as $ev) {
 
     // human‑readable description 
     $descrRows = [];
-    if (!empty($ev->department))         { $descrRows[] = 'Faculty: '      . $ev->department; .'|'. }
-    if (!empty($ev->technicalneeds))     { $descrRows[] = 'Requirements: ' . $ev->technicalneeds; .'|'. }
-    if (!empty($ev->participantsamount)) { $descrRows[] = 'Participants: ' . $ev->participantsamount; }
+    if (!empty($ev->department))         { $descrRows[] = 'Faculty: '      . $ev->department; }
+    if (!empty($ev->technicalneeds))     { $descrRows[] = '| Requirements: ' . $ev->technicalneeds; }
+    if (!empty($ev->participantsamount)) { $descrRows[] = '| Participants: ' . $ev->participantsamount; }
 
     $evlines = [
         'BEGIN:VEVENT',
