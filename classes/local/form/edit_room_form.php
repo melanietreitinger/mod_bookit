@@ -49,6 +49,11 @@ class edit_room_form extends \core\form\persistent {
         $mform = $this->_form;
 
         $mform->addElement('text', 'name', get_string('name'));
+        $mform->addRule('name', get_string('required'), 'required');
+
+        $mform->addElement('text', 'seats', get_string('seats', 'mod_bookit'));
+        $mform->addRule('seats', get_string('required'), 'required');
+        $mform->addRule('seats', get_string('err_numeric', 'form'), 'numeric', null, 'client');
 
         $mform->addElement('textarea', 'description', get_string('description'));
 
