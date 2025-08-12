@@ -70,8 +70,8 @@ class weekplans_table extends \table_sql {
         global $OUTPUT;
         $output = '';
 
-        $alt = get_string('view');
-        $icon = 'a/search';
+        $alt = get_string('edit');
+        $icon = 't/edit';
         $url = new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]);
         $output .= $OUTPUT->action_icon(
             $url,

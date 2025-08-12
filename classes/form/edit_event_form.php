@@ -102,7 +102,7 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('name', 'event_name', 'mod_bookit');
 
         // Semester.
-        $currentyear = date('Y');
+        $currentyear = (int) date('Y');
         // Generate semesters dynamically.
         $semesters = [];
         // ...@TODO: Make range of semester terms an admin option.
@@ -341,6 +341,36 @@ class edit_event_form extends dynamic_form {
                 $mform->addGroup($groupelements, 'resourcegroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
                         false);
             }
+        }
+
+        $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
+        if ($timeclicked) {
+            $timeclicked = new \DateTimeImmutable($timeclicked);
+            $timeclickedstamp = $timeclicked->getTimestamp();
+            $startdate = $timeclicked->setTime(0, 0);
+            $this->_form->setDefault('startdate', $timeclicked->getTimestamp());
+
+            $possiblestarttimes = get_possible_starttimes::list_possible_starttimes(
+                \DateTime::createFromImmutable($startdate),
+                $eventdefaultduration,
+                array_key_first($roomoptions),
+            );
+
+            $smallestdiff = 1e9;
+            $selectedtime = null;
+
+            foreach ($possiblestarttimes as $possiblestarttime => $str) {
+                if (abs($possiblestarttime - $timeclickedstamp) < $smallestdiff) {
+                    $smallestdiff = abs($possiblestarttime - $timeclickedstamp);
+                    $selectedtime = $possiblestarttime;
+                }
+            }
+
+            /** @var \MoodleQuickForm_select $starttimeel */
+            $starttimeel = $mform->getElement('starttime');
+            $starttimeel->removeOptions();
+            $starttimeel->loadArray($possiblestarttimes);
+            $mform->setDefault('starttime', $selectedtime);
         }
     }
 

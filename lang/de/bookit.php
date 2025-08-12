@@ -71,6 +71,7 @@ $string['edit'] = 'Bearbeiten';
 $string['edit_event'] = "Termin bearbeiten";
 $string['edit_institution'] = 'Institution bearbeiten';
 $string['edit_room'] = 'Raum bearbeiten';
+$string['edit_room_data'] = 'Raumdaten bearbeiten';
 $string['edit_weekplan'] = 'Wochenplan bearbeiten';
 $string['edit_weekplan_assignment'] = 'Wochenplan-Zuweisung bearbeiten';
 $string['end'] = 'Ende';

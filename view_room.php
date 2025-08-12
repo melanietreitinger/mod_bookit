@@ -67,16 +67,25 @@ $table = new \mod_bookit\local\table\weekplan_room_table($id);
 
 echo $OUTPUT->header();
 
-echo $OUTPUT->render(new \core\output\single_button(
+echo \core\output\html_writer::link(
+    new moodle_url('/mod/bookit/edit_room.php', ['id' => $id]),
+    get_string('edit_room_data', 'mod_bookit'),
+    ['class' => 'btn btn-primary mb-3']
+);
+
+echo $OUTPUT->heading(get_string('weekplan_assignments', 'mod_bookit'), 2, 'mt-4');
+
+echo \core\output\html_writer::link(
     new moodle_url('/mod/bookit/edit_weekplan_room.php', ['roomid' => $room->get('id')]),
     get_string('new_weekplan_assignment', 'mod_bookit'),
-    'post',
-    single_button::BUTTON_PRIMARY
-)) . '<br><br>';
+    ['class' => 'btn btn-primary mb-2']
+);
 
 $table->out(48, false);
 
-echo '<div id="ec" class="mt-6 mb-2"></div>';
+echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'), 2, 'mt-4');
+
+echo '<div id="ec" class="mt-2 mb-2"></div>';
 
 echo $OUTPUT->render_from_template('mod_bookit/admin_calendar_legend', []);
 

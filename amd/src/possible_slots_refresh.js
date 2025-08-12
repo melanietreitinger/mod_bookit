@@ -42,8 +42,6 @@ export function initPossibleStarttimesRefresh() {
     const timeEl = formEl.querySelector('select[name="starttime"]');
 
     const refreshStarttimes = async() => {
-        const selectedTime = timeEl.value;
-
         const year = parseInt(dateYearEl.value);
         const month = parseInt(dateMonthEl.value);
         const day = parseInt(dateDayEl.value);
@@ -59,6 +57,8 @@ export function initPossibleStarttimesRefresh() {
             }
         }])[0];
 
+        const currentSelected = new Date(timeEl.value * 1000);
+
         while (timeEl.options.length) {
             timeEl.options.remove(0);
         }
@@ -67,7 +67,8 @@ export function initPossibleStarttimesRefresh() {
             const opt = document.createElement("option");
             opt.value = slot.timestamp;
             opt.innerText = slot.string;
-            if (slot === selectedTime) {
+            const date = new Date(slot.timestamp * 1000);
+            if (date.getHours() * 60 + date.getMinutes() === currentSelected.getHours() * 60 + currentSelected.getMinutes()) {
                 opt.selected = true;
             }
             timeEl.options.add(opt);
@@ -77,5 +78,4 @@ export function initPossibleStarttimesRefresh() {
     for (let el of [roomEl, durationEl, dateDayEl, dateMonthEl, dateYearEl]) {
         el.addEventListener('change', refreshStarttimes);
     }
-    void refreshStarttimes();
 }

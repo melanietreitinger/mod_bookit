@@ -106,6 +106,9 @@ class weekplan_manager {
             $hour = intval($time);
             $minute = 0;
         }
+        if ($hour < 0 || $hour >= 24 || $minute < 0 || $minute >= 60) {
+            throw new \Exception('invalid time');
+        }
         return $hour * 3600 + $minute * 60;
     }
 
