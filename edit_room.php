@@ -49,14 +49,18 @@ $PAGE->set_heading($title);
 $PAGE->set_title($title);
 $PAGE->navbar->add($title, new moodle_url($PAGE->url));
 
-$returnurl = new moodle_url('/mod/bookit/rooms.php');
+$returnurl = new moodle_url('/mod/bookit/view_room.php', ['id' => $id]);
 
 $mform = new \mod_bookit\local\form\edit_room_form($PAGE->url, [
     'persistent' => $room,
 ]);
 
 if ($mform->is_cancelled()) {
-    redirect($returnurl);
+    if ($id) {
+        redirect(new moodle_url('/mod/bookit/view_room.php', ['id' => $id]));
+    } else {
+        redirect(new moodle_url('/mod/bookit/rooms.php'));
+    }
 } else if ($data = $mform->get_data()) {
     if ($data->id) {
         $room->from_record($data);
@@ -64,8 +68,9 @@ if ($mform->is_cancelled()) {
     } else {
         $room = new \mod_bookit\local\persistent\room(0, $data);
         $room->create();
+        $id = $room->get('id');
     }
-    redirect($returnurl);
+    redirect(new moodle_url('/mod/bookit/view_room.php', ['id' => $id]));
 } // Else display form.
 
 echo $OUTPUT->header();
