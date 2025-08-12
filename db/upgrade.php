@@ -33,6 +33,7 @@
  */
 function xmldb_bookit_upgrade(int $oldversion): bool {
     global $DB;
+    $dbman = $DB->get_manager();
 
     if ($oldversion < 2024102204) {
         $dbman = $DB->get_manager();
@@ -381,6 +382,20 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
 
         // Bookit savepoint reached.
         upgrade_mod_savepoint(true, 2025050500, 'bookit');
+    }
+
+    if ($oldversion < 2025081200) {
+        // Define field seats to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('seats', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'roommode');
+
+        // Conditionally launch add field seats.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025081200, 'bookit');
     }
 
     return true;

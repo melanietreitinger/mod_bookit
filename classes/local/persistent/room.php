@@ -66,6 +66,9 @@ class room extends persistent {
                 'type' => PARAM_INT,
                 'choices' => [0, 1],
             ],
+            'seats' => [
+                'type' => PARAM_INT,
+            ],
         ];
     }
 }

@@ -44,6 +44,7 @@ $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 // ...@TODO: translate.
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLATZHALTER';
+$string['calendar'] = 'Kalender';
 $string['color'] = 'Farbe';
 $string['define_institutions'] = 'Institutionen definieren';
 $string['edit_blocker'] = 'Blocker bearbeiten';
@@ -168,6 +169,7 @@ $string['roommode'] = 'Raummodus';
 $string['roommode_free'] = 'Freie Auswahl innerhalb der Slots';
 $string['roommode_slots'] = 'Buchungen können nur an Anfängen von Slots starten';
 $string['rooms'] = 'Räume';
+$string['seats'] = 'Anzahl an Plätzen';
 $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';
 $string['select_semester'] = 'Semester';
@@ -214,13 +216,14 @@ $string['type_when_due'] = 'Wenn fällig';
 $string['type_when_due'] = 'Wenn fällig';
 $string['weekplan'] = 'Wochenplan';
 $string['weekplan_assignment_overlaps'] = 'Der eingegebene Zeitraum überschneidet eine bereits existierende Wochenplanzuweisung.';
-$string['weekplan_room'] = 'Wochenplan-Zuweisungen';
-$string['weekplans'] = 'Wochenpläne';
-$string['winter_semester'] = 'Wintersemester';
-$string['weekplan_help'] = 'Hier können Wochenpläne definiert werden. Jede Zeile startet mit einem abgekürzten Wochentag, gefolgt von einer kommagetrennten Liste von Zeitslots. 
-Dies sind Beispiel für valide Zeilen:
+$string['weekplan_assignments'] = 'Wochenplan-Zuweisungen';
+$string['weekplan_help'] = 'Hier können Wochenpläne definiert werden. Jede Zeile startet mit einem abgekürzten Wochentag, gefolgt von einer kommagetrennten Liste von Zeitslots.<br>
+Dies sind Beispiele für valide Zeilen:
 <pre>
 Di 8-11:30, 14:00-17
 Mi 09-16
 Do 07:45-10:00,10-12,13-15
 </pre>';
+$string['weekplan_room'] = 'Wochenplan-Zuweisungen zu Räumen';
+$string['weekplans'] = 'Wochenpläne';
+$string['winter_semester'] = 'Wintersemester';

@@ -152,6 +152,7 @@ $string['roommode'] = 'Room mode';
 $string['roommode_free'] = 'Free selection inside slots';
 $string['roommode_slots'] = 'Bookings can only start at beginnings of slots';
 $string['rooms'] = 'Rooms';
+$string['seats'] = 'Amount of seats';
 $string['select_coursetemplate'] = 'Select a course template';
 $string['select_coursetemplate_help'] = 'Select a course template for the course in which your exam will take place.';
 $string['select_semester'] = 'Term';
@@ -178,13 +179,13 @@ $string['tools'] = 'Tools';
 $string['weekplan'] = 'Week plan';
 $string['weekplan_assignment_overlaps'] = 'The entered period is overlapping an already existing weekplan assignment.';
 $string['weekplan_assignments'] = 'Weekplan assignments';
-$string['weekplan_room'] = 'Weekplan assignments to rooms';
-$string['weekplans'] = 'Week plans';
-$string['winter_semester'] = 'Winter Term';
-$string['weekplan_help'] = 'Here, you can define week plans. Each line should start with a abbreviated day of the week, followed by a list of timeslots. 
+$string['weekplan_help'] = 'Here, you can define week plans. Each line should start with a abbreviated day of the week, followed by a list of comma separated timeslots.<br>
 These are examples for valid lines:
 <pre>
 Di 8-11:30, 14:00-17
 Mi 09-16
 Do 07:45-10:00,10-12,13-15
 </pre>';
+$string['weekplan_room'] = 'Weekplan assignments to rooms';
+$string['weekplans'] = 'Week plans';
+$string['winter_semester'] = 'Winter Term';
