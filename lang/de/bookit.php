@@ -174,6 +174,10 @@ $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';
 $string['select_semester'] = 'Semester';
 $string['select_semester_help'] = 'Wählen Sie das Semester aus, in dem der Termin stattfindet';
+$string['settings_eventdefaultduration'] = 'Voreingestellte Länge eines Termins (min)';
+$string['settings_eventdurationstepwidth'] = 'Schrittweite für die Länge eines Termins (min)';
+$string['settings_eventmaxduration'] = 'Maximal mögliche Länge eines Termins (min)';
+$string['settings_eventstartstepwidth'] = 'Schrittweite für Terminstartzeitpunkte (min)';
 // ...@TODO: translate.
 $string['settings_eventmaxyears'] = 'Maxmum year to select for event';
 // ...@TODO: translate.
