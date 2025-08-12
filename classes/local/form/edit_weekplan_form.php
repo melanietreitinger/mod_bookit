@@ -46,7 +46,10 @@ class edit_weekplan_form extends \moodleform {
         $mform->addElement('text', 'name', get_string('name'));
         $mform->setType('name', PARAM_TEXT);
 
-        $mform->addElement('textarea', 'weekplan', get_string('weekplan', 'mod_bookit'));
+        $mform->addElement('textarea', 'weekplan', get_string('weekplan', 'mod_bookit'), [
+            'rows' => 7
+        ]);
+        $mform->addHelpButton('weekplan', 'weekplan', 'mod_bookit');
 
         $this->add_action_buttons();
     }

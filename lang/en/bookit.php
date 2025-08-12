@@ -181,3 +181,10 @@ $string['weekplan_assignments'] = 'Weekplan assignments';
 $string['weekplan_room'] = 'Weekplan assignments to rooms';
 $string['weekplans'] = 'Week plans';
 $string['winter_semester'] = 'Winter Term';
+$string['weekplan_help'] = 'Here, you can define week plans. Each line should start with a abbreviated day of the week, followed by a list of timeslots. 
+These are examples for valid lines:
+<pre>
+Di 8-11:30, 14:00-17
+Mi 09-16
+Do 07:45-10:00,10-12,13-15
+</pre>';

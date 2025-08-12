@@ -217,3 +217,10 @@ $string['weekplan_assignment_overlaps'] = 'Der eingegebene Zeitraum überschneid
 $string['weekplan_room'] = 'Wochenplan-Zuweisungen';
 $string['weekplans'] = 'Wochenpläne';
 $string['winter_semester'] = 'Wintersemester';
+$string['weekplan_help'] = 'Hier können Wochenpläne definiert werden. Jede Zeile startet mit einem abgekürzten Wochentag, gefolgt von einer kommagetrennten Liste von Zeitslots. 
+Dies sind Beispiel für valide Zeilen:
+<pre>
+Di 8-11:30, 14:00-17
+Mi 09-16
+Do 07:45-10:00,10-12,13-15
+</pre>';
