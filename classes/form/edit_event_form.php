@@ -107,7 +107,6 @@ class edit_event_form extends dynamic_form {
         $semesters = [];
         // ...@TODO: Make range of semester terms an admin option.
         for ($i = -1; $i < 2; $i++) {
-
             $semesters[($currentyear + $i) * 10 + 1] = get_string('summer_semester', 'mod_bookit') . " " . ($currentyear + $i);
             $semesters[($currentyear + $i) * 10 + 2] = get_string('winter_semester', 'mod_bookit') . " " . ($currentyear + $i);
         }
@@ -152,9 +151,7 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
 
         // Add the "bookingtimes" fields.
-        $curdate = new \DateTimeImmutable('+ 1 hour');
         $starttimearray = [
-                'step' => 15, // Step to increment minutes by.
                 'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
         ];
         // Set time restrictions based on "editinternal" capability.
@@ -171,15 +168,6 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
 
         $mform->addElement('select', 'starttime');
-
-        // Closure function to check that no date in the past is selected.
-        $checkmindate = function($val) use ($curdate) {
-            $checkdate = mktime($val['hour'], $val['minute'], '00', $val['month'], $val['day'], $val['year']);
-            if ($checkdate < $curdate->getTimestamp()) {
-                return false;
-            }
-            return true;
-        };
 
         // Add a static field to explain extra time.
         $mform->addElement('static', 'extratime_label', get_string('event_extratime_label', 'mod_bookit'),

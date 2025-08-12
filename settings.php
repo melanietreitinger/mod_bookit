@@ -36,6 +36,50 @@ if ($hassiteconfig) {
     if ($ADMIN->fulltree) {
         // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
 
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/eventdefaultduration',
+            get_string('settings_eventdefaultduration', 'mod_bookit'),
+            null,
+            60,
+            PARAM_INT
+        ));
+
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/eventmaxduration',
+            get_string('settings_eventmaxduration', 'mod_bookit'),
+            null,
+            480,
+            PARAM_INT
+        ));
+
+        $settings->add(new admin_setting_configselect(
+            'mod_bookit/eventdurationstepwidth',
+            get_string('settings_eventdurationstepwidth', 'mod_bookit'),
+            null,
+            15,
+            [
+                5 => '5',
+                10 => '10',
+                15 => '15',
+                30 => '30',
+                60 => '60',
+            ],
+        ));
+
+        $settings->add(new admin_setting_configselect(
+            'mod_bookit/eventstartstepwidth',
+            get_string('settings_eventstartstepwidth', 'mod_bookit'),
+            null,
+            15,
+            [
+                5 => '5',
+                10 => '10',
+                15 => '15',
+                30 => '30',
+                60 => '60',
+            ],
+        ));
+
         // Event setting extra time.
         $name = 'mod_bookit/extratime';
         $title = get_string('settings_extratime', 'mod_bookit');
