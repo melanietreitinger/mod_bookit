@@ -62,11 +62,11 @@ class backup_bookit_activity_task extends backup_activity_task {
         $base = preg_quote($CFG->wwwroot, '/');
 
         // Link to the list of choices.
-        $search = "/(".$base."\//mod\/bookit\/index.php\?id\=)([0-9]+)/";
+        $search = "/(".$base."\/mod\/bookit\/index.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@BOOKITINDEX*$2@$', $content);
 
         // Link to choice view by moduleid.
-        $search = "/(".$base."\//mod\/bookit\/view.php\?id\=)([0-9]+)/";
+        $search = "/(".$base."\/mod\/bookit\/view.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@BOOKITVIEWBYID*$2@$', $content);
 
         return $content;
