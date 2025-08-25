@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <role>
-	<shortname>examiner</shortname>
-	<name>_Examiner</name>
+	<shortname>bookit_examiner</shortname>
+	<name>BookIt_Examiner</name>
 	<description>A person who belongs to or is associated with a university and examines students.</description>
 	<archetype>student</archetype>
 	<contextlevels>

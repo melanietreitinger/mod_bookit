@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <role>
-	<shortname>bookingperson</shortname>
-	<name>_Booking Person</name>
-	<description>A person who makes a request for an e-examination (examiners, examination offices, student staff, academic staff, ...).</description>
+	<shortname>bookit_supportonside</shortname>
+	<name>BookIt_Support on site</name>
+	<description>A person who supports an exam on site.</description>
 	<archetype>student</archetype>
 	<contextlevels>
 		<level>course</level>
@@ -14,7 +14,6 @@
 	<allowview>
 		<shortname>serviceteam</shortname>
 		<shortname>examiner</shortname>
-		<shortname>supportonside</shortname>
 	</allowview>
 	<permissions>
 		<inherit>aiplacement/courseassist:summarise_text</inherit>
@@ -41,6 +40,10 @@
 		<inherit>block/calendar_upcoming:myaddinstance</inherit>
 		<inherit>block/comments:addinstance</inherit>
 		<inherit>block/comments:myaddinstance</inherit>
+		<inherit>block/completion_progress:addinstance</inherit>
+		<inherit>block/completion_progress:myaddinstance</inherit>
+		<inherit>block/completion_progress:overview</inherit>
+		<inherit>block/completion_progress:showbar</inherit>
 		<inherit>block/completionstatus:addinstance</inherit>
 		<inherit>block/course_list:addinstance</inherit>
 		<inherit>block/course_list:myaddinstance</inherit>
@@ -71,9 +74,6 @@
 		<inherit>block/online_users:viewlist</inherit>
 		<inherit>block/private_files:addinstance</inherit>
 		<inherit>block/private_files:myaddinstance</inherit>
-		<inherit>block/quickcourselist:addinstance</inherit>
-		<inherit>block/quickcourselist:myaddinstance</inherit>
-		<inherit>block/quickcourselist:use</inherit>
 		<inherit>block/recent_activity:addinstance</inherit>
 		<inherit>block/recent_activity:viewaddupdatemodule</inherit>
 		<inherit>block/recent_activity:viewdeletemodule</inherit>
@@ -88,15 +88,13 @@
 		<inherit>block/selfcompletion:addinstance</inherit>
 		<inherit>block/settings:addinstance</inherit>
 		<inherit>block/settings:myaddinstance</inherit>
-		<inherit>block/simple_calculator:addinstance</inherit>
-		<inherit>block/simple_calculator:myaddinstance</inherit>
 		<inherit>block/site_main_menu:addinstance</inherit>
 		<inherit>block/social_activities:addinstance</inherit>
 		<inherit>block/starredcourses:myaddinstance</inherit>
 		<inherit>block/tag_flickr:addinstance</inherit>
-		<inherit>block/tag_youtube:addinstance</inherit>
 		<inherit>block/tags:addinstance</inherit>
 		<inherit>block/tags:myaddinstance</inherit>
+		<inherit>block/tag_youtube:addinstance</inherit>
 		<inherit>block/timeline:myaddinstance</inherit>
 		<inherit>booktool/exportimscp:export</inherit>
 		<inherit>booktool/importhtml:import</inherit>
@@ -142,6 +140,9 @@
 		<inherit>enrol/self:unenrol</inherit>
 		<inherit>enrol/self:unenrolself</inherit>
 		<inherit>factor/capability:cannotpassfactor</inherit>
+		<inherit>format/designer:changesectionoptions</inherit>
+		<inherit>format/kickstart:import_from_template</inherit>
+		<inherit>format/kickstart:manage_templates</inherit>
 		<inherit>forumreport/summary:view</inherit>
 		<inherit>forumreport/summary:viewall</inherit>
 		<inherit>gradeexport/ods:publish</inherit>
@@ -163,7 +164,8 @@
 		<inherit>gradereport/singleview:view</inherit>
 		<inherit>gradereport/summary:view</inherit>
 		<inherit>gradereport/user:view</inherit>
-		<inherit>local/bulkenrol:enrolusers</inherit>
+		<inherit>lifecyclestep/duplicate:enterdata</inherit>
+		<inherit>lifecyclestep/email:preventdeletion</inherit>
 		<inherit>message/airnotifier:managedevice</inherit>
 		<inherit>mod/assign:addinstance</inherit>
 		<inherit>mod/assign:editothersubmission</inherit>
@@ -183,6 +185,20 @@
 		<inherit>mod/assign:viewblinddetails</inherit>
 		<inherit>mod/assign:viewgrades</inherit>
 		<inherit>mod/assign:viewownsubmissionsummary</inherit>
+		<inherit>mod/attendance:addinstance</inherit>
+		<inherit>mod/attendance:canbelisted</inherit>
+		<inherit>mod/attendance:changeattendances</inherit>
+		<inherit>mod/attendance:changepreferences</inherit>
+		<inherit>mod/attendance:export</inherit>
+		<inherit>mod/attendance:import</inherit>
+		<inherit>mod/attendance:manageattendances</inherit>
+		<inherit>mod/attendance:managetemporaryusers</inherit>
+		<inherit>mod/attendance:manualautomark</inherit>
+		<inherit>mod/attendance:takeattendances</inherit>
+		<inherit>mod/attendance:view</inherit>
+		<inherit>mod/attendance:viewreports</inherit>
+		<inherit>mod/attendance:viewsummaryreports</inherit>
+		<inherit>mod/attendance:warningemails</inherit>
 		<inherit>mod/bigbluebuttonbn:addinstance</inherit>
 		<inherit>mod/bigbluebuttonbn:addinstancewithmeeting</inherit>
 		<inherit>mod/bigbluebuttonbn:addinstancewithrecording</inherit>
@@ -197,16 +213,23 @@
 		<inherit>mod/bigbluebuttonbn:unpublishrecordings</inherit>
 		<inherit>mod/bigbluebuttonbn:view</inherit>
 		<inherit>mod/bigbluebuttonbn:viewallrecordingformats</inherit>
+		<inherit>mod/board:addinstance</inherit>
+		<inherit>mod/board:deleteallcomments</inherit>
+		<inherit>mod/board:manageboard</inherit>
+		<inherit>mod/board:post</inherit>
+		<inherit>mod/board:postcomment</inherit>
+		<inherit>mod/board:view</inherit>
 		<inherit>mod/book:addinstance</inherit>
 		<inherit>mod/book:edit</inherit>
-		<inherit>mod/book:read</inherit>
-		<inherit>mod/book:viewhiddenchapters</inherit>
+		<inherit>mod/bookit:addevent</inherit>
 		<inherit>mod/bookit:addinstance</inherit>
 		<inherit>mod/bookit:addresource</inherit>
 		<inherit>mod/bookit:editevent</inherit>
 		<inherit>mod/bookit:editinternal</inherit>
 		<inherit>mod/bookit:editresource</inherit>
 		<inherit>mod/bookit:viewalldetailsofevent</inherit>
+		<inherit>mod/book:read</inherit>
+		<inherit>mod/book:viewhiddenchapters</inherit>
 		<inherit>mod/chat:addinstance</inherit>
 		<inherit>mod/chat:chat</inherit>
 		<inherit>mod/chat:deletelog</inherit>
@@ -218,6 +241,11 @@
 		<inherit>mod/choice:choose</inherit>
 		<inherit>mod/choice:deleteresponses</inherit>
 		<inherit>mod/choice:downloadresponses</inherit>
+		<inherit>mod/choicegroup:addinstance</inherit>
+		<inherit>mod/choicegroup:choose</inherit>
+		<inherit>mod/choicegroup:deleteresponses</inherit>
+		<inherit>mod/choicegroup:downloadresponses</inherit>
+		<inherit>mod/choicegroup:readresponses</inherit>
 		<inherit>mod/choice:readresponses</inherit>
 		<inherit>mod/choice:view</inherit>
 		<inherit>mod/data:addinstance</inherit>
@@ -312,6 +340,9 @@
 		<inherit>mod/h5pactivity:view</inherit>
 		<inherit>mod/imscp:addinstance</inherit>
 		<inherit>mod/imscp:view</inherit>
+		<inherit>mod/journal:addentries</inherit>
+		<inherit>mod/journal:addinstance</inherit>
+		<inherit>mod/journal:manageentries</inherit>
 		<inherit>mod/kanban:addcard</inherit>
 		<inherit>mod/kanban:addinstance</inherit>
 		<inherit>mod/kanban:assignothers</inherit>
@@ -333,6 +364,12 @@
 		<inherit>mod/lesson:manageoverrides</inherit>
 		<inherit>mod/lesson:view</inherit>
 		<inherit>mod/lesson:viewreports</inherit>
+		<inherit>mod/lightboxgallery:addcomment</inherit>
+		<inherit>mod/lightboxgallery:addimage</inherit>
+		<inherit>mod/lightboxgallery:addinstance</inherit>
+		<inherit>mod/lightboxgallery:edit</inherit>
+		<inherit>mod/lightboxgallery:submit</inherit>
+		<inherit>mod/lightboxgallery:viewcomments</inherit>
 		<inherit>mod/lti:addcoursetool</inherit>
 		<inherit>mod/lti:addinstance</inherit>
 		<inherit>mod/lti:addpreconfiguredinstance</inherit>
@@ -340,14 +377,57 @@
 		<inherit>mod/lti:manage</inherit>
 		<inherit>mod/lti:requesttooladd</inherit>
 		<inherit>mod/lti:view</inherit>
-		<inherit>mod/mootimeter:addinstance</inherit>
-		<inherit>mod/mootimeter:moderator</inherit>
-		<inherit>mod/mootimeter:view</inherit>
+		<inherit>mod/ouwiki:addinstance</inherit>
+		<inherit>mod/ouwiki:annotate</inherit>
+		<inherit>mod/ouwiki:annotateothers</inherit>
+		<inherit>mod/ouwiki:deletepage</inherit>
+		<inherit>mod/ouwiki:edit</inherit>
+		<inherit>mod/ouwiki:editothers</inherit>
+		<inherit>mod/ouwiki:grade</inherit>
+		<inherit>mod/ouwiki:lock</inherit>
+		<inherit>mod/ouwiki:overridelock</inherit>
+		<inherit>mod/ouwiki:view</inherit>
+		<inherit>mod/ouwiki:viewallindividuals</inherit>
+		<inherit>mod/ouwiki:viewgroupindividuals</inherit>
+		<inherit>mod/ouwiki:viewparticipation</inherit>
 		<inherit>mod/page:addinstance</inherit>
 		<inherit>mod/page:view</inherit>
+		<inherit>mod/pdfannotator:addinstance</inherit>
+		<inherit>mod/pdfannotator:administrateuserinput</inherit>
+		<inherit>mod/pdfannotator:closeanyquestion</inherit>
+		<inherit>mod/pdfannotator:closequestion</inherit>
+		<inherit>mod/pdfannotator:create</inherit>
+		<inherit>mod/pdfannotator:deleteany</inherit>
+		<inherit>mod/pdfannotator:deleteown</inherit>
+		<inherit>mod/pdfannotator:edit</inherit>
+		<inherit>mod/pdfannotator:editanypost</inherit>
+		<inherit>mod/pdfannotator:forwardquestions</inherit>
+		<inherit>mod/pdfannotator:getforwardedquestions</inherit>
+		<inherit>mod/pdfannotator:hidecomments</inherit>
+		<inherit>mod/pdfannotator:markcorrectanswer</inherit>
+		<inherit>mod/pdfannotator:printcomments</inherit>
+		<inherit>mod/pdfannotator:printdocument</inherit>
+		<inherit>mod/pdfannotator:recievenewquestionnotifications</inherit>
+		<inherit>mod/pdfannotator:report</inherit>
+		<inherit>mod/pdfannotator:seehiddencomments</inherit>
+		<inherit>mod/pdfannotator:subscribe</inherit>
+		<inherit>mod/pdfannotator:usedrawing</inherit>
+		<inherit>mod/pdfannotator:usetextbox</inherit>
+		<inherit>mod/pdfannotator:view</inherit>
+		<inherit>mod/pdfannotator:viewanswers</inherit>
+		<inherit>mod/pdfannotator:viewposts</inherit>
+		<inherit>mod/pdfannotator:viewprotectedcomments</inherit>
+		<inherit>mod/pdfannotator:viewquestions</inherit>
+		<inherit>mod/pdfannotator:viewreports</inherit>
+		<inherit>mod/pdfannotator:viewstatistics</inherit>
+		<inherit>mod/pdfannotator:viewteacherstatistics</inherit>
+		<inherit>mod/pdfannotator:vote</inherit>
+		<inherit>mod/pdfannotator:writeprivatecomments</inherit>
+		<inherit>mod/pdfannotator:writeprotectedcomments</inherit>
 		<inherit>mod/publication:addinstance</inherit>
 		<inherit>mod/publication:approve</inherit>
 		<inherit>mod/publication:grantextension</inherit>
+		<inherit>mod/publication:manageoverrides</inherit>
 		<inherit>mod/publication:receiveteachernotification</inherit>
 		<inherit>mod/publication:upload</inherit>
 		<inherit>mod/publication:view</inherit>
@@ -369,8 +449,31 @@
 		<inherit>mod/quiz:view</inherit>
 		<inherit>mod/quiz:viewoverrides</inherit>
 		<inherit>mod/quiz:viewreports</inherit>
+		<inherit>mod/ratingallocate:addinstance</inherit>
+		<inherit>mod/ratingallocate:distribute_unallocated</inherit>
+		<inherit>mod/ratingallocate:export_ratings</inherit>
+		<inherit>mod/ratingallocate:give_rating</inherit>
+		<inherit>mod/ratingallocate:modify_choices</inherit>
+		<inherit>mod/ratingallocate:start_distribution</inherit>
+		<inherit>mod/ratingallocate:view</inherit>
 		<inherit>mod/resource:addinstance</inherit>
 		<inherit>mod/resource:view</inherit>
+		<inherit>mod/scheduler:addinstance</inherit>
+		<inherit>mod/scheduler:appoint</inherit>
+		<inherit>mod/scheduler:attend</inherit>
+		<inherit>mod/scheduler:canscheduletootherteachers</inherit>
+		<inherit>mod/scheduler:canseeotherteachersbooking</inherit>
+		<inherit>mod/scheduler:disengage</inherit>
+		<inherit>mod/scheduler:editallattended</inherit>
+		<inherit>mod/scheduler:editallgrades</inherit>
+		<inherit>mod/scheduler:editallnotes</inherit>
+		<inherit>mod/scheduler:manage</inherit>
+		<inherit>mod/scheduler:manageallappointments</inherit>
+		<inherit>mod/scheduler:seeotherstudentsbooking</inherit>
+		<inherit>mod/scheduler:seeotherstudentsresults</inherit>
+		<inherit>mod/scheduler:seeoverviewoutsideactivity</inherit>
+		<inherit>mod/scheduler:viewfullslots</inherit>
+		<inherit>mod/scheduler:viewslots</inherit>
 		<inherit>mod/scorm:addinstance</inherit>
 		<inherit>mod/scorm:deleteownresponses</inherit>
 		<inherit>mod/scorm:deleteresponses</inherit>
@@ -378,6 +481,17 @@
 		<inherit>mod/scorm:skipview</inherit>
 		<inherit>mod/scorm:viewreport</inherit>
 		<inherit>mod/scorm:viewscores</inherit>
+		<inherit>mod/stickynotes:addinstance</inherit>
+		<inherit>mod/stickynotes:createnote</inherit>
+		<inherit>mod/stickynotes:deleteanynote</inherit>
+		<inherit>mod/stickynotes:deleteownnote</inherit>
+		<inherit>mod/stickynotes:export</inherit>
+		<inherit>mod/stickynotes:managecolumn</inherit>
+		<inherit>mod/stickynotes:updateanynote</inherit>
+		<inherit>mod/stickynotes:updateownnote</inherit>
+		<inherit>mod/stickynotes:view</inherit>
+		<inherit>mod/stickynotes:viewauthor</inherit>
+		<inherit>mod/stickynotes:vote</inherit>
 		<inherit>mod/subsection:addinstance</inherit>
 		<inherit>mod/survey:addinstance</inherit>
 		<inherit>mod/survey:download</inherit>
@@ -524,6 +638,7 @@
 		<inherit>moodle/course:downloadcoursecontent</inherit>
 		<inherit>moodle/course:editcoursewelcomemessage</inherit>
 		<inherit>moodle/course:enrolconfig</inherit>
+		<inherit>moodle/course:enrolreview</inherit>
 		<inherit>moodle/course:ignoreavailabilityrestrictions</inherit>
 		<inherit>moodle/course:ignorefilesizelimits</inherit>
 		<inherit>moodle/course:isincompletionreports</inherit>
@@ -671,6 +786,7 @@
 		<inherit>moodle/user:readuserposts</inherit>
 		<inherit>moodle/user:update</inherit>
 		<inherit>moodle/user:viewalldetails</inherit>
+		<inherit>moodle/user:viewdetails</inherit>
 		<inherit>moodle/user:viewhiddendetails</inherit>
 		<inherit>moodle/user:viewlastip</inherit>
 		<inherit>moodle/user:viewprofilepictures</inherit>
@@ -681,10 +797,6 @@
 		<inherit>qbank/customfields:changelockedcustomfields</inherit>
 		<inherit>qbank/customfields:configurecustomfields</inherit>
 		<inherit>qbank/customfields:viewhiddencustomfields</inherit>
-		<inherit>quiz/exportattemptscsv:download</inherit>
-		<inherit>quiz/grading:viewidnumber</inherit>
-		<inherit>quiz/grading:viewstudentnames</inherit>
-		<inherit>quiz/statistics:view</inherit>
 		<inherit>quizaccess/seb:bypassseb</inherit>
 		<inherit>quizaccess/seb:manage_filemanager_sebconfigfile</inherit>
 		<inherit>quizaccess/seb:manage_seb_activateurlfiltering</inherit>
@@ -713,12 +825,14 @@
 		<inherit>quizaccess/seb:manage_seb_userconfirmquit</inherit>
 		<inherit>quizaccess/seb:manage_seb_usesebclientconfig</inherit>
 		<inherit>quizaccess/seb:managetemplates</inherit>
+		<inherit>quiz/grading:viewidnumber</inherit>
+		<inherit>quiz/grading:viewstudentnames</inherit>
+		<inherit>quiz/statistics:view</inherit>
 		<inherit>report/completion:view</inherit>
-		<inherit>report/coursedeletionlog:view</inherit>
 		<inherit>report/courseoverview:view</inherit>
+		<inherit>report/loglive:view</inherit>
 		<inherit>report/log:view</inherit>
 		<inherit>report/log:viewtoday</inherit>
-		<inherit>report/loglive:view</inherit>
 		<inherit>report/outline:view</inherit>
 		<inherit>report/outline:viewuserreport</inherit>
 		<inherit>report/participation:view</inherit>
@@ -738,8 +852,8 @@
 		<inherit>repository/dropbox:view</inherit>
 		<inherit>repository/equella:view</inherit>
 		<inherit>repository/filesystem:view</inherit>
-		<inherit>repository/flickr:view</inherit>
 		<inherit>repository/flickr_public:view</inherit>
+		<inherit>repository/flickr:view</inherit>
 		<inherit>repository/googledocs:view</inherit>
 		<inherit>repository/local:view</inherit>
 		<inherit>repository/merlot:view</inherit>
@@ -753,6 +867,35 @@
 		<inherit>repository/webdav:view</inherit>
 		<inherit>repository/wikimedia:view</inherit>
 		<inherit>repository/youtube:view</inherit>
+		<inherit>theme/boost_union:configure</inherit>
+		<inherit>theme/boost_union:editregioncontentlower</inherit>
+		<inherit>theme/boost_union:editregioncontentupper</inherit>
+		<inherit>theme/boost_union:editregionfootercenter</inherit>
+		<inherit>theme/boost_union:editregionfooterleft</inherit>
+		<inherit>theme/boost_union:editregionfooterright</inherit>
+		<inherit>theme/boost_union:editregionheader</inherit>
+		<inherit>theme/boost_union:editregionoffcanvascenter</inherit>
+		<inherit>theme/boost_union:editregionoffcanvasleft</inherit>
+		<inherit>theme/boost_union:editregionoffcanvasright</inherit>
+		<inherit>theme/boost_union:editregionoutsidebottom</inherit>
+		<inherit>theme/boost_union:editregionoutsideleft</inherit>
+		<inherit>theme/boost_union:editregionoutsideright</inherit>
+		<inherit>theme/boost_union:editregionoutsidetop</inherit>
+		<inherit>theme/boost_union:viewhintcourseselfenrol</inherit>
+		<inherit>theme/boost_union:viewhintinhiddencourse</inherit>
+		<inherit>theme/boost_union:viewregioncontentlower</inherit>
+		<inherit>theme/boost_union:viewregioncontentupper</inherit>
+		<inherit>theme/boost_union:viewregionfootercenter</inherit>
+		<inherit>theme/boost_union:viewregionfooterleft</inherit>
+		<inherit>theme/boost_union:viewregionfooterright</inherit>
+		<inherit>theme/boost_union:viewregionheader</inherit>
+		<inherit>theme/boost_union:viewregionoffcanvascenter</inherit>
+		<inherit>theme/boost_union:viewregionoffcanvasleft</inherit>
+		<inherit>theme/boost_union:viewregionoffcanvasright</inherit>
+		<inherit>theme/boost_union:viewregionoutsidebottom</inherit>
+		<inherit>theme/boost_union:viewregionoutsideleft</inherit>
+		<inherit>theme/boost_union:viewregionoutsideright</inherit>
+		<inherit>theme/boost_union:viewregionoutsidetop</inherit>
 		<inherit>tiny/h5p:addembed</inherit>
 		<inherit>tiny/premium:accesspremium</inherit>
 		<inherit>tiny/recordrtc:recordaudio</inherit>
@@ -760,6 +903,7 @@
 		<inherit>tiny/recordrtc:recordvideo</inherit>
 		<inherit>tool/brickfield:viewcoursetools</inherit>
 		<inherit>tool/brickfield:viewsystemtools</inherit>
+		<inherit>tool/coursefields:setfields</inherit>
 		<inherit>tool/customlang:edit</inherit>
 		<inherit>tool/customlang:export</inherit>
 		<inherit>tool/customlang:view</inherit>
@@ -771,7 +915,9 @@
 		<inherit>tool/dataprivacy:managedatarequests</inherit>
 		<inherit>tool/dataprivacy:requestdelete</inherit>
 		<inherit>tool/dataprivacy:requestdeleteforotheruser</inherit>
+		<inherit>tool/lifecycle:managecourses</inherit>
 		<inherit>tool/lpmigrate:frameworksmigrate</inherit>
+		<inherit>tool/mergeusers:mergeusers</inherit>
 		<inherit>tool/mfa:mfaaccess</inherit>
 		<inherit>tool/monitor:managerules</inherit>
 		<inherit>tool/monitor:managetool</inherit>
@@ -788,11 +934,8 @@
 		<inherit>tool/usertours:managetours</inherit>
 		<inherit>webservice/rest:use</inherit>
 		<inherit>webservice/soap:use</inherit>
-		<allow>mod/bookit:addevent</allow>
 		<allow>mod/bookit:view</allow>
-		<allow>mod/bookit:viewalldetailsofownevent</allow>
-		<allow>moodle/course:enrolreview</allow>
+		<allow>mod/bookit:viewalldetailsofevent</allow>
 		<allow>moodle/role:assign</allow>
-		<allow>moodle/user:viewdetails</allow>
 	</permissions>
 </role>

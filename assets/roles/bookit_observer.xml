@@ -1,38 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <role>
-	<shortname>serviceteam</shortname>
-	<name>_Service-Team</name>
-	<description>A person who works in the e-assessment service and manage exam bookings.</description>
+	<shortname>bookit_observer</shortname>
+	<name>BookIt_Observer</name>
+	<description>A person who can only view events (e.g. room management, examination office, deanship, service team of another university)</description>
 	<archetype>student</archetype>
 	<contextlevels>
 		<level>course</level>
 		<level>module</level>
 	</contextlevels>
-	<allowassign>
-		<shortname>serviceteam</shortname>
-		<shortname>bookingperson</shortname>
-		<shortname>examiner</shortname>
-		<shortname>supportonside</shortname>
-		<shortname>observer</shortname>
-	</allowassign>
-	<allowoverride>
-		<shortname>bookingperson</shortname>
-		<shortname>examiner</shortname>
-		<shortname>supportonside</shortname>
-		<shortname>observer</shortname>
-	</allowoverride>
-	<allowswitch>
-		<shortname>bookingperson</shortname>
-		<shortname>examiner</shortname>
-		<shortname>supportonside</shortname>
-		<shortname>observer</shortname>
-	</allowswitch>
+	<allowassign/>
+	<allowoverride/>
+	<allowswitch/>
 	<allowview>
 		<shortname>serviceteam</shortname>
-		<shortname>bookingperson</shortname>
 		<shortname>examiner</shortname>
-		<shortname>supportonside</shortname>
-		<shortname>observer</shortname>
 	</allowview>
 	<permissions>
 		<inherit>aiplacement/courseassist:summarise_text</inherit>
@@ -240,6 +221,13 @@
 		<inherit>mod/board:view</inherit>
 		<inherit>mod/book:addinstance</inherit>
 		<inherit>mod/book:edit</inherit>
+		<inherit>mod/bookit:addevent</inherit>
+		<inherit>mod/bookit:addinstance</inherit>
+		<inherit>mod/bookit:addresource</inherit>
+		<inherit>mod/bookit:editevent</inherit>
+		<inherit>mod/bookit:editinternal</inherit>
+		<inherit>mod/bookit:editresource</inherit>
+		<inherit>mod/bookit:viewalldetailsofevent</inherit>
 		<inherit>mod/book:read</inherit>
 		<inherit>mod/book:viewhiddenchapters</inherit>
 		<inherit>mod/chat:addinstance</inherit>
@@ -650,6 +638,7 @@
 		<inherit>moodle/course:downloadcoursecontent</inherit>
 		<inherit>moodle/course:editcoursewelcomemessage</inherit>
 		<inherit>moodle/course:enrolconfig</inherit>
+		<inherit>moodle/course:enrolreview</inherit>
 		<inherit>moodle/course:ignoreavailabilityrestrictions</inherit>
 		<inherit>moodle/course:ignorefilesizelimits</inherit>
 		<inherit>moodle/course:isincompletionreports</inherit>
@@ -797,6 +786,7 @@
 		<inherit>moodle/user:readuserposts</inherit>
 		<inherit>moodle/user:update</inherit>
 		<inherit>moodle/user:viewalldetails</inherit>
+		<inherit>moodle/user:viewdetails</inherit>
 		<inherit>moodle/user:viewhiddendetails</inherit>
 		<inherit>moodle/user:viewlastip</inherit>
 		<inherit>moodle/user:viewprofilepictures</inherit>
@@ -944,17 +934,7 @@
 		<inherit>tool/usertours:managetours</inherit>
 		<inherit>webservice/rest:use</inherit>
 		<inherit>webservice/soap:use</inherit>
-		<allow>mod/bookit:addevent</allow>
-		<allow>mod/bookit:addinstance</allow>
-		<allow>mod/bookit:addresource</allow>
-		<allow>mod/bookit:editevent</allow>
-		<allow>mod/bookit:editinternal</allow>
-		<allow>mod/bookit:editresource</allow>
 		<allow>mod/bookit:view</allow>
-		<allow>mod/bookit:viewalldetailsofevent</allow>
-		<allow>mod/bookit:viewalldetailsofownevent</allow>
-		<allow>moodle/course:enrolreview</allow>
 		<allow>moodle/role:assign</allow>
-		<allow>moodle/user:viewdetails</allow>
 	</permissions>
 </role>
