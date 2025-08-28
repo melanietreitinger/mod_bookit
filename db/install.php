@@ -24,11 +24,16 @@
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\entity\bookit_resource_categories;
 use mod_bookit\local\entity\bookit_resource;
+use mod_bookit\local\install_helper;
 /**
  * This function is executed after the installation of the plugin.
  * @return void
  */
 function xmldb_bookit_install() {
+    global $CFG;
+
+    // Load install helper for checklist data
+    require_once($CFG->dirroot . '/mod/bookit/classes/local/install_helper.php');
 
     // Create categories and resources.
     $category = new bookit_resource_categories('Rooms', 'Examrooms');
@@ -102,5 +107,15 @@ function xmldb_bookit_install() {
         );
 
         $event->save(2);
+    }
+
+    // Create default checklist data
+    mtrace('Setting up default checklist data for BookIt...');
+    $result = install_helper::create_default_checklists(false, false);
+
+    if ($result) {
+        mtrace('Default checklist data was created successfully.');
+    } else {
+        mtrace('Default checklist data was not created (may already exist).');
     }
 }
