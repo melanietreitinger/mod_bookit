@@ -1,0 +1,16 @@
+<div class="form-group">
+    <p>Notification Slot</p>
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="exampleCheck1" name="foo">
+        <label class="form-check-label" for="exampleCheck1">{{typename}}</label>
+    </div>
+    <p>Type: {{#type}}{{type}}{{/type}}{{^type}}N/A{{/type}}</p>
+    <p>Role IDs: {{#roleids}}{{roleids}}{{/roleids}}{{^roleids}}N/A{{/roleids}}</p>
+    <p>Due Days Offset: {{#duedaysoffset}}{{duedaysoffset}}{{/duedaysoffset}}{{^duedaysoffset}}N/A{{/duedaysoffset}}</p>
+    <p>Due Days Relation: {{#duedaysrelation}}{{duedaysrelation}}{{/duedaysrelation}}{{^duedaysrelation}}N/A{{/duedaysrelation}}</p>
+    <p>Is Active: {{#isactive}}{{isactive}}{{/isactive}}{{^isactive}}N/A{{/isactive}}</p>
+    <p>Message Text: {{#messagetext}}{{messagetext}}{{/messagetext}}{{^messagetext}}N/A{{/messagetext}}</p>
+    <p>User Modified: {{#usermodified}}{{usermodified}}{{/usermodified}}{{^usermodified}}N/A{{/usermodified}}</p>
+    <p>Time Created: {{#timecreated}}{{timecreated}}{{/timecreated}}{{^timecreated}}N/A{{/timecreated}}</p>
+    <p>Time Modified: {{#timemodified}}{{timemodified}}{{/timemodified}}{{^timemodified}}N/A{{/timemodified}}</p>
+</div>

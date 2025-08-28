@@ -43,6 +43,27 @@ $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 // ...@TODO: translate.
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLATZHALTER';
+$string['category_name'] = 'Kategoriename';
+$string['checklistcategory'] = 'Checklisten-Kategorie';
+$string['checklistcategorydeleted'] = 'Checklisten-Kategorie erfolgreich gelöscht.';
+$string['checklistcategorysuccess'] = 'Checklisten-Kategorie erfolgreich erstellt.';
+$string['checklistcategoryupdatesuccess'] = 'Checklisten-Kategorie erfolgreich aktualisiert.';
+$string['checklistitem'] = 'Checklisten-Element';
+$string['checklistitemdeleted'] = 'Checklisten-Element erfolgreich gelöscht.';
+$string['checklistitemname'] = 'Name des Checklisten-Elements';
+$string['checklistitemsuccess'] = 'Checklisten-Element erfolgreich erstellt.';
+$string['checklistitemupdatesuccess'] = 'Checklisten-Element erfolgreich aktualisiert.';
+$string['customtemplate'] = 'Nachricht';
+$string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
+.'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
+.'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
+.'<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
+.'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
+.'<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
+.'###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
+.'<p>Nulla vitae elit libero,<br>'
+.'Cras justo odio.</p>';
+$string['edit'] = 'Bearbeiten';
 $string['edit_event'] = "Termin bearbeiten";
 $string['event_bookingstatus'] = 'Buchungsstatus';
 $string['event_bookingstatus_list'] = 'Neu, In Bearbeitung, Bestätigt, Storniert, Abgelehnt';
@@ -91,13 +112,24 @@ $string['event_usermodified'] = 'Created by user';
 // ...@TODO: translate.
 $string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
+$string['item_state_done'] = 'Erledigt';
+$string['item_state_open'] = 'Offen';
+$string['item_state_processing'] = 'In Bearbeitung';
+$string['item_state_unknown'] = 'Unbekannt';
+$string['master_checklist'] = 'Haupt-Checkliste';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';
 $string['modulenameplural'] = 'BookIt Instanzen';
+$string['new_checklistcategory'] = 'Neue Checklisten-Kategorie';
+$string['new_checklistitem'] = 'Neues Checklisten-Element';
 $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
 $string['pluginadministration'] = 'BookIt Administration';
 $string['pluginname'] = 'BookIt';
+$string['recipient'] = 'Empfänger';
 $string['resource_amount'] = 'Anzahl';
+$string['responsibility'] = 'Verantwortlichkeit';
+$string['role'] = 'Rolle';
+$string['room'] = 'Raum';
 $string['roomcolorheading'] = 'Room colors';
 $string['select_coursetemplate'] = 'Auswahl Prüfungskursvorlage';
 $string['select_coursetemplate_help'] = 'Wählen Sie eine Kursvorlage für den Kurs, in dem Ihre Prüfung stattfindet.';
@@ -129,5 +161,14 @@ $string['settings_roomcolorheading'] = 'Room colors';
 $string['settings_textcolor'] = 'Event text color';
 // ...@TODO: translate.
 $string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
+$string['sort'] = 'Sortieren';
 $string['summer_semester'] = 'Sommersemester';
+$string['time'] = 'Zeit';
+$string['type_before_due'] = 'Vor Fälligkeit';
+$string['type_before_due_date'] = 'Vor Fälligkeitsdatum';
+$string['type_overdue'] = 'Erinnerung bei Überfälligkeit';
+$string['type_overdue_date'] = 'Nach Überfälligkeitsdatum';
+$string['type_when_done'] = 'Wenn erledigt';
+$string['type_when_due'] = 'Wenn fällig';
+$string['type_when_due'] = 'Wenn fällig';
 $string['winter_semester'] = 'Wintersemester';

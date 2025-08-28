@@ -1,0 +1,61 @@
+{{!
+    This file is part of the mod_bookit plugin for Moodle - http://moodle.org/
+
+    Master checklist template with a bootstrap table
+}}
+<div class="d-flex justify-content-center">
+
+<div class="mod-bookit-master-checklist w-50 mt-4" id="mod-bookit-master-checklist">
+    <div class="d-none">
+    <h3 id="mod-bookit-master-checklist-title">PLACEHOLDER</h3>
+    </div>
+    <div class="sticky-top">
+    <form>
+        <div class="form-group d-flex mx-n2 my-5 py-2">
+            <select class="form-control mx-2 w-25" id="bookit-master-role-select" name="roleid">
+            <option value="0" selected>{{#str}} role, mod_bookit {{/str}}</option>
+            {{#roles}}
+                <option value="{{id}}" data-bookit-roleoption="{{id}}" data-bookit-rolename="{{name}}">{{name}}</option>
+            {{/roles}}
+            </select>
+            <select class="form-control mx-2 w-25" id="bookit-master-room-select" name="roomid">
+            <option value="0" selected>{{#str}} room, mod_bookit {{/str}}</option>
+            {{#rooms}}
+                <option value="{{id}}" data-bookit-roomoption="{{id}}" data-bookit-roomname="{{name}}">{{name}}</option>
+            {{/rooms}}
+            </select>
+                    <button type="button" class="btn btn-primary mx-2" id="add-checklist-category-button">{{#str}} new_checklistcategory, mod_bookit {{/str}}</button>
+        <button type="button" class="btn btn-primary mx-2" id="add-checklist-item-button">{{#str}} new_checklistitem, mod_bookit {{/str}}</button>
+        </div>
+    </form>
+    </div>
+
+    <table class="table table-hover border rounded p-4" id="mod-bookit-master-checklist-table"
+        data-master-checklist-id="{{id}}"
+        data-master-checklist-name="{{name}}"
+        data-master-checklist-categoryorder="{{mastercategoryorder}}">
+        <thead>
+            <tr>
+            {{#tableheaders}}
+                <th scope="col" class="px-2 py-3">{{.}}</th>
+            {{/tableheaders}}
+            </tr>
+        </thead>
+
+            {{#checklistcategories}}
+                {{> mod_bookit/bookit_checklist_category }}
+
+            {{/checklistcategories}}
+            {{^checklistcategories}}
+            <tr>
+                <td colspan="5" class="text-center">no content found</td>
+            </tr>
+            {{/checklistcategories}}
+    </table>
+</div>
+</div>
+{{#js}}
+require(['mod_bookit/master_checklist'], function(component) {
+    component.init('#mod-bookit-master-checklist');
+});
+{{/js}}
