@@ -109,6 +109,16 @@ function xmldb_bookit_install() {
         $event->save(2);
     }
 
+    // Import default roles
+    mtrace('Importing default roles for BookIt...');
+    $rolesimported = install_helper::import_default_roles(false, true);
+
+    if ($rolesimported) {
+        mtrace('Default roles were imported successfully.');
+    } else {
+        mtrace('No default roles were imported (may already exist).');
+    }
+
     // Create default checklist data
     mtrace('Setting up default checklist data for BookIt...');
     $result = install_helper::create_default_checklists(false, false);
