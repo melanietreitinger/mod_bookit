@@ -39,7 +39,6 @@ use mod_bookit\local\entity\bookit_notification_slot;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class checklist_manager {
-
     /**
      * Get the default checklist master.
      *
@@ -65,14 +64,20 @@ class checklist_manager {
     public static function get_categories_by_ids(array $categories = []): array {
         global $DB;
 
-        list($in_sql, $params) = $DB->get_in_or_equal($categories);
-        $sql = "SELECT * FROM {bookit_checklist_category} WHERE id $in_sql";
+        [$insql, $params] = $DB->get_in_or_equal($categories);
+        $sql = "SELECT * FROM {bookitchecklistcategory} WHERE id $insql";
         $records = $DB->get_records_sql($sql, $params);
 
         return array_map(fn($record) => bookit_checklist_category::from_record($record), $records);
     }
 
-
+    /**
+     * Get checklist categories by master ID.
+     *
+     * @param int $masterid ID of the master checklist
+     * @return array Array of bookit_checklist_category objects
+     * @throws dml_exception
+     */
     public static function get_categories_by_master_id(int $masterid): array {
         global $DB;
 
@@ -100,31 +105,52 @@ class checklist_manager {
         return array_map(fn($record) => bookit_checklist_item::from_record($record), $records);
     }
 
+    /**
+     * Get all roles specific to BookIt.
+     *
+     * @return array Array of role objects for BookIt
+     */
     public static function get_bookit_roles() {
 
-        $target_shortnames = ['bookit_bookingperson', 'bookit_examiner', 'bookit_observer', 'bookit_serviceteam', 'bookit_supportonside'];
+        $targetshortnames = [
+            'bookit_bookingperson',
+            'bookit_examiner',
+            'bookit_observer',
+            'bookit_serviceteam',
+            'bookit_supportonside',
+        ];
         $roles = get_all_roles();
 
         $bookitroles = [];
         foreach ($roles as $role) {
-            if (in_array($role->shortname, $target_shortnames)) {
+            if (in_array($role->shortname, $targetshortnames)) {
                 $bookitroles[] = $role;
             }
         }
         return $bookitroles;
     }
 
+    /**
+     * Get all rooms available for BookIt.
+     *
+     * @return array Array of room resources
+     */
     public static function get_bookit_rooms() {
 
         $categories = categories_manager::get_categories();
 
-        $roomsArray = array_filter($categories, fn($cat) => $cat['name'] === 'Rooms');
-        $rooms = reset($roomsArray)['resources'];
+        $roomsarray = array_filter($categories, fn($cat) => $cat['name'] === 'Rooms');
+        $rooms = reset($roomsarray)['resources'];
 
         return $rooms;
-
     }
 
+    /**
+     * Get the readable name for a checklist item state.
+     *
+     * @param int $state The state value
+     * @return string Localized state name
+     */
     public static function get_checklistitem_statename(int $state): string {
 
         $reflection = new \ReflectionClass(bookit_checklist_item::class);
@@ -137,9 +163,14 @@ class checklist_manager {
         }
 
         return get_string(strtolower($constantname), 'mod_bookit');
-
     }
 
+    /**
+     * Get the readable name for a notification slot type.
+     *
+     * @param int $type The notification type value
+     * @return string Localized notification type name
+     */
     public static function get_notification_slot_type(int $type): string {
 
         $reflection = new \ReflectionClass(bookit_notification_slot::class);
@@ -152,9 +183,14 @@ class checklist_manager {
         }
 
         return get_string(strtolower($constantname), 'mod_bookit');
-
     }
 
+    /**
+     * Get room name by room ID.
+     *
+     * @param int $roomid The ID of the room
+     * @return string Room name or empty string if not found
+     */
     public static function get_roomname_by_id(int $roomid): string {
         $rooms = self::get_bookit_rooms();
         $roommatch = array_filter($rooms, fn($item) => $item['id'] == $roomid);
@@ -164,6 +200,12 @@ class checklist_manager {
         return '';
     }
 
+    /**
+     * Get role name by role ID.
+     *
+     * @param int $roleid The ID of the role
+     * @return string Role name or empty string if not found
+     */
     public static function get_rolename_by_id(int $roleid): string {
         $roles = self::get_bookit_roles();
         $rolematch = array_filter($roles, fn($item) => $item->id == $roleid);
@@ -172,5 +214,4 @@ class checklist_manager {
         }
         return '';
     }
-
 }

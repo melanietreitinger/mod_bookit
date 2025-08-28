@@ -27,8 +27,6 @@ namespace mod_bookit\local\entity;
 
 use dml_exception;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Database class for bookit_checklist_category.
  *
@@ -38,7 +36,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_checklist_category implements \renderable, \templatable {
-
     /**
      * Create a new instance of this class.
      *
@@ -104,15 +101,15 @@ class bookit_checklist_category implements \renderable, \templatable {
         $record = (object) $record;
 
         return new self(
-                $record->id ?? null,
-                $record->masterid,
-                $record->name,
-                $record->description,
-                $record->checklistitems,
-                $record->sortorder,
-                $record->usermodified,
-                $record->timecreated,
-                $record->timemodified
+            $record->id ?? null,
+            $record->masterid,
+            $record->name,
+            $record->description,
+            $record->checklistitems,
+            $record->sortorder,
+            $record->usermodified,
+            $record->timecreated,
+            $record->timemodified
         );
     }
 
@@ -157,6 +154,12 @@ class bookit_checklist_category implements \renderable, \templatable {
         return $DB->delete_records("bookit_checklist_category", ["id" => $this->id]);
     }
 
+    /**
+     * Exports the data for template rendering.
+     *
+     * @param \renderer_base $output The renderer to be used
+     * @return \stdClass Data for the template
+     */
     public function export_for_template(\renderer_base $output) {
         $data = new \stdClass();
 
@@ -171,7 +174,6 @@ class bookit_checklist_category implements \renderable, \templatable {
             $itemids = explode(',', $this->checklistitems);
 
             foreach ($itemids as $itemid) {
-
                 $item = bookit_checklist_item::from_database($itemid);
 
                 $data->checklistitems[] = $item->export_for_template($output);
@@ -182,5 +184,4 @@ class bookit_checklist_category implements \renderable, \templatable {
 
         return $data;
     }
-
 }

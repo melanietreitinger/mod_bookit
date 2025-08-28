@@ -80,7 +80,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         // Create table bookit_checklist_master.
         $table = new xmldb_table('bookit_checklist_master');
 
-        // Add fields
+        // Add fields.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('name', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
         $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null, null, null);
@@ -90,11 +90,11 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
-        // Add keys
+        // Add keys.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
 
-        // Create the table
+        // Create the table.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
@@ -102,7 +102,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         // Create table bookit_checklist_category.
         $table = new xmldb_table('bookit_checklist_category');
 
-        // Add fields
+        // Add fields.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('masterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('name', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
@@ -113,15 +113,15 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
-        // Add keys
+        // Add keys.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('masterid', XMLDB_KEY_FOREIGN, ['masterid'], 'bookit_checklist_master', ['id']);
         $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
 
-        // Add indexes
+        // Add indexes.
         $table->add_index('masterid_sortorder', XMLDB_INDEX_NOTUNIQUE, ['masterid', 'sortorder']);
 
-        // Create the table
+        // Create the table.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
@@ -129,7 +129,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         // Create table bookit_checklist_item.
         $table = new xmldb_table('bookit_checklist_item');
 
-        // Add fields
+        // Add fields.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('masterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('categoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
@@ -149,17 +149,17 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
-        // Add keys
+        // Add keys.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('masterid', XMLDB_KEY_FOREIGN, ['masterid'], 'bookit_checklist_master', ['id']);
         $table->add_key('categoryid', XMLDB_KEY_FOREIGN, ['categoryid'], 'bookit_checklist_category', ['id']);
         $table->add_key('parentid', XMLDB_KEY_FOREIGN, ['parentid'], 'bookit_checklist_item', ['id']);
         $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
 
-        // Add indexes
+        // Add indexes.
         $table->add_index('masterid_sortorder', XMLDB_INDEX_NOTUNIQUE, ['masterid', 'sortorder']);
 
-        // Create the table
+        // Create the table.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
@@ -167,7 +167,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         // Create table bookit_notification_slots.
         $table = new xmldb_table('bookit_notification_slots');
 
-        // Add fields
+        // Add fields.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('checklistitemid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('type', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '1');
@@ -180,12 +180,12 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
-        // Add keys
+        // Add keys.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('checklistitemid', XMLDB_KEY_FOREIGN, ['checklistitemid'], 'bookit_checklist_item', ['id']);
         $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
 
-        // Create the table
+        // Create the table.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }

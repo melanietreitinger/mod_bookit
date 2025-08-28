@@ -18,8 +18,9 @@
  * Admin-Backend concerning master checklists for mod_bookit.
  *
  * @package    mod_bookit
- * @copyright  2025 Justus Dieckmann RUB
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  2025 ssystems GmbH <oss@ssystems.de>
+ * @author     Andreas Rosenthal
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 use mod_bookit\local\manager\checklist_manager;

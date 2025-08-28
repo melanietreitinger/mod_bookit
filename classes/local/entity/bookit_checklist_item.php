@@ -27,8 +27,6 @@ namespace mod_bookit\local\entity;
 
 use dml_exception;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Database class for bookit_checklist_item.
  *
@@ -38,10 +36,24 @@ defined('MOODLE_INTERNAL') || die();
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_checklist_item implements \renderable, \templatable {
-
+    /**
+     * Status constant for an open item.
+     */
     public const ITEM_STATE_OPEN = 1;
+
+    /**
+     * Status constant for an item in progress.
+     */
     public const ITEM_STATE_PROCESSING = 2;
+
+    /**
+     * Status constant for a completed item.
+     */
     public const ITEM_STATE_DONE = 3;
+
+    /**
+     * Status constant for an item with unknown status.
+     */
     public const ITEM_STATE_UNKNOWN = 0;
 
     /**
@@ -126,23 +138,23 @@ class bookit_checklist_item implements \renderable, \templatable {
         $record = (object) $record;
 
         return new self(
-                $record->id ?? null,
-                $record->masterid,
-                $record->categoryid,
-                $record->parentid,
-                $record->roomid,
-                $record->roleid,
-                $record->title,
-                $record->description,
-                $record->itemtype,
-                $record->options,
-                $record->sortorder,
-                $record->isrequired,
-                $record->defaultvalue,
-                $record->duedaysoffset,
-                $record->usermodified,
-                $record->timecreated,
-                $record->timemodified
+            $record->id ?? null,
+            $record->masterid,
+            $record->categoryid,
+            $record->parentid,
+            $record->roomid,
+            $record->roleid,
+            $record->title,
+            $record->description,
+            $record->itemtype,
+            $record->options,
+            $record->sortorder,
+            $record->isrequired,
+            $record->defaultvalue,
+            $record->duedaysoffset,
+            $record->usermodified,
+            $record->timecreated,
+            $record->timemodified
         );
     }
 
@@ -195,6 +207,12 @@ class bookit_checklist_item implements \renderable, \templatable {
         return $DB->delete_records("bookit_checklist_item", ["id" => $this->id]);
     }
 
+    /**
+     * Exports the data for template rendering.
+     *
+     * @param \renderer_base $output The renderer to be used
+     * @return \stdClass Data for the template
+     */
     public function export_for_template(\renderer_base $output) {
         $data = new \stdClass();
 

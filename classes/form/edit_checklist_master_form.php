@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Form for editing the master checklist.
+ * Form for editing master checklists.
  *
  * @package     mod_bookit
  * @copyright   2025 ssystems GmbH <oss@ssystems.de>
@@ -28,8 +28,23 @@ namespace mod_bookit\form;
 use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_checklist_master;
 
+/**
+ * Form class for editing master checklists.
+ *
+ * This form handles the creation and modification of master checklists
+ * through AJAX requests. It supports PUT and DELETE operations.
+ *
+ * @package     mod_bookit
+ * @copyright   2025 ssystems GmbH <oss@ssystems.de>
+ * @author      Andreas Rosenthal
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class edit_checklist_master_form extends dynamic_form {
-
+    /**
+     * Form definition.
+     *
+     * This method defines the form elements.
+     */
     public function definition() {
         $mform = $this->_form;
 
@@ -42,14 +57,12 @@ class edit_checklist_master_form extends dynamic_form {
 
         $mform->addElement('hidden', 'mastercategoryorder');
         $mform->setType('mastercategoryorder', PARAM_TEXT);
-
     }
 
     /**
      * Check if the current user has access to this form.
      */
     protected function check_access_for_dynamic_submission(): void {
-
     }
 
     /**
@@ -72,7 +85,6 @@ class edit_checklist_master_form extends dynamic_form {
      */
     protected function get_page_url_for_dynamic_submission(): \moodle_url {
         return new \moodle_url('/mod/bookit/master_checklist.php');
-
     }
 
     /**
@@ -114,17 +126,22 @@ class edit_checklist_master_form extends dynamic_form {
                 $master = bookit_checklist_master::from_database($id);
                 $data['id'] = $master->id;
                 $data['mastercategoryorder'] = $master->checklistcategories;
-
             } catch (\Exception $e) {
-                error_log("Error loading checklist master with ID $id: " . $e->getMessage());
+                debugging("Error loading checklist master with ID $id: " . $e->getMessage());
             }
         }
 
         $this->set_data($data);
     }
-    public function process_put_request($ajaxdata = []): array {
-        $master = bookit_checklist_master::from_database($ajaxdata['id']);
-        $master->mastercategoryorder = $ajaxdata['mastercategoryorder'];
+    /**
+     * Processes PUT requests for updating checklist items.
+     *
+     * @param array $data The request data to process
+     * @return bool|int Result of the operation, item ID on success or false on failure
+     */
+    public function process_put_request($data) {
+        $master = bookit_checklist_master::from_database($data['id']);
+        $master->mastercategoryorder = $data['mastercategoryorder'];
         $master->save();
 
         return [
@@ -139,8 +156,12 @@ class edit_checklist_master_form extends dynamic_form {
         ];
     }
 
-    public function process_delete_request($id): array {
-
+    /**
+     * Processes DELETE requests for removing checklist items.
+     *
+     * @param array $data The request data containing the item to delete
+     * @return bool True if deletion was successful, false otherwise
+     */
+    public function process_delete_request($data) {
     }
-
 }

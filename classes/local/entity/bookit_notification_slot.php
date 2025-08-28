@@ -28,8 +28,6 @@ namespace mod_bookit\local\entity;
 use dml_exception;
 use mod_bookit\local\manager\checklist_manager;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Database class for bookit_notification_slots.
  *
@@ -39,13 +37,25 @@ defined('MOODLE_INTERNAL') || die();
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_notification_slot implements \renderable, \templatable {
+    /**
+     * Notification type for before the due date.
+     */
+    public const TYPE_BEFORE_DUE = 0;
 
-    const TYPE_BEFORE_DUE = 0;
-    const TYPE_WHEN_DUE = 1;
-    const TYPE_OVERDUE = 2;
-    const TYPE_WHEN_DONE = 3;
+    /**
+     * Notification type for when the item is due.
+     */
+    public const TYPE_WHEN_DUE = 1;
 
+    /**
+     * Notification type for when the item is overdue.
+     */
+    public const TYPE_OVERDUE = 2;
 
+    /**
+     * Notification type for when the item is marked as done.
+     */
+    public const TYPE_WHEN_DONE = 3;
 
     /**
      * Create a new instance of this class.
@@ -56,8 +66,8 @@ class bookit_notification_slot implements \renderable, \templatable {
      * @param string|null $roleids JSON-encoded list of role IDs to notify
      * @param int|null $duedaysoffset
      * @param string|null $duedaysrelation
-     * @param int $isactive
      * @param string|null $messagetext
+     * @param int $isactive
      * @param int|null $usermodified
      * @param int|null $timecreated
      * @param int|null $timemodified
@@ -75,10 +85,10 @@ class bookit_notification_slot implements \renderable, \templatable {
         public ?int $duedaysoffset,
         /** @var string|null duedaysrelation */
         public ?string $duedaysrelation,
-        /** @var int isactive */
-        public int $isactive = 0,
         /** @var string|null messagetext */
         public ?string $messagetext,
+        /** @var int isactive */
+        public int $isactive = 0,
         /** @var int|null usermodified */
         public ?int $usermodified = null,
         /** @var int|null timecreated */
@@ -128,17 +138,17 @@ class bookit_notification_slot implements \renderable, \templatable {
         $record = (object) $record;
 
         return new self(
-                $record->id ?? null,
-                $record->checklistitemid,
-                $record->type ?? 0,
-                $record->roleids,
-                $record->duedaysoffset,
-                $record->duedaysrelation,
-                $record->isactive,
-                $record->messagetext,
-                $record->usermodified,
-                $record->timecreated,
-                $record->timemodified
+            $record->id ?? null,
+            $record->checklistitemid,
+            $record->type ?? 0,
+            $record->roleids,
+            $record->duedaysoffset,
+            $record->duedaysrelation,
+            $record->isactive,
+            $record->messagetext,
+            $record->usermodified,
+            $record->timecreated,
+            $record->timemodified
         );
     }
 
@@ -184,6 +194,11 @@ class bookit_notification_slot implements \renderable, \templatable {
         return $DB->delete_records("bookit_notification_slots", ["id" => $this->id]);
     }
 
+    /**
+     * Gets all notification slot types defined as constants in this class.
+     *
+     * @return array Array of notification slot types
+     */
     public static function get_all_notification_slot_types(): array {
         $reflection = new \ReflectionClass(self::class);
         $constants = $reflection->getConstants();
@@ -201,8 +216,6 @@ class bookit_notification_slot implements \renderable, \templatable {
             return [];
         }
 
-        // TODO this is string?
-
         return json_decode($this->roleids, true) ?: [];
     }
 
@@ -213,7 +226,7 @@ class bookit_notification_slot implements \renderable, \templatable {
      * @return void
      */
     public function set_role_ids(array $roleids): void {
-        // TODO this is string?
+
         $this->roleids = json_encode($roleids);
     }
 

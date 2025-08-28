@@ -28,8 +28,6 @@ namespace mod_bookit\local\entity;
 use dml_exception;
 use mod_bookit\local\manager\checklist_manager;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Database class for bookit_checklist_master.
  *
@@ -39,7 +37,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_checklist_master implements \renderable, \templatable {
-
     /**
      * Table columns
      */
@@ -107,7 +104,6 @@ class bookit_checklist_master implements \renderable, \templatable {
         $record = $DB->get_record("bookit_checklist_master", ["id" => $id], '*', MUST_EXIST);
 
         if (!empty($record->checklistcategories)) {
-
             $checklistcategories = checklist_manager::get_categories_by_master_id($record->id);
 
             $categoryorder = array_map('intval', explode(',', $record->checklistcategories));
@@ -130,15 +126,15 @@ class bookit_checklist_master implements \renderable, \templatable {
         }
 
         return new self(
-                $record->id,
-                $record->name,
-                $record->description,
-                $record->isdefault,
-                $checklistcategories,
-                $record->checklistcategories,
-                $record->usermodified,
-                $record->timecreated,
-                $record->timemodified
+            $record->id,
+            $record->name,
+            $record->description,
+            $record->isdefault,
+            $checklistcategories,
+            $record->checklistcategories,
+            $record->usermodified,
+            $record->timecreated,
+            $record->timemodified
         );
     }
 
@@ -177,10 +173,15 @@ class bookit_checklist_master implements \renderable, \templatable {
      * @throws dml_exception
      */
     public function delete(): bool {
-        // TODO remove or implement
         return true;
     }
 
+    /**
+     * Exports the data for template rendering.
+     *
+     * @param \renderer_base $output The renderer to be used
+     * @return \stdClass Data for the template
+     */
     public function export_for_template(\renderer_base $output) {
         $data = new \stdClass();
 

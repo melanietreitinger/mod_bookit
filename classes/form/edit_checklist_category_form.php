@@ -28,8 +28,23 @@ namespace mod_bookit\form;
 use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_checklist_category;
 
+/**
+ * Form class for creating and editing checklist categories.
+ *
+ * This form handles the creation and modification of checklist categories
+ * through AJAX requests. It supports PUT and DELETE operations.
+ *
+ * @package     mod_bookit
+ * @copyright   2025 ssystems GmbH <oss@ssystems.de>
+ * @author      Andreas Rosenthal
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class edit_checklist_category_form extends dynamic_form {
-
+    /**
+     * Form definition.
+     *
+     * This method defines the form elements for checklist category editing.
+     */
     public function definition() {
         $mform = $this->_form;
 
@@ -49,14 +64,12 @@ class edit_checklist_category_form extends dynamic_form {
         $mform->addElement('text', 'name', get_string('category_name', 'mod_bookit'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
-
     }
 
     /**
      * Check if the current user has access to this form.
      */
     protected function check_access_for_dynamic_submission(): void {
-
     }
 
     /**
@@ -80,7 +93,6 @@ class edit_checklist_category_form extends dynamic_form {
     protected function get_page_url_for_dynamic_submission(): \moodle_url {
 
         return new \moodle_url('/mod/bookit/master_checklist.php');
-
     }
 
     /**
@@ -124,21 +136,24 @@ class edit_checklist_category_form extends dynamic_form {
                 $data['masterid'] = $category->masterid;
                 $data['name'] = $category->name;
                 $data['checklistitems'] = json_encode($this->_ajaxformdata['checklistitems']);
-
             } catch (\Exception $e) {
-                error_log("Error loading checklist category with ID $id: " . $e->getMessage());
+                debugging("Error loading checklist category with ID $id: " . $e->getMessage());
             }
         }
 
         $this->set_data($data);
-
     }
+
+    /**
+     * Process PUT requests for creating or updating checklist categories.
+     *
+     * @param array $ajaxdata The request data to process
+     * @return array Result of the operation with updated category data
+     */
     public function process_put_request($ajaxdata = []): array {
         global $USER;
 
-
         if (!empty($ajaxdata['id'])) {
-
             $category = bookit_checklist_category::from_database($ajaxdata['id']);
             $category->name = $ajaxdata['name'];
             $category->description = $ajaxdata['description'] ?? '';
@@ -150,7 +165,6 @@ class edit_checklist_category_form extends dynamic_form {
 
             $id = $category->id;
         } else {
-
             $category = new bookit_checklist_category(
                 0,
                 $ajaxdata['masterid'],
@@ -164,7 +178,6 @@ class edit_checklist_category_form extends dynamic_form {
             );
 
             $id = $category->save();
-
         }
 
         return [
@@ -181,6 +194,12 @@ class edit_checklist_category_form extends dynamic_form {
         ];
     }
 
+    /**
+     * Process DELETE requests for removing checklist categories.
+     *
+     * @param int $id The ID of the checklist category to delete
+     * @return array Result of the delete operation
+     */
     public function process_delete_request($id): array {
         $category = bookit_checklist_category::from_database($id);
         $category->delete();
@@ -195,5 +214,4 @@ class edit_checklist_category_form extends dynamic_form {
             ],
         ];
     }
-
 }

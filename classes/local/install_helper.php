@@ -25,8 +25,6 @@
 
 namespace mod_bookit\local;
 
-defined('MOODLE_INTERNAL') || die();
-
 use mod_bookit\local\entity\bookit_checklist_master;
 use mod_bookit\local\entity\bookit_checklist_category;
 use mod_bookit\local\entity\bookit_checklist_item;
@@ -35,7 +33,6 @@ use mod_bookit\local\entity\bookit_checklist_item;
  * Installation helper class.
  */
 class install_helper {
-
     /**
      * Create default checklist data during installation.
      *
@@ -69,7 +66,7 @@ class install_helper {
             'Setup exam room',
             'Print attendance list',
             'Grade exams',
-            'Record results'
+            'Record results',
         ];
 
         $descriptions = [
@@ -81,7 +78,7 @@ class install_helper {
             'Setup room according to examination requirements',
             'Print complete list of registered students',
             'Grade all exams within the deadline',
-            'Record all results in the academic system'
+            'Record all results in the academic system',
         ];
 
         // Create the master checklist.
@@ -93,7 +90,7 @@ class install_helper {
             null,
             'University Examination Administration Checklist',
             'A comprehensive checklist for planning, executing, and concluding university examinations',
-            1, // Make it the default
+            1, // Make it the default.
             []
         );
         $masterid = $master->save();
@@ -102,46 +99,46 @@ class install_helper {
             mtrace("Created master checklist with ID: $masterid");
         }
 
-        // Define category data
+        // Define category data.
         $categories = [
             [
                 'name' => 'Exam Preparation',
                 'description' => 'Essential tasks for preparing university examinations',
                 'sortorder' => 1,
-                'items_count' => 3  // We'll create 3 items for each category
+                'items_count' => 3, // We'll create 3 items for each category.
             ],
             [
                 'name' => 'Exam Day',
                 'description' => 'Tasks to be completed on the day of the examination',
                 'sortorder' => 2,
-                'items_count' => 3
+                'items_count' => 3,
             ],
             [
                 'name' => 'Post-Exam',
                 'description' => 'Follow-up tasks after the examination is complete',
                 'sortorder' => 3,
-                'items_count' => 3
-            ]
+                'items_count' => 3,
+            ],
         ];
 
         $categoryids = [];
-        $itemtypes = [1, 2, 3]; // 1=text, 2=number, 3=date
-        $itemIndex = 0;
+        $itemtypes = [1, 2, 3];
+        $itemindex = 0;
 
-        // Create three categories
-        foreach ($categories as $categoryData) {
+        // Create three categories.
+        foreach ($categories as $categorydata) {
             if ($verbose) {
-                mtrace("Creating category: {$categoryData['name']}");
+                mtrace("Creating category: {$categorydata['name']}");
             }
 
-            // Create category
+            // Create category.
             $category = new bookit_checklist_category(
                 null,
                 $masterid,
-                $categoryData['name'],
-                $categoryData['description'],
-                '', // checklist items - will be updated later
-                $categoryData['sortorder']
+                $categorydata['name'],
+                $categorydata['description'],
+                '', // Checklist items - will be updated later.
+                $categorydata['sortorder']
             );
 
             $categoryid = $category->save();
@@ -153,26 +150,26 @@ class install_helper {
 
             $itemids = [];
 
-            // Create items for this category
-            for ($i = 0; $i < $categoryData['items_count']; $i++) {
-                $currentItemIndex = $itemIndex + $i;
-                $itemname = $taskitems[$currentItemIndex];
-                $itemtype = $itemtypes[$i % 3]; // Cycle through item types
-                $desc = $descriptions[$currentItemIndex];
+            // Create items for this category.
+            for ($i = 0; $i < $categorydata['items_count']; $i++) {
+                $currentitemindex = $itemindex + $i;
+                $itemname = $taskitems[$currentitemindex];
+                $itemtype = $itemtypes[$i % 3]; // Cycle through item types.
+                $desc = $descriptions[$currentitemindex];
 
-                // Create options based on item type
+                // Create options based on item type.
                 $options = null;
 
                 $defaultvalue = null;
                 switch ($itemtype) {
-                    case 1: // text
+                    case 1: // Text.
                         $defaultvalue = 'Enter details here';
                         break;
-                    case 2: // number
+                    case 2: // Number.
                         $defaultvalue = 25;
                         break;
-                    case 3: // date
-                        $defaultvalue = time() + (7 * 86400); // 7 days from now
+                    case 3: // Date.
+                        $defaultvalue = time() + (7 * 86400); // 7 days from now.
                         break;
                 }
 
@@ -180,7 +177,7 @@ class install_helper {
                     mtrace("    Creating item: $itemname");
                 }
 
-                // Randomly select a room and role if available
+                // Randomly select a room and role if available.
                 $roomid = null;
                 $roleid = null;
 
@@ -197,20 +194,20 @@ class install_helper {
                 }
 
                 $item = new bookit_checklist_item(
-                    0, // ID will be set by save_to_database
+                    0, // ID will be set by save_to_database.
                     $masterid,
                     $categoryid,
-                    null, // No parent
-                    $roomid, // Room ID (may be null)
-                    $roleid, // Role ID (may be null)
+                    null, // No parent.
+                    $roomid, // Room ID (may be null).
+                    $roleid, // Role ID (may be null).
                     $itemname,
                     $desc,
                     $itemtype,
                     $options,
-                    $i + 1, // sortorder
-                    1, // is_required (all required)
+                    $i + 1, // Sortorder.
+                    1, // Is_required (all required).
                     $defaultvalue,
-                    ($i * 7), // due_days_offset (0, 7, 14 days)
+                    ($i * 7), // Due_days_offset (0, 7, 14 days).
                     null,
                     null,
                     null
@@ -224,7 +221,7 @@ class install_helper {
                 }
             }
 
-            // Update the category with the item IDs
+            // Update the category with the item IDs.
             $category->checklistitems = implode(',', $itemids);
             $category->save();
 
@@ -232,10 +229,10 @@ class install_helper {
                 mtrace("  Updated category with item IDs: " . implode(',', $itemids));
             }
 
-            $itemIndex += $categoryData['items_count'];
+            $itemindex += $categorydata['items_count'];
         }
 
-        // Update the master checklist with the category IDs
+        // Update the master checklist with the category IDs.
         $categoryidstr = implode(',', $categoryids);
         $master = bookit_checklist_master::from_database($masterid);
         $master->mastercategoryorder = $categoryidstr;
@@ -297,7 +294,7 @@ class install_helper {
                 continue;
             }
 
-            // Parse the XML file to get role information
+            // Parse the XML file to get role information.
             $roleinfo = \core_role_preset::parse_preset($xml);
             if (!$roleinfo) {
                 if ($verbose) {
@@ -306,7 +303,7 @@ class install_helper {
                 continue;
             }
 
-            // Check if role with this shortname already exists
+            // Check if role with this shortname already exists.
             if ($existingrole = $DB->get_record('role', ['shortname' => $roleinfo['shortname']])) {
                 if ($verbose) {
                     mtrace('Role with shortname "' . $roleinfo['shortname'] . '" already exists (ID: ' . $existingrole->id . ')');
@@ -315,11 +312,11 @@ class install_helper {
                     continue;
                 }
                 if ($verbose) {
-                    mtrace('Updating existing role due to force flag');
+                    mtrace('Updating existing role due to force flag.');
                 }
                 $roleid = $existingrole->id;
             } else {
-                // Create a new role record
+                // Create a new role record.
                 $role = new \stdClass();
                 $role->name = $roleinfo['name'];
                 $role->shortname = $roleinfo['shortname'];
@@ -333,79 +330,79 @@ class install_helper {
                 }
             }
 
-            // Set context levels for this role
+            // Set context levels for this role.
             if (isset($roleinfo['contextlevels']) && is_array($roleinfo['contextlevels'])) {
-                // First, reset current context levels
+                // First, reset current context levels.
                 $DB->delete_records('role_context_levels', ['roleid' => $roleid]);
 
-                // Then add new context levels
+                // Then add new context levels.
                 foreach ($roleinfo['contextlevels'] as $contextlevel) {
                     $DB->insert_record('role_context_levels', [
                         'roleid' => $roleid,
-                        'contextlevel' => $contextlevel
+                        'contextlevel' => $contextlevel,
                     ]);
                 }
                 if ($verbose) {
-                    mtrace('Set ' . count($roleinfo['contextlevels']) . ' context levels for role');
+                    mtrace('Set ' . count($roleinfo['contextlevels']) . ' context levels for role.');
                 }
             }
 
-            // Set role permissions
+            // Set role permissions.
             if (isset($roleinfo['permissions']) && is_array($roleinfo['permissions'])) {
                 $systemcontext = \context_system::instance();
 
                 foreach ($roleinfo['permissions'] as $capability => $permission) {
                     if ($permission != CAP_INHERIT) {
-                        // Delete any existing capability
+                        // Delete any existing capability.
                         $DB->delete_records('role_capabilities', [
                             'roleid' => $roleid,
                             'capability' => $capability,
-                            'contextid' => $systemcontext->id
+                            'contextid' => $systemcontext->id,
                         ]);
 
-                        // Add the new capability
+                        // Add the new capability.
                         $DB->insert_record('role_capabilities', [
                             'roleid' => $roleid,
                             'capability' => $capability,
                             'permission' => $permission,
                             'contextid' => $systemcontext->id,
-                            'timemodified' => time()
+                            'timemodified' => time(),
                         ]);
                     }
                 }
                 if ($verbose) {
-                    mtrace('Set permissions for role');
+                    mtrace('Set permissions for role.');
                 }
             }
 
-            // Handle role relationships (assign, override, switch)
+            // Handle role relationships (assign, override, switch).
             foreach (['assign', 'override', 'switch', 'view'] as $type) {
-                if (isset($roleinfo['allow'.$type]) && is_array($roleinfo['allow'.$type])) {
-                    // First, remove existing records
-                    $DB->delete_records('role_allow_'.$type, ['roleid' => $roleid]);
+                if (isset($roleinfo['allow' . $type]) && is_array($roleinfo['allow' . $type])) {
+                    // First, remove existing records.
+                    $DB->delete_records('role_allow_' . $type, ['roleid' => $roleid]);
 
-                    // Add new records
-                    foreach ($roleinfo['allow'.$type] as $allowid) {
+                    // Add new records.
+                    foreach ($roleinfo['allow' . $type] as $allowid) {
                         if ($allowid == -1) {
-                            // Special case: allow assigning/overriding self
-                            $DB->insert_record('role_allow_'.$type, [
+                            // Special case: allow assigning/overriding self.
+                            $DB->insert_record('role_allow_' . $type, [
                                 'roleid' => $roleid,
-                                'allow'.$type => $roleid
+                                'allow' . $type => $roleid,
                             ]);
                         } else {
-                            $DB->insert_record('role_allow_'.$type, [
+                            $DB->insert_record('role_allow_' . $type, [
                                 'roleid' => $roleid,
-                                'allow'.$type => $allowid
+                                'allow' . $type => $allowid,
                             ]);
                         }
                     }
                     if ($verbose) {
-                        mtrace('Set allow' . $type . ' permissions for role');
+                        mtrace('Set allow' . $type . ' permissions for role.');
                     }
                 }
             }
 
-            // Mark that at least one role was imported
+            // Mark that at least one role was imported.
             $rolesimported = true;
 
             if ($verbose) {
@@ -417,9 +414,9 @@ class install_helper {
 
         if ($verbose) {
             if ($rolesimported) {
-                mtrace('Completed importing roles');
+                mtrace('Completed importing roles.');
             } else {
-                mtrace('No roles were imported');
+                mtrace('No roles were imported.');
             }
         }
 
