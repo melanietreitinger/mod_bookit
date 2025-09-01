@@ -36,6 +36,27 @@ $string['bookit:view'] = 'View BookIt instance';
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLACEHOLDER';
+$string['category_name'] = 'Category name';
+$string['checklistcategory'] = 'Checklist category';
+$string['checklistcategorydeleted'] = 'Checklist category deleted successfully.';
+$string['checklistcategorysuccess'] = 'Checklist category created successfully.';
+$string['checklistcategoryupdatesuccess'] = 'Checklist category updated successfully.';
+$string['checklistitem'] = 'Checklist item';
+$string['checklistitemdeleted'] = 'Checklist item deleted successfully.';
+$string['checklistitemname'] = 'Checklist item name';
+$string['checklistitemsuccess'] = 'Checklist item created successfully.';
+$string['checklistitemupdatesuccess'] = 'Checklist item updated successfully.';
+$string['customtemplate'] = 'Message';
+$string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
+.'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
+.'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
+.'<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
+.'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
+.'<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
+.'###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
+.'<p>Nulla vitae elit libero,<br>'
+.'Cras justo odio.</p>';
+$string['edit'] = 'Edit';
 $string['edit_event'] = "Edit event";
 $string['event_bookingstatus'] = 'Booking status';
 $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced';
@@ -75,13 +96,24 @@ $string['event_timecompensation_help'] = 'Check if you have participants entitle
 $string['event_usermodified'] = 'Created by user';
 $string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
+$string['item_state_done'] = 'Done';
+$string['item_state_open'] = 'Open';
+$string['item_state_processing'] = 'Processing';
+$string['item_state_unknown'] = 'Unknown';
+$string['master_checklist'] = 'Master checklist';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
 $string['modulenameplural'] = 'BookIt instances';
+$string['new_checklistcategory'] = 'New checklist category';
+$string['new_checklistitem'] = 'New checklist item';
 $string['please_select_and_enter'] = 'Please select or enter a number';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
+$string['recipient'] = 'Recipient';
 $string['resource_amount'] = 'Amount';
+$string['responsibility'] = 'Responsibility';
+$string['role'] = 'Role';
+$string['room'] = 'Room';
 $string['select_coursetemplate'] = 'Select a course template';
 $string['select_coursetemplate_help'] = 'Select a course template for the course in which your exam will take place.';
 $string['select_semester'] = 'Term';
@@ -99,5 +131,13 @@ $string['settings_roomcolor_wcagcheck_desc'] = 'Contrast check for color <i>#{$a
 $string['settings_roomcolorheading'] = 'Room colors';
 $string['settings_textcolor'] = 'Event text color';
 $string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
+$string['sort'] = 'Sort';
 $string['summer_semester'] = 'Summer Term';
+$string['time'] = 'Time';
+$string['type_before_due'] = 'Before due';
+$string['type_before_due_date'] = 'Before due date';
+$string['type_overdue'] = 'Reminder when overdue';
+$string['type_overdue_date'] = 'After overdue date';
+$string['type_when_done'] = 'When done';
+$string['type_when_due'] = 'When due';
 $string['winter_semester'] = 'Winter Term';

@@ -29,6 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
+    $ADMIN->add('modsettings', new admin_category('mod_bookit_category', new lang_string('pluginname', 'mod_bookit')));
     $settings = new admin_settingpage('mod_bookit_settings', new lang_string('pluginname', 'mod_bookit'));
 
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
@@ -110,4 +111,13 @@ if ($hassiteconfig) {
         }
 
     }
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+            'mod_bookit_master_checklist',
+            get_string('master_checklist', 'mod_bookit'),
+            new moodle_url('/mod/bookit/master_checklist.php'),
+        ));
+
+    $ADMIN->add('mod_bookit_category', $settings);
+    $settings = null;
 }
