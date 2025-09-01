@@ -144,8 +144,8 @@ class bookit_notification_slot implements \renderable, \templatable {
             $record->roleids,
             $record->duedaysoffset,
             $record->duedaysrelation,
-            $record->isactive,
             $record->messagetext,
+            $record->isactive,
             $record->usermodified,
             $record->timecreated,
             $record->timemodified

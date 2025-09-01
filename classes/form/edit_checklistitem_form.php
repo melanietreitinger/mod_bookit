@@ -28,6 +28,7 @@ namespace mod_bookit\form;
 use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_checklist_item;
 use mod_bookit\local\manager\checklist_manager;
+use mod_bookit\local\entity\bookit_notification_slot;
 
 /**
  * Form class for editing checklist items.
@@ -110,7 +111,8 @@ class edit_checklistitem_form extends dynamic_form {
             $mform->hideIf(strtolower($slottype) . '_recipient', strtolower($slottype));
 
             if (array_search($val, [0, 2]) !== false) {
-                $mform->addElement('duration', strtolower($slottype) . '_time', get_string('time', 'mod_bookit'));
+                $mform->addElement('duration', strtolower($slottype) . '_time', get_string('time', 'mod_bookit'),
+                ['units' => [DAYSECS]]);
                 $mform->hideIf(strtolower($slottype) . '_time', strtolower($slottype));
             }
 
@@ -281,6 +283,16 @@ class edit_checklistitem_form extends dynamic_form {
                 $daysoffset = array_search($val, [0, 2]) !== false ? $data[strtolower($slottype) . '_time']['number'] : 0;
                 if (!empty($data[strtolower($slottype) . '_id'])) {
                     $slot = bookit_notification_slot::from_database($data[strtolower($slottype) . '_id']);
+
+                    if (!is_array($data[strtolower($slottype) . '_recipient'])) {
+
+                        if (!empty($data[strtolower($slottype) . '_recipient'])) {
+                            $data[strtolower($slottype) . '_recipient'] = [$data[strtolower($slottype) . '_recipient']];
+                        } else {
+                            $data[strtolower($slottype) . '_recipient'] = [];
+                        }
+                    }
+
                     $slot->roleids = implode(',', $data[strtolower($slottype) . '_recipient'] ?? []);
                     $slot->messagetext = format_text($data[strtolower($slottype) . '_messagetext']['text'] ?? '', FORMAT_HTML);
                     $slot->duedaysoffset = $daysoffset;
@@ -294,8 +306,8 @@ class edit_checklistitem_form extends dynamic_form {
                         implode(',', $data[strtolower($slottype) . '_recipient'] ?? []),
                         $daysoffset,
                         $val == 0 ? 'before' : ($val == 2 ? 'after' : 0),
-                        1,
                         format_text($data[strtolower($slottype) . '_messagetext']['text'] ?? '', FORMAT_HTML),
+                        1,
                         $USER->id,
                         time(),
                         time()
