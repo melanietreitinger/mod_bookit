@@ -95,13 +95,21 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->setType('roleid', PARAM_INT);
         $mform->addRule('roleid', null, 'required', null, 'client');
 
+        $duedateradio = [
+            $mform->createElement('radio', 'duedate', '', get_string('noduedate', 'mod_bookit'), 'none'),
+            $mform->createElement('radio', 'duedate', '', get_string('beforeexam', 'mod_bookit'), 'before'),
+            $mform->createElement('radio', 'duedate', '', get_string('afterexam', 'mod_bookit'), 'after')
+        ];
+
+        $mform->addGroup($duedateradio, 'duedategroup', get_string('duedate', 'mod_bookit'), null, false);
+        $mform->setDefault('duedate', 'none');
+
         $mform->addElement('duration', 'duedaysoffset', get_string('duedate', 'mod_bookit'), ['units' => [DAYSECS]]);
         $mform->setDefault('duedaysoffset', [
             'number' => 14,
             'timeunit' => DAYSECS,
         ]);
-
-        $mform->addElement('checkbox', 'duedateoffset', get_string('duedate', 'mod_bookit'));
+        $mform->hideIf('duedaysoffset', 'duedate', 'eq', 'none');
 
         $mform->addElement('header', 'notifications', get_string('notifications', 'mod_bookit'));
         $mform->setExpanded('notifications', false);

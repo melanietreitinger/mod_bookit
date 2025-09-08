@@ -26,6 +26,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['addbooking'] = 'Request booking';
+$string['afterexam'] = 'After exam';
+$string['beforeexam'] = 'Before exam';
 $string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'Add BookIt instance';
 $string['bookit:addresource'] = 'Add a resource';
@@ -108,6 +110,7 @@ $string['modulenameplural'] = 'BookIt instances';
 $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
 $string['notifications'] = 'Notifications';
+$string['noduedate'] = 'No due date';
 $string['please_select_and_enter'] = 'Please select or enter a number';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
