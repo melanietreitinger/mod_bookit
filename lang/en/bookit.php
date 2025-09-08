@@ -56,6 +56,7 @@ $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIE
 .'###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
 .'<p>Nulla vitae elit libero,<br>'
 .'Cras justo odio.</p>';
+$string['duedate'] = 'Due date';
 $string['edit'] = 'Edit';
 $string['edit_event'] = "Edit event";
 $string['event_bookingstatus'] = 'Booking status';
@@ -106,6 +107,7 @@ $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. e
 $string['modulenameplural'] = 'BookIt instances';
 $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
+$string['notifications'] = 'Notifications';
 $string['please_select_and_enter'] = 'Please select or enter a number';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';

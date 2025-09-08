@@ -95,6 +95,17 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->setType('roleid', PARAM_INT);
         $mform->addRule('roleid', null, 'required', null, 'client');
 
+        $mform->addElement('duration', 'duedaysoffset', get_string('duedate', 'mod_bookit'), ['units' => [DAYSECS]]);
+        $mform->setDefault('duedaysoffset', [
+            'number' => 14,
+            'timeunit' => DAYSECS,
+        ]);
+
+        $mform->addElement('checkbox', 'duedateoffset', get_string('duedate', 'mod_bookit'));
+
+        $mform->addElement('header', 'notifications', get_string('notifications', 'mod_bookit'));
+        $mform->setExpanded('notifications', false);
+
         $alltypes = bookit_notification_slot::get_all_notification_slot_types();
 
         foreach ($alltypes as $slottype => $val) {
