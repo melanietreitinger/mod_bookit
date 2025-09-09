@@ -1,7 +1,28 @@
 {{!
-    This file is part of the mod_bookit plugin for Moodle - http://moodle.org/
+    This file is part of Moodle - http://moodle.org/
 
-    Checklist drag handle template
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/bookit_checklist_drag_handle
+    This template renders a drag handle for sortable checklist items.
+
+    Example context (json):
+    {
+        "id": 1,
+        "type": "item"
+    }
 }}
 <td class="bookit-drag-handle" id="bookit-drag-handle-{{type}}-{{id}}"
     data-bookit-drag-handle-id="{{id}}"
