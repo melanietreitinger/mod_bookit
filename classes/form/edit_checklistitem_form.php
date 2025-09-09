@@ -281,7 +281,7 @@ class edit_checklistitem_form extends dynamic_form {
                 1,
                 $data['categoryid'],
                 null,
-                $data['roomid'],
+                $data['roomids'],
                 $data['roleid'],
                 $data['title'],
                 $data['description'] ?? '',
@@ -353,7 +353,7 @@ class edit_checklistitem_form extends dynamic_form {
                 'title' => $data['title'],
                 'order' => 0,
                 'category' => $data['categoryid'],
-                'roomid' => $data['roomid'],
+                'roomids' => $data['roomids'],
                 'roleid' => $data['roleid'],
             ];
         }
@@ -362,8 +362,14 @@ class edit_checklistitem_form extends dynamic_form {
 
         // die(print_r($fields, true));
         // $fields['roomname'] = checklist_manager::get_roomname_by_id($fields['roomid']);
-        $fields['roomname'] = 'lol';
+
+        foreach ($fields['roomids'] as $roomid) {
+            $fields['roomnames'][(int) $roomid] = checklist_manager::get_roomname_by_id((int) $roomid);
+        }
+
         $fields['rolename'] = checklist_manager::get_rolename_by_id($fields['roleid']);
+
+        // die(print_r($fields, true));
 
         return [
             [

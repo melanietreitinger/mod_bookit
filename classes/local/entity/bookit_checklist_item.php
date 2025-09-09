@@ -26,6 +26,7 @@
 namespace mod_bookit\local\entity;
 
 use dml_exception;
+use mod_bookit\local\manager\checklist_manager;
 
 /**
  * Database class for bookit_checklist_item.
@@ -227,12 +228,22 @@ class bookit_checklist_item implements \renderable, \templatable {
         $data->categoryid = $this->categoryid;
 
         // $data->roomid = $this->roomid;
-        $data->roomids = $this->roomids;
+        $data->roomids = json_encode($this->roomids);
         // $data->roomname = \mod_bookit\local\manager\checklist_manager::get_roomname_by_id($this->roomid);
+
+        foreach ($this->roomids as $roomid) {
+            $data->roomnames[] = [
+                'roomname' => checklist_manager::get_roomname_by_id((int) $roomid),
+                'roomid' => (int) $roomid
+            ];
+        }
+
         $data->roleid = $this->roleid;
-        $data->rolename = \mod_bookit\local\manager\checklist_manager::get_rolename_by_id($this->roleid);
+        $data->rolename = checklist_manager::get_rolename_by_id($this->roleid);
 
         $data->type = 'item';
+
+        // die(print_r($data, true));
 
         return $data;
     }

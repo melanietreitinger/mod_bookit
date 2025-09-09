@@ -23,6 +23,7 @@
  */
 
 use mod_bookit\local\manager\resource_manager;
+use mod_bookit\local\install_helper;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -108,6 +109,41 @@ if ($hassiteconfig) {
                     }
                 }
             }
+        }
+
+        $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
+
+        if (empty($installhelperfinished)) {
+            $runinstallhelper = new admin_setting_configcheckbox('mod_bookit/runinstallhelper', new lang_string('runinstallhelper', 'mod_bookit'),
+                new lang_string('runinstallhelperinfo', 'mod_bookit'), 1);
+
+            $runinstallhelper->set_updatedcallback(function() {
+
+            $settingstate = get_config('mod_bookit', 'runinstallhelper');
+
+                if (!empty($settingstate)) {
+                    mtrace('Importing default roles for BookIt...');
+                    $rolesimported = install_helper::import_default_roles(false, true);
+
+                    if ($rolesimported) {
+                        mtrace('Default roles were imported successfully.');
+                    } else {
+                        mtrace('No default roles were imported (may already exist).');
+                    }
+
+                    mtrace('Setting up default checklist data for BookIt...');
+                    $result = install_helper::create_default_checklists(false, false);
+
+                    if ($result) {
+                        mtrace('Default checklist data was created successfully.');
+                    } else {
+                        mtrace('Default checklist data was not created (may already exist).');
+                    }
+                    set_config('installhelperfinished', 1, 'mod_bookit');
+                }
+            });
+
+            $settings->add($runinstallhelper);
         }
 
     }

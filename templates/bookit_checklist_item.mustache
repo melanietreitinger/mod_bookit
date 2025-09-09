@@ -35,14 +35,18 @@
     data-bookit-checklistitem-title="{{title}}"
     data-bookit-checklistitem-order="{{order}}"
     data-bookit-checklistitem-categoryid="{{categoryid}}"
-    data-bookit-checklistitem-room="{{roomid}}"
-    data-bookit-checklistitem-roomname="{{roomname}}"
+    data-bookit-checklistitem-roomids='{{{roomids}}}'
     data-bookit-checklistitem-role="{{roleid}}"
     data-bookit-checklistitem-rolename="{{rolename}}"
     data-bookit-drag-handle-item-id="{{id}}"
     data-bookit-drag-handle-parent-id="{{categoryid}}">
                 <td data-bookit-checklistitem-tabledata-title-id="{{id}}">{{title}}</td>
-                <td data-bookit-checklistitem-tabledata-roomid-id="{{id}}">{{roomname}}</td>
+                <td data-bookit-checklistitem-tabledata-roomid-id="{{id}}">
+                {{#roomnames}}
+                    <div data-bookit-checklistitem-roomid="{{roomid}}"
+                        data-bookit-checklistitem-roomname="{{roomname}}">{{roomname}}</div>
+                {{/roomnames}}
+                </td>
                 <td data-bookit-checklistitem-tabledata-roleid-id="{{id}}">{{rolename}}</td>
                 <td>
                     <button type="button" class="btn" value="{{id}}" name="edit-checklistitem-{{id}}" id="edit-checklistitem-{{id}}">
