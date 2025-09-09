@@ -54,7 +54,7 @@ class bookit_checklist_master implements \renderable, \templatable {
      * @param int|null $id
      * @param string $name
      * @param string $description
-     * @param int $isdefault
+     * @param int|null $isdefault
      * @param mixed $checklistcategories
      * @param string|null $mastercategoryorder
      * @param int|null $usermodified

@@ -174,7 +174,6 @@ class install_helper {
                 if (!empty($rooms)) {
                     $roomids = array_map('strval', array_column($rooms, 'id'));
 
-                    // Randomly remove 1-2 elements from $roomids if there are enough elements
                     if (count($roomids) > 2) {
                         $numtoremove = rand(1, 2);
                         $keystoremove = array_rand($roomids, $numtoremove);
@@ -184,7 +183,6 @@ class install_helper {
                         foreach ($keystoremove as $key) {
                             unset($roomids[$key]);
                         }
-                        // Reindex array after removal
                         $roomids = array_values($roomids);
                     }
                 }
