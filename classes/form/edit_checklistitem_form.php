@@ -225,7 +225,7 @@ class edit_checklistitem_form extends dynamic_form {
                 }
                 $item->{$slottype->value . '_id'} = $slot->id;
                 $item->{$slottype->value} = 1;
-                $item->{$slottype->value . '_recipient'} = explode(',', $slot->roleids);
+                $item->{$slottype->value . '_recipient'} = json_decode($slot->roleids, true);
                 $item->{$slottype->value . '_messagetext'}['text'] = $slot->messagetext;
             }
         }
