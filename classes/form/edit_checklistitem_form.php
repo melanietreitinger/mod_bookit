@@ -29,6 +29,7 @@ use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_checklist_item;
 use mod_bookit\local\manager\checklist_manager;
 use mod_bookit\local\entity\bookit_notification_slot;
+use mod_bookit\local\entity\bookit_notification_type;
 
 /**
  * Form class for editing checklist items.
@@ -48,9 +49,7 @@ class edit_checklistitem_form extends dynamic_form {
      * This method defines the form elements for checklist item editing.
      */
     public function definition() {
-
         $mform = $this->_form;
-
         $mform->addElement('hidden', 'masterid');
         $mform->setType('masterid', PARAM_INT);
 
@@ -66,9 +65,7 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->addRule('title', null, 'required', null, 'client');
 
         $ajaxdata = $this->_ajaxformdata;
-
         $categories = [];
-
         if (!empty($ajaxdata['categories'])) {
             $categories = array_column($ajaxdata['categories'], 'name', 'id');
         }
@@ -84,13 +81,12 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->addRule('categoryid', null, 'required', null, 'client');
 
         $allrooms = array_column(checklist_manager::get_bookit_rooms(), 'name', 'id');
+        $allroles = array_column(checklist_manager::get_bookit_roles(), 'name', 'id');
 
         $select = $mform->addElement('select', 'roomids', get_string('rooms', 'mod_bookit'), $allrooms, ['style' => 'width:50%;']);
         $mform->setType('roomids', PARAM_TEXT);
         $mform->addRule('roomids', null, 'required', null, 'client');
         $select->setMultiple(true);
-
-        $allroles = array_column(checklist_manager::get_bookit_roles(), 'name', 'id');
 
         $mform->addElement('select', 'roleid', get_string('role', 'mod_bookit'), $allroles, ['style' => 'width:50%;']);
         $mform->setType('roleid', PARAM_INT);
@@ -105,7 +101,7 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->addGroup($duedateradio, 'duedategroup', get_string('duedate', 'mod_bookit'), null, false);
         $mform->setDefault('duedate', 'none');
 
-        $mform->addElement('duration', 'duedaysoffset', get_string('duedate', 'mod_bookit'), ['units' => [DAYSECS]]);
+        $mform->addElement('duration', 'duedaysoffset', get_string('time', 'mod_bookit'), ['units' => [DAYSECS]]);
         $mform->setDefault('duedaysoffset', [
             'number' => 14,
             'timeunit' => DAYSECS,
@@ -115,39 +111,35 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->addElement('header', 'notifications', get_string('notifications', 'mod_bookit'));
         $mform->setExpanded('notifications', false);
 
-        $alltypes = bookit_notification_slot::get_all_notification_slot_types();
-
-        foreach ($alltypes as $slottype => $val) {
-            $mform->addElement('checkbox', strtolower($slottype), get_string(strtolower($slottype), 'mod_bookit'));
-
+        foreach (bookit_notification_type::cases() as $case) {
+            $mform->addElement('checkbox', strtolower($case->name), get_string(strtolower($case->name), 'mod_bookit'));
             $select = $mform->addElement(
                 'select',
-                strtolower($slottype) . '_recipient',
+                strtolower($case->name) . '_recipient',
                 get_string('recipient', 'mod_bookit'),
                 $allroles,
                 ['style' => 'width:50%;']
             );
             $select->setMultiple(true);
-            $mform->hideIf(strtolower($slottype) . '_recipient', strtolower($slottype));
+            $mform->hideIf(strtolower($case->name) . '_recipient', strtolower($case->name));
 
-            if (array_search($val, [0, 2]) !== false) {
-                $mform->addElement('duration', strtolower($slottype) . '_time', get_string('time', 'mod_bookit'),
+            if (array_search($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
+                $mform->addElement('duration', strtolower($case->name) . '_time', get_string('time', 'mod_bookit'),
                 ['units' => [DAYSECS]]);
-                $mform->hideIf(strtolower($slottype) . '_time', strtolower($slottype));
+                $mform->hideIf(strtolower($case->name) . '_time', strtolower($case->name));
             }
 
-            $mform->addElement('editor', strtolower($slottype) . '_messagetext', get_string('customtemplate', 'mod_bookit'));
-
-            $mform->setType(strtolower($slottype) . '_messagetext', PARAM_RAW);
-            $mform->setDefault(strtolower($slottype) . '_messagetext', [
+            $mform->addElement('editor', strtolower($case->name) . '_messagetext', get_string('customtemplate', 'mod_bookit'));
+            $mform->setType(strtolower($case->name) . '_messagetext', PARAM_RAW);
+            $mform->setDefault(strtolower($case->name) . '_messagetext', [
                 'text'   => get_string('customtemplatedefaultmessage', 'mod_bookit'),
                 'format' => FORMAT_HTML,
                 'itemid' => 0,
             ]);
-            $mform->hideIf(strtolower($slottype) . '_messagetext', strtolower($slottype));
+            $mform->hideIf(strtolower($case->name) . '_messagetext', strtolower($case->name));
 
-            $mform->addElement('hidden', strtolower($slottype) . '_id');
-            $mform->setType(strtolower($slottype) . '_id', PARAM_INT);
+            $mform->addElement('hidden', strtolower($case->name) . '_id');
+            $mform->setType(strtolower($case->name) . '_id', PARAM_INT);
         }
     }
 

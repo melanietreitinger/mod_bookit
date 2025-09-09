@@ -27,6 +27,7 @@ namespace mod_bookit\local\entity;
 
 use dml_exception;
 use mod_bookit\local\manager\checklist_manager;
+use mod_bookit\local\entity\bookit_notification_type;
 
 /**
  * Database class for bookit_notification_slots.
