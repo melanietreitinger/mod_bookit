@@ -63,7 +63,7 @@ class bookit_notification_slot implements \renderable, \templatable {
      *
      * @param int|null $id
      * @param int $checklistitemid
-     * @param int $type Type of notification (e.g. email, dashboard, etc.)
+     * @param string $type Type of notification (e.g. email, dashboard, etc.)
      * @param string|null $roleids JSON-encoded list of role IDs to notify
      * @param int|null $duedaysoffset
      * @param string|null $duedaysrelation
@@ -78,8 +78,8 @@ class bookit_notification_slot implements \renderable, \templatable {
         public ?int $id,
         /** @var int checklistitemid */
         public int $checklistitemid,
-        /** @var int type */
-        public int $type,
+        /** @var string type */
+        public string $type,
         /** @var string|null roleids */
         public ?string $roleids,
         /** @var int|null duedaysoffset */
@@ -141,7 +141,7 @@ class bookit_notification_slot implements \renderable, \templatable {
         return new self(
             $record->id ?? null,
             $record->checklistitemid,
-            $record->type ?? 0,
+            $record->type ?? '',
             $record->roleids,
             $record->duedaysoffset,
             $record->duedaysrelation,

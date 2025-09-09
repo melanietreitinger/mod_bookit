@@ -170,7 +170,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         // Add fields.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('checklistitemid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('type', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('type', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, '');
         $table->add_field('roleids', XMLDB_TYPE_TEXT, null, null, null, null, null);
         $table->add_field('duedaysoffset', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         $table->add_field('duedaysrelation', XMLDB_TYPE_INTEGER, '10', null, null, null, null);

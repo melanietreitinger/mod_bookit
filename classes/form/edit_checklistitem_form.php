@@ -202,6 +202,8 @@ class edit_checklistitem_form extends dynamic_form {
     public function set_data_for_dynamic_submission(): void {
         $ajaxdata = $this->_ajaxformdata;
 
+        error_log('ARO - AJAXDATA IN SET DATA: ' . print_r($ajaxdata, true));
+
         $item = new \StdClass();
         $id = $this->optional_param('itemid', null, PARAM_INT);
         $itemslots = [];
@@ -212,21 +214,19 @@ class edit_checklistitem_form extends dynamic_form {
         }
 
         if (!empty($itemslots)) {
-            $alltypes = bookit_notification_slot::get_all_notification_slot_types();
-
             foreach ($itemslots as $slot) {
                 if ($slot->isactive == 0) {
                     continue;
                 }
-                $slottype = array_search($slot->type, $alltypes);
+                $slottype = bookit_notification_type::tryFrom($slot->type);
 
-                if (array_search($alltypes[$slottype], [0, 2]) !== false) {
-                    $item->{strtolower($slottype) . '_time'}['number'] = $slot->duedaysoffset;
+                if (array_search($slottype, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
+                    $item->{$slottype->value . '_time'}['number'] = $slot->duedaysoffset;
                 }
-                $item->{strtolower($slottype) . '_id'} = $slot->id;
-                $item->{strtolower($slottype)} = 1;
-                $item->{strtolower($slottype) . '_recipient'} = explode(',', $slot->roleids);
-                $item->{strtolower($slottype) . '_messagetext'}['text'] = $slot->messagetext;
+                $item->{$slottype->value . '_id'} = $slot->id;
+                $item->{$slottype->value} = 1;
+                $item->{$slottype->value . '_recipient'} = explode(',', $slot->roleids);
+                $item->{$slottype->value . '_messagetext'}['text'] = $slot->messagetext;
             }
         }
 
@@ -242,6 +242,8 @@ class edit_checklistitem_form extends dynamic_form {
     public function process_put_request($data) {
         global $USER;
 
+        error_log('ARO - DATA IN PUT REQUEST: ' . print_r($data, true));
+
         if (!empty($data['itemid'])) {
             $item = bookit_checklist_item::from_database($data['itemid']);
 
@@ -249,9 +251,8 @@ class edit_checklistitem_form extends dynamic_form {
                     'title' => $data['title'],
                     'order' => 0,
                     'categoryid' => $data['categoryid'],
-                    'roomid' => $data['roomid'],
-                    'roleid' => $data['roleid'],
                     'roomids' => $data['roomids'],
+                    'roleid' => $data['roleid'],
             ];
 
             foreach ($fields as $key => $value) {
@@ -289,37 +290,39 @@ class edit_checklistitem_form extends dynamic_form {
 
         $id = $item->save();
 
-        $alltypes = bookit_notification_slot::get_all_notification_slot_types();
+        foreach (bookit_notification_type::cases() as $case) {
+            $caseName = strtolower($case->name);
 
-        foreach ($alltypes as $slottype => $val) {
-            if (!empty($data[strtolower($slottype)])) {
-                $daysoffset = array_search($val, [0, 2]) !== false ? $data[strtolower($slottype) . '_time']['number'] : 0;
-                if (!empty($data[strtolower($slottype) . '_id'])) {
-                    $slot = bookit_notification_slot::from_database($data[strtolower($slottype) . '_id']);
+            if (!empty($data[$caseName])) {
+                $daysoffset = 0;
+                if ($case === bookit_notification_type::BEFORE_DUE || $case === bookit_notification_type::OVERDUE) {
+                    $daysoffset = $data[$caseName . '_time']['number'] ?? 0;
+                }
 
-                    if (!is_array($data[strtolower($slottype) . '_recipient'])) {
+                if (!empty($data[$caseName . '_id'])) {
+                    $slot = bookit_notification_slot::from_database($data[$caseName . '_id']);
 
-                        if (!empty($data[strtolower($slottype) . '_recipient'])) {
-                            $data[strtolower($slottype) . '_recipient'] = [$data[strtolower($slottype) . '_recipient']];
-                        } else {
-                            $data[strtolower($slottype) . '_recipient'] = [];
-                        }
-                    }
-
-                    $slot->roleids = implode(',', $data[strtolower($slottype) . '_recipient'] ?? []);
-                    $slot->messagetext = format_text($data[strtolower($slottype) . '_messagetext']['text'] ?? '', FORMAT_HTML);
+                    $slot->roleids = json_encode($data[$caseName . '_recipient'] ?? []);
+                    $slot->messagetext = format_text($data[$caseName . '_messagetext']['text'] ?? '', FORMAT_HTML);
                     $slot->duedaysoffset = $daysoffset;
 
                     $slot->save();
                 } else {
+                    $duedaysrelation = null;
+                    if ($case === bookit_notification_type::BEFORE_DUE) {
+                        $duedaysrelation = 'before';
+                    } else if ($case === bookit_notification_type::OVERDUE) {
+                        $duedaysrelation = 'after';
+                    }
+
                     $slot = new bookit_notification_slot(
                         0,
                         $id,
-                        $val,
-                        implode(',', $data[strtolower($slottype) . '_recipient'] ?? []),
+                        $case->value,
+                        json_encode($data[$caseName . '_recipient'] ?? []),
                         $daysoffset,
-                        $val == 0 ? 'before' : ($val == 2 ? 'after' : 0),
-                        format_text($data[strtolower($slottype) . '_messagetext']['text'] ?? '', FORMAT_HTML),
+                        $duedaysrelation,
+                        format_text($data[$caseName . '_messagetext']['text'] ?? '', FORMAT_HTML),
                         1,
                         $USER->id,
                         time(),
@@ -328,12 +331,10 @@ class edit_checklistitem_form extends dynamic_form {
 
                     $slot->save();
                 }
-            } else {
-                if (!empty($data[strtolower($slottype) . '_id'])) {
-                    $slot = bookit_notification_slot::from_database($data[strtolower($slottype) . '_id']);
-                    $slot->isactive = 0;
-                    $slot->save();
-                }
+            } else if (!empty($data[$caseName . '_id'])) {
+                $slot = bookit_notification_slot::from_database($data[$caseName . '_id']);
+                $slot->isactive = 0;
+                $slot->save();
             }
         }
 
@@ -350,7 +351,7 @@ class edit_checklistitem_form extends dynamic_form {
 
         $fields['id'] = $id;
 
-        foreach ($fields['roomids'] as $roomid) {
+        foreach ($data['roomids'] as $roomid) {
             $fields['roomnames'][(int) $roomid] = checklist_manager::get_roomname_by_id((int) $roomid);
         }
 
