@@ -183,11 +183,10 @@ class install_helper {
 
                 $rooms = \mod_bookit\local\manager\checklist_manager::get_bookit_rooms();
                 if (!empty($rooms)) {
-                    // Select up to 3 random rooms.
-                    $roomids = array_column(array_rand($rooms, min(3, count($rooms))), 'id');
-                    // Ensure room IDs are unique.
-                    $roomids = array_unique($roomids);
-                    // $roomids = json_encode($roomids);
+                    mtrace("HERE");
+                    mtrace(print_r($rooms, true));
+                    // Extract all room IDs as strings
+                    $roomids = array_map('strval', array_column($rooms, 'id'));
                 }
 
                 $roles = \mod_bookit\local\manager\checklist_manager::get_bookit_roles();
@@ -195,6 +194,8 @@ class install_helper {
                     $role = $roles[array_rand($roles)];
                     $roleid = $role->id;
                 }
+
+                mtrace(print_r($roomids, true));
 
                 $item = new bookit_checklist_item(
                     0, // ID will be set by save_to_database.
