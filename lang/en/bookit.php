@@ -119,6 +119,7 @@ $string['resource_amount'] = 'Amount';
 $string['responsibility'] = 'Responsibility';
 $string['role'] = 'Role';
 $string['room'] = 'Room';
+$string['rooms'] = 'Rooms';
 $string['select_coursetemplate'] = 'Select a course template';
 $string['select_coursetemplate_help'] = 'Select a course template for the course in which your exam will take place.';
 $string['select_semester'] = 'Term';

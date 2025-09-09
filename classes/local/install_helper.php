@@ -178,13 +178,16 @@ class install_helper {
                 }
 
                 // Randomly select a room and role if available.
-                $roomid = null;
+                $roomids = [];
                 $roleid = null;
 
                 $rooms = \mod_bookit\local\manager\checklist_manager::get_bookit_rooms();
                 if (!empty($rooms)) {
-                    $room = $rooms[array_rand($rooms)];
-                    $roomid = $room['id'];
+                    // Select up to 3 random rooms.
+                    $roomids = array_column(array_rand($rooms, min(3, count($rooms))), 'id');
+                    // Ensure room IDs are unique.
+                    $roomids = array_unique($roomids);
+                    // $roomids = json_encode($roomids);
                 }
 
                 $roles = \mod_bookit\local\manager\checklist_manager::get_bookit_roles();
@@ -198,7 +201,7 @@ class install_helper {
                     $masterid,
                     $categoryid,
                     null, // No parent.
-                    $roomid, // Room ID (may be null).
+                    $roomids, // Room ID (may be null).
                     $roleid, // Role ID (may be null).
                     $itemname,
                     $desc,

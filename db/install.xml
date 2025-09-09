@@ -141,7 +141,7 @@
         <FIELD NAME="masterid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to the master checklist"/>
         <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to category"/>
         <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to parent item for hierarchical structure"/>
-        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to room"/>
+        <FIELD NAME="roomids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to rooms"/>
         <FIELD NAME="roleid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to role"/>
         <FIELD NAME="title" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Title of the checklist item"/>
         <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Detailed description of the item"/>

@@ -85,9 +85,10 @@ class edit_checklistitem_form extends dynamic_form {
 
         $allrooms = array_column(checklist_manager::get_bookit_rooms(), 'name', 'id');
 
-        $mform->addElement('select', 'roomid', get_string('room', 'mod_bookit'), $allrooms, ['style' => 'width:50%;']);
-        $mform->setType('roomid', PARAM_INT);
-        $mform->addRule('roomid', null, 'required', null, 'client');
+        $select = $mform->addElement('select', 'roomids', get_string('rooms', 'mod_bookit'), $allrooms, ['style' => 'width:50%;']);
+        $mform->setType('roomids', PARAM_TEXT);
+        $mform->addRule('roomids', null, 'required', null, 'client');
+        $select->setMultiple(true);
 
         $allroles = array_column(checklist_manager::get_bookit_roles(), 'name', 'id');
 
@@ -249,6 +250,8 @@ class edit_checklistitem_form extends dynamic_form {
     public function process_put_request($data) {
         global $USER;
 
+        // die(print_r($data, true));
+
         if (!empty($data['itemid'])) {
             $item = bookit_checklist_item::from_database($data['itemid']);
 
@@ -258,6 +261,7 @@ class edit_checklistitem_form extends dynamic_form {
                     'categoryid' => $data['categoryid'],
                     'roomid' => $data['roomid'],
                     'roleid' => $data['roleid'],
+                    'roomids' => $data['roomids']
             ];
 
             foreach ($fields as $key => $value) {
@@ -355,7 +359,10 @@ class edit_checklistitem_form extends dynamic_form {
         }
 
         $fields['id'] = $id;
-        $fields['roomname'] = checklist_manager::get_roomname_by_id($fields['roomid']);
+
+        // die(print_r($fields, true));
+        // $fields['roomname'] = checklist_manager::get_roomname_by_id($fields['roomid']);
+        $fields['roomname'] = 'lol';
         $fields['rolename'] = checklist_manager::get_rolename_by_id($fields['roleid']);
 
         return [

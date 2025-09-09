@@ -64,6 +64,7 @@ class bookit_checklist_item implements \renderable, \templatable {
      * @param int|null $categoryid
      * @param int|null $parentid
      * @param int|null $roomid
+     * @param array|null $roomids
      * @param int|null $roleid
      * @param string $title
      * @param string $description
@@ -86,8 +87,10 @@ class bookit_checklist_item implements \renderable, \templatable {
         public ?int $categoryid,
         /** @var ?int parentid */
         public ?int $parentid,
-        /** @var ?int roomid */
-        public ?int $roomid,
+        // /** @var ?int roomid */
+        // public ?int $roomid,
+        /** @var ?array roomids */
+        public ?array $roomids,
         /** @var ?int roleid */
         public ?int $roleid,
         /** @var string title */
@@ -142,8 +145,9 @@ class bookit_checklist_item implements \renderable, \templatable {
             $record->masterid,
             $record->categoryid,
             $record->parentid,
-            $record->roomid,
-            $record->roleid,
+            // $record->roomid,
+            json_decode($record->roomids),
+            (int) $record->roleid,
             $record->title,
             $record->description,
             $record->itemtype,
@@ -171,7 +175,8 @@ class bookit_checklist_item implements \renderable, \templatable {
         $record->masterid = $this->masterid;
         $record->categoryid = $this->categoryid;
         $record->parentid = $this->parentid;
-        $record->roomid = $this->roomid;
+        // $record->roomid = $this->roomid;
+        $record->roomids = json_encode($this->roomids);
         $record->roleid = $this->roleid;
         $record->title = $this->title;
         $record->description = $this->description;
@@ -221,8 +226,9 @@ class bookit_checklist_item implements \renderable, \templatable {
         $data->order = $this->sortorder;
         $data->categoryid = $this->categoryid;
 
-        $data->roomid = $this->roomid;
-        $data->roomname = \mod_bookit\local\manager\checklist_manager::get_roomname_by_id($this->roomid);
+        // $data->roomid = $this->roomid;
+        $data->roomids = $this->roomids;
+        // $data->roomname = \mod_bookit\local\manager\checklist_manager::get_roomname_by_id($this->roomid);
         $data->roleid = $this->roleid;
         $data->rolename = \mod_bookit\local\manager\checklist_manager::get_rolename_by_id($this->roleid);
 
