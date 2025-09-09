@@ -255,6 +255,8 @@ class edit_checklistitem_form extends dynamic_form {
                     'categoryid' => $data['categoryid'],
                     'roomids' => $data['roomids'],
                     'roleid' => $data['roleid'],
+                    'duedaysrelation' => $data['duedate'],
+                    'duedaysoffset' => $data['duedaysoffset']['number'],
             ];
 
             foreach ($fields as $key => $value) {
@@ -265,9 +267,13 @@ class edit_checklistitem_form extends dynamic_form {
                 }
             }
 
+            error_log('ARO - FIELDS TO UPDATE: ' . print_r($fields, true));
+
             $item->usermodified = $USER->id;
             $item->timemodified = time();
             $item->itemid = $item->id;
+
+            error_log('ARO - ITEM BEFORE SAVE: ' . print_r($item, true));
         } else {
             $item = new bookit_checklist_item(
                 0,
@@ -348,6 +354,8 @@ class edit_checklistitem_form extends dynamic_form {
                 'category' => $data['categoryid'],
                 'roomids' => $data['roomids'],
                 'roleid' => $data['roleid'],
+                'duedaysrelation' => $data['duedate'],
+                'duedaysoffset' => $data['duedaysoffset']['number'],
             ];
         }
 
