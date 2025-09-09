@@ -43,6 +43,7 @@ class bookit_checklist_category implements \renderable, \templatable {
      * @param int $masterid
      * @param string $name
      * @param string|null $description
+     * @param array|null $checklistitems
      * @param int $sortorder
      * @param int|null $usermodified
      * @param int|null $timecreated

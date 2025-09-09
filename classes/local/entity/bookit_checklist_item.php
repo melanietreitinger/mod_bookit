@@ -64,7 +64,6 @@ class bookit_checklist_item implements \renderable, \templatable {
      * @param int $masterid
      * @param int|null $categoryid
      * @param int|null $parentid
-     * @param int|null $roomid
      * @param array|null $roomids
      * @param int|null $roleid
      * @param string $title
@@ -74,7 +73,7 @@ class bookit_checklist_item implements \renderable, \templatable {
      * @param int $sortorder
      * @param int $isrequired
      * @param string|null $defaultvalue
-     * @param int|null $due_days_offset
+     * @param int|null $duedaysoffset
      * @param int|null $usermodified
      * @param int|null $timecreated
      * @param int|null $timemodified
