@@ -112,34 +112,34 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->setExpanded('notifications', false);
 
         foreach (bookit_notification_type::cases() as $case) {
-            $mform->addElement('checkbox', strtolower($case->name), get_string(strtolower($case->name), 'mod_bookit'));
+            $mform->addElement('checkbox', $case->value, get_string($case->value, 'mod_bookit'));
             $select = $mform->addElement(
                 'select',
-                strtolower($case->name) . '_recipient',
+                $case->value . '_recipient',
                 get_string('recipient', 'mod_bookit'),
                 $allroles,
                 ['style' => 'width:50%;']
             );
             $select->setMultiple(true);
-            $mform->hideIf(strtolower($case->name) . '_recipient', strtolower($case->name));
+            $mform->hideIf($case->value . '_recipient', $case->value);
 
             if (array_search($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
-                $mform->addElement('duration', strtolower($case->name) . '_time', get_string('time', 'mod_bookit'),
+                $mform->addElement('duration', $case->value . '_time', get_string('time', 'mod_bookit'),
                 ['units' => [DAYSECS]]);
-                $mform->hideIf(strtolower($case->name) . '_time', strtolower($case->name));
+                $mform->hideIf($case->value . '_time', $case->value);
             }
 
-            $mform->addElement('editor', strtolower($case->name) . '_messagetext', get_string('customtemplate', 'mod_bookit'));
-            $mform->setType(strtolower($case->name) . '_messagetext', PARAM_RAW);
-            $mform->setDefault(strtolower($case->name) . '_messagetext', [
+            $mform->addElement('editor', $case->value . '_messagetext', get_string('customtemplate', 'mod_bookit'));
+            $mform->setType($case->value . '_messagetext', PARAM_RAW);
+            $mform->setDefault($case->value . '_messagetext', [
                 'text'   => get_string('customtemplatedefaultmessage', 'mod_bookit'),
                 'format' => FORMAT_HTML,
                 'itemid' => 0,
             ]);
-            $mform->hideIf(strtolower($case->name) . '_messagetext', strtolower($case->name));
+            $mform->hideIf($case->value . '_messagetext', $case->value);
 
-            $mform->addElement('hidden', strtolower($case->name) . '_id');
-            $mform->setType(strtolower($case->name) . '_id', PARAM_INT);
+            $mform->addElement('hidden', $case->value . '_id');
+            $mform->setType($case->value . '_id', PARAM_INT);
         }
     }
 
@@ -228,6 +228,8 @@ class edit_checklistitem_form extends dynamic_form {
                 $item->{$slottype->value . '_recipient'} = json_decode($slot->roleids, true);
                 $item->{$slottype->value . '_messagetext'}['text'] = $slot->messagetext;
             }
+
+            $this->_form->setExpanded('notifications', true);
         }
 
         $this->set_data($item);
