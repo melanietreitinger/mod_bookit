@@ -102,9 +102,11 @@ if ($hassiteconfig) {
                         $a = new StdClass();
                         $a->fcolor = $fcolor;
                         $a->bcolor = $bcolor;
-                        $setting = new admin_setting_description($name . '_wcag',
-                                get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
-                                get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check);
+                        $setting = new admin_setting_description(
+                            $name . '_wcag',
+                            get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
+                            get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check
+                        );
                         $settings->add($setting);
                     }
                 }
@@ -114,45 +116,48 @@ if ($hassiteconfig) {
         $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
 
         if (empty($installhelperfinished)) {
-            $runinstallhelper = new admin_setting_configcheckbox('mod_bookit/runinstallhelper', new lang_string('runinstallhelper', 'mod_bookit'),
-                new lang_string('runinstallhelperinfo', 'mod_bookit'), 1);
+            $runinstallhelper = new admin_setting_configcheckbox(
+                'mod_bookit/runinstallhelper',
+                new lang_string('runinstallhelper', 'mod_bookit'),
+                new lang_string('runinstallhelperinfo', 'mod_bookit'),
+                1
+            );
 
-                $runinstallhelper->set_updatedcallback(function() {
+                $runinstallhelper->set_updatedcallback(function () {
 
-                $settingstate = get_config('mod_bookit', 'runinstallhelper');
+                    $settingstate = get_config('mod_bookit', 'runinstallhelper');
 
-                if (!empty($settingstate)) {
-                    debugging('Importing default roles for BookIt...');
-                    $rolesimported = install_helper::import_default_roles(false, false);
+                    if (!empty($settingstate)) {
+                        debugging('Importing default roles for BookIt...');
+                        $rolesimported = install_helper::import_default_roles(false, false);
 
-                    if ($rolesimported) {
-                        debugging('Default roles were imported successfully.');
-                    } else {
-                        debugging('No default roles were imported (may already exist).');
+                        if ($rolesimported) {
+                            debugging('Default roles were imported successfully.');
+                        } else {
+                            debugging('No default roles were imported (may already exist).');
+                        }
+
+                        debugging('Setting up default checklist data for BookIt...');
+                        $result = install_helper::create_default_checklists(false, false);
+
+                        if ($result) {
+                            debugging('Default checklist data was created successfully.');
+                        } else {
+                            debugging('Default checklist data was not created (may already exist).');
+                        }
+                        set_config('installhelperfinished', 1, 'mod_bookit');
                     }
-
-                    debugging('Setting up default checklist data for BookIt...');
-                    $result = install_helper::create_default_checklists(false, false);
-
-                    if ($result) {
-                        debugging('Default checklist data was created successfully.');
-                    } else {
-                        debugging('Default checklist data was not created (may already exist).');
-                    }
-                    set_config('installhelperfinished', 1, 'mod_bookit');
-                }
-            });
+                });
 
             $settings->add($runinstallhelper);
         }
-
     }
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
-            'mod_bookit_master_checklist',
-            get_string('master_checklist', 'mod_bookit'),
-            new moodle_url('/mod/bookit/master_checklist.php'),
-        ));
+        'mod_bookit_master_checklist',
+        get_string('master_checklist', 'mod_bookit'),
+        new moodle_url('/mod/bookit/master_checklist.php'),
+    ));
 
     $ADMIN->add('mod_bookit_category', $settings);
     $settings = null;

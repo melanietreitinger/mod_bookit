@@ -161,17 +161,6 @@ class install_helper {
                 $options = null;
 
                 $defaultvalue = null;
-                switch ($itemtype) {
-                    case 1: // Text.
-                        $defaultvalue = 'Enter details here';
-                        break;
-                    case 2: // Number.
-                        $defaultvalue = 25;
-                        break;
-                    case 3: // Date.
-                        $defaultvalue = time() + (7 * 86400); // 7 days from now.
-                        break;
-                }
 
                 if ($verbose) {
                     mtrace("    Creating item: $itemname");
@@ -187,12 +176,12 @@ class install_helper {
 
                     // Randomly remove 1-2 elements from $roomids if there are enough elements
                     if (count($roomids) > 2) {
-                        $numToRemove = rand(1, 2);
-                        $keysToRemove = array_rand($roomids, $numToRemove);
-                        if (!is_array($keysToRemove)) {
-                            $keysToRemove = [$keysToRemove];
+                        $numtoremove = rand(1, 2);
+                        $keystoremove = array_rand($roomids, $numtoremove);
+                        if (!is_array($keystoremove)) {
+                            $keystoremove = [$keystoremove];
                         }
-                        foreach ($keysToRemove as $key) {
+                        foreach ($keystoremove as $key) {
                             unset($roomids[$key]);
                         }
                         // Reindex array after removal
