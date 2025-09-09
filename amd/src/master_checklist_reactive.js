@@ -103,13 +103,22 @@ const loadState = async(reactive) => {
 
     const checklistItemRows = document.querySelectorAll(SELECTORS.ALL_ITEM_TABLE_ROWS);
     checklistItemRows.forEach(itemRow => {
+        const roomElements = itemRow.querySelectorAll('div[data-bookit-checklistitem-roomid]');
+
+        const roomNames = [];
+        roomElements.forEach(roomElement => {
+            roomNames.push({
+                'roomid': roomElement.dataset.bookitChecklistitemRoomid,
+                'roomname': roomElement.dataset.bookitChecklistitemRoomname
+            });
+        });
         stateData.checklistitems.push({
             id: itemRow.dataset.bookitChecklistitemId,
             title: itemRow.dataset.bookitChecklistitemTitle,
             order: itemRow.dataset.bookitChecklistitemOrder,
             categoryid: itemRow.dataset.bookitChecklistitemCategoryid,
-            roomid: itemRow.dataset.bookitChecklistitemRoom,
-            roomname: itemRow.dataset.bookitChecklistitemRoomname,
+            roomids: itemRow.dataset.bookitChecklistitemRoomids,
+            roomnames: roomNames,
             roleid: itemRow.dataset.bookitChecklistitemRole,
             rolename: itemRow.dataset.bookitChecklistitemRolename,
         });
