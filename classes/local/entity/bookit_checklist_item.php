@@ -60,7 +60,7 @@ class bookit_checklist_item implements \renderable, \templatable {
     /**
      * Create a new instance of this class.
      *
-     * @param int $id
+     * @param int|null $id
      * @param int $masterid
      * @param int|null $categoryid
      * @param int|null $parentid
