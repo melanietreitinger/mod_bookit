@@ -146,14 +146,26 @@ export default class extends BaseComponent {
     _handleItemCreatedEvent(event) {
         const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.category}`);
 
+        window.console.log('EVENT IN ITEM CREATED: ', event);
+
+        const roomNames = [];
+        if (event.element.roomnames) {
+            Object.entries(event.element.roomnames).forEach(([key, value]) => {
+                roomNames.push({
+                    'roomid': key,
+                    'roomname': value
+                });
+            });
+        }
+
         Templates.renderForPromise('mod_bookit/bookit_checklist_item',
             {
                 id: event.element.id,
                 title: event.element.title,
                 order: event.element.order,
                 categoryid: event.element.category,
-                roomid: event.element.roomid,
-                roomname: event.element.roomname,
+                roomids: event.element.roomids,
+                roomnames: roomNames,
                 roleid: event.element.roleid,
                 rolename: event.element.rolename,
                 type: 'item',
