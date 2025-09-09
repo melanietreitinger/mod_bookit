@@ -87,8 +87,6 @@ class bookit_checklist_item implements \renderable, \templatable {
         public ?int $categoryid,
         /** @var ?int parentid */
         public ?int $parentid,
-        // /** @var ?int roomid */
-        // public ?int $roomid,
         /** @var ?array roomids */
         public ?array $roomids,
         /** @var ?int roleid */
@@ -145,7 +143,6 @@ class bookit_checklist_item implements \renderable, \templatable {
             $record->masterid,
             $record->categoryid,
             $record->parentid,
-            // $record->roomid,
             json_decode($record->roomids),
             (int) $record->roleid,
             $record->title,
@@ -175,7 +172,6 @@ class bookit_checklist_item implements \renderable, \templatable {
         $record->masterid = $this->masterid;
         $record->categoryid = $this->categoryid;
         $record->parentid = $this->parentid;
-        // $record->roomid = $this->roomid;
         $record->roomids = json_encode($this->roomids);
         $record->roleid = $this->roleid;
         $record->title = $this->title;
@@ -225,15 +221,12 @@ class bookit_checklist_item implements \renderable, \templatable {
         $data->title = $this->title;
         $data->order = $this->sortorder;
         $data->categoryid = $this->categoryid;
-
-        // $data->roomid = $this->roomid;
         $data->roomids = json_encode($this->roomids);
-        // $data->roomname = \mod_bookit\local\manager\checklist_manager::get_roomname_by_id($this->roomid);
 
         foreach ($this->roomids as $roomid) {
             $data->roomnames[] = [
                 'roomname' => checklist_manager::get_roomname_by_id((int) $roomid),
-                'roomid' => (int) $roomid
+                'roomid' => (int) $roomid,
             ];
         }
 
@@ -241,8 +234,6 @@ class bookit_checklist_item implements \renderable, \templatable {
         $data->rolename = checklist_manager::get_rolename_by_id($this->roleid);
 
         $data->type = 'item';
-
-        // die(print_r($data, true));
 
         return $data;
     }

@@ -117,9 +117,9 @@ if ($hassiteconfig) {
             $runinstallhelper = new admin_setting_configcheckbox('mod_bookit/runinstallhelper', new lang_string('runinstallhelper', 'mod_bookit'),
                 new lang_string('runinstallhelperinfo', 'mod_bookit'), 1);
 
-            $runinstallhelper->set_updatedcallback(function() {
+                $runinstallhelper->set_updatedcallback(function() {
 
-            $settingstate = get_config('mod_bookit', 'runinstallhelper');
+                $settingstate = get_config('mod_bookit', 'runinstallhelper');
 
                 if (!empty($settingstate)) {
                     debugging('Importing default roles for BookIt...');

@@ -99,7 +99,7 @@ class edit_checklistitem_form extends dynamic_form {
         $duedateradio = [
             $mform->createElement('radio', 'duedate', '', get_string('noduedate', 'mod_bookit'), 'none'),
             $mform->createElement('radio', 'duedate', '', get_string('beforeexam', 'mod_bookit'), 'before'),
-            $mform->createElement('radio', 'duedate', '', get_string('afterexam', 'mod_bookit'), 'after')
+            $mform->createElement('radio', 'duedate', '', get_string('afterexam', 'mod_bookit'), 'after'),
         ];
 
         $mform->addGroup($duedateradio, 'duedategroup', get_string('duedate', 'mod_bookit'), null, false);
@@ -250,8 +250,6 @@ class edit_checklistitem_form extends dynamic_form {
     public function process_put_request($data) {
         global $USER;
 
-        // die(print_r($data, true));
-
         if (!empty($data['itemid'])) {
             $item = bookit_checklist_item::from_database($data['itemid']);
 
@@ -261,7 +259,7 @@ class edit_checklistitem_form extends dynamic_form {
                     'categoryid' => $data['categoryid'],
                     'roomid' => $data['roomid'],
                     'roleid' => $data['roleid'],
-                    'roomids' => $data['roomids']
+                    'roomids' => $data['roomids'],
             ];
 
             foreach ($fields as $key => $value) {
@@ -360,16 +358,11 @@ class edit_checklistitem_form extends dynamic_form {
 
         $fields['id'] = $id;
 
-        // die(print_r($fields, true));
-        // $fields['roomname'] = checklist_manager::get_roomname_by_id($fields['roomid']);
-
         foreach ($fields['roomids'] as $roomid) {
             $fields['roomnames'][(int) $roomid] = checklist_manager::get_roomname_by_id((int) $roomid);
         }
 
         $fields['rolename'] = checklist_manager::get_rolename_by_id($fields['roleid']);
-
-        // die(print_r($fields, true));
 
         return [
             [
