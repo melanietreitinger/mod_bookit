@@ -183,10 +183,21 @@ class install_helper {
 
                 $rooms = \mod_bookit\local\manager\checklist_manager::get_bookit_rooms();
                 if (!empty($rooms)) {
-                    mtrace("HERE");
-                    mtrace(print_r($rooms, true));
-                    // Extract all room IDs as strings
                     $roomids = array_map('strval', array_column($rooms, 'id'));
+
+                    // Randomly remove 1-2 elements from $roomids if there are enough elements
+                    if (count($roomids) > 2) {
+                        $numToRemove = rand(1, 2);
+                        $keysToRemove = array_rand($roomids, $numToRemove);
+                        if (!is_array($keysToRemove)) {
+                            $keysToRemove = [$keysToRemove];
+                        }
+                        foreach ($keysToRemove as $key) {
+                            unset($roomids[$key]);
+                        }
+                        // Reindex array after removal
+                        $roomids = array_values($roomids);
+                    }
                 }
 
                 $roles = \mod_bookit\local\manager\checklist_manager::get_bookit_roles();
