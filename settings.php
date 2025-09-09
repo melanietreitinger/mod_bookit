@@ -122,22 +122,22 @@ if ($hassiteconfig) {
             $settingstate = get_config('mod_bookit', 'runinstallhelper');
 
                 if (!empty($settingstate)) {
-                    mtrace('Importing default roles for BookIt...');
-                    $rolesimported = install_helper::import_default_roles(false, true);
+                    debugging('Importing default roles for BookIt...');
+                    $rolesimported = install_helper::import_default_roles(false, false);
 
                     if ($rolesimported) {
-                        mtrace('Default roles were imported successfully.');
+                        debugging('Default roles were imported successfully.');
                     } else {
-                        mtrace('No default roles were imported (may already exist).');
+                        debugging('No default roles were imported (may already exist).');
                     }
 
-                    mtrace('Setting up default checklist data for BookIt...');
+                    debugging('Setting up default checklist data for BookIt...');
                     $result = install_helper::create_default_checklists(false, false);
 
                     if ($result) {
-                        mtrace('Default checklist data was created successfully.');
+                        debugging('Default checklist data was created successfully.');
                     } else {
-                        mtrace('Default checklist data was not created (may already exist).');
+                        debugging('Default checklist data was not created (may already exist).');
                     }
                     set_config('installhelperfinished', 1, 'mod_bookit');
                 }

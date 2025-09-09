@@ -206,8 +206,6 @@ class install_helper {
                     $roleid = $role->id;
                 }
 
-                mtrace(print_r($roomids, true));
-
                 $item = new bookit_checklist_item(
                     0, // ID will be set by save_to_database.
                     $masterid,
