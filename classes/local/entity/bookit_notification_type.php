@@ -34,23 +34,8 @@ namespace mod_bookit\local\entity;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 enum bookit_notification_type: string {
-    /**
-     * Notification type for before the due date.
-     */
     case BEFORE_DUE = 'before_due';
-
-    /**
-     * Notification type for when the item is due.
-     */
     case WHEN_DUE = 'when_due';
-
-    /**
-     * Notification type for when the item is overdue.
-     */
     case OVERDUE = 'overdue';
-
-    /**
-     * Notification type for when the item is marked as done.
-     */
     case WHEN_DONE = 'when_done';
 }

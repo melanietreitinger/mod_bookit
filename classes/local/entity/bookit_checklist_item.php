@@ -38,26 +38,6 @@ use mod_bookit\local\manager\checklist_manager;
  */
 class bookit_checklist_item implements \renderable, \templatable {
     /**
-     * Status constant for an open item.
-     */
-    public const ITEM_STATE_OPEN = 1;
-
-    /**
-     * Status constant for an item in progress.
-     */
-    public const ITEM_STATE_PROCESSING = 2;
-
-    /**
-     * Status constant for a completed item.
-     */
-    public const ITEM_STATE_DONE = 3;
-
-    /**
-     * Status constant for an item with unknown status.
-     */
-    public const ITEM_STATE_UNKNOWN = 0;
-
-    /**
      * Create a new instance of this class.
      *
      * @param int|null $id
@@ -73,7 +53,7 @@ class bookit_checklist_item implements \renderable, \templatable {
      * @param int $sortorder
      * @param int $isrequired
      * @param string|null $defaultvalue
-     * @param string|null $duedaysoffset
+     * @param int|null $duedaysoffset
      * @param string|null $duedaysrelation
      * @param int|null $usermodified
      * @param int|null $timecreated

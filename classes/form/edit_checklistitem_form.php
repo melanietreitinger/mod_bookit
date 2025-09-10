@@ -200,10 +200,6 @@ class edit_checklistitem_form extends dynamic_form {
      * Set data for the form.
      */
     public function set_data_for_dynamic_submission(): void {
-        $ajaxdata = $this->_ajaxformdata;
-
-        error_log('ARO - AJAXDATA IN SET DATA: ' . print_r($ajaxdata, true));
-
         $item = new \StdClass();
         $id = $this->optional_param('itemid', null, PARAM_INT);
         $itemslots = [];
@@ -244,8 +240,6 @@ class edit_checklistitem_form extends dynamic_form {
     public function process_put_request($data) {
         global $USER;
 
-        error_log('ARO - DATA IN PUT REQUEST: ' . print_r($data, true));
-
         if (!empty($data['itemid'])) {
             $item = bookit_checklist_item::from_database($data['itemid']);
 
@@ -267,13 +261,10 @@ class edit_checklistitem_form extends dynamic_form {
                 }
             }
 
-            error_log('ARO - FIELDS TO UPDATE: ' . print_r($fields, true));
-
             $item->usermodified = $USER->id;
             $item->timemodified = time();
             $item->itemid = $item->id;
 
-            error_log('ARO - ITEM BEFORE SAVE: ' . print_r($item, true));
         } else {
             $item = new bookit_checklist_item(
                 0,
