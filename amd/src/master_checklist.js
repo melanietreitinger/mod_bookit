@@ -378,9 +378,31 @@ export default class extends BaseComponent {
             const activeRole = this.reactive.state.activeRole.id;
 
             items.forEach(itemId => {
+
+                // TODO get item from state and check if room is in roomids array
+
+                const stateItem = this.reactive.state.checklistitems.get(itemId);
+
+                window.console.log('STATE ITEM IN ROOM UPDATE: ', stateItem);
+
+                window.console.log('ITEM ELEMENT IN ROOM UPDATE: ', itemId);
+
+                window.console.log('EVENT ELEMENT ID IN ROOM UPDATE: ', event.element.id);
+
+                var isInRoom = false;
+
+                const roomIds = stateItem.roomids;
+
+                if (roomIds.includes(event.element.id.toString())) {
+                    isInRoom = true;
+                    window.console.log('ITEM IS IN ROOM: ', itemId);
+                } else {
+                    window.console.log('ITEM IS NOT IN ROOM: ', itemId);
+                }
+
                 const itemElement = document.querySelector(`tr[data-bookit-checklistitem-id="${itemId}"]`);
 
-                if (parseInt(itemElement.dataset.bookitChecklistitemRoom) === event.element.id) {
+                if (isInRoom) {
                     if (activeRole === 0 || parseInt(itemElement.dataset.bookitChecklistitemRole) === activeRole) {
                         itemElement.classList.remove('d-none');
                         if (!hasVisibleItems) {
