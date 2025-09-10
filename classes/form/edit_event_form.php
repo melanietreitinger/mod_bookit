@@ -232,7 +232,7 @@ class edit_event_form extends dynamic_form {
 
         // Add the coursetemplate field.
         // ...@TODO: Implement course template administration in admin settings and query them here.
-        $coursetemplates = [0 => get_string('default')];
+        $coursetemplates = [0 => get_string('none')];
         $mform->addElement('select', 'coursetemplate', get_string('select_coursetemplate', 'mod_bookit'), $coursetemplates);
         $mform->disabledIf('coursetemplate', 'editevent', 'neq');
         $mform->addRule('coursetemplate', null, 'required', null, 'client');
