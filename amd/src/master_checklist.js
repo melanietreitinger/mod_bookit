@@ -1,6 +1,6 @@
-import { BaseComponent } from 'core/reactive';
-import { masterChecklistReactiveInstance } from 'mod_bookit/master_checklist_reactive';
-import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
+import {BaseComponent} from 'core/reactive';
+import {masterChecklistReactiveInstance} from 'mod_bookit/master_checklist_reactive';
+import {SELECTORS} from 'mod_bookit/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import Templates from 'core/templates';
 import * as Toast from 'core/toast';
@@ -15,13 +15,6 @@ export default class extends BaseComponent {
         };
     }
 
-    create(descriptor) {
-
-        window.console.log('create component: ' + descriptor.reactive.name);
-        window.console.log("selectors in create master checklist: ", SELECTORS);
-
-    }
-
     static init(target, selectors) {
         return new this({
             element: document.querySelector(target),
@@ -30,18 +23,14 @@ export default class extends BaseComponent {
         });
     }
 
-
     getWatchers() {
-        window.console.log('GET WATCHERS');
         return [
-            {watch: 'state:updated', handler: this._handleStateEvent},
             {watch: 'checklistcategories:created', handler: this._handleCategoryCreatedEvent},
             {watch: 'checklistcategories:deleted', handler: this._handleCategoryDeletedEvent},
             {watch: 'checklistcategories.name:updated', handler: this._handleCategoryNameUpdatedEvent},
             {watch: 'checklistcategories.items:updated', handler: this._handleCategoryItemsUpdatedEvent},
             {watch: 'checklistitems:created', handler: this._handleItemCreatedEvent},
             {watch: 'checklistitems:deleted', handler: this._handleItemDeletedEvent},
-            {watch: 'checklistitems:updated', handler: this._handleItemUpdatedEvent},
             {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
             {watch: 'checklistitems.title:updated', handler: this._replaceRenderedItem},
             {watch: 'checklistitems.roomid:updated', handler: this._replaceRenderedItem},
@@ -78,13 +67,7 @@ export default class extends BaseComponent {
 
     }
 
-    _handleStateEvent(event) {
-
-    }
-
     async _handleAddChecklistItemButtonClick(event) {
-
-        // TODO do this in mutation instead
         const modalForm = new ModalForm({
             formClass: "mod_bookit\\form\\edit_checklistitem_form",
             args: {
@@ -146,8 +129,6 @@ export default class extends BaseComponent {
     _handleItemCreatedEvent(event) {
         const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.category}`);
 
-        window.console.log('EVENT IN ITEM CREATED: ', event);
-
         const roomNames = [];
         if (event.element.roomnames) {
             Object.entries(event.element.roomnames).forEach(([key, value]) => {
@@ -188,10 +169,6 @@ export default class extends BaseComponent {
 
         Toast.add(getString('checklistitemdeleted', 'mod_bookit', {title: event.element.title}),
             {type: 'success' });
-    }
-
-    _handleItemUpdatedEvent(event) {
-        //TODO remove
     }
 
     _replaceRenderedItem(event) {
@@ -326,6 +303,8 @@ export default class extends BaseComponent {
 
             items.forEach(itemId => {
 
+                // TODO fix rooms
+
                 const itemElement = document.querySelector(`tr[data-bookit-checklistitem-id="${itemId}"]`);
 
                 if (activeRoom === 0) {
@@ -379,15 +358,7 @@ export default class extends BaseComponent {
 
             items.forEach(itemId => {
 
-                // TODO get item from state and check if room is in roomids array
-
                 const stateItem = this.reactive.state.checklistitems.get(itemId);
-
-                window.console.log('STATE ITEM IN ROOM UPDATE: ', stateItem);
-
-                window.console.log('ITEM ELEMENT IN ROOM UPDATE: ', itemId);
-
-                window.console.log('EVENT ELEMENT ID IN ROOM UPDATE: ', event.element.id);
 
                 var isInRoom = false;
 

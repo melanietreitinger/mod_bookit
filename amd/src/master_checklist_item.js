@@ -228,4 +228,7 @@ export default class extends BaseComponent {
 
     }
 
+    _checkVisibility(event) {
+    }
+
 }

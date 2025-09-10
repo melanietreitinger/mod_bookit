@@ -1,6 +1,6 @@
 import {BaseComponent, DragDrop} from 'core/reactive';
-import { masterChecklistReactiveInstance } from 'mod_bookit/master_checklist_reactive';
-import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
+import {masterChecklistReactiveInstance} from 'mod_bookit/master_checklist_reactive';
+import {SELECTORS} from 'mod_bookit/master_checklist_reactive';
 
 export default class extends BaseComponent {
 
@@ -46,14 +46,13 @@ export default class extends BaseComponent {
 
     getDraggableData() {
         const dragType = this.element.dataset.bookitDragHandleType;
-        var parentId = undefined;
 
         switch (dragType) {
             case 'item':
-                parentId = this.fullregion.dataset.bookitChecklistitemCategoryid;
+                var parentId = this.fullregion.dataset.bookitChecklistitemCategoryid;
                 break;
             case 'category':
-                parentId = this.fullregion.dataset.bookitCategoryMasterid;
+                var parentId = this.fullregion.dataset.bookitCategoryMasterid;
                 break;
             default:
                 throw new Error(`Unknown drag handle type: ${dragType}`);
