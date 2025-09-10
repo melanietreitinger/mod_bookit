@@ -65,7 +65,7 @@
     </div>
     <div class="sticky-top">
     <form>
-        <div class="form-group d-flex mx-n2 my-5 py-2">
+        <div class="form-group d-flex justify-content-between mx-n2 my-5 py-2">
             <select class="form-control mx-2 w-25" id="bookit-master-role-select" name="roleid">
             <option value="0" selected>{{#str}} role, mod_bookit {{/str}}</option>
             {{#roles}}
@@ -78,24 +78,23 @@
                 <option value="{{id}}" data-bookit-roomoption="{{id}}" data-bookit-roomname="{{name}}">{{name}}</option>
             {{/rooms}}
             </select>
-                    <button type="button" class="btn btn-primary mx-2" id="add-checklist-category-button">{{#str}} new_checklistcategory, mod_bookit {{/str}}</button>
+        <button type="button" class="btn btn-primary mx-2" id="add-checklist-category-button">{{#str}} new_checklistcategory, mod_bookit {{/str}}</button>
         <button type="button" class="btn btn-primary mx-2" id="add-checklist-item-button">{{#str}} new_checklistitem, mod_bookit {{/str}}</button>
         </div>
     </form>
     </div>
 
-    <table class="table table-hover border rounded p-4" id="mod-bookit-master-checklist-table"
+    <table class="table table-borderless table-hover bg-white rounded" id="mod-bookit-master-checklist-table"
         data-master-checklist-id="{{id}}"
         data-master-checklist-name="{{name}}"
         data-master-checklist-categoryorder="{{mastercategoryorder}}">
-        <thead>
+        <thead class="bg-primary text-light border-bottom" style="opacity: 0.5;">
             <tr>
             {{#tableheaders}}
-                <th scope="col" class="px-2 py-3">{{.}}</th>
+                <th scope="col" class="py-3 font-weight-bold">{{.}}</th>
             {{/tableheaders}}
             </tr>
         </thead>
-
             {{#checklistcategories}}
                 {{> mod_bookit/bookit_checklist_category }}
 

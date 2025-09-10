@@ -33,7 +33,7 @@
         "rolename": "Student"
     }
 }}
-<tr id="bookit-master-checklist-item-{{id}}" class="table-default bookit-checklistitem"
+<tr id="bookit-master-checklist-item-{{id}}" class="table-default border-bottom bookit-checklistitem"
     data-bookit-checklistitem-id="{{id}}"
     data-bookit-checklistitem-title="{{title}}"
     data-bookit-checklistitem-order="{{order}}"
@@ -43,16 +43,22 @@
     data-bookit-checklistitem-rolename="{{rolename}}"
     data-bookit-drag-handle-item-id="{{id}}"
     data-bookit-drag-handle-parent-id="{{categoryid}}">
-                <td data-bookit-checklistitem-tabledata-title-id="{{id}}">{{title}}</td>
-                <td data-bookit-checklistitem-tabledata-roomid-id="{{id}}">
+                 <td class="align-middle py-3 pl-4" data-bookit-checklistitem-tabledata-title-id="{{id}}">
+                    <span class="font-weight-medium">{{title}}</span>
+                </td>
+                <td class="align-middle py-3" data-bookit-checklistitem-tabledata-roomid-id="{{id}}">
                 {{#roomnames}}
                     <div data-bookit-checklistitem-roomid="{{roomid}}"
-                        data-bookit-checklistitem-roomname="{{roomname}}">{{roomname}}</div>
+                        data-bookit-checklistitem-roomname="{{roomname}}">
+                        <span class="badge badge-info text-light" style="opacity: 0.8;">{{roomname}}</span>
+                    </div>
                 {{/roomnames}}
                 </td>
-                <td data-bookit-checklistitem-tabledata-roleid-id="{{id}}">{{rolename}}</td>
-                <td>
-                    <button type="button" class="btn" value="{{id}}" name="edit-checklistitem-{{id}}" id="edit-checklistitem-{{id}}">
+                <td class="align-middle py-3" data-bookit-checklistitem-tabledata-roleid-id="{{id}}">
+                    <span class="badge badge-primary text-light" style="opacity: 0.8;">{{rolename}}</span>
+                </td>
+                <td class="align-middle py-3 text-center">
+                    <button type="button" class="btn btn-sm btn-light pl-3 text-dark" value="{{id}}" name="edit-checklistitem-{{id}}" id="edit-checklistitem-{{id}}">
                         {{#pix}} i/edit, core {{/pix}}
                     </button>
                 </td>

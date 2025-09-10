@@ -24,12 +24,13 @@
         "type": "item"
     }
 }}
-<td class="bookit-drag-handle" id="bookit-drag-handle-{{type}}-{{id}}"
+<td class="bookit-drag-handle align-middle text-center py-3" id="bookit-drag-handle-{{type}}-{{id}}"
     data-bookit-drag-handle-id="{{id}}"
     data-bookit-drag-handle-type="{{type}}"
-    data-bookit-drag-handle-{{type}}-id="{{id}}"
-    style="cursor: grab;">
-    {{#pix}} t/sort, core {{/pix}}
+    data-bookit-drag-handle-{{type}}-id="{{id}}">
+    <button class="btn btn-sm btn-light pl-3 text-dark" style="cursor: grab;">
+        {{#pix}} t/sort, core {{/pix}}
+    </button>
 </td>
 
 {{#js}}
