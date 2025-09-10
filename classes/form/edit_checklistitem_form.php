@@ -124,8 +124,12 @@ class edit_checklistitem_form extends dynamic_form {
             $mform->hideIf($case->value . '_recipient', $case->value);
 
             if (array_search($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
-                $mform->addElement('duration', $case->value . '_time', get_string('time', 'mod_bookit'),
-                ['units' => [DAYSECS]]);
+                $mform->addElement(
+                    'duration',
+                    $case->value . '_time',
+                    get_string('time', 'mod_bookit'),
+                    ['units' => [DAYSECS]]
+                );
                 $mform->hideIf($case->value . '_time', $case->value);
             }
 
@@ -264,7 +268,6 @@ class edit_checklistitem_form extends dynamic_form {
             $item->usermodified = $USER->id;
             $item->timemodified = time();
             $item->itemid = $item->id;
-
         } else {
             $item = new bookit_checklist_item(
                 0,
@@ -290,19 +293,19 @@ class edit_checklistitem_form extends dynamic_form {
         $id = $item->save();
 
         foreach (bookit_notification_type::cases() as $case) {
-            $caseName = strtolower($case->name);
+            $casename = strtolower($case->name);
 
-            if (!empty($data[$caseName])) {
+            if (!empty($data[$casename])) {
                 $daysoffset = 0;
                 if ($case === bookit_notification_type::BEFORE_DUE || $case === bookit_notification_type::OVERDUE) {
-                    $daysoffset = $data[$caseName . '_time']['number'] ?? 0;
+                    $daysoffset = $data[$casename . '_time']['number'] ?? 0;
                 }
 
-                if (!empty($data[$caseName . '_id'])) {
-                    $slot = bookit_notification_slot::from_database($data[$caseName . '_id']);
+                if (!empty($data[$casename . '_id'])) {
+                    $slot = bookit_notification_slot::from_database($data[$casename . '_id']);
 
-                    $slot->roleids = json_encode($data[$caseName . '_recipient'] ?? []);
-                    $slot->messagetext = format_text($data[$caseName . '_messagetext']['text'] ?? '', FORMAT_HTML);
+                    $slot->roleids = json_encode($data[$casename . '_recipient'] ?? []);
+                    $slot->messagetext = format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML);
                     $slot->duedaysoffset = $daysoffset;
 
                     $slot->save();
@@ -318,10 +321,10 @@ class edit_checklistitem_form extends dynamic_form {
                         0,
                         $id,
                         $case->value,
-                        json_encode($data[$caseName . '_recipient'] ?? []),
+                        json_encode($data[$casename . '_recipient'] ?? []),
                         $daysoffset,
                         $duedaysrelation,
-                        format_text($data[$caseName . '_messagetext']['text'] ?? '', FORMAT_HTML),
+                        format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML),
                         1,
                         $USER->id,
                         time(),
@@ -330,8 +333,8 @@ class edit_checklistitem_form extends dynamic_form {
 
                     $slot->save();
                 }
-            } else if (!empty($data[$caseName . '_id'])) {
-                $slot = bookit_notification_slot::from_database($data[$caseName . '_id']);
+            } else if (!empty($data[$casename . '_id'])) {
+                $slot = bookit_notification_slot::from_database($data[$casename . '_id']);
                 $slot->isactive = 0;
                 $slot->save();
             }
