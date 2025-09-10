@@ -38,7 +38,7 @@ export default class extends BaseComponent {
             {watch: 'checklistitems:deleted', handler: this._handleItemDeletedEvent},
             {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
             {watch: 'checklistitems.title:updated', handler: this._replaceRenderedItem},
-            {watch: 'checklistitems.roomid:updated', handler: this._replaceRenderedItem},
+            {watch: 'checklistitems.roomids:updated', handler: this._replaceRenderedItem},
             {watch: 'checklistitems.roleid:updated', handler: this._replaceRenderedItem},
             // {watch: 'activeRole:updated', handler: this._handleRoleUpdate},
             // {watch: 'activeRoom:updated', handler: this._handleRoomUpdate},
@@ -180,10 +180,12 @@ export default class extends BaseComponent {
 
     _replaceRenderedItem(event) {
 
+        window.console.log('REPLACING RENDERED ITEM: ', event);
+
         const actionParts = event.action.split('.');
         const fieldPart = actionParts[1].split(':')[0];
 
-        const elementSelector = `td[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
+        const elementSelector = `span[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
 
         const targetElement = this.getElement(elementSelector);
 
@@ -193,6 +195,27 @@ export default class extends BaseComponent {
             if (nameField in event.element) {
                 targetElement.innerHTML = event.element[nameField];
             }
+        } else if (fieldPart.endsWith('ids')) {
+            var elementString = event.element[fieldPart];
+
+            let roomIds = [];
+
+            if (elementString.includes(',')) {
+                roomIds = elementString.split(',').map(id => parseInt(id));
+            } else if (elementString !== '') {
+                roomIds = [parseInt(elementString)];
+            }
+
+            const roomNames = [];
+            if (roomIds.length > 0) {
+                roomIds.forEach(roomId => {
+                    if (event.element.roomnames[roomId]) {
+                        roomNames.push(event.element.roomnames[roomId]);
+                    }
+                });
+                // targetElement.innerHTML = roomNames.join(', ');
+            }
+
         } else {
             targetElement.innerHTML = event.element[fieldPart];
         }
