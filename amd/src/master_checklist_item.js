@@ -10,6 +10,15 @@ export default class extends BaseComponent {
 
         const itemEditBtnSelector = 'EDIT_CHECKLISTITEM_BTN_' + descriptor.element.dataset.bookitChecklistitemId;
         this.selectors[itemEditBtnSelector] = `#edit-checklistitem-${descriptor.element.dataset.bookitChecklistitemId}`;
+
+        if (descriptor.element.dataset.bookitChecklistitemId == "2") {
+            window.console.log('DESCRIPTOR FOR ITEM ID 2 FOUND:');
+            window.console.log('DESCRIPTOR:', descriptor);
+            window.console.log('ELEMENT:', descriptor.element);
+            window.console.log('DATASET:', descriptor.element.dataset);
+            window.console.log('SELECTORS:', this.selectors);
+
+        }
     }
 
     static init(target, selectors) {
@@ -228,7 +237,38 @@ export default class extends BaseComponent {
 
     }
 
-    _checkVisibility(event) {
+    shouldBeVisible() {
+        const activeRoomId = this.reactive.state.activeRoom.id;
+        const activeRoleId = this.reactive.state.activeRole.id;
+        const itemId = parseInt(this.element.dataset.bookitChecklistitemId)
+        const stateItem = this.reactive.state.checklistitems.get(itemId);
+        const roomIds = stateItem.roomids;
+
+        var isInRoom = false;
+
+        if (activeRoomId == 0 || roomIds.includes(activeRoomId.toString())) {
+            isInRoom = true;
+            window.console.log('ITEM IS IN ROOM: ', itemId);
+        } else {
+            window.console.log('ITEM IS NOT IN ROOM: ', itemId);
+        }
+
+        var hasRole = false;
+
+        if (activeRoleId == 0 || parseInt(this.element.dataset.bookitChecklistitemRole) == activeRoleId) {
+            hasRole = true
+        }
+
+        const shouldBeVisible = isInRoom && hasRole;
+
+        if (!shouldBeVisible) {
+            this.element.classList.add('d-none');
+        } else {
+            this.element.classList.remove('d-none');
+        }
+
+        return shouldBeVisible;
+
     }
 
 }

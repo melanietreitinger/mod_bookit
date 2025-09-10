@@ -46,13 +46,13 @@ export default class extends BaseComponent {
 
     getDraggableData() {
         const dragType = this.element.dataset.bookitDragHandleType;
-
+        var parentId;
         switch (dragType) {
             case 'item':
-                var parentId = this.fullregion.dataset.bookitChecklistitemCategoryid;
+                parentId = this.fullregion.dataset.bookitChecklistitemCategoryid;
                 break;
             case 'category':
-                var parentId = this.fullregion.dataset.bookitCategoryMasterid;
+                parentId = this.fullregion.dataset.bookitCategoryMasterid;
                 break;
             default:
                 throw new Error(`Unknown drag handle type: ${dragType}`);

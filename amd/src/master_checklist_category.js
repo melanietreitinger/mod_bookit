@@ -3,10 +3,12 @@ import { masterChecklistReactiveInstance } from 'mod_bookit/master_checklist_rea
 import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import {getString} from 'core/str';
+import ChecklistHelper from 'mod_bookit/checklist_helper';
 
 export default class extends BaseComponent {
 
     create(descriptor) {
+        this.helper = new ChecklistHelper();
 
         const categoryEditBtnSelector = 'EDIT_CHECKLISTCATEGORY_BTN_' + descriptor.element.dataset.bookitCategoryId;
 
@@ -27,6 +29,8 @@ export default class extends BaseComponent {
     getWatchers() {
         return [
             {watch: 'checklistcategories.name:updated', handler: this._refreshEditButtonListener},
+            {watch: 'activeRole:updated', handler: this._handleFilterUpdate},
+            {watch: 'activeRoom:updated', handler: this._handleFilterUpdate},
         ];
     }
 
@@ -168,6 +172,29 @@ export default class extends BaseComponent {
         const tableElement = document.querySelector(this.selectors.TABLE);
 
         tableElement.insertBefore(categoryElement, this.element.nextElementSibling);
+
+    }
+
+     _handleFilterUpdate(event) {
+        const components = this.reactive.components;
+        const results = this.helper.findComponents(components, {
+            dataset: {bookitChecklistitemCategoryid: this.element.dataset.bookitCategoryId},
+            onlyFirst: false
+        });
+
+        var hasVisibleItems = false;
+        results.forEach((component, index) => {
+            const itemIsVisible = component.shouldBeVisible();
+            if (itemIsVisible) {
+                hasVisibleItems = true;
+            }
+        });
+
+        if (!hasVisibleItems) {
+            this.element.classList.add('d-none');
+        } else {
+            this.element.classList.remove('d-none');
+        }
 
     }
 
