@@ -70,6 +70,12 @@ export default class extends BaseComponent {
             this.reactive.dispatch('roomChanged', {id: e.target.value});
         });
 
+        const spinnerElement = document.querySelector(this.selectors.LOADING_SPINNER);
+        spinnerElement.classList.add('d-none');
+
+        const mainElement = document.querySelector(this.selectors.MAIN_ELEMENT);
+        mainElement.classList.remove('d-none');
+
     }
 
     async _handleAddChecklistItemButtonClick() {

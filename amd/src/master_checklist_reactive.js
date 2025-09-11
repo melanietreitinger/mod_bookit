@@ -4,6 +4,7 @@ import Mutations from 'mod_bookit/master_checklist_mutations';
 export const SELECTORS = {
             TABLE: '#mod-bookit-master-checklist-table',
             MAIN_ELEMENT: '#mod-bookit-master-checklist',
+            LOADING_SPINNER: '#mod-bookit-master-checklist-spinner',
             ADD_CHECKLIST_CATEGORY_BUTTON: '#add-checklist-category-button',
             ADD_CHECKLIST_ITEM_BUTTON: '#add-checklist-item-button',
             MASTER_CHECKLIST_TITLE: '#mod-bookit-master-checklist-title',
