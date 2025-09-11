@@ -187,7 +187,11 @@ export default class extends BaseComponent {
 
         const elementSelector = `span[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
 
+        window.console.log('ELEMENT SELECTOR: ', elementSelector);
+
         const targetElement = this.getElement(elementSelector);
+
+        window.console.log('TARGET ELEMENT: ', targetElement);
 
         if (fieldPart.endsWith('id')) {
             const nameField = fieldPart.substring(0, fieldPart.length - 2) + 'name';
@@ -196,25 +200,62 @@ export default class extends BaseComponent {
                 targetElement.innerHTML = event.element[nameField];
             }
         } else if (fieldPart.endsWith('ids')) {
-            var elementString = event.element[fieldPart];
 
-            let roomIds = [];
+            const stateItem = this.reactive.state.checklistitems.get(event.element.id);
 
-            if (elementString.includes(',')) {
-                roomIds = elementString.split(',').map(id => parseInt(id));
-            } else if (elementString !== '') {
-                roomIds = [parseInt(elementString)];
-            }
-
-            const roomNames = [];
-            if (roomIds.length > 0) {
-                roomIds.forEach(roomId => {
-                    if (event.element.roomnames[roomId]) {
-                        roomNames.push(event.element.roomnames[roomId]);
-                    }
+            // Convert roomnames object to array with roomid and roomname properties
+            const itemRooms = [];
+            if (stateItem.roomnames) {
+                Object.entries(stateItem.roomnames).forEach(([id, name]) => {
+                    itemRooms.push({
+                        'roomid': parseInt(id),
+                        'roomname': name
+                    });
                 });
-                // targetElement.innerHTML = roomNames.join(', ');
             }
+
+            const roomsSelector = `td[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
+            const roomsElement = this.getElement(roomsSelector);
+
+            window.console.log('ITEM ROOMS: ', itemRooms);
+
+            Templates.renderForPromise('mod_bookit/bookit_checklist_item_rooms',
+            {
+                roomnames: itemRooms
+            })
+            .then(({html, js}) => {
+                Templates.replaceNode(roomsElement, html, js);
+
+            })
+            .then(async () => {
+                Toast.add(await getString('checklistitemupdatesuccess', 'mod_bookit'),
+                    {type: 'success'});
+                    // this.dispatchEvent(this.events.categoryRendered, {
+                    //     categoryId: event.element.id
+                    // });
+            })
+            .catch(error => {
+                window.console.error('Error rendering checklist category:', error);
+            });
+            // var elementString = event.element[fieldPart];
+
+            // let roomIds = [];
+
+            // if (elementString.includes(',')) {
+            //     roomIds = elementString.split(',').map(id => parseInt(id));
+            // } else if (elementString !== '') {
+            //     roomIds = [parseInt(elementString)];
+            // }
+
+            // const roomNames = [];
+            // if (roomIds.length > 0) {
+            //     roomIds.forEach(roomId => {
+            //         if (event.element.roomnames[roomId]) {
+            //             roomNames.push(event.element.roomnames[roomId]);
+            //         }
+            //     });
+            //     // targetElement.innerHTML = roomNames.join(', ');
+            // }
 
         } else {
             targetElement.innerHTML = event.element[fieldPart];
