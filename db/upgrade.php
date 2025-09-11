@@ -194,5 +194,39 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025050500, 'bookit');
     }
 
+    if ($oldversion < 2025091100) {
+        $dbman = $DB->get_manager();
+
+        // Rename field roomid to roomids in bookit_checklist_item and change type from int to text.
+        $table = new xmldb_table('bookit_checklist_item');
+        $field = new xmldb_field('roomid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if ($dbman->field_exists($table, $field)) {
+            // First create the new field.
+            $newfield = new xmldb_field('roomids', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $dbman->add_field($table, $newfield);
+
+            // Then copy the data.
+            $DB->execute("UPDATE {bookit_checklist_item} SET roomids = CAST(roomid AS CHAR(10)) WHERE roomid IS NOT NULL");
+
+            // Finally drop the old field.
+            $dbman->drop_field($table, $field);
+        }
+
+        // Change field duedaysrelation from int to text in bookit_checklist_item.
+        $field = new xmldb_field('duedaysrelation', XMLDB_TYPE_TEXT, null, null, null, null, null, 'duedaysoffset');
+        $dbman->change_field_type($table, $field);
+
+        // Change field type from int to text in bookit_notification_slots.
+        $table = new xmldb_table('bookit_notification_slots');
+        $field = new xmldb_field('type', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null, 'checklistitemid');
+        $dbman->change_field_type($table, $field);
+
+        // Change field duedaysrelation from char to text in bookit_notification_slots.
+        $field = new xmldb_field('duedaysrelation', XMLDB_TYPE_TEXT, null, null, null, null, null, 'duedaysoffset');
+        $dbman->change_field_type($table, $field);
+
+        upgrade_mod_savepoint(true, 2025091100, 'bookit');
+    }
+
     return true;
 }
