@@ -205,8 +205,8 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $newfield = new xmldb_field('roomids', XMLDB_TYPE_TEXT, null, null, null, null, null);
             $dbman->add_field($table, $newfield);
 
-            // Then copy the data.
-            $DB->execute("UPDATE {bookit_checklist_item} SET roomids = CAST(roomid AS CHAR(10)) WHERE roomid IS NOT NULL");
+            // Then copy the data and convert to JSON array format.
+            $DB->execute("UPDATE {bookit_checklist_item} SET roomids = CONCAT('[\"', roomid, '\"]') WHERE roomid IS NOT NULL");
 
             // Finally drop the old field.
             $dbman->drop_field($table, $field);
