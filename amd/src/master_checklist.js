@@ -203,7 +203,6 @@ export default class extends BaseComponent {
 
             const stateItem = this.reactive.state.checklistitems.get(event.element.id);
 
-            // Convert roomnames object to array with roomid and roomname properties
             const itemRooms = [];
             if (stateItem.roomnames) {
                 Object.entries(stateItem.roomnames).forEach(([id, name]) => {

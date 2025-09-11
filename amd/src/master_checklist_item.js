@@ -11,14 +11,14 @@ export default class extends BaseComponent {
         const itemEditBtnSelector = 'EDIT_CHECKLISTITEM_BTN_' + descriptor.element.dataset.bookitChecklistitemId;
         this.selectors[itemEditBtnSelector] = `#edit-checklistitem-${descriptor.element.dataset.bookitChecklistitemId}`;
 
-        if (descriptor.element.dataset.bookitChecklistitemId == "2") {
-            window.console.log('DESCRIPTOR FOR ITEM ID 2 FOUND:');
-            window.console.log('DESCRIPTOR:', descriptor);
-            window.console.log('ELEMENT:', descriptor.element);
-            window.console.log('DATASET:', descriptor.element.dataset);
-            window.console.log('SELECTORS:', this.selectors);
+        // if (descriptor.element.dataset.bookitChecklistitemId == "2") {
+        //     window.console.log('DESCRIPTOR FOR ITEM ID 2 FOUND:');
+        //     window.console.log('DESCRIPTOR:', descriptor);
+        //     window.console.log('ELEMENT:', descriptor.element);
+        //     window.console.log('DATASET:', descriptor.element.dataset);
+        //     window.console.log('SELECTORS:', this.selectors);
 
-        }
+        // }
     }
 
     static init(target, selectors) {
@@ -43,6 +43,8 @@ export default class extends BaseComponent {
             e.preventDefault();
             this._handleEditChecklistItemButtonClick(e);
         });
+
+        this.shouldBeVisible();
 
     }
 

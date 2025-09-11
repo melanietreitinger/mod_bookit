@@ -284,6 +284,7 @@ class edit_checklistitem_form extends dynamic_form {
                 0,
                 null,
                 0,
+                null,
                 $USER->id,
                 time(),
                 time()
