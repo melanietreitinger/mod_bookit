@@ -31,6 +31,7 @@ export default class extends BaseComponent {
             {watch: 'checklistcategories.name:updated', handler: this._refreshEditButtonListener},
             {watch: 'activeRole:updated', handler: this._handleFilterUpdate},
             {watch: 'activeRoom:updated', handler: this._handleFilterUpdate},
+            {watch: 'checklistitems:created', handler: this._handleFilterUpdate},
         ];
     }
 

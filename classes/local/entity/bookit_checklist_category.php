@@ -175,7 +175,7 @@ class bookit_checklist_category implements \renderable, \templatable {
             $itemids = explode(',', $this->checklistitems);
 
             foreach ($itemids as $itemid) {
-                $item = bookit_checklist_item::from_database($itemid);
+                $item = bookit_checklist_item::from_database((int)$itemid);
 
                 $data->checklistitems[] = $item->export_for_template($output);
             }
