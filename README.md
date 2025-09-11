@@ -1,4 +1,10 @@
-# Exam Booking #
+# Work in Progress #
+
+## TODO ##
+- settings resolve conflicts etc., wait for funktest
+- merge in language files
+- new commit (quick & dirty) based on main to make merge possible
+- Final check for differences
 
 TODO Describe the plugin shortly here.
 
