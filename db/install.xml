@@ -175,7 +175,7 @@
         <FIELD NAME="type" TYPE="text" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="Type of notification"/>
         <FIELD NAME="roleids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded list of role IDs to notify"/>
         <FIELD NAME="duedaysoffset" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Due days relative to the event date"/>
-        <FIELD NAME="duedaysrelation" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)"/>
+        <FIELD NAME="duedaysrelation" TYPE="text" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)"/>
         <FIELD NAME="isactive" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether this notification slot is active"/>
         <FIELD NAME="messagetext" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Text message to send in the notification"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>

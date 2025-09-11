@@ -210,6 +210,7 @@ class install_helper {
                     ($i * 7), // Due_days_offset (0, 7, 14 days).
                     null,
                     null,
+                    null,
                     null
                 );
 
