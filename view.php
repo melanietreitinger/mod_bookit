@@ -199,9 +199,14 @@ $eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->ou
 $capabilities   = [
     'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
 ];
-//TODO: Resolve merge
+
+//Minor change to main: Handles edge cases better now
 $configcalendar = [];
-if ($tc = get_config('mod_bookit', 'textcolor')) { $configcalendar['textcolor'] = $tc; }
+$tc = get_config('mod_bookit', 'textcolor');
+if ($tc !== false && $tc !== null && $tc !== '') {
+    $configcalendar['textcolor'] = $tc;
+}
+
 
 // Inject allowed weekdays for JS (NEW FEATURE)
 $PAGE->requires->js_init_code('M.cfg.bookit_allowedweekdays = ['.implode(',', bookit_allowed_weekdays()).'];');
