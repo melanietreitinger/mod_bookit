@@ -189,8 +189,6 @@ class edit_checklist_category_form extends dynamic_form {
 
             $masterchecklist->mastercategoryorder = $mastercategoryids;
             $masterchecklist->save();
-
-
         }
 
         return [

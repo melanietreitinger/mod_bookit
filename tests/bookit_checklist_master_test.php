@@ -175,12 +175,10 @@ class bookit_checklist_master_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        // Mock renderer_base
         $renderer = $this->getMockBuilder(\renderer_base::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        // Create a new instance.
         $checklist = new bookit_checklist_master(
             1,
             'Export Test',
@@ -189,10 +187,8 @@ class bookit_checklist_master_test extends advanced_testcase {
             []
         );
 
-        // Export for template.
         $data = $checklist->export_for_template($renderer);
 
-        // Check the exported data.
         $this->assertEquals(1, $data->id);
         $this->assertEquals('Export Test', $data->name);
         $this->assertIsArray($data->tableheaders);
