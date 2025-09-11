@@ -357,7 +357,10 @@ class edit_checklistitem_form extends dynamic_form {
         $fields['id'] = $id;
 
         foreach ($data['roomids'] as $roomid) {
-            $fields['roomnames'][(int) $roomid] = checklist_manager::get_roomname_by_id((int) $roomid);
+            $fields['roomnames'] = [
+                'roomid' => (int) $roomid,
+                'roomname' => checklist_manager::get_roomname_by_id((int) $roomid),
+            ];
         }
 
         $fields['rolename'] = checklist_manager::get_rolename_by_id($fields['roleid']);

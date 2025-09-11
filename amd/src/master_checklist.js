@@ -209,24 +209,24 @@ export default class extends BaseComponent {
 
             const stateItem = this.reactive.state.checklistitems.get(event.element.id);
 
-            const itemRooms = [];
-            if (stateItem.roomnames) {
-                Object.entries(stateItem.roomnames).forEach(([id, name]) => {
-                    itemRooms.push({
-                        'roomid': parseInt(id),
-                        'roomname': name
-                    });
-                });
-            }
+            // const itemRooms = [];
+            // if (stateItem.roomnames) {
+            //     Object.entries(stateItem.roomnames).forEach(([id, name]) => {
+            //         itemRooms.push({
+            //             'roomid': parseInt(id),
+            //             'roomname': name
+            //         });
+            //     });
+            // }
 
             const roomsSelector = `td[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
             const roomsElement = this.getElement(roomsSelector);
 
-            window.console.log('ITEM ROOMS: ', itemRooms);
+            window.console.log('ITEM ROOMS: ', stateItem.roomnames);
 
             Templates.renderForPromise('mod_bookit/bookit_checklist_item_rooms',
             {
-                roomnames: itemRooms
+                roomnames: stateItem.roomnames
             })
             .then(({html, js}) => {
                 Templates.replaceNode(roomsElement, html, js);
