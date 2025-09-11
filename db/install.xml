@@ -152,7 +152,7 @@
         <FIELD NAME="state" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="State of the item (open, processing, done, unknown)"/>
         <FIELD NAME="defaultvalue" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Default value for the item"/>
         <FIELD NAME="duedaysoffset" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Due days relative to the event date"/>
-        <FIELD NAME="duedaysrelation" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)"/>
+        <FIELD NAME="duedaysrelation" TYPE="text" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
