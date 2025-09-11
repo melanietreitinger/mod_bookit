@@ -221,6 +221,5 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
 
         upgrade_mod_savepoint(true, 2025060100, 'bookit');
     }
-
     return true;
 }
