@@ -38,12 +38,11 @@ use advanced_testcase;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers      \mod_bookit\local\entity\bookit_checklist_master
  */
-class bookit_checklist_master_test extends advanced_testcase {
-
+final class bookit_checklist_master_test extends advanced_testcase {
     /**
      * Test the creation of a new bookit_checklist_master instance.
      */
-    public function test_create_instance() {
+    public function test_create_instance(): void {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
@@ -69,7 +68,7 @@ class bookit_checklist_master_test extends advanced_testcase {
     /**
      * Test saving a new bookit_checklist_master to the database.
      */
-    public function test_save_new_instance() {
+    public function test_save_new_instance(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -104,7 +103,7 @@ class bookit_checklist_master_test extends advanced_testcase {
     /**
      * Test updating an existing bookit_checklist_master in the database.
      */
-    public function test_update_instance() {
+    public function test_update_instance(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -140,7 +139,7 @@ class bookit_checklist_master_test extends advanced_testcase {
     /**
      * Test loading a bookit_checklist_master from the database.
      */
-    public function test_from_database() {
+    public function test_from_database(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -171,7 +170,7 @@ class bookit_checklist_master_test extends advanced_testcase {
     /**
      * Test exporting the checklist master for template rendering.
      */
-    public function test_export_for_template() {
+    public function test_export_for_template(): void {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
