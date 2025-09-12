@@ -232,6 +232,8 @@ class edit_checklistitem_form extends dynamic_form {
             $this->_form->setExpanded('notifications', true);
         }
 
+        $item->duedate = $item->duedaysrelation ?? 'none';
+
         $this->set_data($item);
     }
 
