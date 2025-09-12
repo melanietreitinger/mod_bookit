@@ -79,7 +79,6 @@ final class bookit_checklist_category_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        // First create a master checklist to be the parent
         $master = new bookit_checklist_master(
             null,
             'Test Master',
@@ -125,7 +124,6 @@ final class bookit_checklist_category_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        // First create a master checklist to be the parent
         $master = new bookit_checklist_master(
             null,
             'Test Master',
@@ -171,7 +169,6 @@ final class bookit_checklist_category_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        // First create a master checklist to be the parent
         $master = new bookit_checklist_master(
             null,
             'Test Master',
@@ -212,7 +209,6 @@ final class bookit_checklist_category_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        // First create a master checklist to be the parent
         $master = new bookit_checklist_master(
             null,
             'Test Master',
@@ -227,7 +223,7 @@ final class bookit_checklist_category_test extends advanced_testcase {
         $record->description = 'Created directly in the database';
         $record->checklistitems = '';
         $record->sortorder = 3;
-        $record->usermodified = 2; // Admin user ID.
+        $record->usermodified = 2;
         $record->timecreated = time();
         $record->timemodified = time();
 

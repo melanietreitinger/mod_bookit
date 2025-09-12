@@ -110,7 +110,6 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        // First create a master checklist to be the parent
         $master = new bookit_checklist_master(
             null,
             'Test Master',
@@ -118,7 +117,6 @@ final class bookit_checklist_item_test extends advanced_testcase {
         );
         $masterid = $master->save();
 
-        // Create a category for this item
         $category = new bookit_checklist_category(
             null,
             $masterid,
@@ -127,8 +125,8 @@ final class bookit_checklist_item_test extends advanced_testcase {
         );
         $categoryid = $category->save();
 
-        $roomids = [1, 2]; // Room IDs
-        $roleid = 3; // Role ID
+        $roomids = [1, 2];
+        $roleid = 3;
         $title = 'Test Item Save';
         $description = 'This is a test item for saving';
         $itemtype = 1;
