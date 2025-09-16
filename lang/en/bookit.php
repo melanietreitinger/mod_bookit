@@ -141,3 +141,60 @@ $string['type_overdue_date'] = 'After overdue date';
 $string['type_when_done'] = 'When done';
 $string['type_when_due'] = 'When due';
 $string['winter_semester'] = 'Winter Term';
+
+
+$string['overview']        = 'My booked events';
+$string['overview_help']   = 'Shows every event for which you are listed as examiner.';
+$string['checklist']       = 'Checklist';
+$string['status']          = 'Status';
+$string['room']            = 'Room';
+$string['bookit:viewownoverview'] = 'View own events overview';
+
+
+
+//NEU
+$string['config_weekdaysvisible']      = 'Weekdays shown in calendar';
+$string['config_weekdaysvisible']      = 'Weekdays shown in calendar';
+$string['config_weekdaysvisible_desc'] =
+    'Choose which weekdays appear in the BookIT calendar and may be selected for events.
+     <br><em>Default: Monday, Tuesday, Wednesday, Thursday, Friday</em><br>
+     <span style="color:#b50000;">
+         Please note that by hiding weekdays, events that have already been booked
+         on those days will no longer be displayed.
+     </span>';
+$string['invalidweekday'] = 'This weekday is not allowed for booking.';
+
+
+$string['backtooverview'] = 'Back to overview';
+$string['event_bookingstatus_help'] = 'Explanation of the booking status options.';
+$string['editevent'] = 'Edit event';
+
+$string['new']         = 'New';
+$string['inprogress']  = 'In progress';
+$string['accepted']    = 'Accepted';
+$string['cancelled']   = 'Cancelled';
+$string['rejected']    = 'Rejected';
+
+$string['allrooms']     = 'All rooms';
+$string['allfaculties'] = 'All faculties';
+$string['allstatuses']  = 'All statuses';
+
+$string['exportevents'] = 'Export events';
+$string['selectevents'] = 'Please tick the events to export:';
+$string['noevents']     = 'No events in current view.';
+$string['chooseevent']  = 'Please select at least one event.';
+$string['export'] = "Export";
+
+$string['go'] = 'Apply';
+$string['search'] = 'Search';
+
+$string['overview']          = 'Settings overview';
+$string['calendar']          = 'Calendar';
+$string['calendar_desc']     = 'General calendar & booking behaviour';
+$string['resources']         = 'Resources';
+$string['resources_desc']    = 'Rooms, resource colours & availability';
+$string['checklist']         = 'Checklist';
+$string['checklist_desc']    = 'Optional checklist / roles extension';
+$string['checklist_placeholder'] = 'This section is reserved for the optional BookIT-Checklist add-on.';
+
+
