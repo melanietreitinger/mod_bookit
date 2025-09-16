@@ -188,7 +188,7 @@ $string['export'] = "Export";
 $string['go'] = 'Apply';
 $string['search'] = 'Search';
 
-$string['overview']          = 'Settings overview';
+$string['settings_overview']          = 'Settings overview';
 $string['calendar']          = 'Calendar';
 $string['calendar_desc']     = 'General calendar & booking behaviour';
 $string['resources']         = 'Resources';
