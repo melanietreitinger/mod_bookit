@@ -1,6 +1,4 @@
 <?php
-//TODO: My booked events is wrong string, has to be Settings overview
-
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify

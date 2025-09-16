@@ -112,6 +112,6 @@ $cardshtml .= html_writer::end_div();
    ---------------------------------------------------------------------- */
 echo $OUTPUT->header();
 echo html_writer::tag('style', $css);
-echo html_writer::tag('h2', get_string('overview', 'mod_bookit'), ['class' => 'mb-3']);
+echo html_writer::tag('h2', get_string('settings_overview', 'mod_bookit'), ['class' => 'mb-3']);
 echo $cardshtml;
 echo $OUTPUT->footer();
