@@ -16,12 +16,18 @@
 
 /**
  * Plugin administration pages are defined here.
+ * 
+ * Implementation of new BookIT admin settings overview - Structure:
+ *   - Root entry shown under Plugins → Activity modules → BookIT
+ *       => external page: /mod/bookit/admin/settings_overview.php (cards only)
+ *   - Actual settings pages (Calendar, Resources, Checklist)
+ *       => placed into a hidden admin category so they don't appear in the tree
+ *       => will be shown after first click in the settings_overview.php
  *
  * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de> 
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 use mod_bookit\local\manager\resource_manager;
 
 defined('MOODLE_INTERNAL') || die();
@@ -29,95 +35,179 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
-    $ADMIN->add('modsettings', new admin_category('mod_bookit_category', new lang_string('pluginname', 'mod_bookit')));
-    $settings = new admin_settingpage('mod_bookit_settings', new lang_string('pluginname', 'mod_bookit'));
 
-    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
-    if ($ADMIN->fulltree) {
-        // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
+    /**
+     * Root entry as an external page.
+     */
+    $settings = new admin_externalpage(
+        'mod_bookit', // Must match admin_externalpage_setup('mod_bookit') in settings_overview.php
+        get_string('pluginname', 'mod_bookit'),
+        new moodle_url('/mod/bookit/admin/settings_overview.php')
+    );
 
-        // Event setting extra time.
-        $name = 'mod_bookit/extratime';
-        $title = get_string('settings_extratime', 'mod_bookit');
-        $description = get_string('settings_extratime_desc', 'mod_bookit');
-        $setting = new admin_setting_configtext($name, $title, $description, 30, PARAM_INT, 5);
-        $settings->add($setting);
+    /**
+     * Hidden bucket to hold the real admin_settingpage instances so they don't
+     * show up in the left-hand tree (or the search list) as separate entries.
+     */
+    $ADMIN->add('modsettings',
+        new admin_category('mod_bookit_hidden', get_string('pluginname', 'mod_bookit'), /*hidden*/ true)
+    );
 
-        // Event setting eventminyears.
-        $name = 'mod_bookit/eventminyears';
-        $title = get_string('settings_eventminyears', 'mod_bookit');
-        $description = get_string('settings_eventminyears_desc', 'mod_bookit');
-        $minyearlist = [];
-        for ($i = date('Y'); $i >= date('Y', strtotime('-10 year')); $i--) {
-            $minyearlist[$i] = $i;
-        }
-        $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('-1 year')), $minyearlist);
-        $settings->add($setting);
+    // --- Helper: render a heading-like select to jump between sub-pages --------
+    $build_bookit_heading_select = function(string $active): string {
+        $defs = [
+            'calendar'  => ['id' => 'mod_bookit_calendar',  'label' => get_string('calendar',  'mod_bookit')],
+            'resources' => ['id' => 'mod_bookit_resources', 'label' => get_string('resources', 'mod_bookit')],
+            'checklist' => ['id' => 'mod_bookit_checklist', 'label' => get_string('checklist', 'mod_bookit')],
+        ];
 
-        // Event setting eventmaxyears.
-        $name = 'mod_bookit/eventmaxyears';
-        $title = get_string('settings_eventmaxyears', 'mod_bookit');
-        $description = get_string('settings_eventmaxyears_desc', 'mod_bookit');
-        $minyearlist = [];
-        for ($i = date('Y'); $i <= date('Y', strtotime('+10 year')); $i++) {
-            $minyearlist[$i] = $i;
-        }
-        $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
-        $settings->add($setting);
+        // Make a big, bold select that looks like the page heading.
+        $select = html_writer::start_tag('select', [
+            'class'     => 'form-select form-select-lg fw-bold border-0 p-0',
+            'style'     => 'font-size:1.75rem;width:auto;display:inline-block;background-color:transparent;',
+            'aria-label'=> 'BookIT settings section',
+            'onchange'  => 'if(this.value){window.location=this.value;}',
+        ]);
 
-        // Room colors heading.
-        $name = 'mod_bookit/roomcolorheading';
-        $title = get_string('settings_roomcolorheading', 'mod_bookit', null, true);
-        $setting = new admin_setting_heading($name, $title, null);
-        $settings->add($setting);
-
-        // Set text color to black or white (default).
-        $name = 'mod_bookit/textcolor';
-        $title = get_string('settings_textcolor', 'mod_bookit');
-        $description = get_string('settings_textcolor_desc', 'mod_bookit');
-        $choices = ['#ffffff' => 'white', '#000000' => 'black'];
-        $setting = new admin_setting_configselect($name, $title, $description, '#ffffff', $choices);
-        $settings->add($setting);
-
-        // Set a color for each room defined in resources - at least one.
-        // Get the ressources.
-        $catresourceslist = resource_manager::get_resources();
-        foreach ($catresourceslist as $category => $value) {
-            if ($category === 'Rooms') {
-                foreach ($value['resources'] as $rid => $catresource) {
-                    $name = 'mod_bookit/roomcolor_' . $rid;
-                    $title = get_string('settings_roomcolor', 'mod_bookit', $catresource['name'], true);
-                    $description = get_string('settings_roomcolor_desc', 'mod_bookit', null, true);
-                    $setting = new admin_setting_configcolourpicker($name, $title, $description, '');
-                    $settings->add($setting);
-
-                    // Add color contrast check.
-                    $fcolor = get_config('mod_bookit', 'textcolor');
-                    $fcolor = (!empty($fcolor) ? substr($fcolor, 1) : 'FFFFFF');
-                    $bcolor = get_config('mod_bookit', 'roomcolor_' . $rid);
-                    $bcolor = (!empty($bcolor) ? substr($bcolor, 1) : false);
-                    if (!empty($bcolor)) {
-                        $check = printcolorevaluation($fcolor, $bcolor);
-                        $a = new StdClass();
-                        $a->fcolor = $fcolor;
-                        $a->bcolor = $bcolor;
-                        $setting = new admin_setting_description($name . '_wcag',
-                                get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
-                                get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check);
-                        $settings->add($setting);
-                    }
-                }
+        foreach ($defs as $key => $info) {
+            $url  = (new moodle_url('/admin/settings.php', ['section' => $info['id']]))->out(false);
+            $attr = ['value' => $url];
+            if ($key === $active) {
+                $attr['selected'] = 'selected';
             }
+            $select .= html_writer::tag('option', format_string($info['label']), $attr);
         }
+        $select .= html_writer::end_tag('select');
 
-    }
+        // Container so it sits nicely under the default page title.
+        return html_writer::div($select, 'mb-3');
+    };
 
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-            'mod_bookit_master_checklist',
-            get_string('master_checklist', 'mod_bookit'),
-            new moodle_url('/mod/bookit/master_checklist.php'),
+
+    /*     
+    * CALENDAR – event / calendar-behaviour settings
+    */
+    $calendar = new admin_settingpage('mod_bookit_calendar', get_string('calendar', 'mod_bookit'));
+
+    // Top switcher (Calendar active)
+    $calendar->add(new admin_setting_heading(
+        'mod_bookit_nav_calendar', '', $build_bookit_heading_select('calendar')
+    ));
+
+    // Event setting eventmaxyears 
+    $name        = 'mod_bookit/extratime';
+    $title       = get_string('settings_extratime', 'mod_bookit');
+    $description = get_string('settings_extratime_desc', 'mod_bookit');
+    $calendar->add(new admin_setting_configtext($name, $title, $description, 30, PARAM_INT, 5));
+
+    // Min / max selectable year.
+    $thisyear = (int)date('Y');
+
+    $yearlistmin = array_combine(range($thisyear, $thisyear - 10), range($thisyear, $thisyear - 10));
+    $yearlistmax = array_combine(range($thisyear, $thisyear + 10), range($thisyear, $thisyear + 10));
+
+    $calendar->add(new admin_setting_configselect(
+        'mod_bookit/eventminyears',
+        get_string('settings_eventminyears', 'mod_bookit'),
+        get_string('settings_eventminyears_desc', 'mod_bookit'),
+        $thisyear - 1,
+        $yearlistmin
+    ));
+    $calendar->add(new admin_setting_configselect(
+        'mod_bookit/eventmaxyears',
+        get_string('settings_eventmaxyears', 'mod_bookit'),
+        get_string('settings_eventmaxyears_desc', 'mod_bookit'),
+        $thisyear + 1,
+        $yearlistmax
+    ));
+
+    // Weekday visibility.
+    $weekdaychoices = [
+        1 => get_string('monday',    'calendar'),
+        2 => get_string('tuesday',   'calendar'),
+        3 => get_string('wednesday', 'calendar'),
+        4 => get_string('thursday',  'calendar'),
+        5 => get_string('friday',    'calendar'),
+        6 => get_string('saturday',  'calendar'),
+        0 => get_string('sunday',    'calendar'),
+    ];
+    $calendar->add(new admin_setting_configmulticheckbox(
+        'mod_bookit/weekdaysvisible',
+        get_string('config_weekdaysvisible',      'mod_bookit'),
+        get_string('config_weekdaysvisible_desc', 'mod_bookit'),
+        [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // default Mon–Fri
+        $weekdaychoices
+    ));
+
+    // Register under hidden container.
+    $ADMIN->add('mod_bookit_hidden', $calendar);
+
+    
+    // RESOURCES – colours & room related settings
+    $resources = new admin_settingpage('mod_bookit_resources', get_string('resources', 'mod_bookit'));
+
+    // Top switcher (Resources active)
+    $resources->add(new admin_setting_heading(
+        'mod_bookit_nav_resources', '', $build_bookit_heading_select('resources')
+    ));
+
+    // Text colour (white / black).
+    $resources->add(new admin_setting_configselect(
+        'mod_bookit/textcolor',
+        get_string('settings_textcolor',      'mod_bookit'),
+        get_string('settings_textcolor_desc', 'mod_bookit'),
+        '#ffffff',
+        ['#ffffff' => 'white', '#000000' => 'black']
+    ));
+
+    // Room colour heading.
+    $resources->add(new admin_setting_heading(
+        'mod_bookit/roomcolorheading',
+        get_string('settings_roomcolorheading', 'mod_bookit', null, true),
+        ''
+    ));
+
+    // One colour-picker per room.
+    $catresourceslist = resource_manager::get_resources();
+    foreach ($catresourceslist['Rooms']['resources'] ?? [] as $rid => $catresource) {
+        $resources->add(new admin_setting_configcolourpicker(
+            'mod_bookit/roomcolor_' . $rid,
+            get_string('settings_roomcolor',      'mod_bookit', $catresource['name'], true),
+            get_string('settings_roomcolor_desc', 'mod_bookit', null, true),
+            ''
         ));
 
-    $ADMIN->add('mod_bookit_category', $settings);
-    $settings = null;
+        // WCAG helper.
+        $fcolor = ltrim(get_config('mod_bookit', 'textcolor') ?: '#ffffff', '#');
+        $bcolor = ltrim(get_config('mod_bookit', 'roomcolor_' . $rid) ?: '', '#');
+        if ($bcolor !== '') {
+            $checkhtml = printcolorevaluation($fcolor, $bcolor);
+            $a         = (object)['fcolor' => $fcolor, 'bcolor' => $bcolor];
+            $resources->add(new admin_setting_description(
+                'mod_bookit/roomcolor_' . $rid . '_wcag',
+                get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
+                get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $checkhtml
+            ));
+        }
+    }
+
+    // Register under hidden container.
+    $ADMIN->add('mod_bookit_hidden', $resources);
+
+    //CHECKLIST – placeholder (optional add-on)
+    $checklist = new admin_settingpage('mod_bookit_checklist', get_string('checklist', 'mod_bookit'));
+
+    // Top switcher (Checklist active)
+    $checklist->add(new admin_setting_heading(
+        'mod_bookit_nav_checklist', '', $build_bookit_heading_select('checklist')
+    ));
+    
+    $checklist->add(new admin_setting_heading(
+        'mod_bookit_checklist_info',
+        '',
+        get_string('checklist_placeholder', 'mod_bookit')
+    ));
+
+    // Register under hidden container.
+    $ADMIN->add('mod_bookit_hidden', $checklist);
 }
