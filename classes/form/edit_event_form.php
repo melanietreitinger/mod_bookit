@@ -232,7 +232,7 @@ class edit_event_form extends dynamic_form {
 
         // Add the coursetemplate field.
         // ...@TODO: Implement course template administration in admin settings and query them here.
-        $coursetemplates = [0 => get_string('none')];
+        $coursetemplates = [0 => get_string('default')];
         $mform->addElement('select', 'coursetemplate', get_string('select_coursetemplate', 'mod_bookit'), $coursetemplates);
         $mform->disabledIf('coursetemplate', 'editevent', 'neq');
         $mform->addRule('coursetemplate', null, 'required', null, 'client');
@@ -353,42 +353,85 @@ class edit_event_form extends dynamic_form {
      *
      * @return void
      */
-    public function definition_after_data() {
-        global $DB, $USER;
+    public function definition_after_data(): void {
+        global $DB, $USER, $PAGE;   // $PAGE needed for JS injection
         $mform =& $this->_form;
 
-        $context = $this->get_context_for_dynamic_submission();
-        $id = $this->_form->getElementValue('id');
-        $bookingstatus = $this->_form->getElementValue('bookingstatus');
-        $usermodified = $this->_form->getElementValue('usermodified');
-        $examiner = $this->_form->getElementValue('personinchargeid');
-        $otherexaminers = $this->_form->getElementValue('otherexaminers') ?? [];
-        array_push($otherexaminers, $usermodified, $examiner);
+        //Derive current booking-status & capability flags
+        $rawstatus   = $mform->getElementValue('bookingstatus');
+        $bookingstat = is_array($rawstatus) ? (int)$rawstatus[0] : self::BOOKINGSTATUS_NEW;
 
-        // Show the user who created the entry.
-        $user = $DB->get_record('user', ['id' => $usermodified]);
-        $mform->getElement('usermodified')->setValue(
-                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // ...@TODO: ???
+        $id           = $mform->getElementValue('id');
+        $usermodified = $mform->getElementValue('usermodified');
+        $examiner     = $mform->getElementValue('personinchargeid');
+        $otherexaminers = array_filter(array_merge(
+            $mform->getElementValue('otherexaminers') ?? [],
+            [$usermodified, $examiner]
+        ));
+
+        $context          = $this->get_context_for_dynamic_submission();
+        $caneditevent     = has_capability('mod/bookit:editevent', $context)
+                            || !$id
+                            || (self::BOOKINGSTATUS_NEW == $bookingstat && in_array($USER->id, $otherexaminers, true));
+        $caneditinternal  = has_capability('mod/bookit:editinternal', $context);
+
+        //Store capability flags as hidden elements
+        $mform->insertElementBefore(
+            $mform->createElement('hidden', 'editevent', $caneditevent), 'name'
+        )->setType('editevent', PARAM_BOOL);
+
+        $mform->insertElementBefore(
+            $mform->createElement('hidden', 'editinternal', $caneditinternal), 'name'
+        )->setType('editinternal', PARAM_BOOL);
+
+        //Week-day validation  – server side
+        $mform->addRule(
+            'starttime',
+            get_string('invalidweekday', 'mod_bookit'),
+            'callback',
+            function($val): bool {
+                // $val arrives as an array from date_time_selector
+                if (is_array($val)) {
+                    // make_timestamp( year, month, day, hour, minute )
+                    $ts = make_timestamp(
+                        (int)$val['year'],
+                        (int)$val['month'],
+                        (int)$val['day'],
+                        (int)($val['hour']   ?? 0),
+                        (int)($val['minute'] ?? 0)
+                    );
+                } else {
+                    $ts = (int)$val; // Fallback: already a Unix timestamp
+                }
+
+                $allowed = \bookit_allowed_weekdays(); // 0 = Sun … 6 = Sat
+                $weekday = (int) date('w', $ts);
+                return in_array($weekday, $allowed, true);
+            },
+            'server'
         );
 
-        // Get context and capabilities.
-        $context = $this->get_context_for_dynamic_submission();
-        // Event can be edited if capability is set, a new event is created or event is unprocessed (own events).
-        $caneditevent = (has_capability('mod/bookit:editevent', $context) || !$id ||
-                (self::BOOKINGSTATUS_NEW == (int) $bookingstatus[0] && in_array($USER->id, $otherexaminers))
-        );
-        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
-
-        // Set hidden field editevent capability.
-        $e1 = $this->_form->createElement('hidden', 'editevent', $caneditevent);
-        $this->_form->setType('editevent', PARAM_BOOL);
-        $mform->insertElementBefore($e1, 'name');
-
-        // Set hidden field editinternal capability.
-        $e2 = $this->_form->createElement('hidden', 'editinternal', $caneditinternal);
-        $this->_form->setType('editinternal', PARAM_BOOL);
-        $mform->insertElementBefore($e2, 'name');
+        //Quick client-side alert (does not block submission)
+        $allowed = implode(',', \bookit_allowed_weekdays());
+        if ($allowed !== '') {
+            $PAGE->requires->js_init_code("
+                require(['jquery'], function($) {
+                    const allowed = [{$allowed}];
+                    $('#id_starttime_day, #id_starttime_month, #id_starttime_year').on('change', function () {
+                        const d = new Date(
+                            $('#id_starttime_year').val(),
+                            $('#id_starttime_month').val() - 1,
+                            $('#id_starttime_day').val()
+                        );
+                        if (!allowed.includes(d.getDay())) {
+                            alert('".get_string('invalidweekday', 'mod_bookit')."');
+                        }
+                    });
+                });
+            ");
+        }
     }
+
 
     /**
      * Load in existing data as form defaults

@@ -91,4 +91,18 @@ $capabilities = [
                 'archetypes' => [
                 ],
         ],
+        //New: Implements the selected view. TODO: Test whether it still works! 
+        'mod/bookit:viewownoverview' => [
+                'captype'      => 'read',
+                'contextlevel' => CONTEXT_MODULE,
+                'archetypes'   => [
+                'editingteacher' => CAP_ALLOW,
+                'teacher'        => CAP_ALLOW,
+                'manager'        => CAP_ALLOW,
+                'noneditingteacher' => CAP_ALLOW,
+                ],
+        ],
 ];
+
+
+    

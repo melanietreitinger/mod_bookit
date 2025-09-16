@@ -21,10 +21,14 @@
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 namespace mod_bookit\local\entity;
 
 use dml_exception;
+
+/*Summary changes vs optimizations: 
+-Added examiner ID (in first block until around line 130, there is nothing else new) 
+- Rewrote function save
+*/
 
 /**
  * Database class for bookit_events.
@@ -33,84 +37,64 @@ use dml_exception;
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class bookit_event {
 
+class bookit_event {
     /**
      * Create a new instance of this class.
      *
-     * @param int $id
-     * @param string $name
+     * @param int         $id
+     * @param string      $name
      * @param string|null $semester
-     * @param string $department
-     * @param int $starttime
-     * @param int $endtime
-     * @param int|null $duration
-     * @param int|null $participantsamount
-     * @param int|null $timecompensation
+     * @param string      $department
+     * @param int         $starttime
+     * @param int         $endtime
+     * @param int|null    $duration
+     * @param int|null    $participantsamount
+     * @param int|null    $timecompensation
      * @param string|null $compensationfordisadvantages
-     * @param int|null $bookingstatus
-     * @param int|null $personinchargeid
+     * @param int|null    $bookingstatus
+     * @param int|null    $personinchargeid
      * @param string|null $otherexaminers
-     * @param int|null $coursetemplate
+     * @param int|null    $coursetemplate
      * @param string|null $notes
      * @param string|null $internalnotes
      * @param string|null $supportpersons
-     * @param array $resources
-     * @param mixed $refcourseid
-     * @param int|null $usermodified
-     * @param int|null $timecreated
-     * @param int|null $timemodified
+     * @param array       $resources
+     * @param mixed       $refcourseid
+     * @param int|null    $usermodified
+     * @param int|null    $timecreated
+     * @param int|null    $timemodified
+     * @param int|null    $examinerid (optional) User ID of the examiner responsible
      */
     public function __construct(
-        /** @var int id */
-        public int $id,
-        /** @var string name */
-        public string $name,
-        /** @var ?string semester */
+        public int     $id,
+        public string  $name,
         public ?string $semester,
-        /** @var string department */
-        public string $department,
-        /** @var int starttime */
-        public int $starttime,
-        /** @var int endtime */
-        public int $endtime,
-        /** @var ?int duration */
-        public ?int $duration,
-        /** @var ?int participantsamount */
-        public ?int $participantsamount,
-        /** @var ?int timecompensation */
-        public ?int $timecompensation,
-        /** @var ?string compensationfordisadvantages */
+        public string  $department,
+        public int     $starttime,
+        public int     $endtime,
+        public ?int    $duration,
+        public ?int    $participantsamount,
+        public ?int    $timecompensation,
         public ?string $compensationfordisadvantages,
-        /** @var ?int bookingstatus */
-        public ?int $bookingstatus,
-        /** @var ?int personinchargeid */
-        public ?int $personinchargeid,
-        /** @var ?string otherexaminers */
+        public ?int    $bookingstatus,
+        public ?int    $personinchargeid,
         public ?string $otherexaminers,
-        /** @var ?int coursetemplate */
-        public ?int $coursetemplate,
-        /** @var ?string notes */
+        public ?int    $coursetemplate,
         public ?string $notes,
-        /** @var ?string internalnotes */
         public ?string $internalnotes,
-        /** @var ?string supportpersons */
         public ?string $supportpersons,
-        /** @var array resources */
-        public array $resources,
-        /** @var mixed refcourseid */
-        public mixed $refcourseid,
-        /** @var ?int usermodified */
-        public ?int $usermodified,
-        /** @var ?int timecreated */
-        public ?int $timecreated,
-        /** @var ?int timemodified */
-        public ?int $timemodified,
+        public array   $resources,
+        public mixed   $refcourseid,
+        public ?int    $usermodified,
+        public ?int    $timecreated,
+        public ?int    $timemodified,
+        public ?int    $examinerid = null
     ) {
     }
 
     /**
-     * Get record from database.
+     * Fetch a record from the database and return an object.
      *
      * @param int $id id of event to fetch.
      * @return self
@@ -118,12 +102,15 @@ class bookit_event {
      */
     public static function from_database(int $id): self {
         global $DB;
-        $record = $DB->get_record("bookit_event", ["id" => $id], '*', MUST_EXIST);
+        $record = $DB->get_record('bookit_event', ['id' => $id], '*', MUST_EXIST);
 
         $mappings = $DB->get_records('bookit_event_resources', ['eventid' => $record->id]);
         $map = [];
         foreach ($mappings as $mapping) {
-            $map[] = (object) ['resourceid' => $mapping->resourceid, 'amount' => $mapping->amount];
+            $map[] = (object)[
+                'resourceid' => $mapping->resourceid,
+                'amount'     => $mapping->amount,
+            ];
         }
         $record->resources = $map;
 
@@ -131,14 +118,13 @@ class bookit_event {
     }
 
     /**
-     * Create object from record.
+     * Create an object from a stdClass or array record.
      *
      * @param array|object $record
      * @return self
      */
     public static function from_record(array|object $record): self {
-        $record = (object) $record;
-
+        $record = (object)$record;
         return new self(
                 $record->id ?? null,
                 $record->name,
@@ -150,56 +136,60 @@ class bookit_event {
                 $record->participantsamount ?? null,
                 $record->timecompensation ?? null,
                 $record->compensationfordisadvantages ?? null,
-                $record->bookingstatus,
+                $record->bookingstatus ?? 0,
                 $record->personinchargeid ?? null,
-                ltrim(implode(',', $record->otherexaminers), ','),
+                ltrim(implode(',', $record->otherexaminers ?? []), ','),
                 $record->coursetemplate ?? 0,
                 $record->notes ?? null,
                 $record->internalnotes ?? null,
-                $record->supportpersons,
-                $record->resources,
-                $record->refcourseid ?? 0,
+                $record->supportpersons ?? null,
+                $record->resources ?? [],
+                $record->refcourseid ?? null,
                 $record->usermodified ?? null,
                 $record->timecreated ?? null,
                 $record->timemodified ?? null,
+                // if examinerid column is present, use it; else fallback
+                $record->examinerid ?? $record->personinchargeid ?? null
         );
     }
 
     /**
-     * Save to database.
+     * Save this event to the database (insert or update).
      *
-     * @param int|null $userid
+     * @param int|null $userid Optionally override the user performing the save.
      * @return void
      * @throws dml_exception
      */
-    final public function save(int|null $userid = null): void {
+    final public function save(int $userid = null): void {
         global $DB, $USER;
+
+        // Ensure examinerid is set for the overview.
+        if (empty($this->examinerid)) {
+            $this->examinerid = $USER->id;
+        }
+
         $this->usermodified = $userid ?? $USER->id;
-        if (!$this->timecreated) {
-            $this->timecreated = time();
-        }
-        $this->timemodified = time();
+        $this->timecreated  ??= time();
+        $this->timemodified  = time();
+        $this->bookingstatus ??= 0;
 
-        if (!isset($this->bookingstatus)) {
-            $this->bookingstatus = 0;
-        }
-
-        $data = clone $this;
+        // Clone for main table, strip resources.
+        $data     = clone $this;
         $mappings = $data->resources;
         unset($data->resources);
 
-        if ($this->id) {
-            $DB->update_record('bookit_event', $this);
-            $DB->delete_records("bookit_event_resources", ['eventid' => $this->id]);
+        if (!empty($this->id)) {
+            $DB->update_record('bookit_event', $data);
+            $DB->delete_records('bookit_event_resources', ['eventid' => $this->id]);
         } else {
-            $this->id = $DB->insert_record('bookit_event', $this);
+            $this->id = $DB->insert_record('bookit_event', $data);
         }
 
         foreach ($mappings as $mapping) {
             $DB->insert_record('bookit_event_resources', [
-                    'eventid' => $this->id,
+                    'eventid'    => $this->id,
                     'resourceid' => $mapping->resourceid,
-                    'amount' => $mapping->amount,
+                    'amount'     => $mapping->amount,
             ]);
         }
     }
