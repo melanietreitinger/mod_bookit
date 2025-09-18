@@ -27,9 +27,9 @@ Feature: Edit the event form
       | activity | name   |  course | idnumber |
       | bookit   | My BookIt Activity |  C1     | 1        |
 
-    Scenario: Edit an event
-      Given the following "mod_bookit > events" exist:
-        | name            | startdate           | enddate             | bookingstatus | department         |
-        | Exam Physics II | 2025-09-09 08:00:00 | 2025-09-09 10:00:00 | 1             | Physics Department |
-      When I am on the "My BookIt Activity" "mod_bookit > view" page logged in as "susiservice"
-      Then "[datetime='2025-09-09T08:00:00']" "css_element" should exist
+  Scenario: Edit an event
+    Given the following "mod_bookit > events" exist:
+      | name            | startdate                         | enddate                              | bookingstatus | department         |
+      | Exam Physics II | ##today noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | 1             | Physics Department |
+    When I am on the "My BookIt Activity" "mod_bookit > view" page logged in as "susiservice"
+    Then the "datetime" attribute of "div.ec-today time.ec-event-time" "css_element" should contain "##today noon##%Y-%m-%dT%H:%M:%S##"

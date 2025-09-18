@@ -32,6 +32,10 @@ use mod_bookit\local\install_helper;
 function xmldb_bookit_install() {
     global $CFG;
 
+    if (defined('BEHAT_SITE_RUNNING') || PHPUNIT_TEST) {
+        return;
+    }
+
     // Load install helper for checklist data.
     require_once($CFG->dirroot . '/mod/bookit/classes/local/install_helper.php');
 
