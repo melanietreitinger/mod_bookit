@@ -63,6 +63,7 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->addElement('textarea', 'title', get_string('checklistitemname', 'mod_bookit'), ['style' => 'width:50%;']);
         $mform->setType('title', PARAM_TEXT);
         $mform->addRule('title', null, 'required', null, 'client');
+        $mform->addHelpButton('title', 'checklistitemname', 'mod_bookit');
 
         $ajaxdata = $this->_ajaxformdata;
         $categories = [];
@@ -79,6 +80,7 @@ class edit_checklistitem_form extends dynamic_form {
         );
         $mform->setType('categoryid', PARAM_INT);
         $mform->addRule('categoryid', null, 'required', null, 'client');
+        $mform->addHelpButton('categoryid', 'checklistcategory', 'mod_bookit');
 
         $allrooms = array_column(checklist_manager::get_bookit_rooms(), 'name', 'id');
         $allroles = array_column(checklist_manager::get_bookit_roles(), 'name', 'id');
@@ -87,10 +89,12 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->setType('roomids', PARAM_TEXT);
         $mform->addRule('roomids', null, 'required', null, 'client');
         $select->setMultiple(true);
+        $mform->addHelpButton('roomids', 'rooms', 'mod_bookit');
 
         $mform->addElement('select', 'roleid', get_string('role', 'mod_bookit'), $allroles, ['style' => 'width:50%;']);
         $mform->setType('roleid', PARAM_INT);
         $mform->addRule('roleid', null, 'required', null, 'client');
+        $mform->addHelpButton('roleid', 'role', 'mod_bookit');
 
         $duedateradio = [
             $mform->createElement('radio', 'duedate', '', get_string('noduedate', 'mod_bookit'), 'none'),
@@ -100,6 +104,8 @@ class edit_checklistitem_form extends dynamic_form {
 
         $mform->addGroup($duedateradio, 'duedategroup', get_string('duedate', 'mod_bookit'), null, false);
         $mform->setDefault('duedate', 'none');
+        $mform->addRule('duedategroup', null, 'required', null, 'client');
+        $mform->addHelpButton('duedategroup', 'duedate', 'mod_bookit');
 
         $mform->addElement('duration', 'duedaysoffset', get_string('time', 'mod_bookit'), ['units' => [DAYSECS]]);
         $mform->setDefault('duedaysoffset', [
@@ -107,6 +113,7 @@ class edit_checklistitem_form extends dynamic_form {
             'timeunit' => DAYSECS,
         ]);
         $mform->hideIf('duedaysoffset', 'duedate', 'eq', 'none');
+        $mform->addHelpButton('duedaysoffset', 'time', 'mod_bookit');
 
         $mform->addElement('header', 'notifications', get_string('notifications', 'mod_bookit'));
         $mform->setExpanded('notifications', false);
@@ -145,6 +152,7 @@ class edit_checklistitem_form extends dynamic_form {
             $mform->addElement('hidden', $case->value . '_id');
             $mform->setType($case->value . '_id', PARAM_INT);
         }
+        // die(print_r($GLOBALS['_HTML_QuickForm_registered_rules'], true));
     }
 
     /**
@@ -212,6 +220,11 @@ class edit_checklistitem_form extends dynamic_form {
             $item->itemid = $item->id;
             $itemslots = bookit_notification_slot::get_slots_for_item($item->id);
         }
+
+        $checklistcategories = checklist_manager::get_categories_by_master_id($item->masterid ?? null);
+
+        $options = array_column($checklistcategories, 'name', 'id');
+        $this->_form->getElement('categoryid')->loadArray($options);
 
         if (!empty($itemslots)) {
             foreach ($itemslots as $slot) {
@@ -395,5 +408,16 @@ class edit_checklistitem_form extends dynamic_form {
                 ],
             ],
         ];
+    }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if (isset($data['duedate']) && $data['duedate'] != 'none') {
+            if (isset($data['duedaysoffset']) && $data['duedaysoffset'] <= 0) {
+                $errors['duedaysoffset'] = get_string('err_numeric', 'form');
+            }
+        }
+        return $errors;
     }
 }

@@ -78,8 +78,12 @@ class checklist_manager {
      * @return array Array of bookit_checklist_category objects
      * @throws dml_exception
      */
-    public static function get_categories_by_master_id(int $masterid): array {
+    public static function get_categories_by_master_id(int $masterid = null): array {
         global $DB;
+
+        if ($masterid === null) {
+            $masterid = self::get_default_master()->id;
+        }
 
         $sql = "SELECT * FROM {bookit_checklist_category} WHERE masterid = :masterid";
         $params = ['masterid' => $masterid];
