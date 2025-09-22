@@ -144,10 +144,12 @@ export default class extends BaseComponent {
 
         const roomNames = [];
         if (event.element.roomnames) {
-            Object.entries(event.element.roomnames).forEach(([key, value]) => {
+            window.console.log('ROOMNAMES: ', event.element.roomnames);
+            event.element.roomnames.forEach((room) => {
+                window.console.log('ROOM: ', room);
                 roomNames.push({
-                    'roomid': key,
-                    'roomname': value
+                    'roomid': room.roomid,
+                    'roomname': room.roomname
                 });
             });
         }

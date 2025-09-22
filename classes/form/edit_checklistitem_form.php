@@ -372,12 +372,16 @@ class edit_checklistitem_form extends dynamic_form {
 
         $fields['id'] = $id;
 
+        error_log('Data: ' . print_r($data['roomids'], true));
+        $fields['roomnames'] = [];
         foreach ($data['roomids'] as $roomid) {
-            $fields['roomnames'] = [
+            array_push($fields['roomnames'], [
                 'roomid' => (int) $roomid,
                 'roomname' => checklist_manager::get_roomname_by_id((int) $roomid),
-            ];
+            ]);
         }
+
+        error_log('Fields after roomnames: ' . print_r($fields['roomnames'], true));
 
         $fields['rolenames'] = [];
         foreach ($data['roleids'] as $roleid) {
