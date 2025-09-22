@@ -50,7 +50,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $categoryid = 2;
         $parentid = null;
         $roomids = [3, 4];
-        $roleid = 5;
+        $roleids = [5, 6];
         $title = 'Test Item';
         $description = 'This is a test item description';
         $itemtype = 1;
@@ -68,7 +68,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
             $categoryid,
             $parentid,
             $roomids,
-            $roleid,
+            $roleids,
             $title,
             $description,
             $itemtype,
@@ -89,7 +89,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals($categoryid, $item->categoryid);
         $this->assertEquals($parentid, $item->parentid);
         $this->assertEquals($roomids, $item->roomids);
-        $this->assertEquals($roleid, $item->roleid);
+        $this->assertEquals($roleids, $item->roleids);
         $this->assertEquals($title, $item->title);
         $this->assertEquals($description, $item->description);
         $this->assertEquals($itemtype, $item->itemtype);
@@ -126,7 +126,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $categoryid = $category->save();
 
         $roomids = [1, 2];
-        $roleid = 3;
+        $roleids = [3, 4];
         $title = 'Test Item Save';
         $description = 'This is a test item for saving';
         $itemtype = 1;
@@ -140,7 +140,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
             $categoryid,
             null,
             $roomids,
-            $roleid,
+            $roleids,
             $title,
             $description,
             $itemtype,
@@ -172,7 +172,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals($sortorder, $record->sortorder);
         $this->assertEquals($isrequired, $record->isrequired);
         $this->assertEquals(json_encode($roomids), $record->roomids);
-        $this->assertEquals($roleid, $record->roleid);
+        $this->assertEquals(json_encode($roleids), $record->roleids);
     }
 
     /**
@@ -206,7 +206,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
             $categoryid,
             null,
             [1],
-            2,
+            [2],
             'Original Item Name',
             'Original Item Description',
             1,
@@ -230,7 +230,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $item->sortorder = 5;
         $item->isrequired = 1;
         $item->roomids = [1, 2, 3];
-        $item->roleid = 3;
+        $item->roleids = [3, 4];
 
         // Save the updated instance.
         $item->save();
@@ -243,7 +243,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals(5, $record->sortorder);
         $this->assertEquals(1, $record->isrequired);
         $this->assertEquals(json_encode([1, 2, 3]), $record->roomids);
-        $this->assertEquals(3, $record->roleid);
+        $this->assertEquals(json_encode([3, 4]), $record->roleids);
     }
 
     /**
@@ -277,7 +277,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
             $categoryid,
             null,
             [1],
-            2,
+            [2],
             'Item to Delete',
             'This item will be deleted',
             1,
@@ -336,7 +336,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $record->categoryid = $categoryid;
         $record->parentid = null;
         $record->roomids = json_encode([3, 4]);
-        $record->roleid = 5;
+        $record->roleids = json_encode([5, 6]);
         $record->title = 'Database Item Test';
         $record->description = 'Created directly in the database';
         $record->itemtype = 1;
@@ -364,7 +364,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals(3, $item->sortorder);
         $this->assertEquals(1, $item->isrequired);
         $this->assertEquals([3, 4], $item->roomids);
-        $this->assertEquals(5, $item->roleid);
+        $this->assertEquals([5, 6], $item->roleids);
     }
 
     /**
@@ -379,7 +379,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $record->categoryid = 6;
         $record->parentid = null;
         $record->roomids = json_encode([7, 8]);
-        $record->roleid = 9;
+        $record->roleids = json_encode([9, 10]);
         $record->title = 'Record Test Item';
         $record->description = 'Created from record';
         $record->itemtype = 1;
@@ -401,7 +401,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals(5, $item->masterid);
         $this->assertEquals(6, $item->categoryid);
         $this->assertEquals([7, 8], $item->roomids);
-        $this->assertEquals(9, $item->roleid);
+        $this->assertEquals([9, 10], $item->roleids);
         $this->assertEquals('Record Test Item', $item->title);
         $this->assertEquals('Created from record', $item->description);
         $this->assertEquals(4, $item->sortorder);
@@ -427,7 +427,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
             6,
             null,
             [7, 8],
-            9,
+            [9, 10],
             'Export Item Test',
             'Description for export test',
             1,
@@ -449,7 +449,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals(4, $data->order);
         $this->assertEquals(6, $data->categoryid);
         $this->assertEquals(json_encode([7, 8]), $data->roomids);
-        $this->assertEquals(9, $data->roleid);
+        $this->assertEquals(json_encode([9, 10]), $data->roleids);
         $this->assertEquals('item', $data->type);
     }
 }

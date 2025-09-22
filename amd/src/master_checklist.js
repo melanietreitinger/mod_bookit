@@ -152,6 +152,16 @@ export default class extends BaseComponent {
             });
         }
 
+        const roleNames = [];
+        if (event.element.rolenames) {
+            event.element.rolenames.forEach((role) => {
+                roleNames.push({
+                    'roleid': role.roleid,
+                    'rolename': role.rolename
+                });
+            });
+        }
+
         Templates.renderForPromise('mod_bookit/bookit_checklist_item',
             {
                 id: event.element.id,
@@ -160,8 +170,8 @@ export default class extends BaseComponent {
                 categoryid: event.element.category,
                 roomids: event.element.roomids,
                 roomnames: roomNames,
-                roleid: event.element.roleid,
-                rolename: event.element.rolename,
+                roleids: event.element.roleids,
+                rolenames: roleNames,
                 type: 'item',
             })
             .then(({html, js}) => {

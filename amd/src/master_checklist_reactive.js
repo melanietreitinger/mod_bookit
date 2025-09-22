@@ -105,6 +105,7 @@ const loadState = async(reactive) => {
     const checklistItemRows = document.querySelectorAll(SELECTORS.ALL_ITEM_TABLE_ROWS);
     checklistItemRows.forEach(itemRow => {
         const roomElements = itemRow.querySelectorAll('span[data-bookit-checklistitem-tabledata-room-id]');
+        const roleElements = itemRow.querySelectorAll('span[data-bookit-checklistitem-tabledata-role-id]');
 
         const roomNames = [];
         roomElements.forEach(roomElement => {
@@ -113,6 +114,15 @@ const loadState = async(reactive) => {
                 'roomname': roomElement.dataset.bookitChecklistitemRoomname
             });
         });
+
+        const roleNames = [];
+        roleElements.forEach(roleElement => {
+            roleNames.push({
+                'roleid': roleElement.dataset.bookitChecklistitemTabledataRoleId,
+                'rolename': roleElement.dataset.bookitChecklistitemRolename
+            });
+        });
+
         stateData.checklistitems.push({
             id: itemRow.dataset.bookitChecklistitemId,
             title: itemRow.dataset.bookitChecklistitemTitle,
@@ -120,8 +130,8 @@ const loadState = async(reactive) => {
             categoryid: itemRow.dataset.bookitChecklistitemCategoryid,
             roomids: itemRow.dataset.bookitChecklistitemRoomids,
             roomnames: roomNames,
-            roleid: itemRow.dataset.bookitChecklistitemRole,
-            rolename: itemRow.dataset.bookitChecklistitemRolename,
+            roleids: itemRow.dataset.bookitChecklistitemRoleids,
+            rolenames: roleNames,
         });
     });
 

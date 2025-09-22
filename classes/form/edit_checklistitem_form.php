@@ -91,10 +91,11 @@ class edit_checklistitem_form extends dynamic_form {
         $select->setMultiple(true);
         $mform->addHelpButton('roomids', 'rooms', 'mod_bookit');
 
-        $mform->addElement('select', 'roleid', get_string('role', 'mod_bookit'), $allroles, ['style' => 'width:50%;']);
-        $mform->setType('roleid', PARAM_INT);
-        $mform->addRule('roleid', null, 'required', null, 'client');
-        $mform->addHelpButton('roleid', 'role', 'mod_bookit');
+        $select = $mform->addElement('select', 'roleids', get_string('role', 'mod_bookit'), $allroles, ['style' => 'width:50%;']);
+        $mform->setType('roleids', PARAM_TEXT);
+        $mform->addRule('roleids', null, 'required', null, 'client');
+        $select->setMultiple(true);
+        $mform->addHelpButton('roleids', 'role', 'mod_bookit');
 
         $duedateradio = [
             $mform->createElement('radio', 'duedate', '', get_string('noduedate', 'mod_bookit'), 'none'),
@@ -267,7 +268,7 @@ class edit_checklistitem_form extends dynamic_form {
                     'order' => 0,
                     'categoryid' => $data['categoryid'],
                     'roomids' => $data['roomids'],
-                    'roleid' => $data['roleid'],
+                    'roleids' => $data['roleids'],
                     'duedaysrelation' => $data['duedate'],
                     'duedaysoffset' => $data['duedaysoffset']['number'],
             ];
@@ -290,7 +291,7 @@ class edit_checklistitem_form extends dynamic_form {
                 $data['categoryid'],
                 null,
                 $data['roomids'],
-                $data['roleid'],
+                $data['roleids'],
                 $data['title'],
                 $data['description'] ?? '',
                 1,
@@ -363,7 +364,7 @@ class edit_checklistitem_form extends dynamic_form {
                 'order' => 0,
                 'category' => $data['categoryid'],
                 'roomids' => $data['roomids'],
-                'roleid' => $data['roleid'],
+                'roleids' => $data['roleids'],
                 'duedaysrelation' => $data['duedate'],
                 'duedaysoffset' => $data['duedaysoffset']['number'],
             ];
@@ -378,7 +379,13 @@ class edit_checklistitem_form extends dynamic_form {
             ];
         }
 
-        $fields['rolename'] = checklist_manager::get_rolename_by_id($fields['roleid']);
+        $fields['rolenames'] = [];
+        foreach ($data['roleids'] as $roleid) {
+            $fields['rolenames'][] = [
+                'roleid' => (int) $roleid,
+                'rolename' => checklist_manager::get_rolename_by_id((int) $roleid),
+            ];
+        }
 
         return [
             [

@@ -228,5 +228,26 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025091100, 'bookit');
     }
 
+    if ($oldversion < 2025091801) {
+        $dbman = $DB->get_manager();
+
+        // Rename field roleid to roleids in bookit_checklist_item and change type from int to text.
+        $table = new xmldb_table('bookit_checklist_item');
+        $field = new xmldb_field('roleid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if ($dbman->field_exists($table, $field)) {
+            // First create the new field.
+            $newfield = new xmldb_field('roleids', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $dbman->add_field($table, $newfield);
+
+            // Then copy the data and convert to JSON array format.
+            $DB->execute("UPDATE {bookit_checklist_item} SET roleids = CONCAT('[', roleid, ']') WHERE roleid IS NOT NULL");
+
+            // Finally drop the old field.
+            $dbman->drop_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2025091801, 'bookit');
+    }
+
     return true;
 }

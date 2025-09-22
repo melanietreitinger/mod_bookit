@@ -45,7 +45,7 @@ class bookit_checklist_item implements \renderable, \templatable {
      * @param int|null $categoryid
      * @param int|null $parentid
      * @param array|null $roomids
-     * @param int|null $roleid
+     * @param array|null $roleids
      * @param string $title
      * @param string $description
      * @param int $itemtype
@@ -70,8 +70,8 @@ class bookit_checklist_item implements \renderable, \templatable {
         public ?int $parentid,
         /** @var ?array roomids */
         public ?array $roomids,
-        /** @var ?int roleid */
-        public ?int $roleid,
+        /** @var ?array roleids */
+        public ?array $roleids,
         /** @var string title */
         public string $title,
         /** @var string description */
@@ -127,7 +127,7 @@ class bookit_checklist_item implements \renderable, \templatable {
             $record->categoryid,
             $record->parentid,
             json_decode($record->roomids),
-            (int) $record->roleid,
+            json_decode($record->roleids),
             $record->title,
             $record->description,
             $record->itemtype,
@@ -157,7 +157,7 @@ class bookit_checklist_item implements \renderable, \templatable {
         $record->categoryid = $this->categoryid;
         $record->parentid = $this->parentid;
         $record->roomids = json_encode($this->roomids);
-        $record->roleid = $this->roleid;
+        $record->roleids = json_encode($this->roleids);
         $record->title = $this->title;
         $record->description = $this->description;
         $record->itemtype = $this->itemtype;
@@ -215,8 +215,14 @@ class bookit_checklist_item implements \renderable, \templatable {
             ];
         }
 
-        $data->roleid = $this->roleid;
-        $data->rolename = checklist_manager::get_rolename_by_id($this->roleid);
+        $data->roleids = json_encode($this->roleids);
+        $data->rolenames = [];
+        foreach ($this->roleids as $roleid) {
+            $data->rolenames[] = [
+                'rolename' => checklist_manager::get_rolename_by_id((int) $roleid),
+                'roleid' => (int) $roleid,
+            ];
+        }
 
         $data->type = 'item';
 

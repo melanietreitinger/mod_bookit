@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_bookit';
-$plugin->version = 2025091100;
+$plugin->version = 2025091801;
 $plugin->release = '0.1.0';
 $plugin->requires = 2024100700; // Moodle 4.5 (LTS).
 $plugin->supported = [405, 406];
