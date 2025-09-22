@@ -245,6 +245,7 @@ export default class extends BaseComponent {
         const itemId = parseInt(this.element.dataset.bookitChecklistitemId)
         const stateItem = this.reactive.state.checklistitems.get(itemId);
         const roomIds = stateItem.roomids;
+        const roleIds = stateItem.roleids;
 
         var isInRoom = false;
 
@@ -257,8 +258,11 @@ export default class extends BaseComponent {
 
         var hasRole = false;
 
-        if (activeRoleId == 0 || parseInt(this.element.dataset.bookitChecklistitemRole) == activeRoleId) {
-            hasRole = true
+        if (activeRoleId == 0 || roleIds.includes(activeRoleId.toString())) {
+            hasRole = true;
+            window.console.log('ITEM HAS ROLE: ', itemId);
+        } else {
+            window.console.log('ITEM DOES NOT HAVE ROLE: ', itemId);
         }
 
         const shouldBeVisible = isInRoom && hasRole;
@@ -270,7 +274,5 @@ export default class extends BaseComponent {
         }
 
         return shouldBeVisible;
-
     }
-
 }
