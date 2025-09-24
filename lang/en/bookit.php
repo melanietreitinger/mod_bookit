@@ -154,6 +154,7 @@ $string['noduedate'] = 'No due date';
 $string['notifications'] = 'Notifications';
 $string['overdue'] = 'Reminder when overdue';
 $string['overdue_date'] = 'After overdue date';
+$string['reset'] = 'Reset';
 $string['please_select_and_enter'] = 'Please select or enter a number';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';

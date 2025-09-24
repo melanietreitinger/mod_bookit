@@ -245,14 +245,14 @@ export default class extends BaseComponent {
             const selector = `div[id^="fitem_id_${type}_messagetext_"]`;
             const formItems = modalForm.modal.getRoot().find(selector);
 
-            formItems.each((index, formItem) => {
+            formItems.each(async (index, formItem) => {
                 const editorElement = formItem.querySelector('[data-fieldtype="editor"]');
 
                 if (editorElement) {
                     const resetButton = document.createElement('button');
                     resetButton.type = 'button';
-                    resetButton.className = 'btn btn-secondary btn-sm';
-                    resetButton.innerHTML = 'Reset to default';
+                    resetButton.className = 'btn btn-secondary btn-sm mt-2';
+                    resetButton.innerHTML = await getString('reset', 'mod_bookit');
                     resetButton.style.marginLeft = '10px';
 
                     resetButton.addEventListener('click', async (e) => {
@@ -284,7 +284,7 @@ export default class extends BaseComponent {
                                     iframe.dispatchEvent(new Event('change', { bubbles: true }));
                                 }
                             } catch (error) {
-                                console.log('Could not access iframe content:', error);
+                                window.console.log('Could not access iframe content:', error);
                             }
                         }
 
