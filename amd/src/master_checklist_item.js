@@ -3,6 +3,7 @@ import { masterChecklistReactiveInstance } from 'mod_bookit/master_checklist_rea
 import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import { getString } from 'core/str';
+import Templates from 'core/templates';
 
 export default class extends BaseComponent {
 
@@ -232,11 +233,90 @@ export default class extends BaseComponent {
         modalForm.addEventListener(modalForm.events.SERVER_VALIDATION_ERROR, (response) => {
             setTimeout(() => {
                 this._addResetButtonsToNotificationEditors(modalForm);
+                this._addRequiredIconsToNotificationFields(modalForm);
             }, 800);
         });
 
+        setTimeout(() => {
+            this._addRequiredIconsToNotificationFields(modalForm);
+        }, 800);
+
         modalForm.show();
 
+    }
+
+    /**
+     * Add required icons to notification fields
+     * @param {ModalForm} modalForm The modal form instance
+     */
+    _addRequiredIconsToNotificationFields(modalForm) {
+        const notificationTypes = ['before_due', 'when_due', 'overdue', 'when_done'];
+
+        notificationTypes.forEach(type => {
+            // Handle recipient element
+            const recipientElement = modalForm.getFormNode().querySelector(`[id^="fitem_id_${type}_recipient_"]`);
+            if (recipientElement) {
+                const firstDiv = recipientElement.firstElementChild;
+                if (firstDiv) {
+                    const formLabelAddon = firstDiv.querySelector('.form-label-addon');
+                    if (formLabelAddon && formLabelAddon.firstElementChild) {
+                        const anchorElement = formLabelAddon.firstElementChild;
+                        this._addRequiredIcon(anchorElement, type, 'recipient');
+                    }
+                }
+            }
+
+            // Handle time element
+            const timeElement = modalForm.getFormNode().querySelector(`[id^="fitem_id_${type}_time_"]`);
+            if (timeElement) {
+                const firstDiv = timeElement.firstElementChild;
+                if (firstDiv) {
+                    const formLabelAddon = firstDiv.querySelector('.form-label-addon');
+                    if (formLabelAddon && formLabelAddon.firstElementChild) {
+                        const anchorElement = formLabelAddon.firstElementChild;
+                        this._addRequiredIcon(anchorElement, type, 'time');
+                    }
+                }
+            }
+
+            // Handle messagetext element
+            const messagetextElement = modalForm.getFormNode().querySelector(`[id^="fitem_id_${type}_messagetext_"]`);
+            if (messagetextElement) {
+                const firstDiv = messagetextElement.firstElementChild;
+                if (firstDiv) {
+                    const formLabelAddon = firstDiv.querySelector('.form-label-addon');
+                    if (formLabelAddon && formLabelAddon.firstElementChild) {
+                        const anchorElement = formLabelAddon.firstElementChild;
+                        this._addRequiredIcon(anchorElement, type, 'messagetext');
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Helper method to add required icon to an element
+     * @param {Element} anchorElement The anchor element to insert before
+     * @param {string} type The notification type
+     * @param {string} fieldType The field type (recipient, time, messagetext)
+     */
+    _addRequiredIcon(anchorElement, type, fieldType) {
+        Templates.renderForPromise('core/pix_icon_fontawesome', {
+            key: 'fa-circle-exclamation',
+            title: 'Required',
+            alt: 'Required field',
+            extraclasses: 'fa text-danger fa-fw',
+            'aria-hidden': false,
+            unmappedIcon: false
+        })
+        .then((result) => {
+            const iconHtml = result.html;
+            const requiredIconHtml = `<div class="text-danger" title="Required" aria-hidden="true">${iconHtml}</div>`;
+            anchorElement.insertAdjacentHTML('beforebegin', requiredIconHtml);
+        })
+        .catch((error) => {
+            window.console.log(`Template error for ${type}_${fieldType}:`, error);
+        });
     }
 
     /**
