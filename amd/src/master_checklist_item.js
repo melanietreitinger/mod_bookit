@@ -7,6 +7,8 @@ import Templates from 'core/templates';
 
 export default class extends BaseComponent {
 
+    static MODAL_TIMEOUT_MS = 300;
+
     create(descriptor) {
 
         const itemEditBtnSelector = 'EDIT_CHECKLISTITEM_BTN_' + descriptor.element.dataset.bookitChecklistitemId;
@@ -227,19 +229,19 @@ export default class extends BaseComponent {
 
             setTimeout(() => {
                 this._addResetButtonsToNotificationEditors(modalForm);
-            }, 800);
+            }, this.constructor.MODAL_TIMEOUT_MS);
         });
 
         modalForm.addEventListener(modalForm.events.SERVER_VALIDATION_ERROR, (response) => {
             setTimeout(() => {
                 this._addResetButtonsToNotificationEditors(modalForm);
                 this._addRequiredIconsToNotificationFields(modalForm);
-            }, 800);
+            }, this.constructor.MODAL_TIMEOUT_MS);
         });
 
         setTimeout(() => {
             this._addRequiredIconsToNotificationFields(modalForm);
-        }, 800);
+        }, this.constructor.MODAL_TIMEOUT_MS);
 
         modalForm.show();
 
