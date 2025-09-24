@@ -120,6 +120,9 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->setExpanded('notifications', false);
 
         foreach (bookit_notification_type::cases() as $case) {
+
+            $mform->addElement('html', '<hr/>');
+
             $mform->addElement('checkbox', $case->value, get_string($case->value, 'mod_bookit'));
             $select = $mform->addElement(
                 'select',
@@ -130,6 +133,8 @@ class edit_checklistitem_form extends dynamic_form {
             );
             $select->setMultiple(true);
             $mform->hideIf($case->value . '_recipient', $case->value);
+            // $mform->addRule($case->value . '_recipient', null, 'required', null, 'client');
+            // $mform->disabledIf($case->value . '_recipient', $case->value, 'notchecked');
 
             if (array_search($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
                 $mform->addElement(
@@ -155,10 +160,12 @@ class edit_checklistitem_form extends dynamic_form {
             ]);
             $mform->hideIf($case->value . '_messagetext', $case->value);
 
+            $mform->addElement('button', $case->value . '_reset', get_string('reset', 'mod_bookit'));
+            $mform->hideIf($case->value . '_reset', $case->value);
+
             $mform->addElement('hidden', $case->value . '_id');
             $mform->setType($case->value . '_id', PARAM_INT);
         }
-        // die(print_r($GLOBALS['_HTML_QuickForm_registered_rules'], true));
     }
 
     /**
@@ -376,8 +383,6 @@ class edit_checklistitem_form extends dynamic_form {
         }
 
         $fields['id'] = $id;
-
-        error_log('Data: ' . print_r($data['roomids'], true));
         $fields['roomnames'] = [];
         foreach ($data['roomids'] as $roomid) {
             array_push($fields['roomnames'], [
@@ -385,8 +390,6 @@ class edit_checklistitem_form extends dynamic_form {
                 'roomname' => checklist_manager::get_roomname_by_id((int) $roomid),
             ]);
         }
-
-        error_log('Fields after roomnames: ' . print_r($fields['roomnames'], true));
 
         $fields['rolenames'] = [];
         foreach ($data['roleids'] as $roleid) {
@@ -434,6 +437,26 @@ class edit_checklistitem_form extends dynamic_form {
                 $errors['duedaysoffset'] = get_string('err_numeric', 'form');
             }
         }
+
+        foreach (bookit_notification_type::cases() as $case) {
+            if (!empty($data[$case->value])) {
+                // Checkbox enabled → validate its fields
+                if (empty($data[$case->value . '_recipient'])) {
+                    $errors[$case->value . '_recipient'] = get_string('required');
+                }
+
+                if (in_array($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE])) {
+                    if (empty($data[$case->value . '_time']['number'])) {
+                        $errors[$case->value . '_time'] = get_string('required');
+                    }
+                }
+
+                if (empty($data[$case->value . '_messagetext']['text'])) {
+                    $errors[$case->value . '_messagetext'] = get_string('required');
+                }
+            }
+        }
+
         return $errors;
     }
 }

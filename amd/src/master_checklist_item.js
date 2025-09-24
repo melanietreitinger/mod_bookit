@@ -173,7 +173,6 @@ export default class extends BaseComponent {
             this.reactive.stateManager.processUpdates(response.detail);
 
             if (response.detail[0].action === 'delete') {
-                window.console.log('item deleted - removing & unregistering');
                 this.reactive.dispatch('checklistitemDeleted',
                     {
                         id: parseInt(response.detail[0].fields.id),
@@ -230,6 +229,12 @@ export default class extends BaseComponent {
             }, 800);
         });
 
+        modalForm.addEventListener(modalForm.events.SERVER_VALIDATION_ERROR, (response) => {
+            setTimeout(() => {
+                this._addResetButtonsToNotificationEditors(modalForm);
+            }, 800);
+        });
+
         modalForm.show();
 
     }
@@ -242,67 +247,44 @@ export default class extends BaseComponent {
         const notificationTypes = ['before_due', 'when_due', 'overdue', 'when_done'];
 
         notificationTypes.forEach(type => {
-            const selector = `div[id^="fitem_id_${type}_messagetext_"]`;
-            const formItems = modalForm.modal.getRoot().find(selector);
+            const resetButton = modalForm.getFormNode().querySelector(`button[name="${type}_reset"]`);
 
-            formItems.each(async (index, formItem) => {
-                const editorElement = formItem.querySelector('[data-fieldtype="editor"]');
+            if (resetButton) {
+                resetButton.addEventListener('click', async (e) => {
+                    e.preventDefault();
 
-                if (editorElement) {
-                    const resetButton = document.createElement('button');
-                    resetButton.type = 'button';
-                    resetButton.className = 'btn btn-secondary btn-sm mt-2';
-                    resetButton.innerHTML = await getString('reset', 'mod_bookit');
-                    resetButton.style.marginLeft = '10px';
+                    window.console.log(`Resetting ${type} message to default`);
 
-                    resetButton.addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        const defaultMessage = await getString(`customtemplatedefaultmessage_${type}`, 'mod_bookit');
+                    const defaultMessage = await getString(`customtemplatedefaultmessage_${type}`, 'mod_bookit');
 
-                        const textarea = editorElement.querySelector('textarea');
-                        const iframe = editorElement.querySelector('iframe');
+                    const editorSelector = `[name="${type}_messagetext[text]"]`;
+                    const textarea = modalForm.getFormNode().querySelector(editorSelector);
 
-                        if (textarea) {
-                            textarea.value = defaultMessage;
-                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (textarea) {
+                        textarea.value = defaultMessage;
+                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        textarea.dispatchEvent(new Event('change', { bubbles: true }));
 
-                            if (window.M && window.M.editor_atto && textarea.id) {
-                                const editorInstance = window.M.editor_atto.get(textarea.id);
-                                if (editorInstance) {
-                                    editorInstance.updateOriginal();
-                                }
-                            }
-                        } else if (iframe) {
-                            try {
-                                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                                const body = iframeDoc.querySelector('body');
-                                if (body) {
-                                    body.innerHTML = defaultMessage;
-
-                                    iframe.dispatchEvent(new Event('input', { bubbles: true }));
-                                    iframe.dispatchEvent(new Event('change', { bubbles: true }));
-                                }
-                            } catch (error) {
-                                window.console.log('Could not access iframe content:', error);
+                        if (window.M && window.M.editor_atto && textarea.id) {
+                            const editorInstance = window.M.editor_atto.get(textarea.id);
+                            if (editorInstance) {
+                                editorInstance.updateOriginal();
                             }
                         }
+                    }
 
-                        if (window.tinymce) {
-                            const editorId = textarea?.id || editorElement.querySelector('[id]')?.id;
-                            if (editorId) {
-                                const editor = window.tinymce.get(editorId);
-                                if (editor) {
-                                    editor.setContent(defaultMessage);
-                                    editor.save();
-                                }
+                    if (window.tinymce) {
+                        const editorId = textarea?.id;
+                        if (editorId) {
+                            const editor = window.tinymce.get(editorId);
+                            if (editor) {
+                                editor.setContent(defaultMessage);
+                                editor.save();
                             }
                         }
-                    });
-
-                    editorElement.appendChild(resetButton);
-                }
-            });
+                    }
+                });
+            }
         });
     }
 
@@ -318,18 +300,12 @@ export default class extends BaseComponent {
 
         if (activeRoomId == 0 || roomIds.includes(activeRoomId.toString())) {
             isInRoom = true;
-            window.console.log('ITEM IS IN ROOM: ', itemId);
-        } else {
-            window.console.log('ITEM IS NOT IN ROOM: ', itemId);
         }
 
         var hasRole = false;
 
         if (activeRoleId == 0 || roleIds.includes(activeRoleId.toString())) {
             hasRole = true;
-            window.console.log('ITEM HAS ROLE: ', itemId);
-        } else {
-            window.console.log('ITEM DOES NOT HAVE ROLE: ', itemId);
         }
 
         const shouldBeVisible = isInRoom && hasRole;
