@@ -143,8 +143,13 @@ class edit_checklistitem_form extends dynamic_form {
 
             $mform->addElement('editor', $case->value . '_messagetext', get_string('customtemplate', 'mod_bookit'));
             $mform->setType($case->value . '_messagetext', PARAM_RAW);
+
+            // Set specific default message template for each notification type
+            $defaultMessageKey = 'customtemplatedefaultmessage_' . $case->value;
+            $defaultMessage = get_string($defaultMessageKey, 'mod_bookit');
+
             $mform->setDefault($case->value . '_messagetext', [
-                'text'   => get_string('customtemplatedefaultmessage', 'mod_bookit'),
+                'text'   => $defaultMessage,
                 'format' => FORMAT_HTML,
                 'itemid' => 0,
             ]);

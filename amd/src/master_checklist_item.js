@@ -233,10 +233,61 @@ export default class extends BaseComponent {
                 modalForm.submitFormAjax();
 
             });
+
+            // Wait 200ms then add reset buttons to notification type message editors
+            setTimeout(() => {
+                this._addResetButtonsToNotificationEditors(modalForm);
+            }, 800);
         });
 
         modalForm.show();
 
+    }
+
+    /**
+     * Add reset buttons to notification type message editors
+     * @param {ModalForm} modalForm The modal form instance
+     */
+    _addResetButtonsToNotificationEditors(modalForm) {
+        // Notification types that have message text editors
+        const notificationTypes = ['before_due', 'when_due', 'overdue', 'when_done'];
+
+        notificationTypes.forEach(type => {
+            // Find elements with IDs like fitem_id_before_due_messagetext_O39PAGaapB5f006
+            const selector = `div[id^="fitem_id_${type}_messagetext_"]`;
+            const formItems = modalForm.modal.getRoot().find(selector);
+
+            formItems.each((index, formItem) => {
+                // Find the editor element within this form item
+                const editorElement = formItem.querySelector('[data-fieldtype="editor"]');
+
+                if (editorElement) {
+                    // Create reset button
+                    const resetButton = document.createElement('button');
+                    resetButton.type = 'button';
+                    resetButton.className = 'btn btn-secondary btn-sm';
+                    resetButton.innerHTML = 'Reset to default';
+                    resetButton.style.marginLeft = '10px';
+
+                    // Add click event listener
+                    resetButton.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const defaultMessage = await getString(`customtemplatedefaultmessage_${type}`, 'mod_bookit');
+
+                        // Set the content (this will depend on the editor type)
+                        const textarea = editorElement.querySelector('textarea');
+                        if (textarea) {
+                            textarea.value = defaultMessage;
+                            // Trigger change event to notify any listeners
+                            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    });
+
+                    // Append the button to the editor element
+                    editorElement.appendChild(resetButton);
+                }
+            });
+        });
     }
 
     shouldBeVisible() {

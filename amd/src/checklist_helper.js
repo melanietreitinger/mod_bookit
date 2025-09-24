@@ -7,7 +7,6 @@ export default class {
         for (const component of components) {
             if (!component.element) continue;
 
-            // Überprüfen, ob diese Element-ID bereits gefunden wurde
             const elementId = component.element.id;
             if (foundElementIds.has(elementId)) {
                 continue;
