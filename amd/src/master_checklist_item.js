@@ -10,15 +10,6 @@ export default class extends BaseComponent {
 
         const itemEditBtnSelector = 'EDIT_CHECKLISTITEM_BTN_' + descriptor.element.dataset.bookitChecklistitemId;
         this.selectors[itemEditBtnSelector] = `#edit-checklistitem-${descriptor.element.dataset.bookitChecklistitemId}`;
-
-        // if (descriptor.element.dataset.bookitChecklistitemId == "2") {
-        //     window.console.log('DESCRIPTOR FOR ITEM ID 2 FOUND:');
-        //     window.console.log('DESCRIPTOR:', descriptor);
-        //     window.console.log('ELEMENT:', descriptor.element);
-        //     window.console.log('DATASET:', descriptor.element.dataset);
-        //     window.console.log('SELECTORS:', this.selectors);
-
-        // }
     }
 
     static init(target, selectors) {
@@ -234,7 +225,6 @@ export default class extends BaseComponent {
 
             });
 
-            // Wait 200ms then add reset buttons to notification type message editors
             setTimeout(() => {
                 this._addResetButtonsToNotificationEditors(modalForm);
             }, 800);
@@ -249,41 +239,67 @@ export default class extends BaseComponent {
      * @param {ModalForm} modalForm The modal form instance
      */
     _addResetButtonsToNotificationEditors(modalForm) {
-        // Notification types that have message text editors
         const notificationTypes = ['before_due', 'when_due', 'overdue', 'when_done'];
 
         notificationTypes.forEach(type => {
-            // Find elements with IDs like fitem_id_before_due_messagetext_O39PAGaapB5f006
             const selector = `div[id^="fitem_id_${type}_messagetext_"]`;
             const formItems = modalForm.modal.getRoot().find(selector);
 
             formItems.each((index, formItem) => {
-                // Find the editor element within this form item
                 const editorElement = formItem.querySelector('[data-fieldtype="editor"]');
 
                 if (editorElement) {
-                    // Create reset button
                     const resetButton = document.createElement('button');
                     resetButton.type = 'button';
                     resetButton.className = 'btn btn-secondary btn-sm';
                     resetButton.innerHTML = 'Reset to default';
                     resetButton.style.marginLeft = '10px';
 
-                    // Add click event listener
                     resetButton.addEventListener('click', async (e) => {
                         e.preventDefault();
                         const defaultMessage = await getString(`customtemplatedefaultmessage_${type}`, 'mod_bookit');
 
-                        // Set the content (this will depend on the editor type)
                         const textarea = editorElement.querySelector('textarea');
+                        const iframe = editorElement.querySelector('iframe');
+
                         if (textarea) {
                             textarea.value = defaultMessage;
-                            // Trigger change event to notify any listeners
+                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
                             textarea.dispatchEvent(new Event('change', { bubbles: true }));
+
+                            if (window.M && window.M.editor_atto && textarea.id) {
+                                const editorInstance = window.M.editor_atto.get(textarea.id);
+                                if (editorInstance) {
+                                    editorInstance.updateOriginal();
+                                }
+                            }
+                        } else if (iframe) {
+                            try {
+                                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                                const body = iframeDoc.querySelector('body');
+                                if (body) {
+                                    body.innerHTML = defaultMessage;
+
+                                    iframe.dispatchEvent(new Event('input', { bubbles: true }));
+                                    iframe.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            } catch (error) {
+                                console.log('Could not access iframe content:', error);
+                            }
+                        }
+
+                        if (window.tinymce) {
+                            const editorId = textarea?.id || editorElement.querySelector('[id]')?.id;
+                            if (editorId) {
+                                const editor = window.tinymce.get(editorId);
+                                if (editor) {
+                                    editor.setContent(defaultMessage);
+                                    editor.save();
+                                }
+                            }
                         }
                     });
 
-                    // Append the button to the editor element
                     editorElement.appendChild(resetButton);
                 }
             });
