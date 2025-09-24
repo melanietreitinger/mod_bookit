@@ -132,6 +132,7 @@ class edit_checklistitem_form extends dynamic_form {
                 ['style' => 'width:50%;']
             );
             $select->setMultiple(true);
+            $mform->addHelpButton($case->value . '_recipient', 'recipient', 'mod_bookit');
             $mform->hideIf($case->value . '_recipient', $case->value);
             // $mform->addRule($case->value . '_recipient', null, 'required', null, 'client');
             // $mform->disabledIf($case->value . '_recipient', $case->value, 'notchecked');
@@ -140,16 +141,16 @@ class edit_checklistitem_form extends dynamic_form {
                 $mform->addElement(
                     'duration',
                     $case->value . '_time',
-                    get_string('time', 'mod_bookit'),
+                    get_string('notification_time', 'mod_bookit'),
                     ['units' => [DAYSECS]]
                 );
                 $mform->hideIf($case->value . '_time', $case->value);
+                $mform->addHelpButton($case->value . '_time', 'notification_time', 'mod_bookit');
             }
 
             $mform->addElement('editor', $case->value . '_messagetext', get_string('customtemplate', 'mod_bookit'));
             $mform->setType($case->value . '_messagetext', PARAM_RAW);
 
-            // Set specific default message template for each notification type
             $defaultMessageKey = 'customtemplatedefaultmessage_' . $case->value;
             $defaultMessage = get_string($defaultMessageKey, 'mod_bookit');
 
@@ -159,6 +160,7 @@ class edit_checklistitem_form extends dynamic_form {
                 'itemid' => 0,
             ]);
             $mform->hideIf($case->value . '_messagetext', $case->value);
+            $mform->addHelpButton($case->value . '_messagetext', 'customtemplate', 'mod_bookit');
 
             $mform->addElement('button', $case->value . '_reset', get_string('reset', 'mod_bookit'));
             $mform->hideIf($case->value . '_reset', $case->value);

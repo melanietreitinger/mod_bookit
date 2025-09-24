@@ -53,6 +53,7 @@ $string['checklistitemname_help'] = 'The text content of the checklist item whic
 $string['checklistitemsuccess'] = 'Checklist item created successfully.';
 $string['checklistitemupdatesuccess'] = 'Checklist item updated successfully.';
 $string['customtemplate'] = 'Message';
+$string['customtemplate_help'] = 'The custom message template for the notification. ';
 $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
 .'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
 .'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
@@ -152,6 +153,8 @@ $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
 $string['noduedate'] = 'No due date';
 $string['notifications'] = 'Notifications';
+$string['notification_time'] = 'Time';
+$string['notification_time_help'] = 'The time offset in days in relation the exam when the notification should be sent.';
 $string['overdue'] = 'Reminder when overdue';
 $string['overdue_date'] = 'After overdue date';
 $string['reset'] = 'Reset';
@@ -159,6 +162,7 @@ $string['please_select_and_enter'] = 'Please select or enter a number';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
 $string['recipient'] = 'Recipient';
+$string['recipient_help'] = 'The recipient of the notification.';
 $string['resource_amount'] = 'Amount';
 $string['responsibility'] = 'Responsibility';
 $string['role'] = 'Role';
