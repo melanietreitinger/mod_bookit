@@ -4,6 +4,7 @@ import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import { getString } from 'core/str';
 import Templates from 'core/templates';
+import Notification from 'core/notification';
 
 export default class extends BaseComponent {
 
@@ -230,6 +231,11 @@ export default class extends BaseComponent {
             setTimeout(() => {
                 this._addResetButtonsToNotificationEditors(modalForm);
             }, this.constructor.MODAL_TIMEOUT_MS);
+
+            setTimeout(() => {
+                this._addRequiredIconsToNotificationFields(modalForm);
+            }, this.constructor.MODAL_TIMEOUT_MS);
+
         });
 
         modalForm.addEventListener(modalForm.events.SERVER_VALIDATION_ERROR, (response) => {
@@ -239,12 +245,7 @@ export default class extends BaseComponent {
             }, this.constructor.MODAL_TIMEOUT_MS);
         });
 
-        setTimeout(() => {
-            this._addRequiredIconsToNotificationFields(modalForm);
-        }, this.constructor.MODAL_TIMEOUT_MS);
-
         modalForm.show();
-
     }
 
     /**
@@ -335,39 +336,68 @@ export default class extends BaseComponent {
                 resetButton.addEventListener('click', async (e) => {
                     e.preventDefault();
 
-                    window.console.log(`Resetting ${type} message to default`);
+                    try {
+                        const confirmTitle = await getString('confirm', 'core');
+                        const confirmMessage = 'Are you sure you want to reset the message to the default template? Your changes will be deleted.';
 
-                    const defaultMessage = await getString(`customtemplatedefaultmessage_${type}`, 'mod_bookit');
-
-                    const editorSelector = `[name="${type}_messagetext[text]"]`;
-                    const textarea = modalForm.getFormNode().querySelector(editorSelector);
-
-                    if (textarea) {
-                        textarea.value = defaultMessage;
-                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                        textarea.dispatchEvent(new Event('change', { bubbles: true }));
-
-                        if (window.M && window.M.editor_atto && textarea.id) {
-                            const editorInstance = window.M.editor_atto.get(textarea.id);
-                            if (editorInstance) {
-                                editorInstance.updateOriginal();
+                        Notification.confirm(
+                            confirmTitle,
+                            confirmMessage,
+                            await getString('reset', 'core'),
+                            await getString('cancel', 'core'),
+                            async () => {
+                                await this._performReset(modalForm, type);
                             }
-                        }
-                    }
+                        );
 
-                    if (window.tinymce) {
-                        const editorId = textarea?.id;
-                        if (editorId) {
-                            const editor = window.tinymce.get(editorId);
-                            if (editor) {
-                                editor.setContent(defaultMessage);
-                                editor.save();
-                            }
+                    } catch (error) {
+                        window.console.error('Error showing confirmation dialog:', error);
+                        // Fallback: ask with native confirm
+                        if (confirm('Are you sure you want to reset the message to the default template? Your changes will be deleted.')) {
+                            await this._performReset(modalForm, type);
                         }
                     }
                 });
             }
         });
+    }
+
+    /**
+     * Helper method to perform the reset operation
+     * @param {ModalForm} modalForm The modal form instance
+     * @param {string} type The notification type
+     */
+    async _performReset(modalForm, type) {
+        window.console.log(`Resetting ${type} message to default`);
+
+        const defaultMessage = await getString('customtemplatedefaultmessage_' + type, 'mod_bookit');
+
+        const editorSelector = `[name="${type}_messagetext[text]"]`;
+        const textarea = modalForm.getFormNode().querySelector(editorSelector);
+
+        if (textarea) {
+            textarea.value = defaultMessage;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+
+            if (window.M && window.M.editor_atto && textarea.id) {
+                const editorInstance = window.M.editor_atto.get(textarea.id);
+                if (editorInstance) {
+                    editorInstance.updateOriginal();
+                }
+            }
+        }
+
+        if (window.tinymce) {
+            const editorId = textarea?.id;
+            if (editorId) {
+                const editor = window.tinymce.get(editorId);
+                if (editor) {
+                    editor.setContent(defaultMessage);
+                    editor.save();
+                }
+            }
+        }
     }
 
     shouldBeVisible() {
