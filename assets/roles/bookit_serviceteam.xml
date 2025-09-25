@@ -950,6 +950,7 @@
 		<allow>mod/bookit:editevent</allow>
 		<allow>mod/bookit:editinternal</allow>
 		<allow>mod/bookit:editresource</allow>
+		<allow>mod/bookit:managemasterchecklist</allow>
 		<allow>mod/bookit:view</allow>
 		<allow>mod/bookit:viewalldetailsofevent</allow>
 		<allow>mod/bookit:viewalldetailsofownevent</allow>

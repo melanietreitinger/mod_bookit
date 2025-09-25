@@ -153,11 +153,14 @@ if ($hassiteconfig) {
         }
     }
 
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-        'mod_bookit_master_checklist',
-        get_string('master_checklist', 'mod_bookit'),
-        new moodle_url('/mod/bookit/master_checklist.php'),
-    ));
+    if (is_siteadmin() || has_capability('mod/bookit:managemasterchecklist', context_system::instance())) {
+        $ADMIN->add('mod_bookit_category', new admin_externalpage(
+            'mod_bookit_master_checklist',
+            get_string('master_checklist', 'mod_bookit'),
+            new moodle_url('/mod/bookit/master_checklist.php')
+        ));
+    }
+
 
     $ADMIN->add('mod_bookit_category', $settings);
     $settings = null;
