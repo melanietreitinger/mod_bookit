@@ -29,10 +29,12 @@ use core\context;
 use core\context\module;
 use core\exception\moodle_exception;
 use core_form\dynamic_form;
+use mod_bookit\external\get_possible_starttimes;
 use mod_bookit\local\entity\bookit_event;
-use mod_bookit\local\manager\categories_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
+use mod_bookit\local\persistent\institution;
+use mod_bookit\local\persistent\room;
 use moodle_url;
 use stdClass;
 
@@ -49,6 +51,9 @@ class edit_event_form extends dynamic_form {
      * @var int BOOKINGSTATUS_NEW: event is not processed yet and can be edited by the creator.
      */
     public const BOOKINGSTATUS_NEW = 0;
+
+    /** @var bookit_event|null An event, if an existing one is getting edited. */
+    private $event = null;
 
     /**
      * Define the form
@@ -69,9 +74,6 @@ class edit_event_form extends dynamic_form {
         $cmid = $this->_ajaxformdata['cmid'] ?? false;
         $course = get_course_and_cm_from_cmid($cmid);
         $contextcourse = context_course::instance($course[0]->id);
-
-        // ...@TODO: remove debug output field.
-        // $mform->addElement('static', 'dummy', "<pre>".print_r(usertimezone(), true)."</pre>");
 
         // Set hidden field course module id.
         $mform->addElement('hidden', 'cmid');
@@ -100,12 +102,11 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('name', 'event_name', 'mod_bookit');
 
         // Semester.
-        $currentyear = date('Y');
+        $currentyear = (int) date('Y');
         // Generate semesters dynamically.
         $semesters = [];
         // ...@TODO: Make range of semester terms an admin option.
         for ($i = -1; $i < 2; $i++) {
-
             $semesters[($currentyear + $i) * 10 + 1] = get_string('summer_semester', 'mod_bookit') . " " . ($currentyear + $i);
             $semesters[($currentyear + $i) * 10 + 2] = get_string('winter_semester', 'mod_bookit') . " " . ($currentyear + $i);
         }
@@ -114,61 +115,26 @@ class edit_event_form extends dynamic_form {
         $mform->addRule('semester', null, 'required', null, 'client');
         $mform->addHelpButton('semester', 'select_semester', 'mod_bookit');
 
-        // Add the "department" field.
-        $mform->addElement('text', 'department', get_string('event_department', 'mod_bookit'), ['size' => '64']);
-        $mform->disabledIf('department', 'editevent', 'neq');
-        $mform->setType('department', PARAM_TEXT);
-        $mform->addRule('department', null, 'required', null, 'client');
-        $mform->addRule('department', null, 'maxlength', 255, 'client');
-        $mform->addHelpButton('department', 'event_department', 'mod_bookit');
-
-        // Add the "room" field.
-        $rooms = [];
-        foreach ($catresourceslist as $category => $value) {
-            if ($category === 'Rooms') {
-                foreach ($value['resources'] as $rid => $catresource) {
-                    $rooms[$rid] = $catresource['name'];
-                }
-            }
+        // Add the "institutionid" field.
+        $institutions = institution::get_records(['active' => true]);
+        $institutionoptions = [];
+        foreach ($institutions as $institution) {
+            $institutionoptions[$institution->get('id')] = $institution->get('name');
         }
-        $mform->addElement('select', 'room', get_string('event_room', 'mod_bookit'), $rooms);
-        $mform->disabledIf('room', 'editevent', 'neq');
-        $mform->addHelpButton('room', 'event_room', 'mod_bookit');
+        $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
+        $mform->addRule('institutionid', null, 'required', null, 'client');
+        $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
 
-        // Add the "bookingtimes" fields.
-        $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
-        $curdate = new \DateTimeImmutable('+ 1 hour');
-        $starttimearray = [
-                'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
-                'step' => 15, // Step to increment minutes by.
-                'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
-        ];
-        // Set time restrictions based on "editinternal" capability.
-        if ($caneditinternal) {
-            $starttimearray['startyear'] = $config->eventminyears;
-        } else {
-            $starttimearray['startyear'] = date("Y");
-
+        // Add the "roomid" field.
+        $rooms = room::get_records(['active' => true]);
+        $roomoptions = [];
+        foreach ($rooms as $room) {
+            $roomoptions[$room->get('id')] = $room->get('name');
         }
-        $starttimearray['stopyear'] = $config->eventmaxyears;
 
-        // Closure function to check that no date in the past is selected.
-        $checkmindate = function($val) use ($curdate) {
-            $checkdate = mktime($val['hour'], $val['minute'], '00', $val['month'], $val['day'], $val['year']);
-            if ($checkdate < $curdate->getTimestamp()) {
-                return false;
-            }
-            return true;
-        };
-
-        $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $starttimearray);
-        $mform->disabledIf('starttime', 'editevent', 'neq');
-        $mform->addRule('starttime', null, 'required', null, 'client');
-        if (!$caneditinternal) {
-            $mform->addRule('starttime', get_string('event_error_mintime', 'mod_bookit'), 'callback', $checkmindate, 'server',
-                    false, true);
-        }
-        $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
+        $mform->addElement('select', 'roomid', get_string('event_room', 'mod_bookit'), $roomoptions);
+        $mform->disabledIf('roomid', 'editevent', 'neq');
+        $mform->addHelpButton('roomid', 'event_room', 'mod_bookit');
 
         // Add the "duration" field.
         $duration = [];
@@ -183,6 +149,25 @@ class edit_event_form extends dynamic_form {
         $select->setSelected($eventdefaultduration);
         $mform->disabledIf('duration', 'editevent', 'neq');
         $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
+
+        // Add the "bookingtimes" fields.
+        $starttimearray = [
+                'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
+        ];
+        // Set time restrictions based on "editinternal" capability.
+        if ($caneditinternal) {
+            $starttimearray['startyear'] = $config->eventminyears;
+        } else {
+            $starttimearray['startyear'] = date("Y");
+
+        }
+        $starttimearray['stopyear'] = $config->eventmaxyears;
+
+        $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
+        $mform->addRule('startdate', null, 'required', null, 'client');
+        $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
+
+        $mform->addElement('select', 'starttime');
 
         // Add a static field to explain extra time.
         $mform->addElement('static', 'extratime_label', get_string('event_extratime_label', 'mod_bookit'),
@@ -345,6 +330,36 @@ class edit_event_form extends dynamic_form {
                         false);
             }
         }
+
+        $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
+        if ($timeclicked) {
+            $timeclicked = new \DateTimeImmutable($timeclicked);
+            $timeclickedstamp = $timeclicked->getTimestamp();
+            $startdate = $timeclicked->setTime(0, 0);
+            $this->_form->setDefault('startdate', $timeclicked->getTimestamp());
+
+            $possiblestarttimes = get_possible_starttimes::list_possible_starttimes(
+                \DateTime::createFromImmutable($startdate),
+                $eventdefaultduration,
+                array_key_first($roomoptions),
+            );
+
+            $smallestdiff = 1e9;
+            $selectedtime = null;
+
+            foreach ($possiblestarttimes as $possiblestarttime => $str) {
+                if (abs($possiblestarttime - $timeclickedstamp) < $smallestdiff) {
+                    $smallestdiff = abs($possiblestarttime - $timeclickedstamp);
+                    $selectedtime = $possiblestarttime;
+                }
+            }
+
+            /** @var \MoodleQuickForm_select $starttimeel */
+            $starttimeel = $mform->getElement('starttime');
+            $starttimeel->removeOptions();
+            $starttimeel->loadArray($possiblestarttimes);
+            $mform->setDefault('starttime', $selectedtime);
+        }
     }
 
     /**
@@ -356,6 +371,7 @@ class edit_event_form extends dynamic_form {
     public function definition_after_data() {
         global $DB, $USER;
         $mform =& $this->_form;
+        $data = $this->get_submitted_data() ?? $this->event;
 
         $context = $this->get_context_for_dynamic_submission();
         $id = $this->_form->getElementValue('id');
@@ -368,7 +384,7 @@ class edit_event_form extends dynamic_form {
         // Show the user who created the entry.
         $user = $DB->get_record('user', ['id' => $usermodified]);
         $mform->getElement('usermodified')->setValue(
-                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // ...@TODO: ???
+                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // TODO: ???
         );
 
         // Get context and capabilities.
@@ -388,6 +404,15 @@ class edit_event_form extends dynamic_form {
         $e2 = $this->_form->createElement('hidden', 'editinternal', $caneditinternal);
         $this->_form->setType('editinternal', PARAM_BOOL);
         $mform->insertElementBefore($e2, 'name');
+
+        if ($data) {
+            /** @var \MoodleQuickForm_select $starttimeel */
+            $starttimeel = $mform->getElement('starttime');
+            $starttimeel->removeOptions();
+            $starttimeel->loadArray(get_possible_starttimes::list_possible_starttimes(
+                (new \DateTime())->setTimestamp($data->startdate), $data->duration, $data->roomid
+            ));
+        }
     }
 
     /**
@@ -398,6 +423,10 @@ class edit_event_form extends dynamic_form {
         $id = $this->optional_param('id', null, PARAM_INT);
         if (!empty($id)) {
             $event = event_manager::get_event($id);
+            $date = (new \DateTime())->setTimestamp($event->starttime);
+            $date->setTime(0, 0);
+            $event->startdate = $date->getTimestamp();
+            $this->event = $event;
         }
         $event->cmid = $this->optional_param('cmid', null, PARAM_INT);
 
@@ -418,7 +447,7 @@ class edit_event_form extends dynamic_form {
      * Checks if current user has access to this form, otherwise throws exception
      */
     protected function check_access_for_dynamic_submission(): void {
-        // ...@TODO.
+        // TODO.
     }
 
     /**
