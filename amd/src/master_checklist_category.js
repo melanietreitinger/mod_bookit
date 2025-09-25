@@ -32,6 +32,10 @@ export default class extends BaseComponent {
             {watch: 'activeRole:updated', handler: this._handleFilterUpdate},
             {watch: 'activeRoom:updated', handler: this._handleFilterUpdate},
             {watch: 'checklistitems:created', handler: this._handleFilterUpdate},
+            {watch: 'checklistitems.roomids:updated', handler: this._handleFilterUpdate},
+            {watch: 'checklistitems.roleids:updated', handler: this._handleFilterUpdate},
+
+            // item rooms and roles watchers
         ];
     }
 

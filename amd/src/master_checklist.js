@@ -39,7 +39,7 @@ export default class extends BaseComponent {
             {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
             {watch: 'checklistitems.title:updated', handler: this._replaceRenderedItem},
             {watch: 'checklistitems.roomids:updated', handler: this._replaceRenderedItem},
-            {watch: 'checklistitems.roleid:updated', handler: this._replaceRenderedItem},
+            {watch: 'checklistitems.roleids:updated', handler: this._replaceRenderedItem},
             // {watch: 'activeRole:updated', handler: this._handleRoleUpdate},
             // {watch: 'activeRoom:updated', handler: this._handleRoomUpdate},
         ];
@@ -98,6 +98,7 @@ export default class extends BaseComponent {
 
         modalForm.show();
     }
+
 
     async _handleAddChecklistCategoryButtonClick() {
         const modalForm = new ModalForm({
@@ -230,6 +231,8 @@ export default class extends BaseComponent {
             //         });
             //     });
             // }
+
+            // TODO we need to differentiate between roles and rooms here => fieldpart.startsWith
 
             const roomsSelector = `td[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
             const roomsElement = this.getElement(roomsSelector);
