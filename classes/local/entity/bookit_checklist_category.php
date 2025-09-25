@@ -127,7 +127,7 @@ class bookit_checklist_category implements \renderable, \templatable {
         $record->masterid = $this->masterid;
         $record->name = $this->name;
         $record->description = $this->description;
-        $record->checklistitems = trim($this->checklistitems, '"');
+        $record->checklistitems = trim($this->checklistitems, '"[]');
         $record->sortorder = $this->sortorder;
         $record->usermodified = $USER->id;
         $record->timemodified = time();

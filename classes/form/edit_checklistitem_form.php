@@ -65,17 +65,17 @@ class edit_checklistitem_form extends dynamic_form {
         $mform->addRule('title', null, 'required', null, 'client');
         $mform->addHelpButton('title', 'checklistitemname', 'mod_bookit');
 
-        $ajaxdata = $this->_ajaxformdata;
-        $categories = [];
-        if (!empty($ajaxdata['categories'])) {
-            $categories = array_column($ajaxdata['categories'], 'name', 'id');
-        }
+        // $ajaxdata = $this->_ajaxformdata;
+        // $categories = [];
+        // if (!empty($ajaxdata['categories'])) {
+        //     $categories = array_column($ajaxdata['categories'], 'name', 'id');
+        // }
 
         $mform->addElement(
             'select',
             'categoryid',
             get_string('checklistcategory', 'mod_bookit'),
-            $categories,
+            null,
             ['style' => 'width:50%;']
         );
         $mform->setType('categoryid', PARAM_INT);
