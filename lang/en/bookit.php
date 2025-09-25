@@ -163,6 +163,7 @@ $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
 $string['recipient'] = 'Recipient';
 $string['recipient_help'] = 'The recipient of the notification.';
+$string['resetmessagetoconfirm'] = 'Are you sure you want to reset the message to the default template? Your changes will be deleted.';
 $string['resource_amount'] = 'Amount';
 $string['responsibility'] = 'Responsibility';
 $string['role'] = 'Role';

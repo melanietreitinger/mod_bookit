@@ -187,15 +187,12 @@ export default class extends BaseComponent {
             }
 
             const parentId = parseInt(this.element.dataset.bookitChecklistitemCategoryid);
-
             const updatedParentId = parseInt(response.detail[0].fields.categoryid);
 
             if (parentId !== updatedParentId) {
 
                 const targetParentCategoryObject = this.reactive.state.checklistcategories.get(response.detail[0].fields.categoryid);
-
                 const copiedArray = [...targetParentCategoryObject.items];
-
                 const lastItemOfParentCategoryId = copiedArray.pop();
 
                 const data = {
@@ -207,11 +204,9 @@ export default class extends BaseComponent {
                 }
 
                 this.reactive.dispatch('reOrderCategoryItems', data);
-
                 this.element.dataset.bookitChecklistitemCategoryid = data.targetParentId;
 
                 const targetParentElement = document.getElementById(`bookit-master-checklist-tbody-category-${data.targetParentId}`);
-
                 targetParentElement.append(this.element);
             }
 
@@ -256,7 +251,6 @@ export default class extends BaseComponent {
         const notificationTypes = ['before_due', 'when_due', 'overdue', 'when_done'];
 
         notificationTypes.forEach(type => {
-            // Handle recipient element
             const recipientElement = modalForm.getFormNode().querySelector(`[id^="fitem_id_${type}_recipient_"]`);
             if (recipientElement) {
                 const firstDiv = recipientElement.firstElementChild;
@@ -269,7 +263,6 @@ export default class extends BaseComponent {
                 }
             }
 
-            // Handle time element
             const timeElement = modalForm.getFormNode().querySelector(`[id^="fitem_id_${type}_time_"]`);
             if (timeElement) {
                 const firstDiv = timeElement.firstElementChild;
@@ -282,7 +275,6 @@ export default class extends BaseComponent {
                 }
             }
 
-            // Handle messagetext element
             const messagetextElement = modalForm.getFormNode().querySelector(`[id^="fitem_id_${type}_messagetext_"]`);
             if (messagetextElement) {
                 const firstDiv = messagetextElement.firstElementChild;
@@ -338,24 +330,20 @@ export default class extends BaseComponent {
 
                     try {
                         const confirmTitle = await getString('confirm', 'core');
-                        const confirmMessage = 'Are you sure you want to reset the message to the default template? Your changes will be deleted.';
+                        const confirmMessage = await getString('resetmessagetoconfirm', 'mod_bookit');
 
-                        Notification.confirm(
+                        Notification.deleteCancel(
                             confirmTitle,
                             confirmMessage,
                             await getString('reset', 'core'),
-                            await getString('cancel', 'core'),
                             async () => {
                                 await this._performReset(modalForm, type);
-                            }
+                            },
+                            () => {}
                         );
 
                     } catch (error) {
                         window.console.error('Error showing confirmation dialog:', error);
-                        // Fallback: ask with native confirm
-                        if (confirm('Are you sure you want to reset the message to the default template? Your changes will be deleted.')) {
-                            await this._performReset(modalForm, type);
-                        }
                     }
                 });
             }
@@ -368,9 +356,7 @@ export default class extends BaseComponent {
      * @param {string} type The notification type
      */
     async _performReset(modalForm, type) {
-        window.console.log(`Resetting ${type} message to default`);
-
-        const defaultMessage = await getString('customtemplatedefaultmessage_' + type, 'mod_bookit');
+        const defaultMessage = await getString(`customtemplatedefaultmessage_${type}`, 'mod_bookit');
 
         const editorSelector = `[name="${type}_messagetext[text]"]`;
         const textarea = modalForm.getFormNode().querySelector(editorSelector);
