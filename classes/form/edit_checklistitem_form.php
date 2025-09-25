@@ -448,7 +448,7 @@ class edit_checklistitem_form extends dynamic_form {
                 }
 
                 if (in_array($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE])) {
-                    if (empty($data[$case->value . '_time']['number'])) {
+                    if (empty($data[$case->value . '_time'])) {
                         $errors[$case->value . '_time'] = get_string('required');
                     }
                 }

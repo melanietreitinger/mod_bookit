@@ -7,7 +7,7 @@ import Templates from 'core/templates';
 
 export default class extends BaseComponent {
 
-    static MODAL_TIMEOUT_MS = 300;
+    static MODAL_TIMEOUT_MS = 500;
 
     create(descriptor) {
 
