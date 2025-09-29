@@ -33,7 +33,7 @@ export default class extends BaseComponent {
             {watch: 'checklistcategories:created', handler: this._handleCategoryCreatedEvent},
             {watch: 'checklistcategories:deleted', handler: this._handleCategoryDeletedEvent},
             {watch: 'checklistcategories.name:updated', handler: this._handleCategoryNameUpdatedEvent},
-            {watch: 'checklistcategories.items:updated', handler: this._handleCategoryItemsUpdatedEvent},
+
             {watch: 'checklistitems:created', handler: this._handleItemCreatedEvent},
             {watch: 'checklistitems:deleted', handler: this._handleItemDeletedEvent},
             {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
@@ -350,37 +350,7 @@ export default class extends BaseComponent {
 
     }
 
-    _handleCategoryItemsUpdatedEvent(event) {
-        const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.id}`);
 
-        const category = this.reactive.state.checklistcategories.get(event.element.id);
-
-        const formDataObj = {
-            id: category.id,
-            masterid: 1,
-            name: category.name,
-            checklistitems: category.items,
-            action: 'put',
-            _qf__mod_bookit_form_edit_checklist_category_form: 1,
-        };
-
-        const formData = new URLSearchParams(formDataObj).toString();
-        // TODO move to mutation
-        Ajax.call([{
-            methodname: 'core_form_dynamic_form',
-            args: {
-                formdata: formData,
-                form: 'mod_bookit\\form\\edit_checklist_category_form'
-            }
-        }])[0]
-        .then((response) => {
-            // TODO handle response?
-        })
-        .catch(exception => {
-            window.console.error('AJAX error:', exception);
-
-        });
-    }
 
     _handleRoleUpdate(event) {
         const allCategoryElements = document.querySelectorAll(this.selectors.ALL_CATEGORY_TABLE_ROWS);
