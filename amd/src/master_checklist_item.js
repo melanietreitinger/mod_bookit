@@ -216,10 +216,23 @@ export default class extends BaseComponent {
         modalForm.addEventListener(modalForm.events.LOADED, (response) => {
             const deleteButton = modalForm.modal.getRoot().find('button[data-action="delete"]');
 
-            deleteButton.on('click', (e) => {
+            deleteButton.on('click', async (e) => {
+                e.preventDefault();
 
-                modalForm.getFormNode().querySelector('input[name="action"]').value = 'delete';
-                modalForm.submitFormAjax();
+                const confirmTitle = await getString('confirm', 'core');
+                const confirmMessage = await getString('areyousure', 'core');
+                const deleteText = await getString('delete', 'core');
+
+                Notification.deleteCancel(
+                    confirmTitle,
+                    confirmMessage,
+                    deleteText,
+                    () => {
+                        modalForm.getFormNode().querySelector('input[name="action"]').value = 'delete';
+                        modalForm.submitFormAjax();
+                    },
+                    () => {}
+                );
 
             });
 

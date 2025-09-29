@@ -4,6 +4,7 @@ import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import {getString} from 'core/str';
 import ChecklistHelper from 'mod_bookit/checklist_helper';
+import Notification from 'core/notification';
 
 export default class extends BaseComponent {
 
@@ -89,9 +90,22 @@ export default class extends BaseComponent {
 
             const deleteButton = modalForm.modal.getRoot().find('button[data-action="delete"]');
 
-            deleteButton.on('click', (e) => {
-                modalForm.getFormNode().querySelector('input[name="action"]').value = 'delete';
-                modalForm.submitFormAjax();
+            deleteButton.on('click', async (e) => {
+                e.preventDefault();
+                const confirmTitle = await getString('confirm', 'core');
+                const confirmMessage = await getString('areyousure', 'core');
+                const deleteText = await getString('delete', 'core');
+
+                Notification.deleteCancel(
+                    confirmTitle,
+                    confirmMessage,
+                    deleteText,
+                    () => {
+                        modalForm.getFormNode().querySelector('input[name="action"]').value = 'delete';
+                        modalForm.submitFormAjax();
+                    },
+                    () => {}
+                );
             });
         });
 
