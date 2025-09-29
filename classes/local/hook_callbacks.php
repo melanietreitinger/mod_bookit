@@ -43,7 +43,7 @@ class hook_callbacks {
         if (\has_capability('mod/bookit:managemasterchecklist', $context) && !\is_siteadmin()) {
             $url = new \moodle_url('/mod/bookit/master_checklist.php');
             $hook->get_primaryview()->add(
-                get_string('master_checklist', 'mod_bookit'),
+                get_string('pluginname', 'mod_bookit'),
                 $url,
                 navigation_node::TYPE_CUSTOM,
                 null,
