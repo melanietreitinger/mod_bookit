@@ -5,7 +5,7 @@ export default class {
 
     }
 
-    callDynamicForm(stateManager, data) {
+    _callDynamicForm(stateManager, data, processUpdates = true) {
         const type = data.formType;
         data.formData[`_qf__mod_bookit_form_edit_checklist_${type}_form`] = 1;
         const formData = new URLSearchParams(data.formData).toString();
@@ -18,7 +18,9 @@ export default class {
             }
         }])[0]
         .then((response) => {
+            if (processUpdates) {
                 stateManager.processUpdates(JSON.parse(response.data));
+            }
         })
         .catch(exception => {
             window.console.error('AJAX error:', exception);
@@ -31,18 +33,14 @@ export default class {
 
         stateManager.setReadOnly(false);
 
-        // Check if parentId and targetParentId are different
         if (data.parentId !== data.targetParentId) {
-            // Handle moving item between different categories
             const sourceCategory = state.checklistcategories.get(data.parentId);
             const targetCategory = state.checklistcategories.get(data.targetParentId);
 
-            // Initialize source category items array if needed
             if (!sourceCategory.items || !Array.isArray(sourceCategory.items)) {
                 sourceCategory.items = [];
             }
 
-            // Initialize target category items array if needed
             if (!targetCategory.items || !Array.isArray(targetCategory.items)) {
                 targetCategory.items = [];
             }
@@ -50,22 +48,17 @@ export default class {
             const idToMove = parseInt(data.id);
             const targetId = parseInt(data.targetId);
 
-            // Remove the item from the source category
             sourceCategory.items = sourceCategory.items.filter(item => item !== idToMove);
 
-            // Add the item to the target category if it doesn't already exist
             const targetItems = [...targetCategory.items];
             const existingTargetIndex = targetItems.indexOf(idToMove);
 
-            // Only add if the item doesn't already exist in target array
             if (existingTargetIndex === -1) {
                 const targetIndex = targetItems.indexOf(targetId);
 
                 if (targetIndex !== -1) {
-                    // Insert after the target ID
                     targetItems.splice(targetIndex + 1, 0, idToMove);
                 } else {
-                    // If target ID not found, add to the end
                     targetItems.push(idToMove);
                 }
             }
@@ -77,10 +70,8 @@ export default class {
             targetItem.categoryid = parseInt(targetCategory.id);
 
         } else {
-            // Same category - original logic for reordering within a category
             const category = state.checklistcategories.get(data.targetParentId);
 
-            // Initialize items array if it doesn't exist or isn't iterable
             if (!category.items || !Array.isArray(category.items)) {
                 category.items = [];
             }
@@ -91,34 +82,52 @@ export default class {
 
             const currentIndex = currentItems.indexOf(idToMove);
 
-            // If the ID to move is not found in the array, add it at the end
             if (currentIndex === -1) {
                 currentItems.push(idToMove);
             }
 
-            // After possible addition, check if target exists
             const targetIndex = currentItems.indexOf(targetId);
 
             if (targetIndex !== -1 && currentIndex !== -1) {
-                // Remove the element to move
                 currentItems.splice(currentIndex, 1);
 
-                // Find the new target index (might have shifted if the item was removed before target)
                 const newTargetIndex = currentItems.indexOf(targetId);
 
-                // Insert the element after the target
                 currentItems.splice(newTargetIndex + 1, 0, idToMove);
             } else if (currentIndex !== -1) {
-                // targetId doesn't exist but idToMove does - keep the current position
-                // No changes needed
             }
 
-            // Update the items array
             category.items = currentItems;
 
         }
 
         stateManager.setReadOnly(true);
+
+        const categoriesToUpdate = [];
+
+        categoriesToUpdate.push(data.targetParentId);
+
+        if (data.parentId !== data.targetParentId) {
+            categoriesToUpdate.push(data.parentId);
+        }
+
+        categoriesToUpdate.forEach(categoryId => {
+            const category = stateManager.state.checklistcategories.get(categoryId);
+            const formDataObj = {
+                id: category.id,
+                masterid: 1,
+                name: category.name,
+                checklistitems: category.items,
+                action: 'put',
+            };
+
+            const mutationData = {
+                formData: formDataObj,
+                formType: 'category'
+            };
+
+            this._callDynamicForm(stateManager, mutationData, false);
+        });
     }
 
     reOrderCategories(stateManager, data) {
@@ -158,7 +167,7 @@ export default class {
         data.formData = formDataObj;
         data.formType = 'master';
 
-        this.callDynamicForm(stateManager, data);
+        this._callDynamicForm(stateManager, data);
     }
 
     checklistitemCreated(stateManager, data) {

@@ -33,7 +33,7 @@ export default class extends BaseComponent {
             {watch: 'checklistcategories:created', handler: this._handleCategoryCreatedEvent},
             {watch: 'checklistcategories:deleted', handler: this._handleCategoryDeletedEvent},
             {watch: 'checklistcategories.name:updated', handler: this._handleCategoryNameUpdatedEvent},
-            {watch: 'checklistcategories.items:updated', handler: this._handleCategoryItemsUpdatedEvent},
+
             {watch: 'checklistitems:created', handler: this._handleItemCreatedEvent},
             {watch: 'checklistitems:deleted', handler: this._handleItemDeletedEvent},
             {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
@@ -80,7 +80,7 @@ export default class extends BaseComponent {
 
     async _handleAddChecklistItemButtonClick() {
         const modalForm = new ModalForm({
-            formClass: "mod_bookit\\form\\edit_checklistitem_form",
+            formClass: "mod_bookit\\form\\edit_checklist_item_form",
             args: {
                 masterid: 1,
                 itemid: null,
@@ -294,7 +294,7 @@ export default class extends BaseComponent {
             roomid: itemObject.roomid,
             roleid: itemObject.roleid,
             action: 'put',
-            _qf__mod_bookit_form_edit_checklistitem_form: 1,
+            _qf__mod_bookit_form_edit_checklist_item_form: 1,
         };
 
         const formData = new URLSearchParams(formDataObj).toString();
@@ -303,7 +303,7 @@ export default class extends BaseComponent {
             methodname: 'core_form_dynamic_form',
             args: {
                 formdata: formData,
-                form: 'mod_bookit\\form\\edit_checklistitem_form'
+                form: 'mod_bookit\\form\\edit_checklist_item_form'
             }
             }])[0]
             .then((response) => {
@@ -350,37 +350,7 @@ export default class extends BaseComponent {
 
     }
 
-    _handleCategoryItemsUpdatedEvent(event) {
-        const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.id}`);
 
-        const category = this.reactive.state.checklistcategories.get(event.element.id);
-
-        const formDataObj = {
-            id: category.id,
-            masterid: 1,
-            name: category.name,
-            checklistitems: category.items,
-            action: 'put',
-            _qf__mod_bookit_form_edit_checklist_category_form: 1,
-        };
-
-        const formData = new URLSearchParams(formDataObj).toString();
-        // TODO move to mutation
-        Ajax.call([{
-            methodname: 'core_form_dynamic_form',
-            args: {
-                formdata: formData,
-                form: 'mod_bookit\\form\\edit_checklist_category_form'
-            }
-        }])[0]
-        .then((response) => {
-            // TODO handle response?
-        })
-        .catch(exception => {
-            window.console.error('AJAX error:', exception);
-
-        });
-    }
 
     _handleRoleUpdate(event) {
         const allCategoryElements = document.querySelectorAll(this.selectors.ALL_CATEGORY_TABLE_ROWS);
