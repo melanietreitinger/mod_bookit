@@ -42,7 +42,7 @@ use mod_bookit\local\entity\bookit_notification_type;
  * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class edit_checklistitem_form extends dynamic_form {
+class edit_checklist_item_form extends dynamic_form {
     /**
      * Form definition.
      *

@@ -80,7 +80,7 @@ export default class extends BaseComponent {
 
     async _handleAddChecklistItemButtonClick() {
         const modalForm = new ModalForm({
-            formClass: "mod_bookit\\form\\edit_checklistitem_form",
+            formClass: "mod_bookit\\form\\edit_checklist_item_form",
             args: {
                 masterid: 1,
                 itemid: null,
@@ -294,7 +294,7 @@ export default class extends BaseComponent {
             roomid: itemObject.roomid,
             roleid: itemObject.roleid,
             action: 'put',
-            _qf__mod_bookit_form_edit_checklistitem_form: 1,
+            _qf__mod_bookit_form_edit_checklist_item_form: 1,
         };
 
         const formData = new URLSearchParams(formDataObj).toString();
@@ -303,7 +303,7 @@ export default class extends BaseComponent {
             methodname: 'core_form_dynamic_form',
             args: {
                 formdata: formData,
-                form: 'mod_bookit\\form\\edit_checklistitem_form'
+                form: 'mod_bookit\\form\\edit_checklist_item_form'
             }
             }])[0]
             .then((response) => {
