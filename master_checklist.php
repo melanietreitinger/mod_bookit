@@ -41,6 +41,7 @@ $PAGE->set_context($context);
 
 $PAGE->set_url(new moodle_url('/mod/bookit/master_checklist.php'));
 $PAGE->set_heading(get_string('master_checklist', 'mod_bookit'));
+$PAGE->set_title(get_string('master_checklist', 'mod_bookit'));
 
 $PAGE->set_pagelayout('admin');
 
