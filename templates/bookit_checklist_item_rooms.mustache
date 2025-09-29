@@ -29,7 +29,8 @@
 <td class="align-middle py-3" data-bookit-checklistitem-tabledata-roomids-id="{{id}}">
 {{#roomnames}}
     <div>
-        <span class="badge badge-info text-light" style="opacity: 0.8;"
+        <span class="badge {{textclass}}"
+            style="opacity: 0.8;background-color: {{eventcolor}};"
             data-bookit-checklistitem-tabledata-room-id="{{roomid}}"
             data-bookit-checklistitem-roomname="{{roomname}}"
             data-bookit-checklistitem-tabledata-is-room-element>{{roomname}}</span>

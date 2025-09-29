@@ -7,6 +7,7 @@
 	<contextlevels>
 		<level>course</level>
 		<level>module</level>
+		<level>system</level>
 	</contextlevels>
 	<allowassign>
 		<shortname>serviceteam</shortname>
@@ -957,5 +958,6 @@
 		<allow>moodle/course:enrolreview</allow>
 		<allow>moodle/role:assign</allow>
 		<allow>moodle/user:viewdetails</allow>
+		<allow>moodle/site:configview</allow>
 	</permissions>
 </role>
