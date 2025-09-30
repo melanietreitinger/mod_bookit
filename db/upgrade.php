@@ -192,9 +192,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025050500, 'bookit');
     }
 
-    if ($oldversion < 2025042200) {
-        $dbman = $DB->get_manager();
-
+    if ($oldversion < 2025081200) {
         // Define table bookit_institution to be created.
         $table = new xmldb_table('bookit_institution');
 
@@ -321,13 +319,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025042200, 'bookit');
-    }
-
-    if ($oldversion < 2025042800) {
-        $dbman = $DB->get_manager();
-
         // Define field active to be added to bookit_room.
         $table = new xmldb_table('bookit_room');
         $field = new xmldb_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 1, 'eventcolor');
@@ -364,32 +355,11 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->add_field($table, $field);
         }
 
-        // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025042800, 'bookit');
-    }
-
-    if ($oldversion < 2025050500) {
-        $dbman = $DB->get_manager();
-
         // Define field room to be added to bookit_event.
         $table = new xmldb_table('bookit_event');
         $field = new xmldb_field('roomid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'duration');
 
         // Conditionally launch add field room.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025050500, 'bookit');
-    }
-
-    if ($oldversion < 2025081200) {
-        // Define field seats to be added to bookit_room.
-        $table = new xmldb_table('bookit_room');
-        $field = new xmldb_field('seats', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'roommode');
-
-        // Conditionally launch add field seats.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
