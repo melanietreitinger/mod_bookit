@@ -218,4 +218,36 @@ class checklist_manager {
         }
         return '';
     }
+
+    /**
+     * Get role by role ID.
+     *
+     * @param int $roleid The ID of the role
+     * @return object|null Role object or null if not found
+     */
+    public static function get_role_by_id(int $roleid): ?object {
+        $roles = self::get_bookit_roles();
+        $rolematch = array_filter($roles, fn($item) => $item->id == $roleid);
+        if (!empty($rolematch)) {
+            return reset($rolematch);
+        }
+        return null;
+    }
+
+    /**
+     * Check if current user has a specific role ID in any context.
+     *
+     * @param int $roleid Role ID to check
+     * @return bool True if user has the role
+     */
+    public static function user_has_bookit_role(int $roleid): bool {
+        global $USER, $DB;
+
+        $sql = "SELECT COUNT(*)
+                FROM {role_assignments} ra
+                WHERE ra.roleid = ?
+                AND ra.userid = ?";
+
+        return $DB->count_records_sql($sql, [$roleid, $USER->id]) > 0;
+    }
 }

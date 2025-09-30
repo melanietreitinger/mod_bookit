@@ -218,12 +218,22 @@ class bookit_checklist_item implements \renderable, \templatable {
         $data->roleids = json_encode($this->roleids);
         $data->rolenames = [];
         foreach ($this->roleids as $roleid) {
-            $data->rolenames[] = [
-                'rolename' => checklist_manager::get_rolename_by_id((int) $roleid),
+            $role = checklist_manager::get_role_by_id((int) $roleid);
+
+            $roleData = [
+                'rolename' => $role ? $role->name : '',
                 'roleid' => (int) $roleid,
             ];
-        }
 
+            // Check if current user has this specific role
+            if (checklist_manager::user_has_bookit_role((int) $roleid)) {
+                $roleData['extraclasses'] = 'badge badge-warning text-dark';
+            } else {
+                $roleData['extraclasses'] = 'badge badge-primary text-light';
+            }
+
+            $data->rolenames[] = $roleData;
+        }
         $data->type = 'item';
 
         return $data;
