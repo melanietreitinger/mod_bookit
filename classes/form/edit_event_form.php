@@ -332,7 +332,7 @@ class edit_event_form extends dynamic_form {
         }
 
         $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
-        if ($timeclicked) {
+        if ($timeclicked && $roomoptions) {
             $timeclicked = new \DateTimeImmutable($timeclicked);
             $timeclickedstamp = $timeclicked->getTimestamp();
             $startdate = $timeclicked->setTime(0, 0);
@@ -405,7 +405,7 @@ class edit_event_form extends dynamic_form {
         $this->_form->setType('editinternal', PARAM_BOOL);
         $mform->insertElementBefore($e2, 'name');
 
-        if ($data) {
+        if ($data && $data->roomid) {
             /** @var \MoodleQuickForm_select $starttimeel */
             $starttimeel = $mform->getElement('starttime');
             $starttimeel->removeOptions();
