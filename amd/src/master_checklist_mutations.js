@@ -33,6 +33,7 @@ export default class {
 
         stateManager.setReadOnly(false);
 
+        // The item was moved to a different category. We need to update both categories.
         if (data.parentId !== data.targetParentId) {
             const sourceCategory = state.checklistcategories.get(data.parentId);
             const targetCategory = state.checklistcategories.get(data.targetParentId);
@@ -70,6 +71,7 @@ export default class {
             targetItem.categoryid = parseInt(targetCategory.id);
 
         } else {
+            // The item was moved within the same category. We only need to update one category.
             const category = state.checklistcategories.get(data.targetParentId);
 
             if (!category.items || !Array.isArray(category.items)) {
@@ -111,6 +113,7 @@ export default class {
             categoriesToUpdate.push(data.parentId);
         }
 
+        // Persist state changes.
         categoriesToUpdate.forEach(categoryId => {
             const category = stateManager.state.checklistcategories.get(categoryId);
             const formDataObj = {
