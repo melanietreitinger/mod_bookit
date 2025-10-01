@@ -147,12 +147,9 @@ $string['overview']        = 'My booked events';
 $string['overview_help']   = 'Shows every event for which you are listed as examiner.';
 $string['checklist']       = 'Checklist';
 $string['status']          = 'Status';
-$string['room']            = 'Room';
 $string['bookit:viewownoverview'] = 'View own events overview';
 
-
-
-//NEU
+// NEW
 $string['config_weekdaysvisible']      = 'Weekdays shown in calendar';
 $string['config_weekdaysvisible']      = 'Weekdays shown in calendar';
 $string['config_weekdaysvisible_desc'] =
@@ -193,7 +190,6 @@ $string['calendar']          = 'Calendar';
 $string['calendar_desc']     = 'General calendar & booking behaviour';
 $string['resources']         = 'Resources';
 $string['resources_desc']    = 'Rooms, resource colours & availability';
-$string['checklist']         = 'Checklist';
 $string['checklist_desc']    = 'Optional checklist / roles extension';
 $string['checklist_placeholder'] = 'This section is reserved for the optional BookIT-Checklist add-on.';
 
