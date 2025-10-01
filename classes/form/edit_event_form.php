@@ -354,10 +354,10 @@ class edit_event_form extends dynamic_form {
      * @return void
      */
     public function definition_after_data(): void {
-        global $DB, $USER, $PAGE;   // $PAGE needed for JS injection
+        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
         $mform =& $this->_form;
 
-        //Derive current booking-status & capability flags
+        // Derive current booking-status & capability flags.
         $rawstatus   = $mform->getElementValue('bookingstatus');
         $bookingstat = is_array($rawstatus) ? (int)$rawstatus[0] : self::BOOKINGSTATUS_NEW;
 
@@ -375,7 +375,7 @@ class edit_event_form extends dynamic_form {
                             || (self::BOOKINGSTATUS_NEW == $bookingstat && in_array($USER->id, $otherexaminers, true));
         $caneditinternal  = has_capability('mod/bookit:editinternal', $context);
 
-        //Store capability flags as hidden elements
+        // Store capability flags as hidden elements.
         $mform->insertElementBefore(
             $mform->createElement('hidden', 'editevent', $caneditevent), 'name'
         )->setType('editevent', PARAM_BOOL);
@@ -384,15 +384,15 @@ class edit_event_form extends dynamic_form {
             $mform->createElement('hidden', 'editinternal', $caneditinternal), 'name'
         )->setType('editinternal', PARAM_BOOL);
 
-        //Week-day validation  – server side
+        // Week-day validation  – server side.
         $mform->addRule(
             'starttime',
             get_string('invalidweekday', 'mod_bookit'),
             'callback',
             function($val): bool {
-                // $val arrives as an array from date_time_selector
+                // The $val arrives as an array from date_time_selector.
                 if (is_array($val)) {
-                    // make_timestamp( year, month, day, hour, minute )
+                    // Make_timestamp( year, month, day, hour, minute ).
                     $ts = make_timestamp(
                         (int)$val['year'],
                         (int)$val['month'],
@@ -401,17 +401,17 @@ class edit_event_form extends dynamic_form {
                         (int)($val['minute'] ?? 0)
                     );
                 } else {
-                    $ts = (int)$val; // Fallback: already a Unix timestamp
+                    $ts = (int)$val; // Fallback: already a Unix timestamp.
                 }
 
-                $allowed = \bookit_allowed_weekdays(); // 0 = Sun … 6 = Sat
+                $allowed = \bookit_allowed_weekdays(); // 0 = Sun … 6 = Sat.
                 $weekday = (int) date('w', $ts);
                 return in_array($weekday, $allowed, true);
             },
             'server'
         );
 
-        //Quick client-side alert (does not block submission)
+        // Quick client-side alert (does not block submission). 
         $allowed = implode(',', \bookit_allowed_weekdays());
         if ($allowed !== '') {
             $PAGE->requires->js_init_code("
@@ -461,7 +461,7 @@ class edit_event_form extends dynamic_form {
      * Checks if current user has access to this form, otherwise throws exception
      */
     protected function check_access_for_dynamic_submission(): void {
-        // ...@TODO.
+        // ...@TODO.  Does this look like Code codechecker?!
     }
 
     /**

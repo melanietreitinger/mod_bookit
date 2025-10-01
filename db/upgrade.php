@@ -39,7 +39,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
 
     $dbman = $DB->get_manager();
 
-    /**
+    /*
      * 2024102204 – rename event fields, drop legacy fields, add new fields, rename table
      */
     if ($oldversion < 2024102204) {
@@ -82,7 +82,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2024102204, 'bookit');
     }
 
-    /**
+    /*
      * 2025050500 – create checklist tables
      */
     if ($oldversion < 2025050500) {
@@ -184,7 +184,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025050500, 'bookit');
     }
 
-    /**
+    /*
      * 2025050600 – add examinerid to bookit_event
      */
     if ($oldversion < 2025050600) {
@@ -200,7 +200,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025050600, 'bookit');
     }
 
-    /**
+    /*
      * 2025060100 – backfill examinerid from personinchargeid
      */
     if ($oldversion < 2025060100) {

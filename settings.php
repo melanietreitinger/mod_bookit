@@ -16,7 +16,7 @@
 
 /**
  * Plugin administration pages are defined here.
- * 
+ *
  * Implementation of new BookIT admin settings overview - Structure:
  *   - Root entry shown under Plugins → Activity modules → BookIT
  *       => external page: /mod/bookit/admin/settings_overview.php (cards only)
@@ -25,7 +25,7 @@
  *       => will be shown after first click in the settings_overview.php
  *
  * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de> 
+ * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 use mod_bookit\local\manager\resource_manager;
@@ -36,16 +36,16 @@ require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
 
-    /**
+    /*
      * Root entry as an external page.
      */
     $settings = new admin_externalpage(
-        'mod_bookit', // Must match admin_externalpage_setup('mod_bookit') in settings_overview.php
+        'mod_bookit', // Must match admin_externalpage_setup('mod_bookit') in settings_overview.php.
         get_string('pluginname', 'mod_bookit'),
         new moodle_url('/mod/bookit/admin/settings_overview.php')
     );
 
-    /**
+    /*
      * Hidden bucket to hold the real admin_settingpage instances so they don't
      * show up in the left-hand tree (or the search list) as separate entries.
      */
@@ -53,8 +53,8 @@ if ($hassiteconfig) {
         new admin_category('mod_bookit_hidden', get_string('pluginname', 'mod_bookit'), /*hidden*/ true)
     );
 
-    // --- Helper: render a heading-like select to jump between sub-pages --------
-    $build_bookit_heading_select = function(string $active): string {
+    /* --- Helper: render a heading-like select to jump between sub-pages. -------- */
+    $buildbookitheadingselect = function(string $active): string {
         $defs = [
             'calendar'  => ['id' => 'mod_bookit_calendar',  'label' => get_string('calendar',  'mod_bookit')],
             'resources' => ['id' => 'mod_bookit_resources', 'label' => get_string('resources', 'mod_bookit')],
@@ -63,10 +63,10 @@ if ($hassiteconfig) {
 
         // Make a big, bold select that looks like the page heading.
         $select = html_writer::start_tag('select', [
-            'class'     => 'form-select form-select-lg fw-bold border-0 p-0',
-            'style'     => 'font-size:1.75rem;width:auto;display:inline-block;background-color:transparent;',
-            'aria-label'=> 'BookIT settings section',
-            'onchange'  => 'if(this.value){window.location=this.value;}',
+            'class'      => 'form-select form-select-lg fw-bold border-0 p-0',
+            'style'      => 'font-size:1.75rem;width:auto;display:inline-block;background-color:transparent;',
+            'aria-label' => 'BookIT settings section',
+            'onchange'   => 'if(this.value){window.location=this.value;}',
         ]);
 
         foreach ($defs as $key => $info) {
@@ -84,17 +84,17 @@ if ($hassiteconfig) {
     };
 
 
-    /*     
+    /*
     * CALENDAR – event / calendar-behaviour settings
     */
     $calendar = new admin_settingpage('mod_bookit_calendar', get_string('calendar', 'mod_bookit'));
 
-    // Top switcher (Calendar active)
+    // Top switcher (Calendar active).
     $calendar->add(new admin_setting_heading(
-        'mod_bookit_nav_calendar', '', $build_bookit_heading_select('calendar')
+        'mod_bookit_nav_calendar', '', $buildbookitheadingselect('calendar')
     ));
 
-    // Event setting eventmaxyears 
+    // Event setting eventmaxyears.
     $name        = 'mod_bookit/extratime';
     $title       = get_string('settings_extratime', 'mod_bookit');
     $description = get_string('settings_extratime_desc', 'mod_bookit');
@@ -135,20 +135,19 @@ if ($hassiteconfig) {
         'mod_bookit/weekdaysvisible',
         get_string('config_weekdaysvisible',      'mod_bookit'),
         get_string('config_weekdaysvisible_desc', 'mod_bookit'),
-        [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // default Mon–Fri
+        [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Default Mon–Fri.
         $weekdaychoices
     ));
 
     // Register under hidden container.
     $ADMIN->add('mod_bookit_hidden', $calendar);
 
-    
-    // RESOURCES – colours & room related settings
+    // RESOURCES – colours & room related settings.
     $resources = new admin_settingpage('mod_bookit_resources', get_string('resources', 'mod_bookit'));
 
-    // Top switcher (Resources active)
+    // Top switcher (Resources active).
     $resources->add(new admin_setting_heading(
-        'mod_bookit_nav_resources', '', $build_bookit_heading_select('resources')
+        'mod_bookit_nav_resources', '', $buildbookitheadingselect('resources')
     ));
 
     // Text colour (white / black).
@@ -194,14 +193,14 @@ if ($hassiteconfig) {
     // Register under hidden container.
     $ADMIN->add('mod_bookit_hidden', $resources);
 
-    //CHECKLIST – placeholder (optional add-on)
+    // CHECKLIST – placeholder (optional add-on).
     $checklist = new admin_settingpage('mod_bookit_checklist', get_string('checklist', 'mod_bookit'));
 
-    // Top switcher (Checklist active)
+    // Top switcher (Checklist active).
     $checklist->add(new admin_setting_heading(
-        'mod_bookit_nav_checklist', '', $build_bookit_heading_select('checklist')
+        'mod_bookit_nav_checklist', '', $buildbookitheadingselect('checklist')
     ));
-    
+
     $checklist->add(new admin_setting_heading(
         'mod_bookit_checklist_info',
         '',

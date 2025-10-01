@@ -25,8 +25,8 @@ namespace mod_bookit\local\entity;
 
 use dml_exception;
 
-/*Summary changes vs optimizations: 
--Added examiner ID (in first block until around line 130, there is nothing else new) 
+/*Summary changes vs optimizations:
+-Added examiner ID (in first block until around line 130, there is nothing else new)
 - Rewrote function save
 */
 
@@ -42,28 +42,28 @@ class bookit_event {
     /**
      * Create a new instance of this class.
      *
-     * @param int         $id
-     * @param string      $name
-     * @param string|null $semester
-     * @param string      $department
-     * @param int         $starttime
-     * @param int         $endtime
-     * @param int|null    $duration
-     * @param int|null    $participantsamount
-     * @param int|null    $timecompensation
-     * @param string|null $compensationfordisadvantages
-     * @param int|null    $bookingstatus
-     * @param int|null    $personinchargeid
-     * @param string|null $otherexaminers
-     * @param int|null    $coursetemplate
-     * @param string|null $notes
-     * @param string|null $internalnotes
-     * @param string|null $supportpersons
-     * @param array       $resources
-     * @param mixed       $refcourseid
-     * @param int|null    $usermodified
-     * @param int|null    $timecreated
-     * @param int|null    $timemodified
+     * @param int         $id name
+     * @param string      $name name
+     * @param string|null $semester semester
+     * @param string      $department department
+     * @param int         $starttime starttime
+     * @param int         $endtime endtime
+     * @param int|null    $duration duration
+     * @param int|null    $participantsamount participantsamount
+     * @param int|null    $timecompensation timecompensation
+     * @param string|null $compensationfordisadvantages compensationdisadvantages
+     * @param int|null    $bookingstatus bokkingstatus
+     * @param int|null    $personinchargeid personincharce_ID
+     * @param string|null $otherexaminers otherexaminers
+     * @param int|null    $coursetemplate coursetemplate
+     * @param string|null $notes notes
+     * @param string|null $internalnotes internalnotes
+     * @param string|null $supportpersons supportpersons
+     * @param array       $resources rescources
+     * @param mixed       $refcourseid refcourseid
+     * @param int|null    $usermodified usermodified
+     * @param int|null    $timecreated timecreated
+     * @param int|null    $timemodified timemodified
      * @param int|null    $examinerid (optional) User ID of the examiner responsible
      */
     public function __construct(
@@ -148,7 +148,7 @@ class bookit_event {
                 $record->usermodified ?? null,
                 $record->timecreated ?? null,
                 $record->timemodified ?? null,
-                // if examinerid column is present, use it; else fallback
+                /* if examinerid column is present, use it; else fallback */
                 $record->examinerid ?? $record->personinchargeid ?? null
         );
     }
@@ -163,7 +163,7 @@ class bookit_event {
     final public function save(int $userid = null): void {
         global $DB, $USER;
 
-        // Ensure examinerid is set for the overview.
+        /* Ensure examinerid is set for the overview. */
         if (empty($this->examinerid)) {
             $this->examinerid = $USER->id;
         }
