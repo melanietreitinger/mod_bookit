@@ -90,32 +90,13 @@ $PAGE->requires->js_init_code("
             const s = $('#filter-status').val();
             if (r) p.room    = r;
             if (f) p.faculty = f;
-            if (s !== '') p.status = s; 
+            if (s) p.status  = s;
             window.currentFilterParams = p;
-
-            // (b) DEBUG: log what we push to the calendar each time
-            console.log('[BookIT] pushFilters →', p);
-
             if (window.bookitCalendarUpdate) { window.bookitCalendarUpdate(p); }
         }
-
         $('#filter-room, #filter-faculty, #filter-status').on('change', pushFilters);
-
-        // (c) Trigger one initial fetch with empty filters once the calendar is ready.
-        // We poll briefly because the AMD module defines window.bookitCalendarUpdate asynchronously.
-        function tryInitFetch(attempts) {
-            if (window.bookitCalendarUpdate) {
-                console.log('[BookIT] initial fetch with empty filters');
-                window.bookitCalendarUpdate({});
-                return;
-            }
-            if (attempts > 50) { console.warn('[BookIT] calendar not ready after ~5s'); return; }
-            setTimeout(function(){ tryInitFetch(attempts + 1); }, 100);
-        }
-        $(function(){ tryInitFetch(0); });
     })();
 ");
-
 
 /* -------- Export modal ------------------------------------------------ */
 $PAGE->requires->js_init_code("
@@ -211,13 +192,13 @@ function filterExportList() {
 });
 ");
 
-//Calendar feed URL & caps passed to AMD module 
+// Calendar feed URL & caps passed to AMD module.
 $eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id, 'debug' => 1]))->out(false);
 $capabilities   = [
     'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
 ];
 
-//Minor change to main: Handles edge cases better now
+// Minor change to main: Handles edge cases better now.
 $configcalendar = [];
 $tc = get_config('mod_bookit', 'textcolor');
 if ($tc !== false && $tc !== null && $tc !== '') {
@@ -225,13 +206,13 @@ if ($tc !== false && $tc !== null && $tc !== '') {
 }
 
 
-// Inject allowed weekdays for JS (NEW FEATURE)
+// Inject allowed weekdays for JS (NEW FEATURE).
 $PAGE->requires->js_init_code('M.cfg.bookit_allowedweekdays = ['.implode(',', bookit_allowed_weekdays()).'];');
 
-// Log the view event (WORK IN PROGRESS)
-$event = course_module_viewed::create(['objectid'=>$moduleinstance->id,'context'=>$modulecontext]);
-$event->add_record_snapshot('course',$course);
-$event->add_record_snapshot('bookit',$moduleinstance);
+// Log the view event (WORK IN PROGRESS).
+$event = course_module_viewed::create(['objectid' => $moduleinstance->id,'context' => $modulecontext]);
+$event->add_record_snapshot('course', $course);
+$event->add_record_snapshot('bookit', $moduleinstance);
 $event->trigger();
 
 // Set page settings.
@@ -243,46 +224,46 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendar.min.css'
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
-// Page Output
+// Page Output.
 echo $OUTPUT->header();
 
-//NEW FEATURE: Filter bar + Export button
+// NEW FEATURE: Filter bar + Export button.
 echo html_writer::start_div('bookit-filters d-flex gap-2 mb-3');
 
 /* room select */
-echo html_writer::start_tag('select',['id'=>'filter-room','class'=>'form-select w-auto']);
-echo html_writer::tag('option', get_string('allrooms', 'mod_bookit'), ['value'=>'']);
-foreach ($rooms as $rid=>$rname) {
+echo html_writer::start_tag('select',['id' => 'filter-room', 'class' => 'form-select w-auto']);
+echo html_writer::tag('option', get_string('allrooms', 'mod_bookit'), ['value' => '']);
+foreach ($rooms as $rid => $rname) {
     echo html_writer::tag('option', format_string($rname), ['value'=>$rid]);
 }
 echo html_writer::end_tag('select');
 
 /* faculty select */
-echo html_writer::start_tag('select',['id'=>'filter-faculty','class'=>'form-select w-auto']);
-echo html_writer::tag('option', get_string('allfaculties', 'mod_bookit'), ['value'=>'']);
+echo html_writer::start_tag('select', ['id' => 'filter-faculty', 'class' => 'form-select w-auto']);
+echo html_writer::tag('option', get_string('allfaculties', 'mod_bookit'), ['value' => '']);
 foreach ($faculties as $fac) {
-    echo html_writer::tag('option', format_string($fac), ['value'=>$fac]);
+    echo html_writer::tag('option', format_string($fac), ['value' => $fac]);
 }
 echo html_writer::end_tag('select');
 
 /* status select */
-echo html_writer::start_tag('select',['id'=>'filter-status','class'=>'form-select w-auto']);
-echo html_writer::tag('option', get_string('allstatuses', 'mod_bookit'), ['value'=>'']);
+echo html_writer::start_tag('select', ['id' => 'filter-status', 'class' => 'form-select w-auto']);
+echo html_writer::tag('option', get_string('allstatuses', 'mod_bookit'), ['value' => '']);
 foreach ($statusmap as $scode=>$label) {
-    echo html_writer::tag('option', $label, ['value'=>$scode]);
+    echo html_writer::tag('option', $label, ['value' => $scode]);
 }
 echo html_writer::end_tag('select');
 
-echo html_writer::end_div(); // .bookit-filters
+echo html_writer::end_div(); // Bookit-filters.
 
 /* export button */
 echo html_writer::tag('button', get_string('exportevents', 'mod_bookit'),
-    ['id'=>'bookit-export','class'=>'btn btn-secondary mb-3']);
+    ['id'=>'bookit-export', 'class' => 'btn btn-secondary mb-3']);
 
 /* calendar */
-echo html_writer::div('', '', ['id'=>'ec']);
+echo html_writer::div('', '', ['id' => 'ec']);
 
-//Export‑selection modal (NEW FEATURE)
+// Export‑selection modal (NEW FEATURE).
 echo '
 <div class="modal fade" id="bookit-export-modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -331,7 +312,7 @@ echo '
 </div>';
 
 
-//Initialise AMD calendar (from original file)
+// Initialise AMD calendar (from original file).
 $PAGE->requires->js_call_amd('mod_bookit/calendar', 'init',
         [
                 $cm->id,

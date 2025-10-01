@@ -27,7 +27,7 @@ require(__DIR__ . '/../../config.php');
 /* =======================================================================
    0.  Setup, capability checks
    ======================================================================= */
-$id = required_param('id', PARAM_INT);            // course-module id
+$id = required_param('id', PARAM_INT);            // Course-module id.
 $cm = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
 $course  = get_course($cm->course);
 $context = context_module::instance($cm->id);
@@ -36,7 +36,7 @@ require_login($course, false, $cm);
 require_capability('mod/bookit:viewownoverview', $context);
 
 /* =======================================================================
-   1.  Front-end requirements  (
+   1.  Front-end requirements  
    ======================================================================= */
 $tableid = 'overview-table';
 
@@ -139,14 +139,14 @@ $statusmap = [
     1 => 'In progress',
     2 => 'Accepted',
     3 => 'Cancelled',
-    4 => 'Rejected'
+    4 => 'Rejected',
 ];
 $colormap = [
     0 => '#d3d3d3',
     1 => '#fff3cd',
     2 => '#d4edda',
     3 => '#343a40',
-    4 => '#f8d7da'
+    4 => '#f8d7da',
 ];
 $textmap  = [3 => '#ffffff'];
 
@@ -158,7 +158,7 @@ echo html_writer::div(
     html_writer::empty_tag('input', [
         'type'  => 'text',
         'id'    => 'bookit-filter',
-        'class' => 'form-control w-auto d-inline'
+        'class' => 'form-control w-auto d-inline',
     ]),
     'mb-3'
 );
@@ -168,19 +168,19 @@ echo html_writer::div(
    ======================================================================= */
 echo html_writer::start_tag('table', [
     'id'    => $tableid,
-    'class' => 'generaltable table-striped table-hover w-100'
+    'class' => 'generaltable table-striped table-hover w-100',
 ]);
 
-// ----- header row -----
+// ... Header row ...
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr', ['style' => 'background-color:#cfe2ff;']);
-foreach (['ID','Title','Room','Booking status','Date','Checklist progress','Checklist'] as $head) {
+foreach (['ID', 'Title', 'Room', 'Booking status', 'Date', 'Checklist progress', 'Checklist'] as $head) {
     echo html_writer::tag('th', $head);
 }
 echo html_writer::end_tag('tr');
 echo html_writer::end_tag('thead');
 
-// ----- body -----
+// ... Body ...
 echo html_writer::start_tag('tbody');
 foreach ($events as $ev) {
     $room      = $ev->room ?: '-';
@@ -189,14 +189,14 @@ foreach ($events as $ev) {
     $statustxt = $statusmap[$ev->bookingstatus];
     $date      = userdate($ev->starttime, '%d.%m.%Y');
 
-    // title → ModalForm trigger
+    // Title → ModalForm trigger.
     $titlelink = html_writer::link(
         '#',
         format_string($ev->name),
         [
             'class'        => 'bookit-event-link',
             'data-eventid' => $ev->id,
-            'data-cmid'    => $cm->id
+            'data-cmid'    => $cm->id,
         ]
     );
 
