@@ -90,13 +90,32 @@ $PAGE->requires->js_init_code("
             const s = $('#filter-status').val();
             if (r) p.room    = r;
             if (f) p.faculty = f;
-            if (s) p.status  = s;
+            if (s !== '') p.status = s; 
             window.currentFilterParams = p;
+
+            // (b) DEBUG: log what we push to the calendar each time
+            console.log('[BookIT] pushFilters →', p);
+
             if (window.bookitCalendarUpdate) { window.bookitCalendarUpdate(p); }
         }
+
         $('#filter-room, #filter-faculty, #filter-status').on('change', pushFilters);
+
+        // (c) Trigger one initial fetch with empty filters once the calendar is ready.
+        // We poll briefly because the AMD module defines window.bookitCalendarUpdate asynchronously.
+        function tryInitFetch(attempts) {
+            if (window.bookitCalendarUpdate) {
+                console.log('[BookIT] initial fetch with empty filters');
+                window.bookitCalendarUpdate({});
+                return;
+            }
+            if (attempts > 50) { console.warn('[BookIT] calendar not ready after ~5s'); return; }
+            setTimeout(function(){ tryInitFetch(attempts + 1); }, 100);
+        }
+        $(function(){ tryInitFetch(0); });
     })();
 ");
+
 
 /* -------- Export modal ------------------------------------------------ */
 $PAGE->requires->js_init_code("
@@ -193,7 +212,7 @@ function filterExportList() {
 ");
 
 //Calendar feed URL & caps passed to AMD module 
-$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
+$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id, 'debug' => 1]))->out(false);
 $capabilities   = [
     'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
 ];
