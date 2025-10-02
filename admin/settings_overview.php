@@ -25,7 +25,7 @@
 require(__DIR__ . '/../../../config.php');
 
 require_login();
-require_once($CFG->libdir . '/adminlib.php');   
+require_once($CFG->libdir . '/adminlib.php');
 
 admin_externalpage_setup('mod_bookit');  // Must match the page id used in settings.php ("mod_bookit").
 $baseurl = new moodle_url('/admin/settings.php');
@@ -91,7 +91,7 @@ $cardshtml .= $makecard(
     'mod_bookit_calendar',
     get_string('calendar', 'mod_bookit'),
     get_string('calendar_desc', 'mod_bookit'),
-    '' // Neutral theme. 
+    '' // Neutral theme.
 );
 $cardshtml .= $makecard(
     'mod_bookit_resources',

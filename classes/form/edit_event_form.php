@@ -71,7 +71,7 @@ class edit_event_form extends dynamic_form {
         $contextcourse = context_course::instance($course[0]->id);
 
         // ...@TODO: remove debug output field.
-        // $mform->addElement('static', 'dummy', "<pre>".print_r(usertimezone(), true)."</pre>");
+        // ...@TODO: $mform->addElement('static', 'dummy', "<pre>".print_r(usertimezone(), true)."</pre>");
 
         // Set hidden field course module id.
         $mform->addElement('hidden', 'cmid');
@@ -397,7 +397,7 @@ class edit_event_form extends dynamic_form {
                         (int)$val['year'],
                         (int)$val['month'],
                         (int)$val['day'],
-                        (int)($val['hour']   ?? 0),
+                        (int)($val['hour'] ?? 0),
                         (int)($val['minute'] ?? 0)
                     );
                 } else {
@@ -411,7 +411,7 @@ class edit_event_form extends dynamic_form {
             'server'
         );
 
-        // Quick client-side alert (does not block submission). 
+        // Quick client-side alert (does not block submission).
         $allowed = implode(',', \bookit_allowed_weekdays());
         if ($allowed !== '') {
             $PAGE->requires->js_init_code("

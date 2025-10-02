@@ -40,7 +40,7 @@ require_once(__DIR__ . '/lib.php');
 
 use mod_bookit\local\manager\event_manager;
 
-require_login();           // User must be logged-in
+require_login();           // User must be logged-in.
 // ...@TODO: capability check, check for sesskey!
 // ...@TODO: The id of the instance should become required in future!
 
@@ -101,6 +101,6 @@ $events = array_filter($events, function($ev) use ($roomid, $faculty, $status, $
     return true;   // Passes all active filters.
 });
 
-// Output JSON  => wird noch erledigt. 
+// Output JSON  => wird noch erledigt.
 header('Content-Type: application/json; charset=utf-8');
 echo json_encode(array_values($events));

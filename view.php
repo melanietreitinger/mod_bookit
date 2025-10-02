@@ -48,7 +48,7 @@ require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
 
-// Helper data for the filter <select>s  (WORK IN PROGRESS)
+// Helper data for the filter <select>s  (WORK IN PROGRESS).
 $statusmap = [
     0 => get_string('new',        'mod_bookit'),
     1 => get_string('inprogress', 'mod_bookit'),
@@ -77,7 +77,7 @@ $event = course_module_viewed::create([
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
 
-// JavaScript – filter communication + Export‑modal logic (WORK IN PROGRESS)
+// JavaScript – filter communication + Export‑modal logic (WORK IN PROGRESS).
 $PAGE->requires->jquery();
 
 /* -------- send filter changes to the AMD calendar -------------------- */
@@ -210,7 +210,7 @@ if ($tc !== false && $tc !== null && $tc !== '') {
 $PAGE->requires->js_init_code('M.cfg.bookit_allowedweekdays = ['.implode(',', bookit_allowed_weekdays()).'];');
 
 // Log the view event (WORK IN PROGRESS).
-$event = course_module_viewed::create(['objectid' => $moduleinstance->id,'context' => $modulecontext]);
+$event = course_module_viewed::create(['objectid' => $moduleinstance->id, 'context' => $modulecontext]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
 $event->trigger();
@@ -231,10 +231,10 @@ echo $OUTPUT->header();
 echo html_writer::start_div('bookit-filters d-flex gap-2 mb-3');
 
 /* room select */
-echo html_writer::start_tag('select',['id' => 'filter-room', 'class' => 'form-select w-auto']);
+echo html_writer::start_tag('select', ['id' => 'filter-room', 'class' => 'form-select w-auto']);
 echo html_writer::tag('option', get_string('allrooms', 'mod_bookit'), ['value' => '']);
 foreach ($rooms as $rid => $rname) {
-    echo html_writer::tag('option', format_string($rname), ['value'=>$rid]);
+    echo html_writer::tag('option', format_string($rname), ['value' => $rid]);
 }
 echo html_writer::end_tag('select');
 
@@ -249,7 +249,7 @@ echo html_writer::end_tag('select');
 /* status select */
 echo html_writer::start_tag('select', ['id' => 'filter-status', 'class' => 'form-select w-auto']);
 echo html_writer::tag('option', get_string('allstatuses', 'mod_bookit'), ['value' => '']);
-foreach ($statusmap as $scode=>$label) {
+foreach ($statusmap as $scode => $label) {
     echo html_writer::tag('option', $label, ['value' => $scode]);
 }
 echo html_writer::end_tag('select');
@@ -258,7 +258,7 @@ echo html_writer::end_div(); // Bookit-filters.
 
 /* export button */
 echo html_writer::tag('button', get_string('exportevents', 'mod_bookit'),
-    ['id'=>'bookit-export', 'class' => 'btn btn-secondary mb-3']);
+    ['id' => 'bookit-export', 'class' => 'btn btn-secondary mb-3']);
 
 /* calendar */
 echo html_writer::div('', '', ['id' => 'ec']);

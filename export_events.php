@@ -64,7 +64,7 @@ if ($ids) {
 
 /* additional UI filters ------------------------------------------------ */
 $events = array_filter($events, static function($e) use ($room, $faculty, $status): bool {
-    if ($room     && (int)$room !== (int)($e->roomid ?? 0)){
+    if ($room     && (int)$room !== (int)($e->roomid ?? 0)) {
         return false;
     }
     if ($faculty  && $faculty !== ($e->department ?? '')) {
@@ -99,11 +99,11 @@ if ($events) {
 /* ------------------------------------------------------------------
    2.  Build VCALENDAR
    ------------------------------------------------------------------ */
-   $lines = [
+    $lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//BookIT//Export//EN',
-    ];
+     ];
 
     foreach ($events as $ev) {
         $uid   = $ev->id . '@' . parse_url($CFG->wwwroot, PHP_URL_HOST);

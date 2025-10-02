@@ -36,7 +36,7 @@ require_login($course, false, $cm);
 require_capability('mod/bookit:viewownoverview', $context);
 
 /* =======================================================================
-   1.  Front-end requirements  
+   1.  Front-end requirements
    ======================================================================= */
 $tableid = 'overview-table';
 

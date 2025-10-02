@@ -47,7 +47,9 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $table = new xmldb_table('bookit_event');
 
         // Rename fields: status -> bookingstatus.
-        $field1 = new xmldb_field('status', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, null, 'compensationfordisadvantages');
+        $field1 = new xmldb_field
+        ('status', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, null, 'compensationfordisadvantages');
+        
         if ($dbman->field_exists($table, $field1)) {
             $dbman->rename_field($table, $field1, 'bookingstatus');
         }
