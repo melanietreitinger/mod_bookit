@@ -208,11 +208,10 @@ function printcolorevaluation(string $color, string $color2): string {
             WCAG 2.2 <a href="https://www.w3.org/TR/WCAG22/#contrast-minimum">AA</a> /
             <a href="https://www.w3.org/TR/WCAG22/#contrast-enhanced">AAA</a>.<br><br>';
 }
-/** 
+/**
  * This function adds settings navigation.
  * (has to be nullable, sorry!)
-*/
-
+ */
 function bookit_extend_settings_navigation(settings_navigation $settingsnav,
                                            navigation_node $modnode = null) {
     global $PAGE;

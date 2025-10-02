@@ -45,7 +45,7 @@ require_login();           // User must be logged-in.
 // ...@TODO: The id of the instance should become required in future!
 
 
-$id     = optional_param('id', 0, PARAM_INT);   // Course-module id
+$id     = optional_param('id', 0, PARAM_INT);   // Course-module id.
 $start  = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end    = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
 

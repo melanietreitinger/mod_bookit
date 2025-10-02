@@ -115,8 +115,8 @@ if ($events) {
 
         /* ------- human‑readable description ---------------------------- */
         $descrrows = [];
-        if (!empty($ev->department)) { 
-            $descrrows[] = 'Faculty: ' . $ev->department; 
+        if (!empty($ev->department)) {
+            $descrrows[] = 'Faculty: ' . $ev->department;
         }
         if (!empty($ev->technicalneeds)) {
             $descrrows[] = '| Requirements: ' . $ev->technicalneeds;
@@ -168,9 +168,10 @@ if ($events) {
     exit;
 
 
-   /** Helper: escape newline / comma / semicolon according to RFC 5545
-   */
-   function ics_escape(string $s): string {
+    /** 
+     * Helper: escape newline / comma / semicolon according to RFC 5545
+     */
+    function ics_escape(string $s): string {
         return str_replace(
             ['\\',   ',',  ';',  "\r", "\n"],
             ['\\\\', '\,', '\;', '',   '\N'],
