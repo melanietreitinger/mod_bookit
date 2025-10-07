@@ -182,9 +182,6 @@ if ($hassiteconfig) {
         ));
     }
 
-
-    $ADMIN->add('mod_bookit_category', $settings);
-
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
         'mod_bookit_institutions',
         get_string('institutions', 'mod_bookit'),
