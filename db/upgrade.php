@@ -260,13 +260,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->add_field($table, $field);
         }
 
-        // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025050500, 'bookit');
-    }
-
-    if ($oldversion < 2025050500) {
-        $dbman = $DB->get_manager();
-
         // Create table bookit_checklist_master.
         $table = new xmldb_table('bookit_checklist_master');
 
@@ -384,6 +377,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025050500, 'bookit');
     }
 
+
     if ($oldversion < 2025081200) {
         // Define field seats to be added to bookit_room.
         $table = new xmldb_table('bookit_room');
@@ -394,11 +388,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->add_field($table, $field);
         }
 
-        // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025081200, 'bookit');
-    }
-
-    if ($oldversion < 2025081200) {
         // Define table bookit_institution to be created.
         $table = new xmldb_table('bookit_institution');
 
@@ -570,13 +559,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->add_field($table, $field);
         }
 
-        // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025081200, 'bookit');
-    }
-
-    if ($oldversion < 2025081200) {
-        $dbman = $DB->get_manager();
-
         // Rename field roomid to roomids in bookit_checklist_item and change type from int to text.
         $table = new xmldb_table('bookit_checklist_item');
         $field = new xmldb_field('roomid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
@@ -618,6 +600,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $field = new xmldb_field('duedaysrelation', XMLDB_TYPE_TEXT, null, null, null, null, null, 'duedaysoffset');
         $dbman->change_field_type($table, $field);
 
+        // Bookit savepoint reached.
         upgrade_mod_savepoint(true, 2025081200, 'bookit');
     }
 
