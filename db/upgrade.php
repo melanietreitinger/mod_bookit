@@ -264,21 +264,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025050500, 'bookit');
     }
 
-    if ($oldversion < 2025081200) {
-        // Define field seats to be added to bookit_room.
-        $table = new xmldb_table('bookit_room');
-        $field = new xmldb_field('seats', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'roommode');
-
-        // Conditionally launch add field seats.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Bookit savepoint reached.
-        upgrade_mod_savepoint(true, 2025081200, 'bookit');
-    }
-
-
     if ($oldversion < 2025050500) {
         $dbman = $DB->get_manager();
 
@@ -397,6 +382,20 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
 
         // Bookit savepoint reached.
         upgrade_mod_savepoint(true, 2025050500, 'bookit');
+    }
+
+    if ($oldversion < 2025081200) {
+        // Define field seats to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('seats', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'roommode');
+
+        // Conditionally launch add field seats.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025081200, 'bookit');
     }
 
     if ($oldversion < 2025081200) {
@@ -575,7 +574,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025081200, 'bookit');
     }
 
-    if ($oldversion < 2025091100) {
+    if ($oldversion < 2025081200) {
         $dbman = $DB->get_manager();
 
         // Rename field roomid to roomids in bookit_checklist_item and change type from int to text.
@@ -588,6 +587,19 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
 
             // Then copy the data and convert to JSON array format.
             $DB->execute("UPDATE {bookit_checklist_item} SET roomids = CONCAT('[\"', roomid, '\"]') WHERE roomid IS NOT NULL");
+
+            // Finally drop the old field.
+            $dbman->drop_field($table, $field);
+        }
+
+        $field = new xmldb_field('roleid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if ($dbman->field_exists($table, $field)) {
+            // First create the new field.
+            $newfield = new xmldb_field('roleids', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $dbman->add_field($table, $newfield);
+
+            // Then copy the data and convert to JSON array format.
+            $DB->execute("UPDATE {bookit_checklist_item} SET roleids = CONCAT('[', roleid, ']') WHERE roleid IS NOT NULL");
 
             // Finally drop the old field.
             $dbman->drop_field($table, $field);
@@ -606,28 +618,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $field = new xmldb_field('duedaysrelation', XMLDB_TYPE_TEXT, null, null, null, null, null, 'duedaysoffset');
         $dbman->change_field_type($table, $field);
 
-        upgrade_mod_savepoint(true, 2025091100, 'bookit');
-    }
-
-    if ($oldversion < 2025091801) {
-        $dbman = $DB->get_manager();
-
-        // Rename field roleid to roleids in bookit_checklist_item and change type from int to text.
-        $table = new xmldb_table('bookit_checklist_item');
-        $field = new xmldb_field('roleid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        if ($dbman->field_exists($table, $field)) {
-            // First create the new field.
-            $newfield = new xmldb_field('roleids', XMLDB_TYPE_TEXT, null, null, null, null, null);
-            $dbman->add_field($table, $newfield);
-
-            // Then copy the data and convert to JSON array format.
-            $DB->execute("UPDATE {bookit_checklist_item} SET roleids = CONCAT('[', roleid, ']') WHERE roleid IS NOT NULL");
-
-            // Finally drop the old field.
-            $dbman->drop_field($table, $field);
-        }
-
-        upgrade_mod_savepoint(true, 2025091801, 'bookit');
+        upgrade_mod_savepoint(true, 2025081200, 'bookit');
     }
 
     return true;
