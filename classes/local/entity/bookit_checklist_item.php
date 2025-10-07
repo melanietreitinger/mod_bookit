@@ -209,14 +209,18 @@ class bookit_checklist_item implements \renderable, \templatable {
         $data->roomids = json_encode($this->roomids);
 
         foreach ($this->roomids as $roomid) {
+            $room = checklist_manager::get_room_by_id((int) $roomid);
             $data->roomnames[] = [
-                'roomname' => checklist_manager::get_roomname_by_id((int) $roomid),
+                'roomname' => $room->name,
                 'roomid' => (int) $roomid,
+                'eventcolor' => $room->eventcolor,
+                'textclass' => $room->textclass,
             ];
         }
 
         $data->roleids = json_encode($this->roleids);
         $data->rolenames = [];
+
         foreach ($this->roleids as $roleid) {
             $role = checklist_manager::get_role_by_id((int) $roleid);
 
@@ -234,7 +238,10 @@ class bookit_checklist_item implements \renderable, \templatable {
 
             $data->rolenames[] = $roleData;
         }
+
         $data->type = 'item';
+
+        // die(print_r($data, true));
 
         return $data;
     }

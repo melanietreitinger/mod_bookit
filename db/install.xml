@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/bookit/db" VERSION="20240903" COMMENT="XMLDB file for Moodle mod_bookit"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+<XMLDB PATH="mod/bookit/db" VERSION="20250505" COMMENT="XMLDB file for Moodle mod_bookit"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
     <TABLE NAME="bookit" COMMENT="Stores the bookit activity module instances.">
@@ -19,38 +19,39 @@
         <KEY NAME="fk_course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
-<TABLE NAME="bookit_event" COMMENT="Stores the events of bookit">
-  <FIELDS>
-    <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-    <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-    <FIELD NAME="semester" TYPE="int" LENGTH="8" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="department" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-    <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-    <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-    <FIELD NAME="duration" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="participantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Number of participants"/>
-    <FIELD NAME="timecompensation" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="compensationfordisadvantages" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="bookingstatus" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-    <FIELD NAME="personinchargeid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="otherexaminers" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="coursetemplate" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-    <FIELD NAME="supportpersons" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Person(s) for technical support"/>
-    <FIELD NAME="refcourseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Courseid of the exam course"/>
-    <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-    <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-    <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-  </FIELDS>
-  <KEYS>
-    <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-    <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-    <KEY NAME="even_per_fk" TYPE="foreign" FIELDS="personinchargeid" REFTABLE="user" REFFIELDS="id"/>
-    <KEY NAME="even_cou_fk" TYPE="foreign" FIELDS="coursetemplate" REFTABLE="course" REFFIELDS="id"/>
-    <KEY NAME="even_ref_fk" TYPE="foreign" FIELDS="refcourseid" REFTABLE="course" REFFIELDS="id"/>
-  </KEYS>
-</TABLE>
+    <TABLE NAME="bookit_event" COMMENT="Stores the events of bookit">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="semester" TYPE="int" LENGTH="8" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="institutionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="duration" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="participantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Number of participants"/>
+        <FIELD NAME="timecompensation" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="compensationfordisadvantages" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="bookingstatus" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="personinchargeid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="otherexaminers" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="coursetemplate" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="supportpersons" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Person(s) for technical support"/>
+        <FIELD NAME="refcourseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Courseid of the exam course"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="even_per_fk" TYPE="foreign" FIELDS="personinchargeid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="even_cou_fk" TYPE="foreign" FIELDS="coursetemplate" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="even_ref_fk" TYPE="foreign" FIELDS="refcourseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
     <TABLE NAME="bookit_resource_categories" COMMENT="Stores the categories of resources">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
@@ -96,6 +97,98 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="even_eve_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit_event" REFFIELDS="id"/>
         <KEY NAME="even_res_fk" TYPE="foreign" FIELDS="resourceid" REFTABLE="bookit_resource" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_institution" COMMENT="Institutions choosable in bookit">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether the institution is active or hidden (not selectable for new events)."/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_room" COMMENT="Bookit room">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="eventcolor" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="roommode" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false" COMMENT="0 = choose freely inside slots, 1 = only use predetermined slots."/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_weekplan" COMMENT="Weekplan">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_weekplanslot" COMMENT="Weekplan slots">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="weekplanid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Starttime in seconds, counted from start of week."/>
+        <FIELD NAME="endtime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Endtime in seconds, counted from start of week."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="week_wee_frk" TYPE="foreign" FIELDS="weekplanid" REFTABLE="bookit_weekplan" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_weekplan_room" COMMENT="Saves weekplan is used for which room in what timeframe.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="weekplanid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="epoch"/>
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="epoch"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="weekplanid" TYPE="foreign" FIELDS="weekplanid" REFTABLE="bookit_weekplan" REFFIELDS="id"/>
+        <KEY NAME="roomid" TYPE="foreign" FIELDS="roomid" REFTABLE="bookit_room" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_blocker" COMMENT="Stores blocked times for specific rooms or globally.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="roomid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="roomid" TYPE="foreign" FIELDS="roomid" REFTABLE="bookit_room" REFFIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="bookit_checklist_master" COMMENT="Stores the master checklists">

@@ -63,55 +63,5 @@ function xmldb_bookit_install() {
     $resource = new bookit_resource('Fairy', 'For extra luck and glitter!', 199, $category->id);
     $resource->save(2);
 
-    $subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'History', 'Geography', 'English Literature',
-            'Psychology', 'Sociology'];
-
-    // Create events.
-    for ($i = 1; $i <= 10; $i++) {
-        // Generate random date and time in the current week between 07:00 and 20:00.
-        // Changed from 0-6 to 0-5 to exclude Sundays.
-        $dayofweek = rand(0, 5);
-        $hour = rand(7, 20);
-        $minute = rand(0, 59);
-        $second = rand(0, 59);
-        $startdate = strtotime("last Monday +$dayofweek days $hour:$minute:$second");
-        // Add 2 hours to start date.
-        $enddate = $startdate + 7200;
-
-        // Select a random subject.
-        $subject = $subjects[array_rand($subjects)];
-        $tc = rand(2, 7);
-        $event = new bookit_event(
-                0,
-                'Exam ' . $subject,
-                20241,
-                'IT',
-                $startdate,
-                $enddate,
-                90,
-                rand(20, 250),
-                1,
-                $tc.' Zeitverlängerungen',
-                rand(0, 2),
-                2,
-                '',
-                0,
-                'External lorem ipsum',
-                'Internal Lorem Ipsum dolor...',
-                'Susi Support',
-                [
-                        (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
-                        (object) ['resourceid' => rand(6, 7), 'amount' => rand(2, 85)], // Other resources.
-                        (object) ['resourceid' => rand(8, 10), 'amount' => rand(2, 85)], // Other resources.
-                ],
-                null,
-                2,
-                time(),
-                time()
-        );
-
-        $event->save(2);
-    }
-
     set_config('installhelperfinished', 0, 'mod_bookit');
 }

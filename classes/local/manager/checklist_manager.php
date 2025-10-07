@@ -29,6 +29,7 @@ use mod_bookit\local\entity\bookit_checklist_master;
 use mod_bookit\local\entity\bookit_checklist_category;
 use mod_bookit\local\entity\bookit_checklist_item;
 use mod_bookit\local\entity\bookit_notification_slot;
+use mod_bookit\local\manager\color_manager;
 
 /**
  * Checklist manager class.
@@ -137,19 +138,49 @@ class checklist_manager {
     /**
      * Get all rooms available for BookIt.
      *
-     * @return array Array of room resources
+     * @return array Array of room records from database
+     * @throws dml_exception
      */
     public static function get_bookit_rooms() {
+        global $DB;
 
-        $categories = categories_manager::get_categories();
+        $records = $DB->get_records('bookit_room', null, 'name ASC');
 
-        $roomsarray = array_filter($categories, fn($cat) => $cat['name'] === 'Rooms');
-        $rooms = reset($roomsarray)['resources'];
+        return array_values(array_map(function($record) {
+            $eventcolor = $record->eventcolor ?? '';
+            $textcolor = color_manager::get_textcolor_for_background($eventcolor);
+            $textclass = $textcolor === '#000' ? 'text-dark' : 'text-light';
 
-        return $rooms;
+            $record->textclass = $textclass;
+
+            return $record;
+        }, $records));
     }
 
     /**
+     * Get a single room by ID.
+     *
+     * @param int $roomid The ID of the room
+     * @return object|null Room record or null if not found
+     * @throws dml_exception
+     */
+    public static function get_room_by_id(int $roomid): ?object {
+        global $DB;
+
+        $record = $DB->get_record('bookit_room', ['id' => $roomid]);
+
+        if (!$record) {
+            return null;
+        }
+
+        $eventcolor = $record->eventcolor ?? '';
+        $textcolor = color_manager::get_textcolor_for_background($eventcolor);
+        $textclass = $textcolor === '#000' ? 'text-dark' : 'text-light';
+
+        $record->textclass = $textclass;
+
+        return $record;
+    }    /**
      * Get the readable name for a checklist item state.
      *
      * @param int $state The state value
@@ -196,12 +227,8 @@ class checklist_manager {
      * @return string Room name or empty string if not found
      */
     public static function get_roomname_by_id(int $roomid): string {
-        $rooms = self::get_bookit_rooms();
-        $roommatch = array_filter($rooms, fn($item) => $item['id'] == $roomid);
-        if (!empty($roommatch)) {
-            return reset($roommatch)['name'];
-        }
-        return '';
+        $room = self::get_room_by_id($roomid);
+        return $room ? $room->name : '';
     }
 
     /**

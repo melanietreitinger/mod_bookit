@@ -38,10 +38,7 @@
     }
 }}
 
-{{< core/modal }}
-    {{$footer}}
-        <button type="button" class="btn btn-danger mr-auto" data-action="delete">{{#str}} delete {{/str}}</button>
-        <button type="button" class="btn btn-secondary" data-action="cancel">{{#str}} cancel {{/str}}</button>
-        <button type="button" class="btn btn-primary" data-action="save">{{#str}} save {{/str}}</button>
-    {{/footer}}
-{{/ core/modal }}
+{{#str}} legend, mod_bookit {{/str}}: <br>
+<span style="display: inline-block; background: #035AA3; width: 12px; height: 12px"></span> {{#str}}normal_slot, mod_bookit{{/str}} <br>
+<span style="display: inline-block; background: #A33; width: 12px; height: 12px"></span> {{#str}}global_blocker, mod_bookit{{/str}} <br>
+<span style="display: inline-block; background: #C78316; width: 12px; height: 12px"></span> {{#str}}local_blocker, mod_bookit{{/str}} <br>

@@ -31,11 +31,55 @@ require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
     $ADMIN->add('modsettings', new admin_category('mod_bookit_category', new lang_string('pluginname', 'mod_bookit')));
-    $settings = new admin_settingpage('mod_bookit_settings', new lang_string('pluginname', 'mod_bookit'));
+    $settings = new admin_settingpage('mod_bookit_settings', new lang_string('general_settings', 'mod_bookit'));
 
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ADMIN->fulltree) {
         // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
+
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/eventdefaultduration',
+            get_string('settings_eventdefaultduration', 'mod_bookit'),
+            null,
+            60,
+            PARAM_INT
+        ));
+
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/eventmaxduration',
+            get_string('settings_eventmaxduration', 'mod_bookit'),
+            null,
+            480,
+            PARAM_INT
+        ));
+
+        $settings->add(new admin_setting_configselect(
+            'mod_bookit/eventdurationstepwidth',
+            get_string('settings_eventdurationstepwidth', 'mod_bookit'),
+            null,
+            15,
+            [
+                5 => '5',
+                10 => '10',
+                15 => '15',
+                30 => '30',
+                60 => '60',
+            ],
+        ));
+
+        $settings->add(new admin_setting_configselect(
+            'mod_bookit/eventstartstepwidth',
+            get_string('settings_eventstartstepwidth', 'mod_bookit'),
+            null,
+            15,
+            [
+                5 => '5',
+                10 => '10',
+                15 => '15',
+                30 => '30',
+                60 => '60',
+            ],
+        ));
 
         // Event setting extra time.
         $name = 'mod_bookit/extratime';
@@ -65,88 +109,65 @@ if ($hassiteconfig) {
         }
         $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
         $settings->add($setting);
+    }
 
-        // Room colors heading.
-        $name = 'mod_bookit/roomcolorheading';
-        $title = get_string('settings_roomcolorheading', 'mod_bookit', null, true);
-        $setting = new admin_setting_heading($name, $title, null);
-        $settings->add($setting);
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_institutions',
+        get_string('institutions', 'mod_bookit'),
+        new moodle_url('/mod/bookit/institutions.php'),
+        // TODO specify required capability.
+    ));
 
-        // Set text color to black or white (default).
-        $name = 'mod_bookit/textcolor';
-        $title = get_string('settings_textcolor', 'mod_bookit');
-        $description = get_string('settings_textcolor_desc', 'mod_bookit');
-        $choices = ['#ffffff' => 'white', '#000000' => 'black'];
-        $setting = new admin_setting_configselect($name, $title, $description, '#ffffff', $choices);
-        $settings->add($setting);
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_rooms',
+        get_string('rooms', 'mod_bookit'),
+        new moodle_url('/mod/bookit/rooms.php'),
+        // TODO specify required capability.
+    ));
 
-        // Set a color for each room defined in resources - at least one.
-        // Get the ressources.
-        $catresourceslist = resource_manager::get_resources();
-        foreach ($catresourceslist as $category => $value) {
-            if ($category === 'Rooms') {
-                foreach ($value['resources'] as $rid => $catresource) {
-                    $name = 'mod_bookit/roomcolor_' . $rid;
-                    $title = get_string('settings_roomcolor', 'mod_bookit', $catresource['name'], true);
-                    $description = get_string('settings_roomcolor_desc', 'mod_bookit', null, true);
-                    $setting = new admin_setting_configcolourpicker($name, $title, $description, '');
-                    $settings->add($setting);
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_weekplans',
+        get_string('weekplans', 'mod_bookit'),
+        new moodle_url('/mod/bookit/weekplans.php'),
+        // TODO specify required capability.
+    ));
 
-                    // Add color contrast check.
-                    $fcolor = get_config('mod_bookit', 'textcolor');
-                    $fcolor = (!empty($fcolor) ? substr($fcolor, 1) : 'FFFFFF');
-                    $bcolor = get_config('mod_bookit', 'roomcolor_' . $rid);
-                    $bcolor = (!empty($bcolor) ? substr($bcolor, 1) : false);
-                    if (!empty($bcolor)) {
-                        $check = printcolorevaluation($fcolor, $bcolor);
-                        $a = new StdClass();
-                        $a->fcolor = $fcolor;
-                        $a->bcolor = $bcolor;
-                        $setting = new admin_setting_description(
-                            $name . '_wcag',
-                            get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
-                            get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check
-                        );
-                        $settings->add($setting);
-                    }
+    $ADMIN->add('mod_bookit_category', $settings);
+
+    $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
+
+    if (empty($installhelperfinished)) {
+        $runinstallhelper = new admin_setting_configcheckbox(
+            'mod_bookit/runinstallhelper',
+            new lang_string('runinstallhelper', 'mod_bookit'),
+            new lang_string('runinstallhelperinfo', 'mod_bookit'),
+            1
+        );
+
+        $runinstallhelper->set_updatedcallback(function () {
+
+            $settingstate = get_config('mod_bookit', 'runinstallhelper');
+
+            if (!empty($settingstate)) {
+                debugging('Importing default roles for BookIt...');
+                $rolesimported = install_helper::import_default_roles(false, false);
+
+                if ($rolesimported) {
+                    debugging('Default roles were imported successfully.');
+                } else {
+                    debugging('No default roles were imported (may already exist).');
                 }
-            }
-        }
 
-        $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
+                debugging('Setting up default checklist data for BookIt...');
+                $result = install_helper::create_default_checklists(false, false);
 
-        if (empty($installhelperfinished)) {
-            $runinstallhelper = new admin_setting_configcheckbox(
-                'mod_bookit/runinstallhelper',
-                new lang_string('runinstallhelper', 'mod_bookit'),
-                new lang_string('runinstallhelperinfo', 'mod_bookit'),
-                1
-            );
-
-                $runinstallhelper->set_updatedcallback(function () {
-
-                    $settingstate = get_config('mod_bookit', 'runinstallhelper');
-
-                    if (!empty($settingstate)) {
-                        debugging('Importing default roles for BookIt...');
-                        $rolesimported = install_helper::import_default_roles(false, false);
-
-                        if ($rolesimported) {
-                            debugging('Default roles were imported successfully.');
-                        } else {
-                            debugging('No default roles were imported (may already exist).');
+                if ($result) {
+                    debugging('Default checklist data was created successfully.');
+                } else {
+                    debugging('Default checklist data was not created (may already exist).');
+                }
+                set_config('installhelperfinished', 1, 'mod_bookit');
                         }
-
-                        debugging('Setting up default checklist data for BookIt...');
-                        $result = install_helper::create_default_checklists(false, false);
-
-                        if ($result) {
-                            debugging('Default checklist data was created successfully.');
-                        } else {
-                            debugging('Default checklist data was not created (may already exist).');
-                        }
-                        set_config('installhelperfinished', 1, 'mod_bookit');
-                    }
                 });
 
             $settings->add($runinstallhelper);
@@ -164,4 +185,3 @@ if ($hassiteconfig) {
 
     $ADMIN->add('mod_bookit_category', $settings);
     $settings = null;
-}

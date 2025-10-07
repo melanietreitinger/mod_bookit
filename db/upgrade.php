@@ -22,9 +22,6 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// @codingStandardsIgnoreLine
-defined('MOODLE_INTERNAL') || die(); // @codeCoverageIgnore
-
 /**
  * Upgrade script.
  *
@@ -36,6 +33,7 @@ defined('MOODLE_INTERNAL') || die(); // @codeCoverageIgnore
  */
 function xmldb_bookit_upgrade(int $oldversion): bool {
     global $DB;
+    $dbman = $DB->get_manager();
 
     if ($oldversion < 2024102204) {
         $dbman = $DB->get_manager();
@@ -73,6 +71,213 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         // Bookit savepoint reached.
         upgrade_mod_savepoint(true, 2024102204, 'bookit');
     }
+
+    if ($oldversion < 2025042200) {
+        $dbman = $DB->get_manager();
+
+        // Define table bookit_institution to be created.
+        $table = new xmldb_table('bookit_institution');
+
+        // Adding fields to table bookit_institution.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('internalnotes', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table bookit_institution.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Conditionally launch create table for bookit_institution.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table bookit_room to be created.
+        $table = new xmldb_table('bookit_room');
+
+        // Adding fields to table bookit_room.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('eventcolor', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table bookit_room.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Conditionally launch create table for bookit_room.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table bookit_weekplan to be created.
+        $table = new xmldb_table('bookit_weekplan');
+
+        // Adding fields to table bookit_weekplan.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table bookit_weekplan.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Conditionally launch create table for bookit_weekplan.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table bookit_weekplanslot to be created.
+        $table = new xmldb_table('bookit_weekplanslot');
+
+        // Adding fields to table bookit_weekplanslot.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('weekplanid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('starttime', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('endtime', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table bookit_weekplanslot.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('week_wee_frk', XMLDB_KEY_FOREIGN, ['weekplanid'], 'bookit_weekplan', ['id']);
+
+        // Conditionally launch create table for bookit_weekplanslot.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table bookit_weekplan_room to be created.
+        $table = new xmldb_table('bookit_weekplan_room');
+
+        // Adding fields to table bookit_weekplan_room.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('weekplanid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('roomid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('starttime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('endtime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table bookit_weekplan_room.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+        $table->add_key('weekplanid', XMLDB_KEY_FOREIGN, ['weekplanid'], 'bookit_weekplan', ['id']);
+        $table->add_key('roomid', XMLDB_KEY_FOREIGN, ['roomid'], 'bookit_room', ['id']);
+
+        // Conditionally launch create table for bookit_weekplan_room.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table bookit_blocker to be created.
+        $table = new xmldb_table('bookit_blocker');
+
+        // Adding fields to table bookit_blocker.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('starttime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('endtime', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('roomid', XMLDB_TYPE_INTEGER, '11', null, null, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table bookit_blocker.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('roomid', XMLDB_KEY_FOREIGN, ['roomid'], 'bookit_room', ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Conditionally launch create table for bookit_blocker.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025042200, 'bookit');
+    }
+
+    if ($oldversion < 2025042800) {
+        $dbman = $DB->get_manager();
+
+        // Define field active to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 1, 'eventcolor');
+
+        // Conditionally launch add field active.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field roommode to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('roommode', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0, 'active');
+
+        // Conditionally launch add field roommode.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field department to be dropped from bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('department');
+
+        // Conditionally launch drop field department.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Define field institutionid to be added to bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('institutionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'department');
+
+        // Conditionally launch add field institutionid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025042800, 'bookit');
+    }
+
+    if ($oldversion < 2025050500) {
+        $dbman = $DB->get_manager();
+
+        // Define field room to be added to bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('roomid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'duration');
+
+        // Conditionally launch add field room.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025050500, 'bookit');
+    }
+
+    if ($oldversion < 2025081200) {
+        // Define field seats to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('seats', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'roommode');
+
+        // Conditionally launch add field seats.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025081200, 'bookit');
+    }
+
 
     if ($oldversion < 2025050500) {
         $dbman = $DB->get_manager();
