@@ -43,9 +43,6 @@ $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLACEHOLDER';
 $string['calendar'] = 'Calendar';
-$string['color'] = 'Color';
-$string['define_institutions'] = 'Define institutions';
-$string['edit_blocker'] = 'Edit blocker';
 $string['category_name'] = 'Category name';
 $string['checklistcategory'] = 'Checklist category';
 $string['checklistcategory_help'] = 'The checklist category which the checklist item belongs to. New items will be appended to the category and can be moved afterwards.';
@@ -58,17 +55,18 @@ $string['checklistitemname'] = 'Checklist item name';
 $string['checklistitemname_help'] = 'The text content of the checklist item which will be displayed on the checklist.';
 $string['checklistitemsuccess'] = 'Checklist item created successfully.';
 $string['checklistitemupdatesuccess'] = 'Checklist item updated successfully.';
+$string['color'] = 'Color';
 $string['customtemplate'] = 'Message';
 $string['customtemplate_help'] = 'The custom message template for the notification. ';
 $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
-.'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
-.'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
-.'<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
-.'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
-.'<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
-.'###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
-.'<p>Nulla vitae elit libero,<br>'
-.'Cras justo odio.</p>';
+. '<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
+. 'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
+. '<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
+. 'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
+. '<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
+. '###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
+. '<p>Nulla vitae elit libero,<br>'
+. 'Cras justo odio.</p>';
 $string['customtemplatedefaultmessage_before_due'] = 'Lorem ipsum ante ###RECIPIENT###,'
 .'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### vitae cursus ###CHECKLISTITEM### consequat '
 .'magna. ###ITEMDUETIME### pellentesque habitant morbi. ###ITEMSTATUS### tristique senectus netus.</p>'
@@ -107,7 +105,9 @@ $string['customtemplatedefaultmessage_when_done'] = 'Lorem ipsum factum ###RECIP
 .'Egestas diam in.</p>';
 $string['duedate'] = 'Due date';
 $string['duedate_help'] = "The due date for the completion of the checklist item. Must be one of 'none', 'before' or 'after' the exam. An offset in days must be set if the options 'before' or 'after' are selected.";
+$string['define_institutions'] = 'Define institutions';
 $string['edit'] = 'Edit';
+$string['edit_blocker'] = 'Edit blocker';
 $string['edit_event'] = "Edit event";
 $string['edit_institution'] = 'Edit institution';
 $string['edit_room'] = 'Edit room';
@@ -165,12 +165,12 @@ $string['institution_name'] = 'Institution name';
 $string['institutions'] = 'Institutions';
 $string['internalnotes'] = 'Internal notes';
 $string['internalnotes_help'] = 'These notes are just for internal use and not shown to the booking person.';
-$string['legend'] = 'Legend';
-$string['local_blocker'] = 'Local blocker (only for this room)';
 $string['item_state_done'] = 'Done';
 $string['item_state_open'] = 'Open';
 $string['item_state_processing'] = 'Processing';
 $string['item_state_unknown'] = 'Unknown';
+$string['legend'] = 'Legend';
+$string['local_blocker'] = 'Local blocker (only for this room)';
 $string['master_checklist'] = 'Master checklist';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
@@ -184,6 +184,13 @@ $string['normal_slot'] = 'Normal slot';
 $string['period'] = 'Period';
 $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
+$string['new_institution'] = 'New institution';
+$string['new_room'] = 'New room';
+$string['new_timeslot'] = 'New time slot';
+$string['new_weekplan'] = 'New week plan';
+$string['new_weekplan_assignment'] = 'New weekplan assignment';
+$string['normal_slot'] = 'Normal slot';
+$string['period'] = 'Period';
 $string['noduedate'] = 'No due date';
 $string['notifications'] = 'Notifications';
 $string['notification_time'] = 'Time';
@@ -210,6 +217,12 @@ $string['responsibility'] = 'Responsibility';
 $string['role'] = 'Role';
 $string['role_help'] = 'These roles will be assigned to the checklist item and will be responsible for the execution. Multiple roles can be selected by holding CTRL.';
 $string['room'] = 'Room';
+$string['room_active'] = 'Active';
+$string['room_active_help'] = 'If this room will be available to select in new events.';
+$string['roommode'] = 'Room mode';
+$string['roommode_free'] = 'Free selection inside slots';
+$string['roommode_slots'] = 'Bookings can only start at beginnings of slots';
+$string['seats'] = 'Amount of seats';
 $string['rooms'] = 'Rooms';
 $string['rooms_help'] = 'These rooms will be assigned to the checklist item. Multiple rooms may be selected by holding CTRL.';
 $string['runinstallhelper'] = 'Run install helper';
@@ -238,6 +251,8 @@ $string['settings_textcolor_desc'] = 'Set the text color of the event in the cal
 $string['start'] = 'Start';
 $string['start_of_period'] = 'Start of period';
 $string['sort'] = 'Sort';
+$string['start'] = 'Start';
+$string['start_of_period'] = 'Start of period';
 $string['summer_semester'] = 'Summer Term';
 $string['timeslots'] = 'Time slots';
 $string['tools'] = 'Tools';
@@ -253,6 +268,15 @@ Do 07:45-10:00,10-12,13-15
 </pre>';
 $string['weekplan_room'] = 'Weekplan assignments to rooms';
 $string['weekplans'] = 'Week plans';
+$string['weekplan_assignment_overlaps'] = 'The entered period is overlapping an already existing weekplan assignment.';
+$string['weekplan_assignments'] = 'Weekplan assignments';
+$string['weekplan_help'] = 'Here, you can define week plans. Each line should start with a abbreviated day of the week, followed by a list of comma separated timeslots.<br>
+These are examples for valid lines:
+<pre>
+Di 8-11:30, 14:00-17
+Mi 09-16
+Do 07:45-10:00,10-12,13-15
+</pre>';
 $string['time'] = 'Time';
 $string['time_help'] = "If the due date for the checklist item is 'before' or 'after', this setting defines how many days before or after the exam the checklist item should be completed.";
 $string['when_done'] = 'When done';
