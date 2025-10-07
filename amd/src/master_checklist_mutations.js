@@ -28,6 +28,28 @@ export default class {
 
     }
 
+    _updateChecklistItemCategory(stateManager, itemId) {
+        const state = stateManager.state;
+        const itemObject = state.checklistitems.get(itemId);
+
+        const formDataObj = {
+            itemid: itemObject.id,
+            masterid: 1,
+            title: itemObject.title,
+            categoryid: itemObject.categoryid,
+            roomid: itemObject.roomid,
+            roleid: itemObject.roleid,
+            action: 'put',
+        };
+
+        const mutationData = {
+            formData: formDataObj,
+            formType: 'item'
+        };
+
+        this._callDynamicForm(stateManager, mutationData, false);
+    }
+
     reOrderCategoryItems(stateManager, data) {
         const state = stateManager.state;
 
@@ -69,6 +91,8 @@ export default class {
             const targetItem = state.checklistitems.get(idToMove);
 
             targetItem.categoryid = parseInt(targetCategory.id);
+
+            this._updateChecklistItemCategory(stateManager, idToMove);
 
         } else {
             // The item was moved within the same category. We only need to update one category.

@@ -36,7 +36,7 @@ export default class extends BaseComponent {
 
             {watch: 'checklistitems:created', handler: this._handleItemCreatedEvent},
             {watch: 'checklistitems:deleted', handler: this._handleItemDeletedEvent},
-            {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
+            // {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
             {watch: 'checklistitems.title:updated', handler: this._replaceRenderedItem},
             {watch: 'checklistitems.roomids:updated', handler: this._replaceRenderedItem},
             {watch: 'checklistitems.roleids:updated', handler: this._replaceRenderedItem},
@@ -283,37 +283,37 @@ export default class extends BaseComponent {
 
     }
 
-    _handleItemCategoryUpdatedEvent(event) {
-        const itemObject = this.reactive.state.checklistitems.get(event.element.id);
+    // _handleItemCategoryUpdatedEvent(event) {
+    //     const itemObject = this.reactive.state.checklistitems.get(event.element.id);
 
-        const formDataObj = {
-            itemid: itemObject.id,
-            masterid: 1,
-            title: itemObject.title,
-            categoryid: itemObject.categoryid,
-            roomid: itemObject.roomid,
-            roleid: itemObject.roleid,
-            action: 'put',
-            _qf__mod_bookit_form_edit_checklist_item_form: 1,
-        };
+    //     const formDataObj = {
+    //         itemid: itemObject.id,
+    //         masterid: 1,
+    //         title: itemObject.title,
+    //         categoryid: itemObject.categoryid,
+    //         roomid: itemObject.roomid,
+    //         roleid: itemObject.roleid,
+    //         action: 'put',
+    //         _qf__mod_bookit_form_edit_checklist_item_form: 1,
+    //     };
 
-        const formData = new URLSearchParams(formDataObj).toString();
-        // TODO move to mutation
-        Ajax.call([{
-            methodname: 'core_form_dynamic_form',
-            args: {
-                formdata: formData,
-                form: 'mod_bookit\\form\\edit_checklist_item_form'
-            }
-            }])[0]
-            .then((response) => {
-                // TODO handle response?
-                })
-                .catch(exception => {
-                    window.console.error('AJAX error:', exception);
-                });
+    //     const formData = new URLSearchParams(formDataObj).toString();
+    //     // TODO move to mutation
+    //     Ajax.call([{
+    //         methodname: 'core_form_dynamic_form',
+    //         args: {
+    //             formdata: formData,
+    //             form: 'mod_bookit\\form\\edit_checklist_item_form'
+    //         }
+    //         }])[0]
+    //         .then((response) => {
+    //             // TODO handle response?
+    //             })
+    //             .catch(exception => {
+    //                 window.console.error('AJAX error:', exception);
+    //             });
 
-    }
+    // }
 
     _handleCategoryDeletedEvent(event) {
         const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.id}`);
