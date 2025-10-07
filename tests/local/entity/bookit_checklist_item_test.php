@@ -414,8 +414,33 @@ final class bookit_checklist_item_test extends advanced_testcase {
      * Test exporting the checklist item for template rendering.
      */
     public function test_export_for_template(): void {
+        global $DB, $USER;
+
         $this->resetAfterTest(true);
         $this->setAdminUser();
+
+        // Create test rooms in the database
+        $room1 = new \stdClass();
+        $room1->name = 'Test Room 1';
+        $room1->description = 'First test room';
+        $room1->eventcolor = '#FF0000';
+        $room1->active = 1;
+        $room1->roommode = 0;
+        $room1->usermodified = $USER->id;
+        $room1->timecreated = time();
+        $room1->timemodified = time();
+        $room1id = $DB->insert_record('bookit_room', $room1);
+
+        $room2 = new \stdClass();
+        $room2->name = 'Test Room 2';
+        $room2->description = 'Second test room';
+        $room2->eventcolor = '#00FF00';
+        $room2->active = 1;
+        $room2->roommode = 0;
+        $room2->usermodified = $USER->id;
+        $room2->timecreated = time();
+        $room2->timemodified = time();
+        $room2id = $DB->insert_record('bookit_room', $room2);
 
         $renderer = $this->getMockBuilder(\renderer_base::class)
             ->disableOriginalConstructor()
@@ -426,7 +451,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
             5,
             6,
             null,
-            [7, 8],
+            [$room1id, $room2id], // Use the actual room IDs
             [9, 10],
             'Export Item Test',
             'Description for export test',
@@ -448,8 +473,20 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals('Export Item Test', $data->title);
         $this->assertEquals(4, $data->order);
         $this->assertEquals(6, $data->categoryid);
-        $this->assertEquals(json_encode([7, 8]), $data->roomids);
+        $this->assertEquals(json_encode([$room1id, $room2id]), $data->roomids);
         $this->assertEquals(json_encode([9, 10]), $data->roleids);
         $this->assertEquals('item', $data->type);
+
+        // Verify room names are properly exported
+        $this->assertCount(2, $data->roomnames);
+        $this->assertEquals('Test Room 1', $data->roomnames[0]['roomname']);
+        $this->assertEquals($room1id, $data->roomnames[0]['roomid']);
+        $this->assertEquals('#FF0000', $data->roomnames[0]['eventcolor']);
+        $this->assertEquals('text-light', $data->roomnames[0]['textclass']);
+
+        $this->assertEquals('Test Room 2', $data->roomnames[1]['roomname']);
+        $this->assertEquals($room2id, $data->roomnames[1]['roomid']);
+        $this->assertEquals('#00FF00', $data->roomnames[1]['eventcolor']);
+        $this->assertEquals('text-dark', $data->roomnames[1]['textclass']);
     }
 }
