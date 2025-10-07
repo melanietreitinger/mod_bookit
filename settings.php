@@ -111,29 +111,6 @@ if ($hassiteconfig) {
         $settings->add($setting);
     }
 
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-        'mod_bookit_institutions',
-        get_string('institutions', 'mod_bookit'),
-        new moodle_url('/mod/bookit/institutions.php'),
-        // TODO specify required capability.
-    ));
-
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-        'mod_bookit_rooms',
-        get_string('rooms', 'mod_bookit'),
-        new moodle_url('/mod/bookit/rooms.php'),
-        // TODO specify required capability.
-    ));
-
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-        'mod_bookit_weekplans',
-        get_string('weekplans', 'mod_bookit'),
-        new moodle_url('/mod/bookit/weekplans.php'),
-        // TODO specify required capability.
-    ));
-
-    $ADMIN->add('mod_bookit_category', $settings);
-
     $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
 
     if (empty($installhelperfinished)) {
@@ -173,6 +150,8 @@ if ($hassiteconfig) {
             $settings->add($runinstallhelper);
         }
     }
+
+    $ADMIN->add('mod_bookit_category', $settings);
 
     if (is_siteadmin() || has_capability('mod/bookit:managemasterchecklist', context_system::instance())) {
         $ADMIN->add('mod_bookit_category', new admin_externalpage(
