@@ -195,6 +195,7 @@ export default class extends BaseComponent {
     }
 
      _handleFilterUpdate(event) {
+        window.console.log('handle filter update for category', this.element.dataset.bookitCategoryId);
         const components = this.reactive.components;
         const results = this.helper.findComponents(components, {
             dataset: {bookitChecklistitemCategoryid: this.element.dataset.bookitCategoryId},

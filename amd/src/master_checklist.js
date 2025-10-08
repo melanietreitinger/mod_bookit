@@ -120,6 +120,7 @@ export default class extends BaseComponent {
     }
 
     _handleCategoryCreatedEvent(event) {
+
         Templates.renderForPromise('mod_bookit/bookit_checklist_category',
             {
                 id: event.element.id,
@@ -134,6 +135,15 @@ export default class extends BaseComponent {
             .then(async () => {
                 Toast.add(await getString('checklistcategorysuccess', 'mod_bookit'),
                     {type: 'success'});
+
+                const components = this.reactive.components;
+                const categoryResults = this.helper.findComponents(components, {
+                    dataset: {bookitTbodyCategoryId: event.element.id.toString()},
+                    onlyFirst: false
+                });
+
+                const categoryComponent = categoryResults.find(comp => typeof comp._handleFilterUpdate === 'function');
+                categoryComponent._handleFilterUpdate(event);
             })
             .catch(error => {
                 window.console.error('Error rendering checklist item:', error);
@@ -141,6 +151,9 @@ export default class extends BaseComponent {
     }
 
     _handleItemCreatedEvent(event) {
+
+        window.console.log('HANDLE ITEM CREATED EVENT: ', event);
+
         const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.category}`);
 
         const roomNames = [];
@@ -186,6 +199,21 @@ export default class extends BaseComponent {
             .then(async () => {
                 Toast.add(await getString('checklistitemsuccess', 'mod_bookit'),
                     {type: 'success'});
+                window.console.log('ITEM IS RENDERED');
+
+                // Find and trigger filter update on parent category component
+                const components = this.reactive.components;
+                const categoryResults = this.helper.findComponents(components, {
+                    dataset: {bookitCategoryId: event.element.category},
+                    onlyFirst: true
+                });
+
+                if (categoryResults.length > 0) {
+                    const categoryComponent = categoryResults[0];
+                    if (categoryComponent._handleFilterUpdate) {
+                        categoryComponent._handleFilterUpdate(event);
+                    }
+                }
             })
             .catch(error => {
                 window.console.error('Error rendering checklist item:', error);
