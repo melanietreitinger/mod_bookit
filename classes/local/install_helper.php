@@ -56,6 +56,9 @@ class install_helper {
             mtrace('Creating default checklist data for BookIt...');
         }
 
+        // First, ensure we have some default rooms available.
+        self::create_default_rooms($force, $verbose);
+
         // Collection of exam-related task items for our test data.
         $taskitems = [
             'Reserve room',
@@ -137,7 +140,7 @@ class install_helper {
                 $masterid,
                 $categorydata['name'],
                 $categorydata['description'],
-                '', // Checklist items - will be updated later.
+                null, // Checklist items - will be updated later.
                 $categorydata['sortorder']
             );
 
@@ -434,4 +437,88 @@ class install_helper {
 
         return $rolesimported;
     }
+
+    /**
+     * Create default rooms for testing purposes.
+     *
+     * @param bool $force Force creation even if rooms exist
+     * @param bool $verbose Print verbose output
+     * @return bool True if rooms were created, false otherwise
+     */
+    public static function create_default_rooms(bool $force = false, bool $verbose = false): bool {
+        global $DB, $USER;
+
+        // Check if rooms already exist.
+        $existing = $DB->count_records('bookit_room');
+        if ($existing > 0 && !$force) {
+            if ($verbose) {
+                mtrace('Rooms already exist. Skipping creation.');
+            }
+            return false;
+        }
+
+        if ($verbose) {
+            mtrace('Creating default rooms for BookIt...');
+        }
+
+        // Define sample rooms.
+        $rooms = [
+            [
+                'name' => 'Lecture Hall A',
+                'description' => 'Large lecture hall with 200 seats, equipped with modern AV technology',
+                'eventcolor' => '#FF6B6B',
+                'active' => 1,
+                'roommode' => 1,
+            ],
+            [
+                'name' => 'Seminar Room B',
+                'description' => 'Medium-sized seminar room for up to 50 students',
+                'eventcolor' => '#4ECDC4',
+                'active' => 1,
+                'roommode' => 0,
+            ],
+            [
+                'name' => 'Computer Lab C',
+                'description' => 'Computer laboratory with 30 workstations',
+                'eventcolor' => '#45B7D1',
+                'active' => 1,
+                'roommode' => 1,
+            ],
+            [
+                'name' => 'Conference Room D',
+                'description' => 'Small conference room for meetings and group work',
+                'eventcolor' => '#96CEB4',
+                'active' => 1,
+                'roommode' => 0,
+            ],
+        ];
+
+        $roomsCreated = 0;
+        foreach ($rooms as $roomdata) {
+            $room = new \stdClass();
+            $room->name = $roomdata['name'];
+            $room->description = $roomdata['description'];
+            $room->eventcolor = $roomdata['eventcolor'];
+            $room->active = $roomdata['active'];
+            $room->roommode = $roomdata['roommode'];
+            $room->usermodified = $USER->id ?? 2; // Default to admin user if no user set.
+            $room->timecreated = time();
+            $room->timemodified = time();
+
+            $roomid = $DB->insert_record('bookit_room', $room);
+
+            if ($verbose) {
+                mtrace("Created room: {$room->name} (ID: $roomid)");
+            }
+
+            $roomsCreated++;
+        }
+
+        if ($verbose) {
+            mtrace("Successfully created $roomsCreated default rooms!");
+        }
+
+        return $roomsCreated > 0;
+    }
+
 }
