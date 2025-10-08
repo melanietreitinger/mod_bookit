@@ -229,7 +229,7 @@ class bookit_checklist_item implements \renderable, \templatable {
                 'roleid' => (int) $roleid,
             ];
 
-            // Check if current user has this specific role
+            // Check if current user has this specific role.
             if (checklist_manager::user_has_bookit_role((int) $roleid)) {
                 $roleData['extraclasses'] = 'badge badge-warning text-dark';
             } else {

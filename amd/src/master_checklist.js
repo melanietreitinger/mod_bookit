@@ -150,7 +150,9 @@ export default class extends BaseComponent {
                 window.console.log('ROOM: ', room);
                 roomNames.push({
                     'roomid': room.roomid,
-                    'roomname': room.roomname
+                    'roomname': room.roomname,
+                    'eventcolor': room.eventcolor,
+                    'textclass': room.textclass,
                 });
             });
         }
@@ -160,7 +162,8 @@ export default class extends BaseComponent {
             event.element.rolenames.forEach((role) => {
                 roleNames.push({
                     'roleid': role.roleid,
-                    'rolename': role.rolename
+                    'rolename': role.rolename,
+                    'extraclasses': role.extraclasses,
                 });
             });
         }
@@ -204,58 +207,44 @@ export default class extends BaseComponent {
         const actionParts = event.action.split('.');
         const fieldPart = actionParts[1].split(':')[0];
 
-        const elementSelector = `span[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
-
-        window.console.log('ELEMENT SELECTOR: ', elementSelector);
-
-        const targetElement = this.getElement(elementSelector);
-
-        window.console.log('TARGET ELEMENT: ', targetElement);
-
-        if (fieldPart.endsWith('id')) {
-            const nameField = fieldPart.substring(0, fieldPart.length - 2) + 'name';
-
-            if (nameField in event.element) {
-                targetElement.innerHTML = event.element[nameField];
-            }
-        } else if (fieldPart.endsWith('ids')) {
+        if (fieldPart.endsWith('ids')) {
 
             const stateItem = this.reactive.state.checklistitems.get(event.element.id);
 
-            // const itemRooms = [];
-            // if (stateItem.roomnames) {
-            //     Object.entries(stateItem.roomnames).forEach(([id, name]) => {
-            //         itemRooms.push({
-            //             'roomid': parseInt(id),
-            //             'roomname': name
-            //         });
-            //     });
-            // }
+            const selector = `td[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
+            const targetElement = this.getElement(selector);
 
-            // TODO we need to differentiate between roles and rooms here => fieldpart.startsWith
+            let templateName, templateData;
 
-            const roomsSelector = `td[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
-            const roomsElement = this.getElement(roomsSelector);
+            if (fieldPart.startsWith('room')) {
 
-            window.console.log('ITEM ROOMS: ', stateItem.roomnames);
+                templateName = 'mod_bookit/bookit_checklist_item_rooms';
+                templateData = {
+                    roomnames: stateItem.roomnames
+                };
+                window.console.log('Updating rooms for item:', event.element.id, stateItem.roomnames);
+            } else if (fieldPart.startsWith('role')) {
 
-            Templates.renderForPromise('mod_bookit/bookit_checklist_item_rooms',
-            {
-                roomnames: stateItem.roomnames
-            })
+                templateName = 'mod_bookit/bookit_checklist_item_roles';
+                templateData = {
+                    rolenames: stateItem.rolenames
+                };
+                window.console.log('Updating roles for item:', event.element.id, stateItem.rolenames);
+            } else {
+                window.console.warn('Unknown field type for ids update:', fieldPart);
+                return;
+            }
+
+            Templates.renderForPromise(templateName, templateData)
             .then(({html, js}) => {
-                Templates.replaceNode(roomsElement, html, js);
-
+                Templates.replaceNode(targetElement, html, js);
             })
             .then(async () => {
                 Toast.add(await getString('checklistitemupdatesuccess', 'mod_bookit'),
                     {type: 'success'});
-                    // this.dispatchEvent(this.events.categoryRendered, {
-                    //     categoryId: event.element.id
-                    // });
             })
             .catch(error => {
-                window.console.error('Error rendering checklist category:', error);
+                window.console.error('Error rendering checklist item update:', error);
             });
             // var elementString = event.element[fieldPart];
 
@@ -278,42 +267,19 @@ export default class extends BaseComponent {
             // }
 
         } else {
+            const elementSelector = `span[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
+
+            window.console.log('ELEMENT SELECTOR: ', elementSelector);
+
+            const targetElement = this.getElement(elementSelector);
+
+            window.console.log('TARGET ELEMENT: ', targetElement);
+
             targetElement.innerHTML = event.element[fieldPart];
+
         }
 
     }
-
-    // _handleItemCategoryUpdatedEvent(event) {
-    //     const itemObject = this.reactive.state.checklistitems.get(event.element.id);
-
-    //     const formDataObj = {
-    //         itemid: itemObject.id,
-    //         masterid: 1,
-    //         title: itemObject.title,
-    //         categoryid: itemObject.categoryid,
-    //         roomid: itemObject.roomid,
-    //         roleid: itemObject.roleid,
-    //         action: 'put',
-    //         _qf__mod_bookit_form_edit_checklist_item_form: 1,
-    //     };
-
-    //     const formData = new URLSearchParams(formDataObj).toString();
-    //     // TODO move to mutation
-    //     Ajax.call([{
-    //         methodname: 'core_form_dynamic_form',
-    //         args: {
-    //             formdata: formData,
-    //             form: 'mod_bookit\\form\\edit_checklist_item_form'
-    //         }
-    //         }])[0]
-    //         .then((response) => {
-    //             // TODO handle response?
-    //             })
-    //             .catch(exception => {
-    //                 window.console.error('AJAX error:', exception);
-    //             });
-
-    // }
 
     _handleCategoryDeletedEvent(event) {
         const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.id}`);
@@ -332,6 +298,7 @@ export default class extends BaseComponent {
                 id: event.element.id,
                 name: event.element.name,
                 order: event.element.order,
+                type: 'category',
             })
             .then(({html, js}) => {
                 Templates.replaceNode(targetElement, html, js);
@@ -349,7 +316,6 @@ export default class extends BaseComponent {
             });
 
     }
-
 
 
     _handleRoleUpdate(event) {

@@ -201,7 +201,7 @@ class edit_checklist_category_form extends dynamic_form {
                     'id' => $id,
                     'name' => $ajaxdata['name'],
                     'order' => 0,
-                    'items' => explode(',', $ajaxdata['checklistitems']),
+                    'items' => json_decode($ajaxdata['checklistitems'], true) ?: [],
                 ],
             ],
         ];

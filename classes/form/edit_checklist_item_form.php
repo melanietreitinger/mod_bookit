@@ -27,6 +27,7 @@ namespace mod_bookit\form;
 
 use core_form\dynamic_form;
 use mod_bookit\local\entity\bookit_checklist_item;
+use mod_bookit\local\entity\bookit_checklist_category;
 use mod_bookit\local\manager\checklist_manager;
 use mod_bookit\local\entity\bookit_notification_slot;
 use mod_bookit\local\entity\bookit_notification_type;
@@ -64,12 +65,6 @@ class edit_checklist_item_form extends dynamic_form {
         $mform->setType('title', PARAM_TEXT);
         $mform->addRule('title', null, 'required', null, 'client');
         $mform->addHelpButton('title', 'checklistitemname', 'mod_bookit');
-
-        // $ajaxdata = $this->_ajaxformdata;
-        // $categories = [];
-        // if (!empty($ajaxdata['categories'])) {
-        //     $categories = array_column($ajaxdata['categories'], 'name', 'id');
-        // }
 
         $mform->addElement(
             'select',
@@ -323,6 +318,21 @@ class edit_checklist_item_form extends dynamic_form {
 
         $id = $item->save();
 
+        if (!empty($data['categoryid'])) {
+            $category = bookit_checklist_category::from_database($data['categoryid']);
+
+            $existingItems = [];
+            if (!empty($category->checklistitems)) {
+                $existingItems = array_map('intval', explode(',', trim($category->checklistitems, '"[]')));
+            }
+
+            if (!in_array($id, $existingItems)) {
+                $existingItems[] = $id;
+                $category->checklistitems = implode(',', $existingItems);
+                $category->save();
+            }
+        }
+
         foreach (bookit_notification_type::cases() as $case) {
             $casename = strtolower($case->name);
 
@@ -387,17 +397,26 @@ class edit_checklist_item_form extends dynamic_form {
         $fields['id'] = $id;
         $fields['roomnames'] = [];
         foreach ($data['roomids'] as $roomid) {
+            $room = checklist_manager::get_room_by_id((int) $roomid);
             array_push($fields['roomnames'], [
                 'roomid' => (int) $roomid,
-                'roomname' => checklist_manager::get_roomname_by_id((int) $roomid),
+                'roomname' => $room->name,
+                'eventcolor' => $room->eventcolor,
+                'textclass' => $room->textclass,
             ]);
         }
 
         $fields['rolenames'] = [];
         foreach ($data['roleids'] as $roleid) {
+                if (checklist_manager::user_has_bookit_role((int) $roleid)) {
+                $extraclasses = 'badge badge-warning text-dark';
+            } else {
+                $extraclasses = 'badge badge-primary text-light';
+            }
             $fields['rolenames'][] = [
                 'roleid' => (int) $roleid,
                 'rolename' => checklist_manager::get_rolename_by_id((int) $roleid),
+                'extraclasses' => $extraclasses,
             ];
         }
 
@@ -419,6 +438,26 @@ class edit_checklist_item_form extends dynamic_form {
     public function process_delete_request($id) {
 
         $item = bookit_checklist_item::from_database($id);
+        $categoryid = $item->categoryid;
+
+        if (!empty($categoryid)) {
+            $category = bookit_checklist_category::from_database($categoryid);
+
+            $existingItems = [];
+            if (!empty($category->checklistitems)) {
+                $existingItems = array_map('intval', explode(',', trim($category->checklistitems, '"[]')));
+            }
+
+            $updatedItems = array_filter($existingItems, function($itemId) use ($id) {
+                return $itemId !== (int) $id;
+            });
+
+            $updatedItems = array_values($updatedItems);
+
+            $category->checklistitems = empty($updatedItems) ? '' : implode(',', $updatedItems);
+            $category->save();
+        }
+
         $item->delete();
         return [
             [

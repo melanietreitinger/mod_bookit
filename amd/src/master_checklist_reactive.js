@@ -109,9 +109,14 @@ const loadState = async(reactive) => {
 
         const roomNames = [];
         roomElements.forEach(roomElement => {
+
+            const itemId = itemRow.dataset.bookitChecklistitemId;
+
             roomNames.push({
                 'roomid': roomElement.dataset.bookitChecklistitemTabledataRoomId,
-                'roomname': roomElement.dataset.bookitChecklistitemRoomname
+                'roomname': roomElement.dataset.bookitChecklistitemRoomname,
+                'textclass': roomElement.dataset.bookitChecklistitemTabledataRoomTextclass,
+                'eventcolor': roomElement.dataset.bookitChecklistitemTabledataRoomColor
             });
         });
 
