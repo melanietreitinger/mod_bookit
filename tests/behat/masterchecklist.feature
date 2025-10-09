@@ -12,7 +12,6 @@ Feature: Edit the master checklist
     And I wait "1" seconds
     And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
 
-
   Scenario: Admin can create a new master checklist category
     Given I wait "1" seconds
     Then I should see "Master checklist" in the "#page-header" "css_element"
@@ -24,3 +23,15 @@ Feature: Edit the master checklist
     And I press "Save changes"
     And I wait "1" seconds
     Then I should see "My Test Category"
+
+  Scenario: Admin can delete a master checklist category
+    Given I should see "Exam Preparation"
+    And I click on "button[id^='edit-checklistcategory-']" "css_element" in the "Exam Preparation" "table_row"
+    And I wait "1" seconds
+    And I should see "Delete"
+    And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
+    And I should see "Are you sure?"
+    And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
+    Then I should not see "Exam Preparation"
