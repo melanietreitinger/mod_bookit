@@ -114,41 +114,21 @@ if ($hassiteconfig) {
     $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
 
     if (empty($installhelperfinished)) {
-        $runinstallhelper = new admin_setting_configcheckbox(
+        $installurl = new moodle_url('/mod/bookit/install_helper_run.php', ['sesskey' => sesskey()]);
+        $description = new lang_string('runinstallhelperinfo', 'mod_bookit');
+        $description .= \core\output\html_writer::empty_tag('br');
+        $description .= \core\output\html_writer::link($installurl,
+                new lang_string('runinstallhelper', 'mod_bookit'),
+                ['class' => 'btn btn-secondary mt-3', 'role' => 'button']);
+
+        $runinstallhelper = new admin_setting_heading(
             'mod_bookit/runinstallhelper',
             new lang_string('runinstallhelper', 'mod_bookit'),
-            new lang_string('runinstallhelperinfo', 'mod_bookit'),
-            1
+            $description
         );
 
-        $runinstallhelper->set_updatedcallback(function () {
-
-            $settingstate = get_config('mod_bookit', 'runinstallhelper');
-
-            if (!empty($settingstate)) {
-                debugging('Importing default roles for BookIt...');
-                $rolesimported = install_helper::import_default_roles(false, false);
-
-                if ($rolesimported) {
-                    debugging('Default roles were imported successfully.');
-                } else {
-                    debugging('No default roles were imported (may already exist).');
-                }
-
-                debugging('Setting up default checklist data for BookIt...');
-                $result = install_helper::create_default_checklists(false, false);
-
-                if ($result) {
-                    debugging('Default checklist data was created successfully.');
-                } else {
-                    debugging('Default checklist data was not created (may already exist).');
-                }
-                set_config('installhelperfinished', 1, 'mod_bookit');
-                        }
-                });
-
-            $settings->add($runinstallhelper);
-        }
+        $settings->add($runinstallhelper);
+    }
     }
 
     $ADMIN->add('mod_bookit_category', $settings);
