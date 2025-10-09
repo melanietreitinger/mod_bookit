@@ -262,7 +262,6 @@
 		<inherit>mod/choice:view</inherit>
 		<inherit>mod/data:addinstance</inherit>
 		<inherit>mod/data:approve</inherit>
-		<inherit>mod/data:comment</inherit>
 		<inherit>mod/data:exportallentries</inherit>
 		<inherit>mod/data:exportentry</inherit>
 		<inherit>mod/data:exportownentry</inherit>
