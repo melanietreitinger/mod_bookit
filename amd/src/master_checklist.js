@@ -136,14 +136,16 @@ export default class extends BaseComponent {
                 Toast.add(await getString('checklistcategorysuccess', 'mod_bookit'),
                     {type: 'success'});
 
-                const components = this.reactive.components;
-                const categoryResults = this.helper.findComponents(components, {
-                    dataset: {bookitTbodyCategoryId: event.element.id.toString()},
-                    onlyFirst: false
-                });
+                if (this.reactive.state.activeRole.id !== 0 || this.reactive.state.activeRoom.id !== 0) {
+                    const components = this.reactive.components;
+                    const categoryResults = this.helper.findComponents(components, {
+                        dataset: {bookitTbodyCategoryId: event.element.id.toString()},
+                        onlyFirst: false
+                    });
 
-                const categoryComponent = categoryResults.find(comp => typeof comp._handleFilterUpdate === 'function');
-                categoryComponent._handleFilterUpdate(event);
+                    const categoryComponent = categoryResults.find(comp => typeof comp._handleFilterUpdate === 'function');
+                    categoryComponent._handleFilterUpdate(event);
+                }
             })
             .catch(error => {
                 window.console.error('Error rendering checklist item:', error);

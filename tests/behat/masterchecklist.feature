@@ -22,5 +22,5 @@ Feature: Edit the master checklist
     And I set the following fields to these values:
       | Category name | My Test Category |
     And I press "Save changes"
-    And I wait "2" seconds
+    And I wait "1" seconds
     Then I should see "My Test Category"
