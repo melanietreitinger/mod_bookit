@@ -82,7 +82,7 @@ Feature: Edit the master checklist
     And I wait "1" seconds
     And I click on "Reset" "button" in the "Confirm" "dialogue"
     And I wait "1" seconds
-    And I should not see "This is my behat notification edit test message. Cool."
+    And the field "before_due_messagetext[text]" does not match value "This is my behat notification edit test message. Cool."
 
   Scenario: Admin can delete a master checklist item
     Given I should see "Reserve room"
