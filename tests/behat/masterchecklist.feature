@@ -22,6 +22,14 @@ Feature: Edit the master checklist
     And I press "Save changes"
     Then I should see "My Test Category"
 
+  Scenario: Admin can edit a master checklist category
+    Given I should see "Exam Preparation"
+    And I click on "button[id^='edit-checklistcategory-']" "css_element" in the "Exam Preparation" "table_row"
+    And I should see "Save"
+    And I set the field "Category name" to "Exam Preparation EDITED"
+    And I click on "button[data-action='save']" "css_element"
+    Then I should see "Exam Preparation EDITED"
+
   Scenario: Admin can delete a master checklist category
     Given I should see "Exam Preparation"
     And I click on "button[id^='edit-checklistcategory-']" "css_element" in the "Exam Preparation" "table_row"
@@ -46,9 +54,14 @@ Feature: Edit the master checklist
     Given I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I should see "Save"
-    And I set the field "Checklist item name" to "Reserve room EDITED"
+    And I set the following fields to these values:
+      | Checklist item name | Reserve room EDITED |
+      | Rooms               | Lecture Hall A      |
+      | Role               | BookIt_Observer |
     And I click on "button[data-action='save']" "css_element"
     Then I should see "Reserve room EDITED"
+    And I should see "Lecture Hall A"
+    And I should see "BookIt_Observer"
 
   Scenario: Admin can delete a master checklist item
     Given I should see "Reserve room"
