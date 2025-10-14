@@ -42,7 +42,11 @@ class bookit_checklist_item implements \renderable, \templatable {
     /** @var int|null ID of the checklist item */
     public ?int $itemid;
 
+    /** @var string|null Due date as string */
     public ?string $duedate;
+
+    /** @var int|null Order of the checklist item */
+    public ?int $order;
 
     /**
      * Create a new instance of this class.

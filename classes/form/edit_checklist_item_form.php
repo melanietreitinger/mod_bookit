@@ -278,6 +278,16 @@ class edit_checklist_item_form extends dynamic_form {
         if (!empty($data['itemid'])) {
             $item = bookit_checklist_item::from_database($data['itemid']);
 
+            // Safely extract duedaysoffset value
+            $duedaysoffset = 0;
+            if (isset($data['duedaysoffset'])) {
+                if (is_array($data['duedaysoffset']) && isset($data['duedaysoffset']['number'])) {
+                    $duedaysoffset = (int)$data['duedaysoffset']['number'];
+                } else if (is_numeric($data['duedaysoffset'])) {
+                    $duedaysoffset = (int)$data['duedaysoffset'];
+                }
+            }
+
             $fields = [
                     'title' => $data['title'],
                     'order' => 0,
@@ -285,7 +295,7 @@ class edit_checklist_item_form extends dynamic_form {
                     'roomids' => $data['roomids'],
                     'roleids' => $data['roleids'],
                     'duedaysrelation' => $data['duedate'],
-                    'duedaysoffset' => $data['duedaysoffset']['number'],
+                    'duedaysoffset' => $duedaysoffset,
             ];
 
             foreach ($fields as $key => $value) {

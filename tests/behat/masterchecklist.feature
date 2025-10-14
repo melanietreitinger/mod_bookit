@@ -13,7 +13,6 @@ Feature: Edit the master checklist
     And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
 
   Scenario: Admin can create a new master checklist category
-    Given I wait "1" seconds
     Then I should see "Master checklist" in the "#page-header" "css_element"
     When I click on "add-checklist-category-button" "button"
     And I should see "Category name"
@@ -21,23 +20,18 @@ Feature: Edit the master checklist
     And I set the following fields to these values:
       | Category name | My Test Category |
     And I press "Save changes"
-    And I wait "1" seconds
     Then I should see "My Test Category"
 
   Scenario: Admin can delete a master checklist category
     Given I should see "Exam Preparation"
     And I click on "button[id^='edit-checklistcategory-']" "css_element" in the "Exam Preparation" "table_row"
-    And I wait "1" seconds
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
-    And I wait "1" seconds
     And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
-    And I wait "1" seconds
     Then I should not see "Exam Preparation"
 
   Scenario: Admin can create a new master checklist item
-    Given I wait "1" seconds
     When I click on "add-checklist-item-button" "button"
     And I should see "Checklist item"
     And I set the following fields to these values:
@@ -45,19 +39,22 @@ Feature: Edit the master checklist
       | Checklist category       | Exam Preparation      |
       | Rooms                    | Lecture Hall A        |
       | Role                    | BookIt_Booking Person  |
-    And I wait "1" seconds
     And I press "Save changes"
-    And I wait "1" seconds
     Then I should see "My Test Item"
+
+  Scenario: Admin can edit a master checklist item
+    Given I should see "Reserve room"
+    And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
+    And I should see "Save"
+    And I set the field "Checklist item name" to "Reserve room EDITED"
+    And I click on "button[data-action='save']" "css_element"
+    Then I should see "Reserve room EDITED"
 
   Scenario: Admin can delete a master checklist item
     Given I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
-    And I wait "1" seconds
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
-    And I wait "1" seconds
     And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
-    And I wait "1" seconds
     Then I should not see "Reserve room"
