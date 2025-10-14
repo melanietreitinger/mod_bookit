@@ -56,12 +56,22 @@ Feature: Edit the master checklist
     And I should see "Save"
     And I set the following fields to these values:
       | Checklist item name | Reserve room EDITED |
-      | Rooms               | Lecture Hall A      |
-      | Role               | BookIt_Observer |
+      | Checklist category  | Exam Day            |
+      | Before exam         | 1                   |
+    And I wait "1" seconds
+    And I set the field "Time" to "14"
+    And I set the field "Rooms" to "Lecture Hall A, Seminar Room B"
+    And I set the field "Role" to "BookIt_Observer, BookIt_Service-Team"
+    And I set the field "Before due" to "1"
+    And I wait "1" seconds
+    And I set the field "before_due_time[number]" to "7"
+    And I set the field "Recipient" to "BookIt_Observer, BookIt_Service-Team"
     And I click on "button[data-action='save']" "css_element"
     Then I should see "Reserve room EDITED"
-    And I should see "Lecture Hall A"
-    And I should see "BookIt_Observer"
+    And I should see "Lecture Hall A" in the "Reserve room EDITED" "table_row"
+    And I should see "Seminar Room B" in the "Reserve room EDITED" "table_row"
+    And I should see "BookIt_Observer" in the "Reserve room EDITED" "table_row"
+    And I should see "BookIt_Service-Team" in the "Reserve room EDITED" "table_row"
 
   Scenario: Admin can delete a master checklist item
     Given I should see "Reserve room"
