@@ -65,6 +65,7 @@ Feature: Edit the master checklist
     And I set the field "Before due" to "1"
     And I wait "1" seconds
     And I set the field "before_due_time[number]" to "7"
+    And I set the field "before_due_messagetext[text]" to "This is my behat notification edit test message. Cool."
     And I set the field "Recipient" to "BookIt_Observer, BookIt_Service-Team"
     And I click on "button[data-action='save']" "css_element"
     Then I should see "Reserve room EDITED"
@@ -72,6 +73,16 @@ Feature: Edit the master checklist
     And I should see "Seminar Room B" in the "Reserve room EDITED" "table_row"
     And I should see "BookIt_Observer" in the "Reserve room EDITED" "table_row"
     And I should see "BookIt_Service-Team" in the "Reserve room EDITED" "table_row"
+    And I wait "1" seconds
+    And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room EDITED" "table_row"
+    And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
+    And I click on "button[name='before_due_reset']" "css_element"
+    And I wait "1" seconds
+    And I should see "Confirm"
+    And I wait "1" seconds
+    And I click on "Reset" "button" in the "Confirm" "dialogue"
+    And I wait "1" seconds
+    And I should not see "This is my behat notification edit test message. Cool."
 
   Scenario: Admin can delete a master checklist item
     Given I should see "Reserve room"

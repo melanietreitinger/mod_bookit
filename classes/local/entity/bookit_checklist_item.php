@@ -48,6 +48,84 @@ class bookit_checklist_item implements \renderable, \templatable {
     /** @var int|null Order of the checklist item */
     public ?int $order;
 
+    // Notification properties
+    /** @var bool|null Before due notification enabled */
+    public ?bool $before_due = null;
+
+    /** @var array|null Before due notification time duration */
+    public ?array $before_due_time = null;
+
+    /** @var array|null Before due notification message text */
+    public ?array $before_due_messagetext = null;
+
+    /** @var array|null Before due notification recipient */
+    public ?array $before_due_recipient = null;
+
+    /** @var int|null Before due notification slot ID */
+    public ?int $before_due_id = null;
+
+    /** @var bool|null Before exam notification enabled */
+    public ?bool $before_exam = null;
+
+    /** @var array|null Before exam notification time duration */
+    public ?array $before_exam_time = null;
+
+    /** @var array|null Before exam notification message text */
+    public ?array $before_exam_messagetext = null;
+
+    /** @var array|null Before exam notification recipient */
+    public ?array $before_exam_recipient = null;
+
+    /** @var int|null Before exam notification slot ID */
+    public ?int $before_exam_id = null;
+
+    /** @var bool|null After exam notification enabled */
+    public ?bool $after_exam = null;
+
+    /** @var array|null After exam notification time duration */
+    public ?array $after_exam_time = null;
+
+    /** @var array|null After exam notification message text */
+    public ?array $after_exam_messagetext = null;
+
+    /** @var array|null After exam notification recipient */
+    public ?array $after_exam_recipient = null;
+
+    /** @var int|null After exam notification slot ID */
+    public ?int $after_exam_id = null;
+
+    /** @var bool|null During exam notification enabled */
+    public ?bool $during_exam = null;
+
+    /** @var array|null During exam notification time duration */
+    public ?array $during_exam_time = null;
+
+    /** @var array|null During exam notification message text */
+    public ?array $during_exam_messagetext = null;
+
+    /** @var array|null During exam notification recipient */
+    public ?array $during_exam_recipient = null;
+
+    /** @var int|null During exam notification slot ID */
+    public ?int $during_exam_id = null;
+
+    /** @var bool|null Overdue notification enabled */
+    public ?bool $overdue = null;
+
+    /** @var array|null Overdue notification time duration */
+    public ?array $overdue_time = null;
+
+    /** @var array|null Overdue notification message text */
+    public ?array $overdue_messagetext = null;
+
+    /** @var array|null Overdue notification recipient */
+    public ?array $overdue_recipient = null;
+
+    /** @var int|null Overdue notification slot ID */
+    public ?int $overdue_id = null;
+
+
+
     /**
      * Create a new instance of this class.
      *
