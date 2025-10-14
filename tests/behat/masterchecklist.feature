@@ -31,7 +31,33 @@ Feature: Edit the master checklist
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
     And I wait "1" seconds
-    And I should see "Are you sure?"
+    And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
     And I wait "1" seconds
     Then I should not see "Exam Preparation"
+
+  Scenario: Admin can create a new master checklist item
+    Given I wait "1" seconds
+    When I click on "add-checklist-item-button" "button"
+    And I should see "Checklist item"
+    And I set the following fields to these values:
+      | Checklist item name      | My Test Item          |
+      | Checklist category       | Exam Preparation      |
+      | Rooms                    | Lecture Hall A        |
+      | Role                    | BookIt_Booking Person  |
+    And I wait "1" seconds
+    And I press "Save changes"
+    And I wait "1" seconds
+    Then I should see "My Test Item"
+
+  Scenario: Admin can delete a master checklist item
+    Given I should see "Reserve room"
+    And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
+    And I wait "1" seconds
+    And I should see "Delete"
+    And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
+    And I should see "Confirm"
+    And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
+    Then I should not see "Reserve room"

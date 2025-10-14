@@ -37,6 +37,13 @@ use mod_bookit\local\manager\checklist_manager;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_checklist_item implements \renderable, \templatable {
+
+
+    /** @var int|null ID of the checklist item */
+    public ?int $itemid;
+
+    public ?string $duedate;
+
     /**
      * Create a new instance of this class.
      *
