@@ -521,98 +521,41 @@ class edit_checklist_item_form extends dynamic_form {
     public function definition_after_data() {
         parent::definition_after_data();
 
-        // Fix duration field values directly on the form elements
-        // $this->fix_duration_field_values();
+        // Fix main duedaysoffset field
+        $this->fix_duration_field('duedaysoffset');
 
-        $number = $this->_form->getElement('duedaysoffset')->getValue();
-        $duration = ['number' => $number, 'timeunit' => DAYSECS];
-
-        if (is_array($number) && isset($number['timeunit']) && is_array($number['timeunit'])) {
-            $number['timeunit'] = DAYSECS;
-        } else if (!is_array($number) || !isset($number['timeunit'])) {
-            $duration = [
-                'number' => is_array($number) ? ($number['number'] ?? 1) : (int)$number,
-                'timeunit' => DAYSECS,
-            ];
-        }
-
-        $this->_form->getElement('duedaysoffset')->setValue($duration);
-
-
+        // Fix notification time fields
         foreach (bookit_notification_type::cases() as $case) {
             if (in_array($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE])) {
                 $fieldName = $case->value . '_time';
-                $number = $this->_form->getElement($fieldName)->getValue();
-                $duration = ['number' => $number, 'timeunit' => DAYSECS];
-
-                if (is_array($number) && isset($number['timeunit']) && is_array($number['timeunit'])) {
-                    $number['timeunit'] = DAYSECS;
-                } else if (!is_array($number) || !isset($number['timeunit'])) {
-                    $duration = [
-                        'number' => is_array($number) ? ($number['number'] ?? 1) : (int)$number,
-                        'timeunit' => DAYSECS,
-                    ];
-                }
-
-                $this->_form->getElement($fieldName)->setValue($duration);
+                $this->fix_duration_field($fieldName);
             }
         }
-
     }
 
-    // /**
-    //  * Fix duration field values directly on the form elements
-    //  */
-    // private function fix_duration_field_values() {
-    //     error_log("FIXING DURATION FIELD VALUES");
+    /**
+     * Fix a duration field to ensure it has the correct array format
+     */
+    private function fix_duration_field($fieldName) {
+        if (!$this->_form->elementExists($fieldName)) {
+            return;
+        }
 
-    //     // Fix main duedaysoffset field
-    //     if ($this->_form->elementExists('duedaysoffset')) {
-    //         $element = $this->_form->getElement('duedaysoffset');
-    //         $currentValue = $element->getValue();
+        $element = $this->_form->getElement($fieldName);
+        $currentValue = $element->getValue();
 
-    //         error_log("Current duedaysoffset value: " . print_r($currentValue, true));
+        $duration = [
+            'number' => 0,
+            'timeunit' => DAYSECS,
+        ];
 
-    //         // Fix corrupted timeunit array
-    //         if (is_array($currentValue) && isset($currentValue['timeunit']) && is_array($currentValue['timeunit'])) {
-    //             $currentValue['timeunit'] = DAYSECS;
-    //             error_log("Fixed corrupted duedaysoffset timeunit array");
-    //             $element->setValue($currentValue);
-    //         } else if (!is_array($currentValue) || !isset($currentValue['timeunit'])) {
-    //             $fixedValue = [
-    //                 'number' => is_array($currentValue) ? ($currentValue['number'] ?? 1) : (int)$currentValue,
-    //                 'timeunit' => DAYSECS,
-    //             ];
-    //             error_log("Setting fixed duedaysoffset value: " . print_r($fixedValue, true));
-    //             $element->setValue($fixedValue);
-    //         }
-    //     }
+        if (is_array($currentValue)) {
+            $duration['number'] = isset($currentValue['number']) ? (int)$currentValue['number'] : 0;
+        } else if (is_numeric($currentValue)) {
+            $duration['number'] = (int)$currentValue;
+        }
 
-    //     // Fix notification time fields
-    //     foreach (bookit_notification_type::cases() as $case) {
-    //         if (in_array($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE])) {
-    //             $fieldName = $case->value . '_time';
-    //             if ($this->_form->elementExists($fieldName)) {
-    //                 $element = $this->_form->getElement($fieldName);
-    //                 $currentValue = $element->getValue();
+        $element->setValue($duration);
+    }
 
-    //                 error_log("Current $fieldName value: " . print_r($currentValue, true));
-
-    //                 // Fix corrupted timeunit array
-    //                 if (is_array($currentValue) && isset($currentValue['timeunit']) && is_array($currentValue['timeunit'])) {
-    //                     $currentValue['timeunit'] = DAYSECS;
-    //                     error_log("Fixed corrupted $fieldName timeunit array");
-    //                     $element->setValue($currentValue);
-    //                 } else if (!is_array($currentValue) || !isset($currentValue['timeunit'])) {
-    //                     $fixedValue = [
-    //                         'number' => is_array($currentValue) ? ($currentValue['number'] ?? 1) : (int)$currentValue,
-    //                         'timeunit' => DAYSECS,
-    //                     ];
-    //                     error_log("Setting fixed $fieldName value: " . print_r($fixedValue, true));
-    //                     $element->setValue($fixedValue);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 }
