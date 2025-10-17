@@ -67,7 +67,12 @@ export default class extends BaseComponent {
             this.reactive.dispatch('roleChanged', {id: e.target.value});
         });
         this.addEventListener(this.getElement(this.selectors.ROOM_SELECT), 'change', (e) => {
-            this.reactive.dispatch('roomChanged', {id: e.target.value});
+
+            window.console.log('ROOM SELECT CHANGED: ', e);
+
+            // TODO we need to dispatch all selected values
+
+            this.reactive.dispatch('roomChanged', {options: e.target.selectedOptions});
         });
 
         const spinnerElement = document.querySelector(this.selectors.LOADING_SPINNER);

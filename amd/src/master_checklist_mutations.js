@@ -233,9 +233,20 @@ export default class {
     roomChanged(stateManager, data) {
         const state = stateManager.state;
 
+        const optionsArray = Array.from(data.options);
+        window.console.log(optionsArray);
+
         stateManager.setReadOnly(false);
 
-        state.activeRoom.id = parseInt(data.id);
+        const tempArray = [];
+        optionsArray.forEach(option => {
+            tempArray.push({
+                id: option.value,
+                name: option.textContent
+            });
+        });
+
+        state.activeRoom = tempArray;
 
         stateManager.setReadOnly(true);
     }

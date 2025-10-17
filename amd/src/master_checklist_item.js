@@ -400,7 +400,7 @@ export default class extends BaseComponent {
     }
 
     shouldBeVisible() {
-        const activeRoomId = this.reactive.state.activeRoom.id;
+        const activeRooms = this.reactive.state.activeRoom;
         const activeRoleId = this.reactive.state.activeRole.id;
         const itemId = parseInt(this.element.dataset.bookitChecklistitemId)
         const stateItem = this.reactive.state.checklistitems.get(itemId);
@@ -409,7 +409,13 @@ export default class extends BaseComponent {
 
         var isInRoom = false;
 
-        if (activeRoomId == 0 || roomIds.includes(activeRoomId.toString())) {
+        const noRoomSelection = activeRooms.some(room => room.id == 0);
+        const parsedRoomIds = JSON.parse(roomIds);
+        const hasMatchingRoom = activeRooms.some(activeRoom =>
+            parsedRoomIds.includes(activeRoom.id.toString())
+        );
+
+        if (noRoomSelection || hasMatchingRoom) {
             isInRoom = true;
         }
 

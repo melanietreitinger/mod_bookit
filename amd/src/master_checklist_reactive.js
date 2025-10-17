@@ -80,9 +80,9 @@ const loadState = async(reactive) => {
         activeRole: {
             id: 0,
         },
-        activeRoom: {
-            id: 0,
-        },
+        activeRoom: [
+            { id: 0, name: 'No selection' }
+        ],
     };
     const checklistCategoryRows = document.querySelectorAll(SELECTORS.ALL_CATEGORY_TABLE_ROWS);
     checklistCategoryRows.forEach(categoryRow => {
@@ -110,7 +110,7 @@ const loadState = async(reactive) => {
         const roomNames = [];
         roomElements.forEach(roomElement => {
 
-            const itemId = itemRow.dataset.bookitChecklistitemId;
+            // const itemId = itemRow.dataset.bookitChecklistitemId;
 
             roomNames.push({
                 'roomid': roomElement.dataset.bookitChecklistitemTabledataRoomId,
