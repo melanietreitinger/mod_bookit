@@ -28,10 +28,12 @@ export default class extends BaseComponent {
     }
 
     getWatchers() {
+
+        window.console.log('getting watchers for checklist category', this.element.dataset.bookitCategoryId);
         return [
             {watch: 'checklistcategories.name:updated', handler: this._refreshEditButtonListener},
             {watch: 'activeRole:updated', handler: this._handleFilterUpdate},
-            {watch: 'activeRoom:updated', handler: this._handleFilterUpdate},
+            {watch: 'activeRoom:created', handler: this._handleFilterUpdate},
             {watch: 'checklistitems:created', handler: this._handleFilterUpdate},
             {watch: 'checklistitems.roomids:updated', handler: this._handleFilterUpdate},
             {watch: 'checklistitems.roleids:updated', handler: this._handleFilterUpdate},

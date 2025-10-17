@@ -407,17 +407,33 @@ export default class extends BaseComponent {
         const roomIds = stateItem.roomids;
         const roleIds = stateItem.roleids;
 
+        window.console.log('=== shouldBeVisible Debug ===');
+        window.console.log('itemId:', itemId);
+        window.console.log('activeRooms:', activeRooms);
+        window.console.log('activeRoleId:', activeRoleId);
+        window.console.log('roomIds (raw):', roomIds);
+        window.console.log('roleIds:', roleIds);
+
         var isInRoom = false;
 
-        const noRoomSelection = activeRooms.some(room => room.id == 0);
+        const noRoomSelection = activeRooms.some(room => {
+            window.console.log('ROOM IN NO ROOM SELECTION CALLBACK FUNC:', room);
+            return room.id == 0;
+        });
         const parsedRoomIds = JSON.parse(roomIds);
         const hasMatchingRoom = activeRooms.some(activeRoom =>
             parsedRoomIds.includes(activeRoom.id.toString())
         );
 
+        window.console.log('noRoomSelection:', noRoomSelection);
+        window.console.log('parsedRoomIds:', parsedRoomIds);
+        window.console.log('hasMatchingRoom:', hasMatchingRoom);
+
         if (noRoomSelection || hasMatchingRoom) {
             isInRoom = true;
         }
+
+        window.console.log('isInRoom:', isInRoom);
 
         var hasRole = false;
 
@@ -425,7 +441,12 @@ export default class extends BaseComponent {
             hasRole = true;
         }
 
+        window.console.log('hasRole:', hasRole);
+
         const shouldBeVisible = isInRoom && hasRole;
+
+        window.console.log('shouldBeVisible:', shouldBeVisible);
+        window.console.log('=== End Debug ===');
 
         if (!shouldBeVisible) {
             this.element.classList.add('d-none');

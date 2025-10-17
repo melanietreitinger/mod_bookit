@@ -238,15 +238,31 @@ export default class {
 
         stateManager.setReadOnly(false);
 
-        const tempArray = [];
+        window.console.log('DEBUG: state.activeRoom before modification:', state.activeRoom);
+        window.console.log('DEBUG: typeof state.activeRoom:', typeof state.activeRoom);
+        window.console.log('DEBUG: Array.isArray(state.activeRoom):', Array.isArray(state.activeRoom));
+        window.console.log('DEBUG: state.activeRoom.constructor:', state.activeRoom.constructor);
+
+        let tempArray = [];
         optionsArray.forEach(option => {
+            window.console.log('ROOM OPTION:', option);
             tempArray.push({
                 id: option.value,
                 name: option.textContent
             });
         });
 
-        state.activeRoom = tempArray;
+        const hasNoSelection = tempArray.some(room => room.id === "0");
+        if (hasNoSelection) {
+            tempArray = tempArray.filter(room => room.id === "0");
+            window.console.log('No selection found - keeping only No selection option');
+        }
+
+        // Clear the existing StateMap and add new elements
+        state.activeRoom.clear();
+        tempArray.forEach((room) => {
+            state.activeRoom.set(room.id, room);
+        });
 
         stateManager.setReadOnly(true);
     }

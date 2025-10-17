@@ -42,6 +42,7 @@ export default class extends BaseComponent {
             {watch: 'checklistitems.roleids:updated', handler: this._replaceRenderedItem},
             // {watch: 'activeRole:updated', handler: this._handleRoleUpdate},
             // {watch: 'activeRoom:updated', handler: this._handleRoomUpdate},
+            {watch: 'activeRoom:created', handler: this._handleFilterUpdate},
         ];
     }
 
@@ -81,6 +82,26 @@ export default class extends BaseComponent {
         const mainElement = document.querySelector(this.selectors.MAIN_ELEMENT);
         mainElement.classList.remove('d-none');
 
+    }
+
+    _handleFilterUpdate(event) {
+        window.console.log('Filter update in master checklist:', event);
+
+        // Check if the created element has id 0 (No selection)
+        if (event.element.id === "0") {
+            window.console.log('No selection detected - clearing other room selections');
+
+            const roomSelect = this.getElement(this.selectors.ROOM_SELECT);
+
+            // Unselect all options except the one with value "0"
+            for (let option of roomSelect.options) {
+                if (option.value !== "0") {
+                    option.selected = false;
+                } else {
+                    option.selected = true;
+                }
+            }
+        }
     }
 
     async _handleAddChecklistItemButtonClick() {
