@@ -92,3 +92,33 @@ Feature: Edit the master checklist
     And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
     Then I should not see "Reserve room"
+
+  Scenario: Edited notification slot messages are preserved regardless if the slot is active or not
+    Given I should see "Reserve room"
+    And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
+    And I click on "Notifications" "link"
+    And I set the field "Before due" to "1"
+    And I wait "1" seconds
+    And I set the field "before_due_time[number]" to "7"
+    And I set the field "before_due_messagetext[text]" to "This is my behat notification edit test message. Cool."
+    And I set the field "Recipient" to "BookIt_Observer, BookIt_Service-Team"
+    And I click on "button[data-action='save']" "css_element"
+    And I wait "1" seconds
+    And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
+    And I wait "1" seconds
+    And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
+    And I set the field "Before due" to "0"
+    And I wait "1" seconds
+    And I click on "button[data-action='save']" "css_element"
+    And I wait "1" seconds
+    And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
+    And I click on "Notifications" "link"
+    And I set the field "Before due" to "1"
+    And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
+
+  # The existing drag and drop test steps are not sufficient for this use case and do not work properly.
+  # Currently, manual testing is required for drag and drop.
+
+  # Scenario: Admin can sort master checklist categories by drag and drop
+
+  # Scenario: Admin can sort master checklist items by drag and drop
