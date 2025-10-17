@@ -421,9 +421,21 @@ export default class extends BaseComponent {
             return room.id == 0;
         });
         const parsedRoomIds = JSON.parse(roomIds);
-        const hasMatchingRoom = activeRooms.some(activeRoom =>
-            parsedRoomIds.includes(activeRoom.id.toString())
-        );
+        window.console.log('roomIds (parsed):', parsedRoomIds);
+        window.console.log('parsedRoomIds is array:', Array.isArray(parsedRoomIds));
+
+        let hasMatchingRoom = false;
+        if (Array.isArray(parsedRoomIds)) {
+            // If it's an array, use includes
+            hasMatchingRoom = activeRooms.some(activeRoom =>
+                parsedRoomIds.includes(activeRoom.id.toString())
+            );
+        } else {
+            // If it's a single value (int), match directly
+            hasMatchingRoom = activeRooms.some(activeRoom =>
+                activeRoom.id.toString() === parsedRoomIds.toString()
+            );
+        }
 
         window.console.log('noRoomSelection:', noRoomSelection);
         window.console.log('parsedRoomIds:', parsedRoomIds);

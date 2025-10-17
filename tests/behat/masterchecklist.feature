@@ -82,7 +82,7 @@ Feature: Edit the master checklist
     And I wait "1" seconds
     And I click on "Reset" "button" in the "Confirm" "dialogue"
     And I wait "1" seconds
-    And the field "before_due_messagetext[text]" does not match value "This is my behat notification edit test message. Cool."
+    Then the field "before_due_messagetext[text]" does not match value "This is my behat notification edit test message. Cool."
 
   Scenario: Admin can delete a master checklist item
     Given I should see "Reserve room"
@@ -115,6 +115,51 @@ Feature: Edit the master checklist
     And I click on "Notifications" "link"
     And I set the field "Before due" to "1"
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
+  Scenario: Admin can filter master checklist items by role and rooms
+    Given I should see "Reserve room"
+    And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
+    And I set the field "roomids[]" to "Lecture Hall A"
+    And I set the field "roleids[]" to "BookIt_Observer"
+    And I click on "button[data-action='save']" "css_element"
+    And I wait "1" seconds
+    And I set the field "roomid" to "Computer Lab C"
+    And I should not see "Reserve room"
+    And I wait "1" seconds
+    And I set the field "roomid" to "No selection"
+    And I should see "Reserve room"
+    And I wait "1" seconds
+    And I set the field "roleid" to "BookIt_Examiner"
+    And I should not see "Reserve room"
+    And I wait "1" seconds
+    And I set the field "roleid" to "BookIt_Observer"
+    And I should see "Reserve room"
+    And I wait "1" seconds
+    And I set the field "roomid" to "Computer Lab C"
+    And I set the field "roleid" to "BookIt_Examiner"
+    And I click on "add-checklist-item-button" "button"
+    And I should see "Checklist item"
+    And I set the following fields to these values:
+      | Checklist item name      | My Test Item          |
+      | Checklist category       | Exam Preparation      |
+    And I set the field "roomids[]" to "Computer Lab"
+    And I set the field "roleids[]" to "BookIt_Examiner"
+    And I press "Save changes"
+    And I should see "My Test Item"
+    And I wait "1" seconds
+        And I click on "add-checklist-item-button" "button"
+    And I should see "Checklist item"
+    And I set the following fields to these values:
+      | Checklist item name      | My Second Test Item   |
+      | Checklist category       | Exam Preparation      |
+    And I set the field "roomids[]" to "Lecture Hall A"
+    And I set the field "roleids[]" to "BookIt_Observer"
+    And I press "Save changes"
+    And I should not see "My Second Test Item"
+    And I set the field "roomid" to "No selection"
+    And I set the field "roleid" to "No selection"
+    And I change window size to "large"
+    And I should see "My Test Item"
+    Then I should see "My Second Test Item"
 
   # The existing drag and drop test steps are not sufficient for this use case and do not work properly.
   # Currently, manual testing is required for drag and drop.
