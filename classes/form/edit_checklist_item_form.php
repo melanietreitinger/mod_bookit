@@ -80,13 +80,19 @@ class edit_checklist_item_form extends dynamic_form {
         $allrooms = array_column(checklist_manager::get_bookit_rooms(), 'name', 'id');
         $allroles = array_column(checklist_manager::get_bookit_roles(), 'name', 'id');
 
-        $select = $mform->addElement('select', 'roomids', get_string('rooms', 'mod_bookit'), $allrooms, ['style' => 'width:50%;']);
+        $select = $mform->addElement('select', 'roomids', get_string('rooms', 'mod_bookit'), $allrooms, [
+            'style' => 'width:50%; max-height:150px;',
+            'size' => '4'
+        ]);
         $mform->setType('roomids', PARAM_TEXT);
         $mform->addRule('roomids', null, 'required', null, 'client');
         $select->setMultiple(true);
         $mform->addHelpButton('roomids', 'rooms', 'mod_bookit');
 
-        $select = $mform->addElement('select', 'roleids', get_string('role', 'mod_bookit'), $allroles, ['style' => 'width:50%;']);
+        $select = $mform->addElement('select', 'roleids', get_string('role', 'mod_bookit'), $allroles, [
+            'style' => 'width:50%; max-height:150px;',
+            'size' => '4'
+        ]);
         $mform->setType('roleids', PARAM_TEXT);
         $mform->addRule('roleids', null, 'required', null, 'client');
         $select->setMultiple(true);
@@ -241,10 +247,12 @@ class edit_checklist_item_form extends dynamic_form {
         $options = array_column($checklistcategories, 'name', 'id');
         $this->_form->getElement('categoryid')->loadArray($options);
 
+        $hasactiveslots = false;
+
         if (!empty($itemslots)) {
             foreach ($itemslots as $slot) {
-                if ($slot->isactive == 0) {
-                    continue;
+                if ($slot->isactive == 1 && $hasactiveslots == false) {
+                    $hasactiveslots = true;
                 }
                 $slottype = bookit_notification_type::tryFrom($slot->type);
 
@@ -253,12 +261,14 @@ class edit_checklist_item_form extends dynamic_form {
                     $item->{$slottype->value . '_time'}['timeunit'] = DAYSECS;
                 }
                 $item->{$slottype->value . '_id'} = $slot->id;
-                $item->{$slottype->value} = 1;
+                $item->{$slottype->value} = $slot->isactive ;
                 $item->{$slottype->value . '_recipient'} = json_decode($slot->roleids, true);
                 $item->{$slottype->value . '_messagetext'}['text'] = $slot->messagetext;
             }
 
-            $this->_form->setExpanded('notifications', true);
+            if ($hasactiveslots) {
+                $this->_form->setExpanded('notifications', true);
+            }
         }
 
         $item->duedate = $item->duedaysrelation ?? 'none';
@@ -278,7 +288,6 @@ class edit_checklist_item_form extends dynamic_form {
         if (!empty($data['itemid'])) {
             $item = bookit_checklist_item::from_database($data['itemid']);
 
-            // Safely extract duedaysoffset value
             $duedaysoffset = 0;
             if (isset($data['duedaysoffset'])) {
                 if (is_array($data['duedaysoffset']) && isset($data['duedaysoffset']['number'])) {
@@ -367,28 +376,41 @@ class edit_checklist_item_form extends dynamic_form {
 
                     $slot->save();
                 } else {
-                    $duedaysrelation = null;
-                    if ($case === bookit_notification_type::BEFORE_DUE) {
-                        $duedaysrelation = 'before';
-                    } else if ($case === bookit_notification_type::OVERDUE) {
-                        $duedaysrelation = 'after';
+                    // Check if there already is an existing record (active or inactive) before creating a new one.
+                    $existingslot = bookit_notification_slot::get_slot_by_item_and_type($id, $case->value);
+
+                    if ($existingslot) {
+                        // Reactivate and update existing slot.
+                        $existingslot->roleids = json_encode($data[$casename . '_recipient'] ?? []);
+                        $existingslot->messagetext = format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML);
+                        $existingslot->duedaysoffset = $daysoffset;
+                        $existingslot->isactive = 1;
+                        $existingslot->save();
+                    } else {
+                        // Create new slot.
+                        $duedaysrelation = null;
+                        if ($case === bookit_notification_type::BEFORE_DUE) {
+                            $duedaysrelation = 'before';
+                        } else if ($case === bookit_notification_type::OVERDUE) {
+                            $duedaysrelation = 'after';
+                        }
+
+                        $slot = new bookit_notification_slot(
+                            0,
+                            $id,
+                            $case->value,
+                            json_encode($data[$casename . '_recipient'] ?? []),
+                            $daysoffset,
+                            $duedaysrelation,
+                            format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML),
+                            1,
+                            $USER->id,
+                            time(),
+                            time()
+                        );
+
+                        $slot->save();
                     }
-
-                    $slot = new bookit_notification_slot(
-                        0,
-                        $id,
-                        $case->value,
-                        json_encode($data[$casename . '_recipient'] ?? []),
-                        $daysoffset,
-                        $duedaysrelation,
-                        format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML),
-                        1,
-                        $USER->id,
-                        time(),
-                        time()
-                    );
-
-                    $slot->save();
                 }
             } else if (!empty($data[$casename . '_id'])) {
                 $slot = bookit_notification_slot::from_database($data[$casename . '_id']);

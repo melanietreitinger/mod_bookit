@@ -79,7 +79,7 @@
                 <option value="{{id}}" data-bookit-roleoption="{{id}}" data-bookit-rolename="{{name}}">{{name}}</option>
             {{/roles}}
             </select>
-            <select class="form-control mx-2 w-25" id="bookit-master-room-select" name="roomid">
+            <select class="form-control mx-2 w-25" id="bookit-master-room-select" name="roomid" multiple size="4">
             <option value="0" selected>{{#str}} room, mod_bookit {{/str}}</option>
             {{#rooms}}
                 <option value="{{id}}" data-bookit-roomoption="{{id}}" data-bookit-roomname="{{name}}">{{name}}</option>
