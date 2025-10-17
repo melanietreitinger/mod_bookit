@@ -130,6 +130,32 @@ class bookit_notification_slot implements \renderable, \templatable {
     }
 
     /**
+     * Get notification slot for a specific checklist item and type
+     *
+     * @param int $checklistitemid ID of the checklist item
+     * @param string $type Notification type
+     * @return self|null Notification slot object or null if not found
+     * @throws dml_exception
+     */
+    public static function get_slot_by_item_and_type(int $checklistitemid, string $type): ?self {
+        global $DB;
+
+        $sql = "SELECT * FROM {bookit_notification_slots}
+                WHERE checklistitemid = :checklistitemid
+                AND " . $DB->sql_compare_text('type') . " = " . $DB->sql_compare_text(':type');
+
+        $params = [
+            'checklistitemid' => $checklistitemid,
+            'type' => $type
+        ];
+
+        $record = $DB->get_record_sql($sql, $params);
+
+        if ($record) {
+            return self::from_record($record);
+        }
+        return null;
+    }    /**
      * Create object from record.
      *
      * @param array|object $record
