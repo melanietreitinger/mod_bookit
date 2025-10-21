@@ -420,18 +420,24 @@ export default class extends BaseComponent {
             window.console.log('ROOM IN NO ROOM SELECTION CALLBACK FUNC:', room);
             return room.id == 0;
         });
-        const parsedRoomIds = JSON.parse(roomIds);
+
+        let parsedRoomIds;
+        try {
+            parsedRoomIds = JSON.parse(roomIds);
+        } catch (error) {
+            window.console.log('Failed to parse roomIds as JSON, treating as string:', roomIds);
+            parsedRoomIds = roomIds;
+        }
+
         window.console.log('roomIds (parsed):', parsedRoomIds);
         window.console.log('parsedRoomIds is array:', Array.isArray(parsedRoomIds));
 
         let hasMatchingRoom = false;
         if (Array.isArray(parsedRoomIds)) {
-            // If it's an array, use includes
             hasMatchingRoom = activeRooms.some(activeRoom =>
                 parsedRoomIds.includes(activeRoom.id.toString())
             );
         } else {
-            // If it's a single value (int), match directly
             hasMatchingRoom = activeRooms.some(activeRoom =>
                 activeRoom.id.toString() === parsedRoomIds.toString()
             );
