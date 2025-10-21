@@ -19,6 +19,7 @@ Feature: Edit the master checklist
 
   Scenario Outline: Admin and Service-Team can create a new master checklist category
     Given I log in as "<user>"
+    And I change window size to "large"
     And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
     And I should see "Master checklist" in the "#page-header" "css_element"
     When I click on "add-checklist-category-button" "button"
@@ -73,8 +74,8 @@ Feature: Edit the master checklist
     And I set the following fields to these values:
       | Checklist item name      | My Test Item          |
       | Checklist category       | Exam Preparation      |
-      | Rooms                    | Lecture Hall A        |
-      | Role                    | BookIt_Booking Person  |
+    And I set the field "roomids[]" to "Lecture Hall A"
+    And I set the field "roleids[]" to "BookIt_Booking Person"
     And I press "Save changes"
     Then I should see "My Test Item"
 
@@ -95,8 +96,8 @@ Feature: Edit the master checklist
       | Before exam         | 1                   |
     And I wait "1" seconds
     And I set the field "Time" to "14"
-    And I set the field "Rooms" to "Lecture Hall A, Seminar Room B"
-    And I set the field "Role" to "BookIt_Observer, BookIt_Service-Team"
+    And I set the field "roomids[]" to "Lecture Hall A, Seminar Room B"
+    And I set the field "roleids[]" to "BookIt_Observer, BookIt_Service-Team"
     And I set the field "Before due" to "1"
     And I wait "1" seconds
     And I set the field "before_due_time[number]" to "7"
