@@ -369,7 +369,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
     }
 
     if ($oldversion < 2025102100) {
-
         // Define field shortname to be added to bookit_room.
         $table = new xmldb_table('bookit_room');
         $field = new xmldb_field('shortname', XMLDB_TYPE_CHAR, '6', null, null, null, null, 'name');
@@ -454,7 +453,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         // Bookit savepoint reached.
         upgrade_mod_savepoint(true, 2025102100, 'bookit');
     }
-
 
     return true;
 }

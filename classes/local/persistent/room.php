@@ -81,12 +81,12 @@ class room extends persistent {
             ],
             'extratimebefore' => [
                 'type' => PARAM_INT,
-                'required' => false,
+                'default' => null,
                 'null' => NULL_ALLOWED,
             ],
             'extratimeafter' => [
                 'type' => PARAM_INT,
-                'required' => false,
+                'default' => null,
                 'null' => NULL_ALLOWED,
             ],
             'preventoverlap' => [

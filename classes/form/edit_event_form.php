@@ -46,7 +46,6 @@ use stdClass;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_event_form extends dynamic_form {
-
     /**
      * @var int BOOKINGSTATUS_NEW: event is not processed yet and can be edited by the creator.
      */
@@ -159,7 +158,6 @@ class edit_event_form extends dynamic_form {
             $starttimearray['startyear'] = $config->eventminyears;
         } else {
             $starttimearray['startyear'] = date("Y");
-
         }
         $starttimearray['stopyear'] = $config->eventmaxyears;
 
@@ -170,8 +168,12 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('select', 'starttime');
 
         // Add a static field to explain extra time.
-        $mform->addElement('static', 'extratime_label', get_string('event_extratime_label', 'mod_bookit'),
-                get_string('event_extratime_description', 'mod_bookit', $config->extratime));
+        $mform->addElement(
+            'static',
+            'extratime_label',
+            get_string('event_extratime_label', 'mod_bookit'),
+            get_string('event_extratime_description', 'mod_bookit', $config->extratime)
+        );
 
         // Add "amount of students" field.
         $mform->addElement('text', 'participantsamount', get_string('event_students', 'mod_bookit'), ['size' => '4']);
@@ -199,8 +201,13 @@ class edit_event_form extends dynamic_form {
         foreach ($users as $id => $user) {
             $examinerlist[$id] = fullname($user) . ' | ' . $user->email;
         }
-        $mform->addElement('autocomplete', 'personinchargeid',
-                get_string('event_personincharge', 'mod_bookit'), $examinerlist, $userselectoroptions);
+        $mform->addElement(
+            'autocomplete',
+            'personinchargeid',
+            get_string('event_personincharge', 'mod_bookit'),
+            $examinerlist,
+            $userselectoroptions
+        );
         $mform->disabledIf('personinchargeid', 'editevent', 'neq');
         $mform->setType('personinchargeid', PARAM_TEXT);
         $mform->setDefault('personinchargeid', '');
@@ -209,8 +216,13 @@ class edit_event_form extends dynamic_form {
 
         // Add the "otherexaminers" field.
         $userselectoroptions['multiple'] = true;
-        $mform->addElement('autocomplete', 'otherexaminers',
-                get_string('event_otherexaminers', 'mod_bookit'), $examinerlist, $userselectoroptions);
+        $mform->addElement(
+            'autocomplete',
+            'otherexaminers',
+            get_string('event_otherexaminers', 'mod_bookit'),
+            $examinerlist,
+            $userselectoroptions
+        );
         $mform->disabledIf('otherexaminers', 'editevent', 'neq');
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
@@ -225,25 +237,33 @@ class edit_event_form extends dynamic_form {
 
         // Add the "timecompensation" field.
         $mform->addElement(
-                'advcheckbox',
-                'timecompensation',
-                get_string('event_timecompensation', 'mod_bookit'),
-                get_string('yes')
+            'advcheckbox',
+            'timecompensation',
+            get_string('event_timecompensation', 'mod_bookit'),
+            get_string('yes')
         );
         $mform->disabledIf('timecompensation', 'editevent', 'neq');
         $mform->setType('timecompensation', PARAM_BOOL);
         $mform->addHelpButton('timecompensation', 'event_timecompensation', 'mod_bookit');
 
         // Add the "compensationfordisadvantages" field.
-        $mform->addElement('textarea', 'compensationfordisadvantages',
-                get_string('event_compensationfordisadvantages', 'mod_bookit'), ['size' => '64']);
+        $mform->addElement(
+            'textarea',
+            'compensationfordisadvantages',
+            get_string('event_compensationfordisadvantages', 'mod_bookit'),
+            ['size' => '64']
+        );
         $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
         $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
 
         // Add the "notes" field.
-        $mform->addElement('textarea', 'notes', get_string("event_notes", "mod_bookit"),
-                'wrap="virtual" rows="5" cols="50"');
+        $mform->addElement(
+            'textarea',
+            'notes',
+            get_string("event_notes", "mod_bookit"),
+            'wrap="virtual" rows="5" cols="50"'
+        );
         $mform->disabledIf('notes', 'editevent', 'neq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
 
@@ -256,8 +276,12 @@ class edit_event_form extends dynamic_form {
         // ...@TODO: make category to select courses an admin option for 'exclude'.
         // ...@TODO: exclude current course.
         // ...@TODO: make use of capabilities to show courses ???
-        $mform->addElement('course', 'refcourseid', get_string('event_refcourseid', 'mod_bookit'),
-                ['multiple' => false, 'showhidden' => true, 'exclude' => '']);
+        $mform->addElement(
+            'course',
+            'refcourseid',
+            get_string('event_refcourseid', 'mod_bookit'),
+            ['multiple' => false, 'showhidden' => true, 'exclude' => '']
+        );
         $mform->setType('refcourseid', PARAM_INT);
         $mform->setDefault('refcourseid', 0);
         $mform->hideIf('refcourseid', 'editinternal', 'neq');
@@ -275,8 +299,13 @@ class edit_event_form extends dynamic_form {
             foreach ($users as $id => $user) {
                 $supportpersons[$id] = fullname($user);
             }
-            $mform->addElement('autocomplete', 'supportpersons',
-                    get_string('event_supportperson', 'mod_bookit'), $supportpersons, $userselectoroptions);
+            $mform->addElement(
+                'autocomplete',
+                'supportpersons',
+                get_string('event_supportperson', 'mod_bookit'),
+                $supportpersons,
+                $userselectoroptions
+            );
             $mform->setType('supportpersons', PARAM_TEXT);
             $mform->addHelpButton('supportpersons', 'event_supportperson', 'mod_bookit');
         } else {
@@ -284,14 +313,22 @@ class edit_event_form extends dynamic_form {
             $mform->setType('supportpersons', PARAM_TEXT);
         }
         // Add the "bookingstatus" field.
-        $mform->addElement('select', 'bookingstatus', get_string('event_bookingstatus', 'mod_bookit'),
-                explode(',', get_string('event_bookingstatus_list', 'mod_bookit')));
+        $mform->addElement(
+            'select',
+            'bookingstatus',
+            get_string('event_bookingstatus', 'mod_bookit'),
+            explode(',', get_string('event_bookingstatus_list', 'mod_bookit'))
+        );
         $mform->hideIf('bookingstatus', 'editinternal', 'neq');
         $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
 
         // Add the "internalnotes" field.
-        $mform->addElement('textarea', 'internalnotes', get_string("event_internalnotes", "mod_bookit"),
-                'wrap="virtual" rows="5" cols="50"');
+        $mform->addElement(
+            'textarea',
+            'internalnotes',
+            get_string("event_internalnotes", "mod_bookit"),
+            'wrap="virtual" rows="5" cols="50"'
+        );
         $mform->hideIf('internalnotes', 'editinternal', 'neq');
         $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
 
@@ -307,27 +344,32 @@ class edit_event_form extends dynamic_form {
                 $groupelements = [];
                 $groupelements[] =
                         $mform->createElement(
-                                'advcheckbox',
-                                'checkbox_' . $rid,
-                                '',
-                                $v['name'],
-                                ['group' => 1],
-                                [0, !0] // Array of values associated with the checked/unchecked state of the checkbox.
+                            'advcheckbox',
+                            'checkbox_' . $rid,
+                            '',
+                            $v['name'],
+                            ['group' => 1],
+                            [0, !0] // Array of values associated with the checked/unchecked state of the checkbox.
                         );
                 $mform->disabledIf('checkbox_' . $rid, 'editevent', 'neq');
 
                 $groupelements[] =
                         $mform->createElement(
-                                'text',
-                                'resource_' . $rid,
-                                get_string('resource_amount', 'mod_bookit'),
-                                ['size' => '4']
+                            'text',
+                            'resource_' . $rid,
+                            get_string('resource_amount', 'mod_bookit'),
+                            ['size' => '4']
                         );
                 $mform->setType('resource_' . $rid, PARAM_INT);
                 $mform->disabledIf('resource_' . $rid, 'checkbox_' . $rid);
 
-                $mform->addGroup($groupelements, 'resourcegroup', get_string('please_select_and_enter', 'mod_bookit'), ['<br>'],
-                        false);
+                $mform->addGroup(
+                    $groupelements,
+                    'resourcegroup',
+                    get_string('please_select_and_enter', 'mod_bookit'),
+                    ['<br>'],
+                    false
+                );
             }
         }
 
@@ -384,7 +426,7 @@ class edit_event_form extends dynamic_form {
         // Show the user who created the entry.
         $user = $DB->get_record('user', ['id' => $usermodified]);
         $mform->getElement('usermodified')->setValue(
-                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // TODO: ???
+            fullname($user, has_capability('moodle/site:viewfullnames', $context)) // TODO: ???
         );
 
         // Get context and capabilities.
@@ -410,7 +452,9 @@ class edit_event_form extends dynamic_form {
             $starttimeel = $mform->getElement('starttime');
             $starttimeel->removeOptions();
             $starttimeel->loadArray(get_possible_starttimes::list_possible_starttimes(
-                (new \DateTime())->setTimestamp($data->startdate), $data->duration, $data->roomid
+                (new \DateTime())->setTimestamp($data->startdate),
+                $data->duration,
+                $data->roomid
             ));
         }
     }
@@ -419,7 +463,7 @@ class edit_event_form extends dynamic_form {
      * Load in existing data as form defaults
      */
     public function set_data_for_dynamic_submission(): void {
-        $event = new StdClass;
+        $event = new StdClass();
         $id = $this->optional_param('id', null, PARAM_INT);
         if (!empty($id)) {
             $event = event_manager::get_event($id);

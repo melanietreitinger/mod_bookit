@@ -72,6 +72,9 @@ class get_possible_starttimes extends external_api {
     public static function list_possible_starttimes(DateTime $date, int $duration, int $roomid): array {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
 
+        $extratimebefore = $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore');
+        $extratimeafter = $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimebefore');
+
         $timestamp = $date->getTimestamp();
 
         $weekplanid = weekplan_room::get_applicable_weekplanid($timestamp, $roomid);
@@ -87,12 +90,9 @@ class get_possible_starttimes extends external_api {
 
         $timeline = new bool_timeline(false);
 
-        $extratimebefore = get_config('mod_bookit', 'extratimebefore');
-        $extratimeafter = get_config('mod_bookit', 'extratimeafter');
-
         foreach ($slots as $slot) {
-            $slot->starttime = event_manager::place_weekly_time_into_week($slot->starttime - $extratimebefore, $weekstarttime);
-            $slot->endtime = event_manager::place_weekly_time_into_week($slot->endtime + $extratimeafter, $weekstarttime);
+            $slot->starttime = event_manager::place_weekly_time_into_week($slot->starttime, $weekstarttime);
+            $slot->endtime = event_manager::place_weekly_time_into_week($slot->endtime, $weekstarttime);
             $timeline->set_range($slot->starttime, $slot->endtime, true);
         }
 
@@ -110,13 +110,13 @@ class get_possible_starttimes extends external_api {
                     $slot->starttime += $freemodegrid - $offset;
                 }
                 for ($time = $slot->starttime; $time <= $slot->endtime; $time += $freemodegrid) {
-                    if ($timeline->does_complete_range_equal($time, $time + $duration * 60, true)) {
+                    if ($timeline->does_complete_range_equal($time - $extratimebefore * 60, $time + ($duration + $extratimeafter) * 60, true)) {
                         $starttimes[$time] = (new DateTime())->setTimestamp($time)->format("H:i");
                     }
                 }
             } else {
-                if ($timeline->does_complete_range_equal($slot->starttime, $slot->starttime + $duration * 60, true)) {
-                    $starttimes[$slot->starttime] = (new DateTime())->setTimestamp($slot->starttime)->format("H:i");
+                if ($timeline->does_complete_range_equal($slot->starttime, $slot->starttime + ($duration + $extratimebefore + $extratimeafter) * 60, true)) {
+                    $starttimes[$slot->starttime + $extratimebefore * 60] = (new DateTime())->setTimestamp($slot->starttime + $extratimebefore * 60)->format("H:i");
                 }
             }
         }

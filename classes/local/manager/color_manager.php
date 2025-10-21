@@ -32,7 +32,6 @@ namespace mod_bookit\local\manager;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class color_manager {
-
     /**
      * @var array associative array which caches the foreground color.
      */

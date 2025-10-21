@@ -231,3 +231,7 @@ Do 07:45-10:00,10-12,13-15
 $string['weekplan_room'] = 'Wochenplan-Zuweisungen zu Räumen';
 $string['weekplans'] = 'Wochenpläne';
 $string['winter_semester'] = 'Wintersemester';
+$string['location'] = 'Ort';
+$string['shortname'] = 'Kurzname';
+$string['overwrite_extratimebefore'] = 'Globale extratimebefore-Einstellung überschreiben?';
+$string['overwrite_extratimeafter'] = 'Globale extratimeafter-Einstellung überschreiben?';

@@ -33,7 +33,6 @@ use dml_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class resource_manager {
-
     /**
      * Get resources of event.
      * @param int $eventid
@@ -58,7 +57,7 @@ class resource_manager {
     public static function get_resources(): array {
         global $DB;
         $records = $DB->get_records_sql(
-                'SELECT r.id resource_id, r.name resource_name, r.description resource_desc, r.amount resource_amount,
+            'SELECT r.id resource_id, r.name resource_name, r.description resource_desc, r.amount resource_amount,
                      c.id category_id, c.name category_name, c.description category_desc
                      FROM {bookit_resource} r LEFT JOIN {bookit_resource_categories} c ON c.id = r.categoryid'
         );

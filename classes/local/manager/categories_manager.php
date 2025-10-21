@@ -31,7 +31,6 @@ namespace mod_bookit\local\manager;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class categories_manager {
-
     /**
      * Get categories.
      * @return array[]
