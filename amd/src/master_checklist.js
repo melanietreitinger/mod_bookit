@@ -148,6 +148,13 @@ export default class extends BaseComponent {
 
     _handleCategoryCreatedEvent(event) {
 
+        if (this.reactive.state.checklistcategories && this.reactive.state.checklistcategories.size > 0) {
+            const noContentElement = this.getElement(this.selectors.NOCONTENT);
+            if (noContentElement) {
+                noContentElement.remove();
+            }
+        }
+
         Templates.renderForPromise('mod_bookit/bookit_checklist_category',
             {
                 id: event.element.id,

@@ -15,6 +15,7 @@ export const SELECTORS = {
             ALL_ROOM_OPTIONS: 'option[data-bookit-roomoption]',
             ROLE_SELECT: '#bookit-master-role-select',
             ROOM_SELECT: '#bookit-master-room-select',
+            NOCONTENT: '#bookit-master-checklist-nocontent-row',
         };
 
 

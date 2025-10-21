@@ -112,8 +112,8 @@
 
                 {{/checklistcategories}}
                 {{^checklistcategories}}
-                <tr>
-                    <td colspan="5" class="text-center">no content found</td>
+                <tr id="bookit-master-checklist-nocontent-row">
+                    <td colspan="5" class="text-center">{{#str}} nocontent, mod_bookit {{/str}}</td>
                 </tr>
                 {{/checklistcategories}}
         </table>

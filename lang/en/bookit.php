@@ -193,6 +193,7 @@ $string['new_weekplan'] = 'New week plan';
 $string['new_weekplan_assignment'] = 'New weekplan assignment';
 $string['normal_slot'] = 'Normal slot';
 $string['period'] = 'Period';
+$string['nocontent'] = 'No master checklist categories found. Create the first category!';
 $string['noduedate'] = 'No due date';
 $string['notifications'] = 'Notifications';
 $string['notification_time'] = 'Time';

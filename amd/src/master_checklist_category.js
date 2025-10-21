@@ -204,18 +204,31 @@ export default class extends BaseComponent {
             onlyFirst: false
         });
 
-        var hasVisibleItems = false;
-        results.forEach((component, index) => {
-            const itemIsVisible = component.shouldBeVisible();
-            if (itemIsVisible) {
-                hasVisibleItems = true;
-            }
-        });
 
-        if (!hasVisibleItems) {
-            this.element.classList.add('d-none');
+        if (!results || results.length === 0) {
+            const activeRooms = this.reactive.state.activeRoom;
+            const activeRoleId = this.reactive.state.activeRole.id;
+            const noRoomSelection = activeRooms.some(room => {
+                return room.id == 0;
+            });
+            if (activeRoleId == 0 && noRoomSelection) {
+                this.element.classList.remove('d-none');
+            }
         } else {
-            this.element.classList.remove('d-none');
+
+            var hasVisibleItems = false;
+            results.forEach((component, index) => {
+                const itemIsVisible = component.shouldBeVisible();
+                if (itemIsVisible) {
+                    hasVisibleItems = true;
+                }
+            });
+
+            if (!hasVisibleItems) {
+                this.element.classList.add('d-none');
+            } else {
+                this.element.classList.remove('d-none');
+            }
         }
 
     }

@@ -168,6 +168,7 @@ $string['new_room'] = 'Neuer Raum';
 $string['new_timeslot'] = 'Neue timeslot';
 $string['new_weekplan'] = 'Neuer Wochenplan';
 $string['new_weekplan_assignment'] = 'Neue Wochenplan-Zuweisung';
+$string['nocontent'] = 'Keine Haupt-Checklisten-Kategorien gefunden. Erstellen Sie die erste Kategorie!';
 $string['normal_slot'] = 'Normaler Slot';
 $string['period'] = 'Zeitraum';
 $string['please_select_and_enter'] = 'Anzahl auswählen oder eintragen';
