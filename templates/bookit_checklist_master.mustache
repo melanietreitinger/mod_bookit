@@ -65,57 +65,59 @@
     <span class="sr-only">Loading...</span>
     </div>
 </div>
-<div class="mt-4 mr-3 pt-5" id="mod-bookit-filter-label-box">
-<div class="pt-2 h5">{{#str}} filters, mod_bookit {{/str}}</div>
-</div>
-<div class="mod-bookit-master-checklist w-50 mt-4 d-none" id="mod-bookit-master-checklist">
-    <div class="d-none">
-    <h3 id="mod-bookit-master-checklist-title">PLACEHOLDER</h3>
+<div class="justify-content-center d-none" id="mod-bookit-master-checklist">
+    <div class="mt-4 mr-5 pt-5" id="mod-bookit-filter-label-box">
+        <div class="pt-2 h5">{{#str}} filters, mod_bookit {{/str}}</div>
     </div>
-    <div>
-    <form>
-        <div class="form-group d-flex justify-content-between my-5 py-2">
-            <label for="bookit-master-role-select">{{#str}} role, mod_bookit {{/str}}</label>
-            <select class="form-control mx-2 w-25" id="bookit-master-role-select" name="roleid">
-            <option value="0" selected>{{#str}} no_selection, mod_bookit {{/str}}</option>
-            {{#roles}}
-                <option value="{{id}}" data-bookit-roleoption="{{id}}" data-bookit-rolename="{{name}}">{{name}}</option>
-            {{/roles}}
-            </select>
-            <label for="bookit-master-room-select">{{#str}} rooms, mod_bookit {{/str}}</label>
-            <select class="form-control mx-2 w-25" id="bookit-master-room-select" name="roomid" multiple size="4">
-            <option value="0" selected>{{#str}} no_selection, mod_bookit {{/str}}</option>
-            {{#rooms}}
-                <option value="{{id}}" data-bookit-roomoption="{{id}}" data-bookit-roomname="{{name}}">{{name}}</option>
-            {{/rooms}}
-            </select>
-        <button type="button" class="btn btn-primary mx-2 h-25" id="add-checklist-category-button">{{#str}} new_checklistcategory, mod_bookit {{/str}}</button>
-        <button type="button" class="btn btn-primary mx-2 h-25" id="add-checklist-item-button">{{#str}} new_checklistitem, mod_bookit {{/str}}</button>
+    <div class="mt-4 pr-5 mr-5">
+        <div class="d-none">
+        <h3 id="mod-bookit-master-checklist-title">PLACEHOLDER</h3>
         </div>
-    </form>
+        <div>
+        <form>
+            <div class="form-group d-flex justify-content-between my-5 py-2">
+                <label for="bookit-master-role-select">{{#str}} role, mod_bookit {{/str}}</label>
+                <select class="form-control mx-2 w-25" id="bookit-master-role-select" name="roleid">
+                <option value="0" selected>{{#str}} no_selection, mod_bookit {{/str}}</option>
+                {{#roles}}
+                    <option value="{{id}}" data-bookit-roleoption="{{id}}" data-bookit-rolename="{{name}}">{{name}}</option>
+                {{/roles}}
+                </select>
+                <label for="bookit-master-room-select">{{#str}} rooms, mod_bookit {{/str}}</label>
+                <select class="form-control mx-2 w-25" id="bookit-master-room-select" name="roomid" multiple size="4">
+                <option value="0" selected>{{#str}} no_selection, mod_bookit {{/str}}</option>
+                {{#rooms}}
+                    <option value="{{id}}" data-bookit-roomoption="{{id}}" data-bookit-roomname="{{name}}">{{name}}</option>
+                {{/rooms}}
+                </select>
+            <button type="button" class="btn btn-primary mx-2 h-25" id="add-checklist-category-button">{{#str}} new_checklistcategory, mod_bookit {{/str}}</button>
+            <button type="button" class="btn btn-primary mx-2 h-25" id="add-checklist-item-button">{{#str}} new_checklistitem, mod_bookit {{/str}}</button>
+            </div>
+        </form>
+        </div>
+
+        <table class="table table-borderless table-hover bg-white rounded" id="mod-bookit-master-checklist-table"
+            data-master-checklist-id="{{id}}"
+            data-master-checklist-name="{{name}}"
+            data-master-checklist-categoryorder="{{mastercategoryorder}}">
+            <thead class="bg-primary text-light border-bottom" style="opacity: 0.5;">
+                <tr>
+                {{#tableheaders}}
+                    <th scope="col" class="py-3 font-weight-bold">{{.}}</th>
+                {{/tableheaders}}
+                </tr>
+            </thead>
+                {{#checklistcategories}}
+                    {{> mod_bookit/bookit_checklist_category }}
+
+                {{/checklistcategories}}
+                {{^checklistcategories}}
+                <tr>
+                    <td colspan="5" class="text-center">no content found</td>
+                </tr>
+                {{/checklistcategories}}
+        </table>
     </div>
-
-    <table class="table table-borderless table-hover bg-white rounded" id="mod-bookit-master-checklist-table"
-        data-master-checklist-id="{{id}}"
-        data-master-checklist-name="{{name}}"
-        data-master-checklist-categoryorder="{{mastercategoryorder}}">
-        <thead class="bg-primary text-light border-bottom" style="opacity: 0.5;">
-            <tr>
-            {{#tableheaders}}
-                <th scope="col" class="py-3 font-weight-bold">{{.}}</th>
-            {{/tableheaders}}
-            </tr>
-        </thead>
-            {{#checklistcategories}}
-                {{> mod_bookit/bookit_checklist_category }}
-
-            {{/checklistcategories}}
-            {{^checklistcategories}}
-            <tr>
-                <td colspan="5" class="text-center">no content found</td>
-            </tr>
-            {{/checklistcategories}}
-    </table>
 </div>
 </div>
 {{#js}}

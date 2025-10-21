@@ -81,6 +81,7 @@ export default class extends BaseComponent {
 
         const mainElement = document.querySelector(this.selectors.MAIN_ELEMENT);
         mainElement.classList.remove('d-none');
+        mainElement.classList.add('d-flex');
 
     }
 
