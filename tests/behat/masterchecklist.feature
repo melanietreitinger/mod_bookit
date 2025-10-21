@@ -2,18 +2,25 @@
 
 Feature: Edit the master checklist
   In order to manage master checklists for bookit activities
-  As an administrator
+  As an administrator and user with the role bookit_serviceteam
   I need to be able to view and edit master checklists
 
   Background:
-    Given I log in as "admin"
+    Given the following "users" exist:
+      | username     | firstname | lastname | email                    |
+      | serviceteam1 | Service   | Team     | serviceteam@example.com |
+    And I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt > General Settings" in site administration
     And I click on "Run install helper" "link"
-    And I wait "1" seconds
-    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And the following "role assigns" exist:
+      | user         | role               | contextlevel | reference |
+      | serviceteam1 | bookit_serviceteam | System       |           |
+    And I log out
 
-  Scenario: Admin can create a new master checklist category
-    Then I should see "Master checklist" in the "#page-header" "css_element"
+  Scenario Outline: Admin and Service-Team can create a new master checklist category
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I should see "Master checklist" in the "#page-header" "css_element"
     When I click on "add-checklist-category-button" "button"
     And I should see "Category name"
     And I should see "Required"
@@ -22,16 +29,30 @@ Feature: Edit the master checklist
     And I press "Save changes"
     Then I should see "My Test Category"
 
-  Scenario: Admin can edit a master checklist category
-    Given I should see "Exam Preparation"
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
+  Scenario Outline: Admin and Service-Team can edit a master checklist category
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I should see "Exam Preparation"
     And I click on "button[id^='edit-checklistcategory-']" "css_element" in the "Exam Preparation" "table_row"
     And I should see "Save"
     And I set the field "Category name" to "Exam Preparation EDITED"
     And I click on "button[data-action='save']" "css_element"
     Then I should see "Exam Preparation EDITED"
 
-  Scenario: Admin can delete a master checklist category
-    Given I should see "Exam Preparation"
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
+  Scenario Outline: Admin and Service-Team can delete a master checklist category
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I should see "Exam Preparation"
     And I click on "button[id^='edit-checklistcategory-']" "css_element" in the "Exam Preparation" "table_row"
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
@@ -39,8 +60,15 @@ Feature: Edit the master checklist
     And I click on "button[data-action='delete']" "css_element"
     Then I should not see "Exam Preparation"
 
-  Scenario: Admin can create a new master checklist item
-    When I click on "add-checklist-item-button" "button"
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
+  Scenario Outline: Admin and Service-Team can create a new master checklist item
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I click on "add-checklist-item-button" "button"
     And I should see "Checklist item"
     And I set the following fields to these values:
       | Checklist item name      | My Test Item          |
@@ -50,8 +78,15 @@ Feature: Edit the master checklist
     And I press "Save changes"
     Then I should see "My Test Item"
 
-  Scenario: Admin can edit a master checklist item
-    Given I should see "Reserve room"
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
+  Scenario Outline: Admin and Service-Team can edit a master checklist item
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I should see "Save"
     And I set the following fields to these values:
@@ -84,8 +119,15 @@ Feature: Edit the master checklist
     And I wait "1" seconds
     Then the field "before_due_messagetext[text]" does not match value "This is my behat notification edit test message. Cool."
 
-  Scenario: Admin can delete a master checklist item
-    Given I should see "Reserve room"
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
+  Scenario Outline: Admin and Service-Team can delete a master checklist item
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
@@ -93,8 +135,15 @@ Feature: Edit the master checklist
     And I click on "button[data-action='delete']" "css_element"
     Then I should not see "Reserve room"
 
-  Scenario: Edited notification slot messages are preserved regardless if the slot is active or not
-    Given I should see "Reserve room"
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
+  Scenario Outline: Edited notification slot messages are preserved regardless if the slot is active or not
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I click on "Notifications" "link"
     And I set the field "Before due" to "1"
@@ -115,8 +164,16 @@ Feature: Edit the master checklist
     And I click on "Notifications" "link"
     And I set the field "Before due" to "1"
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
-  Scenario: Admin can filter master checklist items by role and rooms
-    Given I should see "Reserve room"
+
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
+  Scenario Outline: Admin and Service-Team can filter master checklist items by role and rooms
+    Given I log in as "<user>"
+    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I set the field "roomids[]" to "Lecture Hall A"
     And I set the field "roleids[]" to "BookIt_Observer"
@@ -161,9 +218,14 @@ Feature: Edit the master checklist
     And I should see "My Test Item"
     Then I should see "My Second Test Item"
 
+    Examples:
+        | user         |
+        | admin        |
+        | serviceteam1 |
+
   # The existing drag and drop test steps are not sufficient for this use case and do not work properly.
   # Currently, manual testing is required for drag and drop.
 
-  # Scenario: Admin can sort master checklist categories by drag and drop
+  # Scenario: Admin and Service-Team can sort master checklist categories by drag and drop
 
-  # Scenario: Admin can sort master checklist items by drag and drop
+  # Scenario: Admin and Service-Team can sort master checklist items by drag and drop
