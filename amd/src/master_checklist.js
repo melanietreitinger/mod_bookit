@@ -258,27 +258,16 @@ export default class extends BaseComponent {
 
     _replaceRenderedItem(event) {
 
-        window.console.log('REPLACING RENDERED ITEM: ', event);
-        window.console.log('Event element ID:', event.element.id);
-        window.console.log('Event action:', event.action);
-
         const actionParts = event.action.split('.');
         const fieldPart = actionParts[1].split(':')[0];
-
-        window.console.log('Action parts:', actionParts);
-        window.console.log('Field part:', fieldPart);
 
         if (fieldPart.endsWith('ids')) {
 
             const stateItem = this.reactive.state.checklistitems.get(event.element.id);
-            window.console.log('State item retrieved:', stateItem);
 
             const selector = `td[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
-            window.console.log('Selector for target element:', selector);
 
             const targetElement = this.getElement(selector);
-            window.console.log('Target element found:', targetElement);
-
             let templateName, templateData;
 
             if (fieldPart.startsWith('room')) {
@@ -288,9 +277,6 @@ export default class extends BaseComponent {
                     id: event.element.id,
                     roomnames: stateItem.roomnames
                 };
-                window.console.log('Updating rooms for item:', event.element.id, stateItem.roomnames);
-                window.console.log('Room template name:', templateName);
-                window.console.log('Room template data:', templateData);
             } else if (fieldPart.startsWith('role')) {
 
                 templateName = 'mod_bookit/bookit_checklist_item_roles';
@@ -298,77 +284,32 @@ export default class extends BaseComponent {
                     id: event.element.id,
                     rolenames: stateItem.rolenames
                 };
-                window.console.log('Updating roles for item:', event.element.id, stateItem.rolenames);
-                window.console.log('Role template name:', templateName);
-                window.console.log('Role template data:', templateData);
             } else {
-                window.console.warn('Unknown field type for ids update:', fieldPart);
                 return;
             }
 
-            window.console.log('About to render template with data:', templateData);
-
             Templates.renderForPromise(templateName, templateData)
             .then(({html, js}) => {
-                window.console.log('Template rendered successfully. HTML length:', html.length);
-                window.console.log('Template HTML:', html);
-                window.console.log('Target element before replace:', targetElement);
-
                 Templates.replaceNode(targetElement, html, js);
-
-                window.console.log('Template replaced successfully');
             })
             .then(async () => {
-                window.console.log('Showing success toast for item update');
                 Toast.add(await getString('checklistitemupdatesuccess', 'mod_bookit'),
                     {type: 'success'});
             })
             .catch(error => {
-                window.console.error('Error rendering checklist item update:', error);
-                window.console.error('Template name:', templateName);
-                window.console.error('Template data:', templateData);
-                window.console.error('Target element:', targetElement);
+                window.console.error('Error rendering checklist item field update:', error);
             });
-            // var elementString = event.element[fieldPart];
-
-            // let roomIds = [];
-
-            // if (elementString.includes(',')) {
-            //     roomIds = elementString.split(',').map(id => parseInt(id));
-            // } else if (elementString !== '') {
-            //     roomIds = [parseInt(elementString)];
-            // }
-
-            // const roomNames = [];
-            // if (roomIds.length > 0) {
-            //     roomIds.forEach(roomId => {
-            //         if (event.element.roomnames[roomId]) {
-            //             roomNames.push(event.element.roomnames[roomId]);
-            //         }
-            //     });
-            //     // targetElement.innerHTML = roomNames.join(', ');
-            // }
 
         } else {
-            window.console.log('Processing non-ids field update');
-
             const elementSelector = `span[data-bookit-checklistitem-tabledata-${fieldPart}-id="${event.element.id}"]`;
-
-            window.console.log('ELEMENT SELECTOR: ', elementSelector);
 
             const targetElement = this.getElement(elementSelector);
 
-            window.console.log('TARGET ELEMENT: ', targetElement);
-            window.console.log('Current element innerHTML:', targetElement ? targetElement.innerHTML : 'null');
-            window.console.log('New value to set:', event.element[fieldPart]);
-
             if (targetElement) {
                 targetElement.innerHTML = event.element[fieldPart];
-                window.console.log('Successfully updated element innerHTML');
             } else {
                 window.console.error('Target element not found for selector:', elementSelector);
             }
-
         }
 
     }
