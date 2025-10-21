@@ -84,7 +84,7 @@ class sharing_manager {
             'role_shortnames',
             'master_category_order',
             'checklist_items',
-            'room_data'
+            'room_data',
         ];
         $csvwriter->add_data($headers);
 
@@ -116,8 +116,8 @@ class sharing_manager {
                     'description' => $room->description ?? '',
                     'eventcolor' => $room->eventcolor ?? '',
                     'textclass' => $room->textclass ?? '',
-                    'capacity' => $room->capacity ?? 0
-                ])
+                    'capacity' => $room->capacity ?? 0,
+                ]),
             ];
             $csvwriter->add_data($roomdata);
         }
@@ -142,7 +142,7 @@ class sharing_manager {
             '',
             $master->mastercategoryorder ?? '',
             '',
-            ''
+            '',
         ];
         $csvwriter->add_data($masterdata);
 
@@ -171,7 +171,7 @@ class sharing_manager {
                 '',
                 '',
                 $category->checklistitems ?? '',
-                ''
+                '',
             ];
             $csvwriter->add_data($categorydata);
 
@@ -181,10 +181,10 @@ class sharing_manager {
             foreach ($items as $item) {
 
                 // Convert room IDs to prefixed room IDs for CSV reference.
-                $roomids_csv = [];
+                $roomidscsv = [];
                 if (!empty($item->roomids)) {
                     foreach ($item->roomids as $roomid) {
-                        $roomids_csv[] = 'room_' . $roomid;
+                        $roomidscsv[] = 'room_' . $roomid;
                     }
                 }
 
@@ -215,11 +215,11 @@ class sharing_manager {
                     $item->defaultvalue ?? '',
                     $item->duedaysoffset ?? '',
                     $item->duedaysrelation ?? '',
-                    json_encode($roomids_csv),
+                    json_encode($roomidscsv),
                     json_encode($roleshortnames),
                     '',
                     '',
-                    ''
+                    '',
                 ];
                 $csvwriter->add_data($itemdata);
             }
@@ -237,7 +237,7 @@ class sharing_manager {
      * @return bool Success status
      */
     public static function import_master_checklist_csv($filehandle, string $encoding = 'utf-8', string $delimiter = 'comma'): bool {
-        // TODO: Implement CSV import functionality
+        // TODO: Implement CSV import functionality.
         return false;
     }
 
@@ -249,7 +249,7 @@ class sharing_manager {
      * @return void Downloads the PDF file directly
      */
     public static function export_master_checklist_pdf(int $masterid, string $filename = ''): void {
-        // TODO: Implement PDF export functionality
+        // TODO: Implement PDF export functionality.
     }
 
 }
