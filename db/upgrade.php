@@ -368,5 +368,93 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025081200, 'bookit');
     }
 
+    if ($oldversion < 2025102100) {
+
+        // Define field shortname to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('shortname', XMLDB_TYPE_CHAR, '6', null, null, null, null, 'name');
+
+        // Conditionally launch add field shortname.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field location to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('location', XMLDB_TYPE_TEXT, null, null, null, null, null, 'description');
+
+        // Conditionally launch add field location.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field seats to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('seats', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'roommode');
+
+        // Conditionally launch add field seats.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field extratimebefore to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('extratimebefore', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'seats');
+
+        // Conditionally launch add field extratimebefore.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field extratimeafter to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('extratimeafter', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'extratimebefore');
+
+        // Conditionally launch add field extratimeafter.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field preventoverlap to be added to bookit_room.
+        $table = new xmldb_table('bookit_room');
+        $field = new xmldb_field('preventoverlap', XMLDB_TYPE_INTEGER, '2', null, null, null, '2', 'extratimeafter');
+
+        // Conditionally launch add field preventoverlap.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Changing nullability of field endtime on table bookit_weekplan_room to null.
+        $table = new xmldb_table('bookit_weekplan_room');
+        $field = new xmldb_field('endtime', XMLDB_TYPE_INTEGER, '11', null, null, null, null, 'starttime');
+
+        // Launch change of nullability for field endtime.
+        $dbman->change_field_notnull($table, $field);
+
+        // Define field extratimebefore to be added to bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('extratimebefore', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'supportpersons');
+
+        // Conditionally launch add field extratimebefore.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field extratimeafter to be added to bookit_event.
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field('extratimeafter', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'extratimebefore');
+
+        // Conditionally launch add field extratimeafter.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $DB->execute('UPDATE {bookit_event} SET extratimebefore=15, extratimeafter=15');
+
+        // Bookit savepoint reached.
+        upgrade_mod_savepoint(true, 2025102100, 'bookit');
+    }
+
+
     return true;
 }

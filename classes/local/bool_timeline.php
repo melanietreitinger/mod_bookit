@@ -137,7 +137,7 @@ class bool_timeline {
      * Returns whether the complete time range equals $value.
      * @param int $starttime timestamp, inclusive
      * @param int $endtime timestamp, exclusive
-     * @param $value
+     * @param mixed $value
      * @return bool
      */
     public function does_complete_range_equal(int $starttime, int $endtime, $value): bool {
@@ -153,10 +153,10 @@ class bool_timeline {
 
     /**
      * "Normalizes" the array in the specified range, meaning duplicate entries get removed.
-     * @param $startindex
-     * @param $endindex
+     * @param int $startindex
+     * @param int $endindex
      */
-    private function normalize_index_range($startindex, $endindex) {
+    private function normalize_index_range(int $startindex, int $endindex) {
         $deletedamount = 0;
         for ($i = $startindex; $i < $endindex; $i++) {
             if ($this->array[$i - $deletedamount][1] === $this->array[$i - $deletedamount + 1][1]) {

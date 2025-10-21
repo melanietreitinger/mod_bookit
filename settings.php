@@ -81,11 +81,23 @@ if ($hassiteconfig) {
         ));
 
         // Event setting extra time.
-        $name = 'mod_bookit/extratime';
-        $title = get_string('settings_extratime', 'mod_bookit');
-        $description = get_string('settings_extratime_desc', 'mod_bookit');
-        $setting = new admin_setting_configtext($name, $title, $description, 30, PARAM_INT, 5);
-        $settings->add($setting);
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/extratimebefore',
+            new lang_string('settings_extratime_before', 'mod_bookit'),
+            new lang_string('settings_extratime_before_desc', 'mod_bookit'),
+            15,
+            PARAM_INT,
+            5
+        ));
+
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/extratimeafter',
+            new lang_string('settings_extratime_after', 'mod_bookit'),
+            new lang_string('settings_extratime_after_desc', 'mod_bookit'),
+            15,
+            PARAM_INT,
+            5
+        ));
 
         // Event setting eventminyears.
         $name = 'mod_bookit/eventminyears';

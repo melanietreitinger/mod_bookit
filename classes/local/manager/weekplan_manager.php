@@ -172,6 +172,7 @@ class weekplan_manager {
 
     /**
      * Saves the weekplan to the DB based on the given textual representation.
+     * @param string $weekplan
      * @param int $weekplanid
      */
     public static function save_string_weekplan_to_db(string $weekplan, int $weekplanid) {

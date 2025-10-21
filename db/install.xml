@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/bookit/db" VERSION="20250505" COMMENT="XMLDB file for Moodle mod_bookit"
+<XMLDB PATH="mod/bookit/db" VERSION="20251021" COMMENT="XMLDB file for Moodle mod_bookit"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -39,6 +39,8 @@
         <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="supportpersons" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Person(s) for technical support"/>
+        <FIELD NAME="extratimebefore" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes"/>
+        <FIELD NAME="extratimeafter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes"/>
         <FIELD NAME="refcourseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Courseid of the exam course"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -118,10 +120,16 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="location" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="eventcolor" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="roommode" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 = choose freely inside slots, 1 = only use predetermined slots."/>
+        <FIELD NAME="seats" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="extratimebefore" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes; can be empty to fall back on the global setting"/>
+        <FIELD NAME="extratimeafter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes; can be empty to fall back on the global setting"/>
+        <FIELD NAME="preventoverlap" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="2" SEQUENCE="false" COMMENT="0 = Allow all overlap 1 = Allow overlap with not confirmed events 2 = Do not allow overlap"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -162,7 +170,7 @@
         <FIELD NAME="weekplanid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="epoch"/>
-        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="epoch"/>
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="epoch"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>

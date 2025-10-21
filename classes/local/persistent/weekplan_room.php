@@ -53,6 +53,8 @@ class weekplan_room extends persistent {
             ],
             'endtime' => [
                 'type' => PARAM_INT,
+                'required' => false,
+                'null' => NULL_ALLOWED
             ],
         ];
     }

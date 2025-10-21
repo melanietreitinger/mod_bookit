@@ -87,9 +87,12 @@ class get_possible_starttimes extends external_api {
 
         $timeline = new bool_timeline(false);
 
+        $extratimebefore = get_config('mod_bookit', 'extratimebefore');
+        $extratimeafter = get_config('mod_bookit', 'extratimeafter');
+
         foreach ($slots as $slot) {
-            $slot->starttime = event_manager::place_weekly_time_into_week($slot->starttime, $weekstarttime);
-            $slot->endtime = event_manager::place_weekly_time_into_week($slot->endtime, $weekstarttime);
+            $slot->starttime = event_manager::place_weekly_time_into_week($slot->starttime - $extratimebefore, $weekstarttime);
+            $slot->endtime = event_manager::place_weekly_time_into_week($slot->endtime + $extratimeafter, $weekstarttime);
             $timeline->set_range($slot->starttime, $slot->endtime, true);
         }
 
@@ -123,7 +126,11 @@ class get_possible_starttimes extends external_api {
 
     /**
      * Execution for get_possible_slots external api.
-     * @param int $blockerid
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @param int $duration
+     * @param int $roomid
      * @return array
      */
     public static function execute(int $year, int $month, int $day, int $duration, int $roomid): array {

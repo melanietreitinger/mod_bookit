@@ -186,10 +186,10 @@ $string['settings_eventmaxyears_desc'] = 'Set the maxmum year to select for even
 $string['settings_eventminyears'] = 'Minimum year to select for event';
 // ...@TODO: translate.
 $string['settings_eventminyears_desc'] = 'Set the minimum year to select for event. Note: this only applies to roles with the capability <code>caneditinternal</code>.';
-// ...@TODO: translate.
-$string['settings_extratime'] = 'Extra time for event';
-// ...@TODO: translate.
-$string['settings_extratime_desc'] = 'Extra time which will be added automatically to each event to allow preparation and wrap-up works to be done.';
+$string['settings_extratime_before'] = 'Zusätzliche Zeit vor dem Termin (min)';
+$string['settings_extratime_before_desc'] = 'Zusätzliche Zeit in Minuten, die automatisch vor dem Termin hinzuaddiert wird, um Vorarbeiten zu erlauben.';
+$string['settings_extratime_after'] = 'Zusätzliche Zeit nach dem Termin (min)';
+$string['settings_extratime_after_desc'] = 'Zusätzliche Zeit in Minuten, die automatisch nach dem Termin hinzuaddiert wird, um Nacharbeiten zu erlauben.';
 // ...@TODO: translate.
 $string['settings_roomcolor'] = 'Color for room {$a}';
 // ...@TODO: translate.

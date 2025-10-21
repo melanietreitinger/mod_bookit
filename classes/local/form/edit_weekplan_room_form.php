@@ -44,9 +44,7 @@ class edit_weekplan_room_form extends persistent {
     /** @var string The related persistent class. */
     protected static $persistentclass = 'mod_bookit\local\persistent\weekplan_room';
 
-    /**
-     * Defines forms elements
-     */
+    #[\Override]
     public function definition() {
         $mform = $this->_form;
 
@@ -74,12 +72,7 @@ class edit_weekplan_room_form extends persistent {
         $this->add_action_buttons();
     }
 
-    /**
-     * Extra validation for persistent form.
-     * @param $data
-     * @param $files
-     * @param array $errors
-     */
+    #[\Override]
     protected function extra_validation($data, $files, array &$errors) {
         if ($data->endtime < $data->starttime) {
             $errors['endtime'] = get_string('end_before_start', 'mod_bookit');
