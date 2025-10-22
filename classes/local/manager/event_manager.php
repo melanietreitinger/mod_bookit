@@ -132,9 +132,9 @@ class event_manager {
             }
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved).' ('.$roomname.')',
-                'start' => date('Y-m-d H:i', $record->starttime),
-                'end' => date('Y-m-d H:i', $record->endtime),
+                'title' => ($record->name ?? $reserved).' (' . $roomname . ')',
+                'start' => date('Y-m-d H:i' , $record->starttime),
+                'end' => date('Y-m-d H:i' , $record->endtime),
                 'backgroundColor' => $color,
                 'extendedProps' => (object)['reserved' => !$record->name],
 
@@ -143,32 +143,32 @@ class event_manager {
         return $events;
     }
      /**
-     * function get_exportable_events
-     * @param int|null $instanceid
-     * @param array $ids
-     * @return array
-     * @throws dml_exception
-     */
+      * function get_exportable_events
+      * @param int|null $instanceid
+      * @param array $ids
+      * @return array
+      * @throws dml_exception
+      */
     public static function get_exportable_events(int $instanceid, array $ids): array {
         global $DB, $USER;
-    
+
         if (empty($ids)) {
             return [];
         }
-    
-        list($in, $inparams) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
+
+        $inequal = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
+        $in = $inequal[0];
+        $inparams = $inequal[1];
         $context = \context_module::instance($instanceid);
-    
+
         $viewall = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewown = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-    
         if ($viewall) {
             $sql = "SELECT id, name, starttime, endtime, department, bookingstatus
                       FROM {bookit_event}
                      WHERE id $in";
             return array_values($DB->get_records_sql($sql, $inparams));
         }
-    
         if ($viewown) {
             $like = $DB->sql_like('otherexaminers', ':otherex');
             $sql  = "SELECT id, name, starttime, endtime, department, bookingstatus
@@ -182,10 +182,7 @@ class event_manager {
             $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
             return array_values($DB->get_records_sql($sql, $params));
         }
-    
         // No details capability  nothing exportable.
         return [];
-    }
-    
+    }    
 }
-
