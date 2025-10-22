@@ -31,9 +31,6 @@ $string['bookit:addinstance'] = 'BookIt Instanz hinzufügen';
 $string['bookit:view'] = 'BookIt Instanz anzeigen';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['calendar'] = 'Kalender';
-$string['color'] = 'Farbe';
-$string['define_institutions'] = 'Institutionen definieren';
-$string['edit_blocker'] = 'Blocker bearbeiten';
 $string['category_name'] = 'Kategoriename';
 $string['checklistcategory'] = 'Checklisten-Kategorie';
 $string['checklistcategorydeleted'] = 'Checklisten-Kategorie erfolgreich gelöscht.';
@@ -44,6 +41,7 @@ $string['checklistitemdeleted'] = 'Checklisten-Element erfolgreich gelöscht.';
 $string['checklistitemname'] = 'Name des Checklisten-Elements';
 $string['checklistitemsuccess'] = 'Checklisten-Element erfolgreich erstellt.';
 $string['checklistitemupdatesuccess'] = 'Checklisten-Element erfolgreich aktualisiert.';
+$string['color'] = 'Farbe';
 $string['customtemplate'] = 'Nachricht';
 $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
 .'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
@@ -63,15 +61,6 @@ $string['customtemplatedefaultmessage_before_due'] = 'Lorem ipsum ante ###RECIPI
 .'arcu felis ###NUMBEROFPARTICIPANTS### bibendum ###BOOKINGPERSON### ut ###BOOKINGSTATUS### placerat.</p>'
 .'<p>Ante tempus imperdiet,<br>'
 .'Duis autem vel.</p>';
-$string['customtemplatedefaultmessage_when_due'] = 'Lorem ipsum hodie ###RECIPIENT###,'
-.'<p>Pellentesque habitant ###CHECKLISTCATEGORY### morbi tristique ###CHECKLISTITEM### senectus et '
-.'netus. ###ITEMDUETIME### malesuada fames ac. ###ITEMSTATUS### turpis egestas pretium.</p>'
-.'<p>Aenean ###SEMESTERTERM### euismod ###EVENTTITLE###. Elementum ###DEPARTMENT### tempus ###ROOM### '
-.'egestas. ###EVENTSTART### sed viverra tellus. ###EVENTDURATION### in hac ###TOTALDURATION### habitasse.</p>'
-.'<p>Platea dictumst ###COURSETEMPLATE### vestibulum ###PERSONINCHARGE###. Rhoncus ###OTHEREXAMINERS### '
-.'mattis rhoncus ###NUMBEROFPARTICIPANTS### urna ###BOOKINGPERSON### neque ###BOOKINGSTATUS### viverra.</p>'
-.'<p>Justo nec ultrices,<br>'
-.'Dui sapien eget.</p>';
 $string['customtemplatedefaultmessage_overdue'] = 'Lorem ipsum serius ###RECIPIENT###,'
 .'<p>Gravida quis ###CHECKLISTCATEGORY### blandit turpis ###CHECKLISTITEM### cursus in '
 .'hac. ###ITEMDUETIME### habitasse platea dictumst. ###ITEMSTATUS### vestibulum rhoncus est.</p>'
@@ -90,7 +79,18 @@ $string['customtemplatedefaultmessage_when_done'] = 'Lorem ipsum factum ###RECIP
 .'et malesuada ###NUMBEROFPARTICIPANTS### fames ###BOOKINGPERSON### ac ###BOOKINGSTATUS### turpis.</p>'
 .'<p>Egestas congue quisque,<br>'
 .'Egestas diam in.</p>';
+$string['customtemplatedefaultmessage_when_due'] = 'Lorem ipsum hodie ###RECIPIENT###,'
+.'<p>Pellentesque habitant ###CHECKLISTCATEGORY### morbi tristique ###CHECKLISTITEM### senectus et '
+.'netus. ###ITEMDUETIME### malesuada fames ac. ###ITEMSTATUS### turpis egestas pretium.</p>'
+.'<p>Aenean ###SEMESTERTERM### euismod ###EVENTTITLE###. Elementum ###DEPARTMENT### tempus ###ROOM### '
+.'egestas. ###EVENTSTART### sed viverra tellus. ###EVENTDURATION### in hac ###TOTALDURATION### habitasse.</p>'
+.'<p>Platea dictumst ###COURSETEMPLATE### vestibulum ###PERSONINCHARGE###. Rhoncus ###OTHEREXAMINERS### '
+.'mattis rhoncus ###NUMBEROFPARTICIPANTS### urna ###BOOKINGPERSON### neque ###BOOKINGSTATUS### viverra.</p>'
+.'<p>Justo nec ultrices,<br>'
+.'Dui sapien eget.</p>';
+$string['define_institutions'] = 'Institutionen definieren';
 $string['edit'] = 'Bearbeiten';
+$string['edit_blocker'] = 'Blocker bearbeiten';
 $string['edit_event'] = "Termin bearbeiten";
 $string['edit_institution'] = 'Institution bearbeiten';
 $string['edit_room'] = 'Raum bearbeiten';

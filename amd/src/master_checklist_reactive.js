@@ -16,6 +16,8 @@ export const SELECTORS = {
             ROLE_SELECT: '#bookit-master-role-select',
             ROOM_SELECT: '#bookit-master-room-select',
             NOCONTENT: '#bookit-master-checklist-nocontent-row',
+            EXPORT_BTN: '#export-master-checklist-button',
+            IMPORT_BTN: '#import-master-checklist-button',
         };
 
 

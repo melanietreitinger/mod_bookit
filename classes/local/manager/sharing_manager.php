@@ -25,7 +25,9 @@
 
 namespace mod_bookit\local\manager;
 
-use csv_export_writer;
+// global $CFG;
+require_once($CFG->libdir . '/csvlib.class.php');
+
 use dml_exception;
 use mod_bookit\local\entity\bookit_checklist_master;
 
@@ -54,6 +56,7 @@ class sharing_manager {
      * @throws dml_exception
      */
     public static function export_master_checklist_csv(int $masterid, string $filename = ''): void {
+        // Get the master checklist
         $master = bookit_checklist_master::from_database($masterid);
 
         if (empty($filename)) {
@@ -61,7 +64,7 @@ class sharing_manager {
         }
 
         // Initialize CSV writer.
-        $csvwriter = new csv_export_writer('comma', '"', 'application/download');
+        $csvwriter = new \csv_export_writer('comma', '"', 'application/download');
         $csvwriter->set_filename($filename, '.csv');
 
         // Add comprehensive CSV headers for all data.

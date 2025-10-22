@@ -76,6 +76,12 @@ export default class extends BaseComponent {
             this.reactive.dispatch('roomChanged', {options: e.target.selectedOptions});
         });
 
+        // Add event listener for export button
+        this.addEventListener(this.getElement(this.selectors.EXPORT_BTN), 'click', (e) => {
+            e.preventDefault();
+            this._handleExportChecklistButtonClick(e);
+        });
+
         const spinnerElement = document.querySelector(this.selectors.LOADING_SPINNER);
         spinnerElement.classList.add('d-none');
 
@@ -141,6 +147,33 @@ export default class extends BaseComponent {
         modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (response) => {
             this.reactive.stateManager.processUpdates(response.detail);
 
+        });
+
+        modalForm.show();
+    }
+
+    async _handleExportChecklistButtonClick(e) {
+        const masterid = e.target.dataset.masterId;
+
+        const modalForm = new ModalForm({
+            formClass: "mod_bookit\\form\\export_checklist_form",
+            args: {
+                masterid: masterid
+            },
+            modalConfig: {
+                title: await getString('export', 'mod_bookit'),
+            },
+            saveButtonText: await getString('export', 'mod_bookit'),
+        });
+
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async (response) => {
+            if (response.detail.success && response.detail.downloadurl) {
+                // Trigger download by opening the URL
+                window.open(response.detail.downloadurl, '_blank');
+                Toast.add(await getString('export_success', 'mod_bookit'), {type: 'success'});
+            } else {
+                Toast.add(response.detail.message || await getString('export_error', 'mod_bookit'), {type: 'error'});
+            }
         });
 
         modalForm.show();
