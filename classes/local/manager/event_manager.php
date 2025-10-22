@@ -36,7 +36,6 @@ use dml_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class event_manager {
-
     /**
      * Get event from id.
      *
@@ -132,9 +131,9 @@ class event_manager {
             }
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved).' (' . $roomname . ')',
-                'start' => date('Y-m-d H:i' , $record->starttime),
-                'end' => date('Y-m-d H:i' , $record->endtime),
+                'title' => ($record->name ?? $reserved) . ' (' . $roomname . ')',
+                'start' => date('Y-m-d H:i', $record->starttime),
+                'end' => date('Y-m-d H:i', $record->endtime),
                 'backgroundColor' => $color,
                 'extendedProps' => (object)['reserved' => !$record->name],
 
@@ -184,5 +183,5 @@ class event_manager {
         }
         // No details capability  nothing exportable.
         return [];
-    }    
+    }
 }

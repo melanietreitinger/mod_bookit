@@ -62,17 +62,17 @@ try {
 }
 
 // WORK IN PROGRESS by vadym - new optional filter parameters (for Filter user story).
-$roomid  = optional_param('room',    0,          PARAM_INT);
-$faculty = optional_param('faculty', '',         PARAM_TEXT);
-$status  = optional_param('status',  '',         PARAM_INT);
-$search  = optional_param('search',  '',         PARAM_TEXT);
+$roomid  = optional_param('room', 0, PARAM_INT);
+$faculty = optional_param('faculty', '', PARAM_TEXT);
+$status  = optional_param('status', '', PARAM_INT);
+$search  = optional_param('search', '', PARAM_TEXT);
 
 
 // Fetch events using the helper.
 $events = event_manager::get_events_in_timerange($start, $end, $id);
 
 // WORK IN PROGRESS by vadym: Apply in-memory filters (only if parameter present). For Filter user story.
-$events = array_filter($events, function($ev) use ($roomid, $faculty, $status, $search) {
+$events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, $search) {
 
     // Room filter (resource id – note: $ev->roomid comes from event_manager).
     if ($roomid && (!isset($ev->roomid) || (int)$ev->roomid !== $roomid)) {

@@ -50,11 +50,11 @@ $modulecontext = context_module::instance($cm->id);
 
 // Helper data for the filter <select>s  (WORK IN PROGRESS).
 $statusmap = [
-    0 => get_string('new',        'mod_bookit'),
+    0 => get_string('new', 'mod_bookit'),
     1 => get_string('inprogress', 'mod_bookit'),
-    2 => get_string('accepted',   'mod_bookit'),
-    3 => get_string('cancelled',  'mod_bookit'),
-    4 => get_string('rejected',   'mod_bookit'),
+    2 => get_string('accepted', 'mod_bookit'),
+    3 => get_string('cancelled', 'mod_bookit'),
+    4 => get_string('rejected', 'mod_bookit'),
 ];
 
 $rooms = [];
@@ -118,7 +118,7 @@ require(['jquery'], function($) {
         $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function(data){
             list.empty();
             if (!data.length) {
-                list.append('<div class=\"text-muted\">".get_string('noevents', 'mod_bookit')."</div>');
+                list.append('<div class=\"text-muted\">" . get_string('noevents', 'mod_bookit') . "</div>');
                 return;
             }
 
@@ -196,7 +196,7 @@ require(['jquery'], function($) {
         // export only enabled, checked ids (reserved entries are disabled)
         const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
             .map(function(){ return this.value; }).get();
-        if (!ids.length) { alert('".get_string('chooseevent', 'mod_bookit')."'); return; }
+        if (!ids.length) { alert('" . get_string('chooseevent', 'mod_bookit') . "'); return; }
 
         const qs = new URLSearchParams({id: {$cm->id}});
         if (window.currentFilterParams) {
@@ -227,7 +227,7 @@ if ($tc !== false && $tc !== null && $tc !== '') {
 
 
 // Inject allowed weekdays for JS (NEW FEATURE).
-$PAGE->requires->js_init_code('M.cfg.bookit_allowedweekdays = ['.implode(',', bookit_allowed_weekdays()).'];');
+$PAGE->requires->js_init_code('M.cfg.bookit_allowedweekdays = [' . implode(',', bookit_allowed_weekdays()) . '];');
 
 // Log the view event (WORK IN PROGRESS).
 $event = course_module_viewed::create(['objectid' => $moduleinstance->id, 'context' => $modulecontext]);

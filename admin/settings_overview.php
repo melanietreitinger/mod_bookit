@@ -65,7 +65,7 @@ $css = '
 /* ----------------------------------------------------------------------
    Card factory (neutral style; button at the bottom)
    ---------------------------------------------------------------------- */
-$makecard = function(string $id, string $title, string $desc, string $bgignored) use ($baseurl) {
+$makecard = function (string $id, string $title, string $desc, string $bgignored) use ($baseurl) {
     $url  = $baseurl->out(false, ['section' => $id]);
 
     $card  = html_writer::start_div('bookit-card');
