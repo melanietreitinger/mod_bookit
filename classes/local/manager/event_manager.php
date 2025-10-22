@@ -142,5 +142,50 @@ class event_manager {
         }
         return $events;
     }
+     /**
+     * function get_exportable_events
+     * @param int|null $instanceid
+     * @param array $ids
+     * @return array
+     * @throws dml_exception
+     */
+    public static function get_exportable_events(int $instanceid, array $ids): array {
+        global $DB, $USER;
+    
+        if (empty($ids)) {
+            return [];
+        }
+    
+        list($in, $inparams) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
+        $context = \context_module::instance($instanceid);
+    
+        $viewall = has_capability('mod/bookit:viewalldetailsofevent', $context);
+        $viewown = has_capability('mod/bookit:viewalldetailsofownevent', $context);
+    
+        if ($viewall) {
+            $sql = "SELECT id, name, starttime, endtime, department, bookingstatus
+                      FROM {bookit_event}
+                     WHERE id $in";
+            return array_values($DB->get_records_sql($sql, $inparams));
+        }
+    
+        if ($viewown) {
+            $like = $DB->sql_like('otherexaminers', ':otherex');
+            $sql  = "SELECT id, name, starttime, endtime, department, bookingstatus
+                       FROM {bookit_event}
+                      WHERE id $in
+                        AND (
+                             usermodified = :uid
+                          OR personinchargeid = :uid2
+                          OR $like
+                        )";
+            $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
+            return array_values($DB->get_records_sql($sql, $params));
+        }
+    
+        // No details capability  nothing exportable.
+        return [];
+    }
+    
 }
 

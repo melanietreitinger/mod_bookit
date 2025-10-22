@@ -122,75 +122,95 @@ require(['jquery'], function($) {
                 return;
             }
 
-           data.forEach(function (e) {
-            var roomTxt   = (e.location || e.room || \"\").trim();
-            var faculty   = (e.department || \"\").trim();
-            var statusMap = {0:\"New\",1:\"In progress\",2:\"Accepted\",3:\"Cancelled\",4:\"Rejected\"};
-            var statusTxt = statusMap[e.bookingstatus] || \"\";
+            data.forEach(function (e) {
+                var roomTxt   = (e.location || e.room || '').trim();
+                var faculty   = (e.department || '').trim();
+                var statusMap = {0:'New',1:'In progress',2:'Accepted',3:'Cancelled',4:'Rejected'};
+                var statusTxt = statusMap[e.bookingstatus] || '';
 
-            var dateTxt   = e.start.substr(0,16).replace(\"T\",\" \");
-            var metaLine  = roomTxt ? roomTxt + \" \" + dateTxt : dateTxt;
+                var startStr  = (e.start || '');
+                var dateTxt   = startStr ? startStr.substr(0,16).replace('T',' ') : '';
+                var metaLine  = roomTxt ? (roomTxt + ' ' + dateTxt) : dateTxt;
 
-            var row = $(\"<label class=\\\"list-group-item d-flex gap-2 align-items-start\\\" \" +
-                    \"data-room=\\\"\"+roomTxt.toLowerCase()+\"\\\" \" +
-                    \"data-faculty=\\\"\"+faculty.toLowerCase()+\"\\\" \" +
-                    \"data-status=\\\"\"+statusTxt.toLowerCase()+\"\\\">\" +
-                        \"<input class=\\\"form-check-input mt-1\\\" type=\\\"checkbox\\\" value=\\\"\"+e.id+\"\\\">\" +
-                        \"<span>\"+e.title+\" <small class=\\\"text-muted\\\">(\"+metaLine+\")</small></span>\" +
-                    \"</label>\");
-            list.append(row);
+                // Treat events with no details (reserved placeholders) as not exportable.
+                var isReserved = false;
+                if (e.extendedProps && (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)) {
+                    isReserved = true;
+                }
+
+                var checkbox = isReserved
+                    ? '<input class=\"form-check-input mt-1\" type=\"checkbox\" disabled>'
+                    : '<input class=\"form-check-input mt-1\" type=\"checkbox\" value=\"'+ e.id +'\">';
+
+                var badge = isReserved
+                    ? ' <span class=\"badge bg-secondary ms-2\">Reserved</span>'
+                    : '';
+
+                var row = $(
+                    '<label class=\"list-group-item d-flex gap-2 align-items-start\" ' +
+                    ' data-room=\"'+ roomTxt.toLowerCase() +'\" ' +
+                    ' data-faculty=\"'+ faculty.toLowerCase() +'\" ' +
+                    ' data-status=\"'+ statusTxt.toLowerCase() +'\" ' +
+                    ' data-reserved=\"'+ (isReserved ? '1' : '0') +'\">' +
+                        checkbox +
+                        '<span>'+ (e.title || '') +' <small class=\"text-muted\">(' + metaLine + ')</small>'+ badge +'</span>' +
+                    '</label>'
+                );
+                list.append(row);
+            });
+
+            filterExportList();
         });
-        filterExportList();
-
-        });
-    });
-
-    /* check‑all / uncheck‑all buttons -------------------------------- */
-    $('#bookit-check-all').on('click', function () {
-        // check only those check‑boxes whose row is currently visible
-        $('#bookit-export-list label:visible input').prop('checked', true);
-    });
-
-    $('#bookit-uncheck-all').on('click', function () {
-        // uncheck only the boxes of visible rows (keeps hidden‑row state intact)
-        $('#bookit-export-list label:visible input').prop('checked', false);
     });
 
     /* ---------- live search inside modal -------------------------------- */
-function filterExportList() {
-    const val = $('#bookit-modal-search').val().toLowerCase().trim();
-    console.log('[BookIT] filterExportList(), query = \"' + val + '\"');
-
-    $('#bookit-export-list label').each(function () {
-        const \$row = $(this);                           // \$ = escaped for PHP
-        const show = \$row.text().toLowerCase().includes(val);
-
-        // keep Bootstrap’s flex layout when visible, or switch to d-none when hidden
-        \$row.toggleClass('d-flex',  show)
-             .toggleClass('d-none', !show);
-    });
-}
+    function filterExportList() {
+        const val = ($('#bookit-modal-search').val() || '').toLowerCase().trim();
+        $('#bookit-export-list label').each(function () {
+            const \$row = $(this);                           // \$ escaped for PHP
+            const show = \$row.text().toLowerCase().includes(val);
+            // keep Bootstrap’s flex layout when visible, or switch to d-none when hidden
+            \$row.toggleClass('d-flex',  show)
+                 .toggleClass('d-none', !show);
+        });
+    }
 
     /* fire on every keystroke in the search box ------------------------- */
     $('#bookit-modal-search').on('input', function () {
-        console.log('[BookIT] input event from search box');
         filterExportList();
     });
 
-    /* Confirm‑Export → redirect to export_events.php ----------------- */
+    /* check-all / uncheck-all buttons -------------------------------- */
+    $('#bookit-check-all').on('click', function () {
+        // check only those check-boxes whose row is currently visible AND enabled
+        $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', true);
+    });
+
+    $('#bookit-uncheck-all').on('click', function () {
+        // uncheck only the boxes of visible & enabled rows (keeps hidden-row state intact)
+        $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', false);
+    });
+
+    /* Confirm-Export  redirect to export_events.php ----------------- */
     $('#bookit-export-confirm').on('click', function () {
-        const ids = $('#bookit-export-list input:checked').map(function(){return this.value;}).get();
+        // export only enabled, checked ids (reserved entries are disabled)
+        const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
+            .map(function(){ return this.value; }).get();
         if (!ids.length) { alert('".get_string('chooseevent', 'mod_bookit')."'); return; }
 
         const qs = new URLSearchParams({id: {$cm->id}});
-        if (window.currentFilterParams) { Object.entries(window.currentFilterParams).forEach(([k,v])=>qs.append(k,v)); }
+        if (window.currentFilterParams) {
+            Object.entries(window.currentFilterParams).forEach(([k,v]) => qs.append(k, v));
+        }
         ids.forEach(id => qs.append('ids[]', id));
 
         window.location = M.cfg.wwwroot + '/mod/bookit/export_events.php?' + qs.toString();
         $('#bookit-export-modal').modal('hide');
     });
+
 });
 ");
+
 
 // Calendar feed URL & caps passed to AMD module.
 $eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id, 'debug' => 1]))->out(false);

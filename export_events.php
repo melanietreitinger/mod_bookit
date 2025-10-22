@@ -48,19 +48,86 @@ require_capability('mod/bookit:viewownoverview', $context);
 /* ------------------------------------------------------------------
    1.  Fetch events (either explicit ids[] or time-range)
    ------------------------------------------------------------------ */
-if ($ids) {
-    list($sqlids, $params) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED);
-    $events = $DB->get_records_select('bookit_event', "id $sqlids", $params);
-} else {
-    $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
-    $end   = optional_param('end',   '2100-01-01T00:00', PARAM_TEXT);
+/* ------------------------------------------------------------------
+   1.  Fetch events (either explicit ids[] or time-range) — capability-safe
+   ------------------------------------------------------------------ */
+   global $DB, $USER;
 
-    $events = event_manager::get_events_in_timerange(
-        (new DateTime($start))->format('Y-m-d H:i'),
-        (new DateTime($end))->format('Y-m-d H:i'),
-        $cmid
-    );
-}
+   $viewalldetailsofevent    = has_capability('mod/bookit:viewalldetailsofevent', $context);
+   $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
+   
+   $events = [];
+   
+   if (!empty($ids)) {
+       // Export specific IDs, but only those the user is allowed to see in detail.
+       list($in, $inparams) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
+   
+       if ($viewalldetailsofevent) {
+           $sql = "SELECT *
+                     FROM {bookit_event}
+                    WHERE id $in";
+           $events = $DB->get_records_sql($sql, $inparams);
+   
+       } else if ($viewalldetailsofownevent) {
+           $like = $DB->sql_like('otherexaminers', ':otherex');
+           $sql  = "SELECT *
+                      FROM {bookit_event}
+                     WHERE id $in
+                       AND (
+                            usermodified = :uid
+                         OR personinchargeid = :uid2
+                         OR $like
+                     )";
+           $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
+           $events = $DB->get_records_sql($sql, $params);
+   
+       } else {
+           // No details capability: nothing exportable.
+           $events = [];
+       }
+   
+   } else {
+       // Time-range export, capability-safe.
+       $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
+       $end   = optional_param('end',   '2100-01-01T00:00', PARAM_TEXT);
+   
+       $startts = (new DateTime(str_replace('T',' ', $start)))->getTimestamp();
+       $endts   = (new DateTime(str_replace('T',' ', $end)))->getTimestamp();
+   
+       if ($viewalldetailsofevent) {
+           $sql = "SELECT *
+                     FROM {bookit_event}
+                    WHERE endtime >= :starttime
+                      AND starttime <= :endtime";
+           $params = ['starttime' => $startts, 'endtime' => $endts];
+           $events = $DB->get_records_sql($sql, $params);
+   
+       } else if ($viewalldetailsofownevent) {
+           $like = $DB->sql_like('otherexaminers', ':otherex');
+           $sql  = "SELECT *
+                      FROM {bookit_event}
+                     WHERE endtime >= :starttime
+                       AND starttime <= :endtime
+                       AND (
+                            usermodified = :uid
+                         OR personinchargeid = :uid2
+                         OR $like
+                     )";
+           $params = [
+               'starttime' => $startts,
+               'endtime'   => $endts,
+               'uid'       => $USER->id,
+               'uid2'      => $USER->id,
+               'otherex'   => $USER->id
+           ];
+           $events = $DB->get_records_sql($sql, $params);
+   
+       } else {
+           // No details capability: nothing exportable.
+           $events = [];
+       }
+   }
+   
 
 /* additional UI filters ------------------------------------------------ */
 $events = array_filter($events, static function($e) use ($room, $faculty, $status): bool {
