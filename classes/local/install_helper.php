@@ -269,6 +269,54 @@ class install_helper {
     }
 
     /**
+     * Run complete installation setup including roles, users, rooms, and checklists.
+     *
+     * @param bool $force Force creation even if data exists
+     * @param bool $verbose Print verbose output
+     * @return bool True if installation was successful, false otherwise
+     */
+    public static function install_all_defaults(bool $force = false, bool $verbose = false): bool {
+        if ($verbose) {
+            mtrace('Starting complete BookIt installation...');
+        }
+
+        $success = true;
+
+        // Import roles first
+        if ($verbose) {
+            mtrace('Step 1: Importing default roles...');
+        }
+        $rolesimported = self::import_default_roles($force, $verbose);
+        if (!$rolesimported && $verbose) {
+            mtrace('No roles were imported or roles already exist.');
+        }
+
+        // Import users (depends on roles)
+        if ($verbose) {
+            mtrace('Step 2: Importing default users...');
+        }
+        $usersimported = self::import_default_users($force, $verbose);
+        if (!$usersimported && $verbose) {
+            mtrace('No users were imported or users already exist.');
+        }
+
+        // Create default checklists (includes rooms creation)
+        if ($verbose) {
+            mtrace('Step 3: Creating default checklists and rooms...');
+        }
+        $checklistscreated = self::create_default_checklists($force, $verbose);
+        if (!$checklistscreated && $verbose) {
+            mtrace('No checklists were created or checklists already exist.');
+        }
+
+        if ($verbose) {
+            mtrace('BookIt installation completed.');
+        }
+
+        return $success;
+    }
+
+    /**
      * Import default roles from XML files in assets/roles/ directory.
      *
      * @param bool $force Force import even if role already exists
@@ -526,6 +574,211 @@ class install_helper {
         }
 
         return $roomsCreated > 0;
+    }
+
+    /**
+     * Import default users from CSV file in assets/users/ directory.
+     *
+     * @param bool $force Force creation even if users exist
+     * @param bool $verbose Print verbose output
+     * @return bool True if at least one user was imported, false otherwise
+     */
+    public static function import_default_users(bool $force = false, bool $verbose = false): bool {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/user/lib.php');
+
+        $csvfile = $CFG->dirroot . '/mod/bookit/assets/users/users.csv';
+
+        if (!file_exists($csvfile)) {
+            if ($verbose) {
+                mtrace('Users CSV file not found: ' . $csvfile);
+            }
+            return false;
+        }
+
+        if ($verbose) {
+            mtrace('Processing users CSV file: ' . $csvfile);
+        }
+
+        $handle = fopen($csvfile, 'r');
+        if (!$handle) {
+            if ($verbose) {
+                mtrace('Could not open CSV file: ' . $csvfile);
+            }
+            return false;
+        }
+
+        $usersimported = false;
+        $linenum = 0;
+        $systemcontext = \context_system::instance();
+
+        while (($data = fgetcsv($handle, 1000, ';')) !== false) {
+            $linenum++;
+
+            // Skip header row.
+            if ($linenum === 1) {
+                continue;
+            }
+
+            // Skip empty rows.
+            if (empty($data) || count($data) < 6) {
+                continue;
+            }
+
+            // Parse CSV data: username;email;firstname;lastname;auth;password.
+            $username = trim($data[0]);
+            $email = trim($data[1]);
+            $firstname = trim($data[2]);
+            $lastname = trim($data[3]);
+            $auth = trim($data[4]);
+            $password = trim($data[5]);
+
+            if (empty($username) || empty($email)) {
+                if ($verbose) {
+                    mtrace("Skipping line $linenum: missing username or email");
+                }
+                continue;
+            }
+
+            // Check if user already exists.
+            $existinguser = $DB->get_record('user', ['username' => $username, 'deleted' => 0]);
+            if ($existinguser && !$force) {
+                if ($verbose) {
+                    mtrace("User '$username' already exists (ID: {$existinguser->id}). Skipping.");
+                }
+                // Still check role assignment for existing users
+                self::assign_bookit_role_to_user($existinguser, $verbose);
+                continue;
+            }
+
+            if ($verbose) {
+                mtrace("Creating user: $username ($firstname $lastname)");
+            }
+
+            // Create user object.
+            $user = new \stdClass();
+            $user->username = $username;
+            $user->email = $email;
+            $user->firstname = $firstname;
+            $user->lastname = $lastname;
+            $user->auth = $auth;
+            $user->confirmed = 1;
+            $user->mnethostid = $CFG->mnet_localhost_id;
+            $user->timecreated = time();
+            $user->timemodified = time();
+
+            // Set password if provided and not 'x'.
+            if ($password !== 'x' && !empty($password)) {
+                $user->password = hash_internal_user_password($password);
+            } else {
+                // Generate a random password if none provided.
+                $user->password = hash_internal_user_password(generate_password());
+            }
+
+            try {
+                $userid = user_create_user($user, false, false);
+
+                if ($verbose) {
+                    mtrace("  Created user with ID: $userid");
+                }
+
+                // Get the created user record.
+                $createduser = $DB->get_record('user', ['id' => $userid]);
+
+                // Assign appropriate BookIt role.
+                self::assign_bookit_role_to_user($createduser, $verbose);
+
+                $usersimported = true;
+
+            } catch (\Exception $e) {
+                if ($verbose) {
+                    mtrace("  Error creating user '$username': " . $e->getMessage());
+                }
+            }
+        }
+
+        fclose($handle);
+
+        if ($verbose) {
+            if ($usersimported) {
+                mtrace('Completed importing users.');
+            } else {
+                mtrace('No users were imported.');
+            }
+        }
+
+        return $usersimported;
+    }
+
+    /**
+     * Assign appropriate BookIt role to a user based on their username.
+     *
+     * @param \stdClass $user User record
+     * @param bool $verbose Print verbose output
+     * @return void
+     */
+    private static function assign_bookit_role_to_user(\stdClass $user, bool $verbose = false): void {
+        global $DB;
+
+        $systemcontext = \context_system::instance();
+
+        // Determine role based on username patterns.
+        $roleshortname = null;
+        $username = strtolower($user->username);
+
+        if (strpos($username, 'serviceteam') !== false) {
+            $roleshortname = 'bookit_serviceteam';
+        } elseif (strpos($username, 'examiner') !== false) {
+            $roleshortname = 'bookit_examiner';
+        } elseif (strpos($username, 'observer') !== false) {
+            $roleshortname = 'bookit_observer';
+        } elseif (strpos($username, 'support') !== false) {
+            $roleshortname = 'bookit_supportonsite';
+        } elseif (strpos($username, 'booker') !== false) {
+            $roleshortname = 'bookit_bookingperson';
+        }
+
+        if (!$roleshortname) {
+            if ($verbose) {
+                mtrace("  No specific BookIt role determined for user: {$user->username}");
+            }
+            return;
+        }
+
+        // Get the role.
+        $role = $DB->get_record('role', ['shortname' => $roleshortname]);
+        if (!$role) {
+            if ($verbose) {
+                mtrace("  Role '$roleshortname' not found for user: {$user->username}");
+            }
+            return;
+        }
+
+        // Check if user already has this role.
+        $existing = $DB->get_record('role_assignments', [
+            'roleid' => $role->id,
+            'userid' => $user->id,
+            'contextid' => $systemcontext->id
+        ]);
+
+        if ($existing) {
+            if ($verbose) {
+                mtrace("  User {$user->username} already has role: {$role->shortname}");
+            }
+            return;
+        }
+
+        // Assign the role.
+        try {
+            role_assign($role->id, $user->id, $systemcontext->id);
+            if ($verbose) {
+                mtrace("  Assigned role '{$role->shortname}' to user: {$user->username}");
+            }
+        } catch (\Exception $e) {
+            if ($verbose) {
+                mtrace("  Error assigning role to user {$user->username}: " . $e->getMessage());
+            }
+        }
     }
 
 }

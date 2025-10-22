@@ -36,6 +36,7 @@ set_config('installhelperfinished', 1, 'mod_bookit');
 
 // Run the installation helper.
 $rolesimported = install_helper::import_default_roles(false, false);
+$usersimported = install_helper::import_default_users(false, false);
 $result = install_helper::create_default_checklists(false, false);
 
 // Redirect back to settings.
