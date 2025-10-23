@@ -60,7 +60,8 @@ class sharing_manager {
         $master = bookit_checklist_master::from_database($masterid);
 
         if (empty($filename)) {
-            $filename = clean_filename($master->name . '_checklist_export');
+            // $filename = clean_filename($master->name . '_checklist_export');
+            $filename = 'checklist_master_export';
         }
 
         // Initialize CSV writer.
