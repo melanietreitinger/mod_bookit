@@ -313,16 +313,27 @@ class bookit_checklist_item implements \renderable, \templatable {
         foreach ($this->roleids as $roleid) {
             $role = checklist_manager::get_role_by_id((int) $roleid);
 
-            $roleData = [
-                'rolename' => $role ? $role->name : '',
-                'roleid' => (int) $roleid,
-            ];
-
-            // Check if current user has this specific role.
-            if (checklist_manager::user_has_bookit_role((int) $roleid)) {
-                $roleData['extraclasses'] = 'badge badge-warning text-dark';
+            // Handle missing role (role ID 0)
+            if ((int) $roleid === 0 || !$role) {
+                $roleData = [
+                    'rolename' => get_string('missing_role', 'mod_bookit'),
+                    'roleid' => (int) $roleid,
+                    'extraclasses' => 'badge badge-warning text-dark',
+                    'is_missing_role' => true,
+                ];
             } else {
-                $roleData['extraclasses'] = 'badge badge-primary text-light';
+                $roleData = [
+                    'rolename' => $role->name,
+                    'roleid' => (int) $roleid,
+                    'is_missing_role' => false,
+                ];
+
+                // Check if current user has this specific role.
+                if (checklist_manager::user_has_bookit_role((int) $roleid)) {
+                    $roleData['extraclasses'] = 'badge badge-warning text-dark';
+                } else {
+                    $roleData['extraclasses'] = 'badge badge-primary text-light';
+                }
             }
 
             $data->rolenames[] = $roleData;

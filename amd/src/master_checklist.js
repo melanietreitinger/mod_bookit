@@ -82,6 +82,12 @@ export default class extends BaseComponent {
             this._handleExportChecklistButtonClick(e);
         });
 
+        // Add event listener for import button
+        this.addEventListener(this.getElement(this.selectors.IMPORT_BTN), 'click', (e) => {
+            e.preventDefault();
+            this._handleImportChecklistButtonClick(e);
+        });
+
         const spinnerElement = document.querySelector(this.selectors.LOADING_SPINNER);
         spinnerElement.classList.add('d-none');
 
@@ -173,6 +179,35 @@ export default class extends BaseComponent {
                 Toast.add(await getString('export_success', 'mod_bookit'), {type: 'success'});
             } else {
                 Toast.add(response.detail.message || await getString('export_error', 'mod_bookit'), {type: 'error'});
+            }
+        });
+
+        modalForm.show();
+    }
+
+    async _handleImportChecklistButtonClick(e) {
+        const masterid = e.target.dataset.masterId;
+
+        const modalForm = new ModalForm({
+            formClass: "mod_bookit\\form\\import_checklist_form",
+            args: {
+                masterid: masterid
+            },
+            modalConfig: {
+                title: await getString('import', 'mod_bookit'),
+            },
+            saveButtonText: await getString('import', 'mod_bookit'),
+        });
+
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async (response) => {
+            if (response.detail.success) {
+                Toast.add(response.detail.message || await getString('importsuccessful', 'mod_bookit'), {type: 'success'});
+                if (response.detail.reload) {
+                    // Reload the page to show imported data
+                    window.location.reload();
+                }
+            } else {
+                Toast.add(response.detail.message || await getString('importfailed', 'mod_bookit'), {type: 'error'});
             }
         });
 

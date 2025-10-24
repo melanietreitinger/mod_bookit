@@ -29,10 +29,20 @@
 <td class="align-middle py-3" data-bookit-checklistitem-tabledata-roleids-id="{{id}}">
 {{#rolenames}}
     <div>
-        <span class="badge {{extraclasses}}"  style="opacity: 0.8;"
+        {{#is_missing_role}}
+        <span class="badge badge-warning text-dark" style="opacity: 0.8;"
+            data-bookit-checklistitem-tabledata-role-id="{{roleid}}"
+            data-bookit-checklistitem-rolename="{{rolename}}"
+            data-bookit-checklistitem-tabledata-is-role-element>
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {{rolename}}
+        </span>
+        {{/is_missing_role}}
+        {{^is_missing_role}}
+        <span class="badge {{extraclasses}}" style="opacity: 0.8;"
             data-bookit-checklistitem-tabledata-role-id="{{roleid}}"
             data-bookit-checklistitem-rolename="{{rolename}}"
             data-bookit-checklistitem-tabledata-is-role-element>{{rolename}}</span>
+        {{/is_missing_role}}
     </div>
 {{/rolenames}}
 </td>
