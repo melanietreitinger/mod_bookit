@@ -305,4 +305,6 @@ $string['importfailed'] = 'Import failed: {$a}';
 $string['invalidcsvformat'] = 'Invalid CSV format. Please check the file structure.';
 $string['import_success'] = 'Import completed successfully';
 $string['import_error'] = 'Import failed. Please try again.';
+$string['import_rooms'] = 'Import rooms';
+$string['import_rooms_desc'] = 'When checked, room assignments from the CSV will be imported and mapped to checklist items. When unchecked, items will have no room assignments.';
 $string['missing_role'] = 'Missing Role';

@@ -74,6 +74,12 @@ class import_checklist_form extends dynamic_form {
             ]
         );
         $mform->addRule('csvfile', get_string('required'), 'required', null, 'client');
+
+        // Add checkbox to control room imports
+        $mform->addElement('checkbox', 'import_rooms', get_string('import_rooms', 'mod_bookit'),
+            get_string('import_rooms_desc', 'mod_bookit'));
+        $mform->setType('import_rooms', PARAM_BOOL);
+        $mform->setDefault('import_rooms', 1); // Default to checked
     }
 
     /**
@@ -136,7 +142,8 @@ class import_checklist_form extends dynamic_form {
 
             // Process the CSV import
             $sharingmanager = new sharing_manager();
-            $result = $sharingmanager->import_master_checklist_csv($masterid, $csvdata);
+            $importrooms = !empty($data->import_rooms);
+            $result = $sharingmanager->import_master_checklist_csv($masterid, $csvdata, $importrooms);
 
             if ($result['success']) {
                 return [

@@ -239,7 +239,7 @@ class sharing_manager {
      * @param string $csvdata CSV data content
      * @return array Result array with success status and import details
      */
-    public static function import_master_checklist_csv(int $masterid, string $csvdata): array {
+    public static function import_master_checklist_csv(int $masterid, string $csvdata, bool $importrooms = true): array {
         global $DB, $USER;
 
         if (empty($csvdata)) {
@@ -291,8 +291,8 @@ class sharing_manager {
 
                 $row = array_combine($headers, $data);
 
-                // Process rooms first to build room cache
-                if ($row['type'] === 'room' && !empty($row['name']) && !empty($row['room_data'])) {
+                // Process rooms first to build room cache (only if import_rooms is enabled)
+                if ($importrooms && $row['type'] === 'room' && !empty($row['name']) && !empty($row['room_data'])) {
                     $roomData = json_decode($row['room_data'], true);
                     if ($roomData) {
                         $roomName = $row['name'];
@@ -357,9 +357,9 @@ class sharing_manager {
                 // Create items for this category
                 $categoryItemIds = [];
                 foreach ($categoryInfo['items'] as $itemRow) {
-                    // Parse room IDs from CSV
+                    // Parse room IDs from CSV (only if import_rooms is enabled)
                     $roomIds = [];
-                    if (!empty($itemRow['room_ids'])) {
+                    if ($importrooms && !empty($itemRow['room_ids'])) {
                         $roomIdsFromCsv = json_decode($itemRow['room_ids'], true);
                         if (is_array($roomIdsFromCsv)) {
                             foreach ($roomIdsFromCsv as $roomRef) {
