@@ -47,13 +47,13 @@ class hook_callbacks {
             // FIXME: we need to add a node to the settings tree for non-admin, non-manager users.
 
             // die(print_r($hook->get_primaryview(), true));
-            // $hook->get_primaryview()->find('siteadminnode', null)?->add(
-            //     get_string('master_checklist', 'mod_bookit'),
-            //     $url,
-            //     navigation_node::TYPE_CUSTOM,
-            //     null,
-            //     'bookit_master_checklist'
-            // );
+            $hook->get_primaryview()->find('siteadminnode', null)?->add(
+                get_string('master_checklist', 'mod_bookit'),
+                $url,
+                navigation_node::TYPE_CUSTOM,
+                null,
+                'bookit_master_checklist'
+            );
             // $PAGE->navigation->extend_for_user($USER);
             // $PAGE->navbar->includesettingsbase = true;
             // $view = $PAGE->navigation;

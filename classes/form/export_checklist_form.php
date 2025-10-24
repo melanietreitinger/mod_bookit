@@ -46,6 +46,7 @@ class export_checklist_form extends dynamic_form {
      * This method defines the form elements for checklist export.
      */
     public function definition() {
+        global $OUTPUT;
         $mform = $this->_form;
 
         $mform->addElement('hidden', 'masterid');
@@ -55,18 +56,15 @@ class export_checklist_form extends dynamic_form {
         $mform->setType('action', PARAM_TEXT);
         $mform->setDefault('action', 'export');
 
-        // Add info box with help text
-        $mform->addElement('static', 'export_info', '',
-            '<div class="alert alert-info">' .
-            '<i class="fa fa-info-circle" aria-hidden="true"></i> ' .
-            get_string('export_help', 'mod_bookit') .
-            '</div>'
-        );
+        $data = [
+            'export_help' => get_string('export_help', 'mod_bookit')
+        ];
+        $exportinfo = $OUTPUT->render_from_template('mod_bookit/masterchecklist/bookit_checklist_exportinfo', $data);
+        $mform->addElement('static', 'export_info', '', $exportinfo);
 
-        // Add radio button group for format selection
         $formats = [];
         $formats[] = $mform->createElement('radio', 'format', '', get_string('csv_format', 'mod_bookit'), 'csv');
-        // $formats[] = $mform->createElement('radio', 'format', '', get_string('pdf_format', 'mod_bookit'), 'pdf');
+        $formats[] = $mform->createElement('radio', 'format', '', get_string('pdf_format', 'mod_bookit'), 'pdf');
 
         $mform->addGroup($formats, 'format_group', get_string('export_format', 'mod_bookit'), '<br/>', false);
         $mform->addRule('format_group', null, 'required', null, 'client');
@@ -114,7 +112,6 @@ class export_checklist_form extends dynamic_form {
         if (!empty($ajaxdata['masterid']) && !empty($data->format)) {
             $masterid = (int)$ajaxdata['masterid'];
 
-            // Instead of direct export, return URL for download
             $exporturl = new \moodle_url('/mod/bookit/export.php', [
                 'masterid' => $masterid,
                 'format' => $data->format
