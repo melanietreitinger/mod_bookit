@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['add_blocker'] = 'Add blocker';
 $string['addbooking'] = 'Request booking';
+$string['active_weekplan'] = 'Active weekplan';
 $string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'Add BookIt instance';
 $string['bookit:addresource'] = 'Add a resource';

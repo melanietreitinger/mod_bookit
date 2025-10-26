@@ -43,12 +43,20 @@ class rooms_table extends \table_sql {
         global $PAGE;
         parent::__construct('mod_bookit-rooms_table');
         $this->define_baseurl($PAGE->url);
-        $this->set_sql('id, name, active, description, eventcolor', '{bookit_room}', 'true');
+        $this->set_sql(
+            'r.id, r.name, r.active, r.description, r.eventcolor, w.name as activeweekplan, w.id as activeweekplanid',
+            '{bookit_room} r ' .
+            'LEFT JOIN {bookit_weekplan_room} wr ON r.id = wr.roomid AND wr.starttime <= :time1 AND (wr.endtime IS NULL OR wr.endtime >= :time2) ' .
+            'LEFT JOIN {bookit_weekplan} w ON wr.weekplanid = w.id ',
+            'true',
+            ['time1' => time(), 'time2' => time()]
+        );
         $this->column_nosort = ['internalnotes', 'tools'];
-        $this->define_columns(['name', 'description', 'tools']);
+        $this->define_columns(['name', 'description', 'activeweekplan', 'tools']);
         $this->define_headers([
             get_string('name'),
             get_string('description'),
+            get_string('active_weekplan', 'mod_bookit'),
             get_string('tools', 'mod_bookit'),
         ]);
     }
@@ -61,6 +69,21 @@ class rooms_table extends \table_sql {
     public function col_name($row) {
         $url = new \moodle_url('/mod/bookit/view_room.php', ['id' => $row->id]);
         return \html_writer::link($url, $row->name);
+    }
+
+    /**
+     * Render 'activeweekplan' column.
+     * @param $row
+     * @return string
+     */
+    public function col_activeweekplan($row) {
+        if (isset($row->activeweekplanid)) {
+            return \html_writer::link(
+                new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]),
+                $row->activeweekplan,
+            );
+        }
+        return '-';
     }
 
     /**
