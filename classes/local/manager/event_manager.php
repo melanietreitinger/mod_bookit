@@ -80,14 +80,14 @@ class event_manager {
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
 
-        $sqlreserved = 'SELECT e.id, NULL as name, e.starttime, e.endtime, r.eventcolor, r.name as roomname ' .
+        $sqlreserved = 'SELECT e.id, NULL as name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname ' .
                 'FROM {bookit_event} e ' .
                 'JOIN {bookit_room} r ON r.id = e.roomid ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
 
         // Service-Team: can view all events in detail.
         if ($viewalldetailsofevent) {
-            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, r.eventcolor, r.name as roomname ' .
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname ' .
                 'FROM {bookit_event} e ' .
                 'JOIN {bookit_room} r ON r.id = e.roomid ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
@@ -96,7 +96,7 @@ class event_manager {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
             // Every user: can view own events in detail.
-            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, r.eventcolor, r.name as roomname
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname
                     FROM {bookit_event} e
                     JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
@@ -119,13 +119,16 @@ class event_manager {
         foreach ($records as $record) {
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved) . ' (' . $record->roomname . ')',
-                'start' => date('Y-m-d H:i', $record->starttime),
-                'end' => date('Y-m-d H:i', $record->endtime),
+                'title' => [
+                    'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' . date('H:i', $record->endtime) . '</h6>' .
+                        ($record->name ?? $reserved) . ' (' . $record->roomname . ')'
+                ],
+                'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
+                'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
                 'backgroundColor' => $record->eventcolor,
                 'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
                 'extendedProps' => (object)['reserved' => !$record->name],
-
+                'classNames' => 'hide-event-time',
             ];
         }
         return $events;

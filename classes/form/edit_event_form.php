@@ -312,6 +312,17 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('hidden', 'supportpersons');
             $mform->setType('supportpersons', PARAM_TEXT);
         }
+
+        if ($caneditinternal) {
+            $mform->addElement('text', 'extratimebefore', get_string('settings_extratime_before', 'mod_bookit'));
+            $mform->setType('extratimebefore', PARAM_INT);
+            $mform->addElement('text', 'extratimeafter', get_string('settings_extratime_after', 'mod_bookit'));
+            $mform->setType('extratimeafter', PARAM_INT);
+        } else {
+            $mform->addElement('hidden', 'extratimebefore');
+            $mform->addElement('hidden', 'extratimeafter');
+        }
+
         // Add the "bookingstatus" field.
         $mform->addElement(
             'select',
@@ -447,6 +458,16 @@ class edit_event_form extends dynamic_form {
         $this->_form->setType('editinternal', PARAM_BOOL);
         $mform->insertElementBefore($e2, 'name');
 
+        if (!$caneditinternal) {
+            if ($this->event) {
+                $mform->setConstant('extratimebefore', $this->event->extratimebefore);
+                $mform->setConstant('extratimeafter', $this->event->extratimeafter);
+            } else {
+                $mform->setConstant('extratimebefore', null);
+                $mform->setConstant('extratimeafter', null);
+            }
+        }
+
         if ($data && $data->roomid) {
             /** @var \MoodleQuickForm_select $starttimeel */
             $starttimeel = $mform->getElement('starttime');
@@ -506,29 +527,20 @@ class edit_event_form extends dynamic_form {
         foreach (resource_manager::get_resources() as $category => $catresource) {
             // Rooms.
             foreach ($catresource['resources'] as $id => $v) {
-                if ('Rooms' == $category) {
-                    if ($formdata->room == $id) {
-                        $mappings[] = (object) [
-                                'resourceid' => $formdata->room,
-                                'amount' => 1,
-                        ];
-                    }
-                } else {
-                    // Other Resources.
-                    $checkboxname = 'checkbox_' . $id;
-                    if ($formdata->$checkboxname ?? false) {
-                        $mappings[] = (object) [
-                                'resourceid' => $id,
-                                'amount' => $formdata->{'resource_' . $id},
-                        ];
-                    }
+                // Other Resources.
+                $checkboxname = 'checkbox_' . $id;
+                if ($formdata->$checkboxname ?? false) {
+                    $mappings[] = (object)[
+                        'resourceid' => $id,
+                        'amount' => $formdata->{'resource_' . $id},
+                    ];
                 }
             }
         }
         $formdata->resources = $mappings;
 
         // Calculate endtime.
-        $formdata->endtime = $formdata->starttime + $formdata->duration * 60 + $formdata->extratime * 60;
+        $formdata->endtime = $formdata->starttime + $formdata->duration * 60;
 
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));

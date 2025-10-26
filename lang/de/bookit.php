@@ -89,7 +89,7 @@ $string['event_duration_help'] = 'Tragen Sie die Dauer des Events ein.';
 // ...@TODO: translate.
 $string['event_error_mintime'] = 'You cannot enter events in the past.';
 // ...@TODO: translate.
-$string['event_extratime_description'] = '<i>Note that an extra time of {$a} minutes is automatically added to each event to allow preparation and wrap-up works to be done.</i>';
+$string['event_extratime_description'] = '<i>Zusätzlich wird Zeit vor und nach dem Termin für Vor- und Nachbereitung automatisch hinzugefügt.</i>';
 // ...@TODO: translate.
 $string['event_extratime_label'] = '<i>Extra time for the event</i>';
 $string['event_internalnotes'] = 'Interne Hinweise';

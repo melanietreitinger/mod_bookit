@@ -56,8 +56,8 @@ class color_manager {
      * @return string
      */
     private static function calculate_textcolor_for_background(string $color): string {
-        return self::calculate_luminosity_ratio($color, '#000') > self::calculate_luminosity_ratio($color, '#fff')
-            ? '#000' : '#fff';
+        return self::calculate_luminosity_ratio($color, '#000000') > self::calculate_luminosity_ratio($color, '#ffffff')
+            ? '#000000' : '#ffffff';
     }
 
     /**
