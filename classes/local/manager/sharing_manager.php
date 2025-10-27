@@ -560,7 +560,98 @@ class sharing_manager {
      * @return void Downloads the PDF file directly
      */
     public static function export_master_checklist_pdf(int $masterid, string $filename = ''): void {
-        // TODO: Implement PDF export functionality.
+        global $OUTPUT, $CFG;
+
+        // Include PDF library
+        require_once($CFG->libdir . '/pdflib.php');
+
+        // Get the master checklist
+        $master = bookit_checklist_master::from_database($masterid);
+
+        if (empty($filename)) {
+            $filename = clean_filename($master->name . '_checklist_export');
+        }
+
+        // Prepare data structure manually to avoid renderer type issues
+        $data = new \stdClass();
+        $data->id = $master->id;
+        $data->name = $master->name;
+        $data->checklistcategories = [];
+
+        // Get all rooms and roles once for efficiency
+        $allrooms = checklist_manager::get_bookit_rooms();
+        $allroles = checklist_manager::get_bookit_roles();
+
+        // Create lookup arrays for faster access
+        $roomlookup = [];
+        foreach ($allrooms as $room) {
+            $roomlookup[$room->id] = $room;
+        }
+
+        $rolelookup = [];
+        foreach ($allroles as $role) {
+            $rolelookup[$role->id] = $role;
+        }
+
+        // Get categories and items directly
+        foreach ($master->checklistcategories as $category) {
+            $categorydata = new \stdClass();
+            $categorydata->id = $category->id;
+            $categorydata->name = $category->name;
+            $categorydata->checklistitems = [];
+
+            if (!empty($category->checklistitems)) {
+                $itemids = explode(',', $category->checklistitems);
+
+                foreach ($itemids as $itemid) {
+                    $item = \mod_bookit\local\entity\bookit_checklist_item::from_database((int)$itemid);
+
+                    $itemdata = new \stdClass();
+                    $itemdata->id = $item->id;
+                    $itemdata->title = $item->title;
+                    $itemdata->roomnames = [];
+                    $itemdata->rolenames = [];
+
+                    // Get room names
+                    if (!empty($item->roomids)) {
+                        foreach ($item->roomids as $roomid) {
+                            if (isset($roomlookup[$roomid])) {
+                                $room = $roomlookup[$roomid];
+                                $roomname = new \stdClass();
+                                $roomname->roomname = $room->name;
+                                $roomname->eventcolor = $room->eventcolor ?? '#007bff';
+                                $itemdata->roomnames[] = $roomname;
+                            }
+                        }
+                    }
+
+                    // Get role names
+                    if (!empty($item->roleids)) {
+                        foreach ($item->roleids as $roleid) {
+                            if (isset($rolelookup[$roleid])) {
+                                $role = $rolelookup[$roleid];
+                                $rolename = new \stdClass();
+                                $rolename->rolename = $role->name;
+                                $itemdata->rolenames[] = $rolename;
+                            }
+                        }
+                    }
+
+                    $categorydata->checklistitems[] = $itemdata;
+                }
+            }
+
+            $data->checklistcategories[] = $categorydata;
+        }
+
+        // Render the PDF template
+        $html = $OUTPUT->render_from_template('mod_bookit/bookit_checklist_master_pdf', $data);
+
+        // Create PDF instance
+        $pdf = new \pdf();
+        $pdf->AddPage();
+        $pdf->writeHTML($html);
+        $pdf->Output($filename . '.pdf', 'D');
     }
 
 }
