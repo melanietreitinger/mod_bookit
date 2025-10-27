@@ -124,6 +124,7 @@ $string['event_timecompensation_help'] = 'Check if you have participants entitle
 // ...@TODO: translate.
 $string['event_usermodified'] = 'Created by user';
 // ...@TODO: translate.
+$string['from_x_onwards'] = 'Ab dem {$a}';
 $string['header_internal'] = 'Internal fields';
 $string['general_settings'] = 'Allgemeine Einstellungen';
 $string['global_blocker'] = 'Globaler Blocker';

@@ -27,6 +27,7 @@ namespace mod_bookit\local\form;
 use core\form\persistent;
 use mod_bookit\local\persistent\weekplan;
 use mod_bookit\local\persistent\weekplan_room;
+use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -67,14 +68,17 @@ class edit_weekplan_room_form extends persistent {
 
         $mform->addElement('date_selector', 'starttime', get_string('start_of_period', 'mod_bookit'));
 
-        $mform->addElement('date_selector', 'endtime', get_string('end_of_period', 'mod_bookit'));
+        $mform->addElement('date_selector', 'endtime', get_string('end_of_period', 'mod_bookit'),
+            ['optional' => true]);
 
         $this->add_action_buttons();
     }
 
     #[\Override]
     protected function extra_validation($data, $files, array &$errors) {
-        if ($data->endtime < $data->starttime) {
+        // Set endtime to null if it is zero.
+        $data->endtime = $data->endtime ?: null;
+        if ($data->endtime && $data->endtime < $data->starttime) {
             $errors['endtime'] = get_string('end_before_start', 'mod_bookit');
         }
 
@@ -82,5 +86,11 @@ class edit_weekplan_room_form extends persistent {
         if ($collision) {
             $errors['endtime'] = get_string('weekplan_assignment_overlaps', 'mod_bookit');
         }
+    }
+
+    #[\Override]
+    protected static function convert_fields(stdClass $data) {
+        $data->endtime = $data->endtime ?: null;
+        return parent::convert_fields($data);
     }
 }

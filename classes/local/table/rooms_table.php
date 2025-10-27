@@ -46,7 +46,8 @@ class rooms_table extends \table_sql {
         $this->set_sql(
             'r.id, r.name, r.active, r.description, r.eventcolor, w.name as activeweekplan, w.id as activeweekplanid',
             '{bookit_room} r ' .
-            'LEFT JOIN {bookit_weekplan_room} wr ON r.id = wr.roomid AND wr.starttime <= :time1 AND (wr.endtime IS NULL OR wr.endtime >= :time2) ' .
+            'LEFT JOIN {bookit_weekplan_room} wr ON r.id = wr.roomid AND wr.starttime <= :time1 AND ' .
+                '(wr.endtime IS NULL OR wr.endtime >= :time2) ' .
             'LEFT JOIN {bookit_weekplan} w ON wr.weekplanid = w.id ',
             'true',
             ['time1' => time(), 'time2' => time()]

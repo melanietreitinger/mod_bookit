@@ -66,13 +66,22 @@ class weekplan_room extends persistent {
     public function check_for_collision() {
         global $DB;
 
-        $sql = 'SELECT * FROM {bookit_weekplan_room} ' .
-            'WHERE starttime <= :endtime AND endtime >= :starttime AND roomid = :roomid';
-        $params = [
-            'starttime' => $this->get('starttime'),
-            'endtime' => $this->get('endtime'),
-            'roomid' => $this->get('roomid'),
-        ];
+        if ($this->get('endtime')) {
+            $sql = 'SELECT * FROM {bookit_weekplan_room} ' .
+                'WHERE starttime <= :endtime AND (endtime IS NULL OR endtime >= :starttime) AND roomid = :roomid';
+            $params = [
+                'starttime' => $this->get('starttime'),
+                'endtime' => $this->get('endtime'),
+                'roomid' => $this->get('roomid'),
+            ];
+        } else {
+            $sql = 'SELECT * FROM {bookit_weekplan_room} ' .
+                'WHERE (endtime IS NULL OR endtime >= :starttime) AND roomid = :roomid';
+            $params = [
+                'starttime' => $this->get('starttime'),
+                'roomid' => $this->get('roomid'),
+            ];
+        }
         if ($this->get('id')) {
             $sql .= ' AND id != :id';
             $params['id'] = $this->get('id');
@@ -88,7 +97,7 @@ class weekplan_room extends persistent {
      * @return int|null
      */
     public static function get_applicable_weekplanid(int $timestamp, int $roomid): int|null {
-        $records = self::get_records_select('starttime <= :time1 AND endtime >= :time2 AND roomid = :roomid', [
+        $records = self::get_records_select('starttime <= :time1 AND (endtime IS NULL OR endtime >= :time2) AND roomid = :roomid', [
             'time1' => $timestamp,
             'time2' => $timestamp,
             'roomid' => $roomid,

@@ -108,6 +108,7 @@ $string['event_supportperson_help'] = 'Support persons assigned to this event.';
 $string['event_timecompensation'] = 'Time compensation';
 $string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
 $string['event_usermodified'] = 'Created by user';
+$string['from_x_onwards'] = 'From {$a} onwards';
 $string['general_settings'] = 'General Settings';
 $string['global_blocker'] = 'Global blocker';
 $string['globally'] = 'Globally';

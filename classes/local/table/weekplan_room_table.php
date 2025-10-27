@@ -70,7 +70,11 @@ class weekplan_room_table extends \table_sql {
      * @return string
      */
     public function col_starttime(object $row) {
-        return date('d.m.Y', $row->starttime) . ' - ' . date('d.m.Y', $row->endtime);
+        if ($row->endtime) {
+            return date('d.m.Y', $row->starttime) . ' - ' . date('d.m.Y', $row->endtime);
+        } else {
+            return get_string('from_x_onwards', 'mod_bookit', date('d.m.Y', $row->starttime));
+        }
     }
 
     /**
