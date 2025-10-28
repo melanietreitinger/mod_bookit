@@ -66,10 +66,11 @@ class edit_weekplan_room_form extends persistent {
             $options,
         );
 
-        $mform->addElement('date_selector', 'starttime', get_string('start_of_period', 'mod_bookit'));
+        $mform->addElement('date_selector', 'starttime', get_string('start_of_period', 'mod_bookit'),
+            ['startyear' => 2020]);
 
         $mform->addElement('date_selector', 'endtime', get_string('end_of_period', 'mod_bookit'),
-            ['optional' => true]);
+            ['optional' => true, 'startyear' => 2020]);
 
         $this->add_action_buttons();
     }

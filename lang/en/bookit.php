@@ -50,6 +50,8 @@ $string['checklistitemname'] = 'Checklist item name';
 $string['checklistitemsuccess'] = 'Checklist item created successfully.';
 $string['checklistitemupdatesuccess'] = 'Checklist item updated successfully.';
 $string['color'] = 'Color';
+$string['could_not_parse_line'] = 'Could not parse line.';
+$string['could_not_parse_time_period_x'] = 'Could not parse time period "{$a}".';
 $string['customtemplate'] = 'Message';
 $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
 . '<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
@@ -61,6 +63,7 @@ $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIE
 . '<p>Nulla vitae elit libero,<br>'
 . 'Cras justo odio.</p>';
 $string['define_institutions'] = 'Define institutions';
+$string['did_not_begin_with_weekday'] = "Did not begin with weekday abbreviation";
 $string['edit'] = 'Edit';
 $string['edit_blocker'] = 'Edit blocker';
 $string['edit_event'] = "Edit event";
@@ -70,6 +73,7 @@ $string['edit_room_data'] = 'Edit room data';
 $string['edit_weekplan'] = 'Edit week plan';
 $string['edit_weekplan_assignment'] = 'Edit weekplan assignment';
 $string['end'] = 'End';
+$string['end_before_start_in_timeperiod_x'] = 'The end time was before the start time in time period "{$a}".';
 $string['end_before_start'] = 'The end date has to be after the start date!';
 $string['end_of_period'] = 'End of period';
 $string['event_bookingstatus'] = 'Booking status';
@@ -126,6 +130,7 @@ $string['item_state_open'] = 'Open';
 $string['item_state_processing'] = 'Processing';
 $string['item_state_unknown'] = 'Unknown';
 $string['legend'] = 'Legend';
+$string['line_x'] = 'Line {$a}:';
 $string['local_blocker'] = 'Local blocker (only for this room)';
 $string['location'] = 'Location';
 $string['master_checklist'] = 'Master checklist';

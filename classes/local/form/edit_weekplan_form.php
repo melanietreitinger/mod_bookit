@@ -24,6 +24,8 @@
 
 namespace mod_bookit\local\form;
 
+use mod_bookit\local\manager\weekplan_manager;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -52,5 +54,15 @@ class edit_weekplan_form extends \moodleform {
         $mform->addHelpButton('weekplan', 'weekplan', 'mod_bookit');
 
         $this->add_action_buttons();
+    }
+
+    #[\Override]
+    public function validation($data, $files) {
+        $errors = [];
+        list($parseerrors, $parsedweekplan) = weekplan_manager::parse_weekplan($data['weekplan']);
+        if ($parseerrors) {
+            $errors['weekplan'] = join('<br>', $parseerrors);
+        }
+        return $errors;
     }
 }
