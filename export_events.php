@@ -59,7 +59,7 @@ if (!empty($ids)) {
     $inorequal = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
     $in = $inorequal[0];
     $inparams = $inorequal[1];
-    
+
     if ($viewalldetailsofevent) {
         $sql = "SELECT *
                     FROM {bookit_event}
@@ -84,10 +84,10 @@ if (!empty($ids)) {
 } else {
     // Time-range export, capability-safe.
     $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
-    $end   = optional_param('end',   '2100-01-01T00:00', PARAM_TEXT);
+    $end   = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
 
-    $startts = (new DateTime(str_replace('T',' ', $start)))->getTimestamp();
-    $endts   = (new DateTime(str_replace('T',' ', $end)))->getTimestamp();
+    $startts = (new DateTime(str_replace('T', ' ', $start)))->getTimestamp();
+    $endts   = (new DateTime(str_replace('T', ' ', $end)))->getTimestamp();
 
     if ($viewalldetailsofevent) {
         $sql = "SELECT *
@@ -96,7 +96,6 @@ if (!empty($ids)) {
                     AND starttime <= :endtime";
         $params = ['starttime' => $startts, 'endtime' => $endts];
         $events = $DB->get_records_sql($sql, $params);
-
     } else if ($viewalldetailsofownevent) {
         $like = $DB->sql_like('otherexaminers', ':otherex');
         $sql  = "SELECT *

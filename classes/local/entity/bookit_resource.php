@@ -65,11 +65,13 @@ class bookit_resource {
     public function __construct(
         string $name,
         string $description,
-        int $amount, int $categoryid,
+        int $amount,
+        int $categoryid,
         int|null $usermodified = null, 
         int|null $timecreated = null,
         int|null $timemodified = null,
-        int|null $id = null) {
+        int|null $id = null
+        ) {
             $this->id = $id;
             $this->name = $name;
             $this->description = $description;
