@@ -259,7 +259,7 @@ class edit_event_form extends dynamic_form {
             ),
             $examinerlist,
             $userselectoroptions
-            );
+        );
         $mform->disabledIf('otherexaminers', 'editevent', 'neq');
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
@@ -390,12 +390,12 @@ class edit_event_form extends dynamic_form {
                 $groupelements = [];
                 $groupelements[] =
                     $mform->createElement(
-                            'advcheckbox',
-                            'checkbox_' . $rid,
-                            '',
-                            $v['name'],
-                            ['group' => 1],
-                            [0, !0] // Array of values associated with the checked/unchecked state of the checkbox.
+                        'advcheckbox',
+                        'checkbox_' . $rid,
+                        '',
+                        $v['name'],
+                        ['group' => 1],
+                        [0, !0] // Array of values associated with the checked/unchecked state of the checkbox.
                     );
                 $mform->disabledIf('checkbox_' . $rid, 'editevent', 'neq');
 
@@ -450,14 +450,20 @@ class edit_event_form extends dynamic_form {
 
         // Store capability flags as hidden elements.
         $mform->insertElementBefore(
-            $mform->createElement('hidden', 'editevent', $caneditevent), 'name'
+            $mform->createElement(
+                'hidden',
+                'editevent',
+                $caneditevent
+            ),
+            'name'
         )->setType('editevent', PARAM_BOOL);
 
         $mform->insertElementBefore(
             $mform->createElement(
                 'hidden',
                 'editinternal',
-                $caneditinternal), 
+                $caneditinternal
+            ),
             'name'
         )->setType('editinternal', PARAM_BOOL);
 

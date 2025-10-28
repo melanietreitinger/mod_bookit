@@ -209,8 +209,7 @@ function printcolorevaluation(string $color, string $color2): string {
             <a href="https://www.w3.org/TR/WCAG22/#contrast-enhanced">AAA</a>.<br><br>';
 }
 /**
- * This function adds settings navigation.
- * (has to be nullable, sorry!)
+ * This function adds settings navigation (has to be nullable, sorry!)
  * @param settings_navigation $settingsnav
  * @param navigation_node $modnode|null
  */

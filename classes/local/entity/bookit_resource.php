@@ -67,19 +67,19 @@ class bookit_resource {
         string $description,
         int $amount,
         int $categoryid,
-        int|null $usermodified = null, 
+        int|null $usermodified = null,
         int|null $timecreated = null,
         int|null $timemodified = null,
         int|null $id = null
-        ) {
-            $this->id = $id;
-            $this->name = $name;
-            $this->description = $description;
-            $this->amount = $amount;
-            $this->categoryid = $categoryid;
-            $this->usermodified = $usermodified;
-            $this->timecreated = $timecreated;
-            $this->timemodified = $timemodified;
+    ) {
+        $this->id = $id;
+        $this->name = $name;
+        $this->description = $description;
+        $this->amount = $amount;
+        $this->categoryid = $categoryid;
+        $this->usermodified = $usermodified;
+        $this->timecreated = $timecreated;
+        $this->timemodified = $timemodified;
     }
 
     /**
