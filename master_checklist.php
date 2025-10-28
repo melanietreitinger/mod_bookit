@@ -47,9 +47,6 @@ $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 
-// $PAGE->requires->js(new moodle_url('/mod/bookit/amd/build/html2pdf.bundle.min.js'));
-
-
 $defaultchecklistmaster = checklist_manager::get_default_master();
 
 if (!$defaultchecklistmaster) {

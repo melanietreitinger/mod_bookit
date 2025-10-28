@@ -6,7 +6,6 @@ import Templates from 'core/templates';
 import * as Toast from 'core/toast';
 import {getString} from 'core/str';
 import ChecklistHelper from 'mod_bookit/checklist_helper';
-import html2pdf from 'mod_bookit/html2pdf.bundle';
 
 export default class extends BaseComponent {
 
@@ -173,75 +172,10 @@ export default class extends BaseComponent {
         });
 
         modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async (response) => {
-            if (response.detail.success) {
-                // Check if this is HTML-based PDF export or server-side export
-                if (response.detail.method === 'html') {
-                    // Client-side HTML2PDF export
-                    window.console.log('Starting HTML2PDF export...');
-                    window.console.log('MAIN_ELEMENT selector:', this.selectors.MAIN_ELEMENT);
-
-                    var element = document.querySelector(this.selectors.MAIN_ELEMENT);
-                    window.console.log('Selected element:', element);
-
-                    if (!element) {
-                        window.console.error('Element not found with selector:', this.selectors.MAIN_ELEMENT);
-                        Toast.add('Export failed: Element not found', {type: 'error'});
-                        return;
-                    }
-
-                    window.console.log('Element content length:', element.innerHTML.length);
-                    window.console.log('html2pdf function:', typeof html2pdf, html2pdf);
-                    window.console.log('Calling html2pdf...');
-
-                    try {
-                        // Generate timestamp for filename
-                        const now = new Date();
-                        const timestamp = now.getFullYear() +
-                            String(now.getMonth() + 1).padStart(2, '0') +
-                            String(now.getDate()).padStart(2, '0') + '_' +
-                            String(now.getHours()).padStart(2, '0') +
-                            String(now.getMinutes()).padStart(2, '0') +
-                            String(now.getSeconds()).padStart(2, '0');
-
-                        // Configure html2pdf options for better output
-                        const options = {
-                            margin: 1,
-                            filename: `master-checklist_${timestamp}.pdf`,
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { scale: 2, useCORS: true },
-                            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-                        };
-
-                        window.console.log('Using html2pdf options:', options);
-
-                        const result = html2pdf(element, options);
-                        window.console.log('html2pdf result:', result);
-
-                        // html2pdf returns a promise, so we need to handle it
-                        if (result && typeof result.then === 'function') {
-                            result.then(() => {
-                                window.console.log('PDF export completed successfully');
-                                Toast.add(getString('export_success', 'mod_bookit'), {type: 'success'});
-                            }).catch((error) => {
-                                window.console.error('PDF export failed:', error);
-                                Toast.add('Export failed: ' + error.message, {type: 'error'});
-                            });
-                        } else {
-                            window.console.log('PDF export initiated (no promise returned)');
-                            Toast.add(await getString('export_success', 'mod_bookit'), {type: 'success'});
-                        }
-                    } catch (error) {
-                        window.console.error('Error calling html2pdf:', error);
-                        Toast.add('Export failed: ' + error.message, {type: 'error'});
-                    }
-                } else if (response.detail.downloadurl) {
-                    // Server-side export (TCPDF, CSV, etc.)
-                    window.console.log('Starting server-side export...');
-                    window.open(response.detail.downloadurl, '_blank');
-                    Toast.add(await getString('export_success', 'mod_bookit'), {type: 'success'});
-                } else {
-                    Toast.add(response.detail.message || await getString('export_error', 'mod_bookit'), {type: 'error'});
-                }
+            if (response.detail.success && response.detail.downloadurl) {
+                // Server-side export (TCPDF, CSV, etc.)
+                window.open(response.detail.downloadurl, '_blank');
+                Toast.add(await getString('export_success', 'mod_bookit'), {type: 'success'});
             } else {
                 Toast.add(response.detail.message || await getString('export_error', 'mod_bookit'), {type: 'error'});
             }
