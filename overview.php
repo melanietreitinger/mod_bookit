@@ -205,7 +205,7 @@ foreach ($events as $ev) {
     echo html_writer::tag('td', $titlelink);
     echo html_writer::tag('td', s($room));
     echo html_writer::tag(
-        'td', 
+        'td',
         s($statustxt),
         ['style' => "background-color:$statusbg;color:$statusfg;"]
     );

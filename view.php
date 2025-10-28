@@ -336,13 +336,16 @@ echo '
 
 
 // Initialise AMD calendar (from original file).
-$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init',
-        [
-                $cm->id,
-                $eventsource,
-                $capabilities,
-                current_language(),
-                $configcalendar,
-        ]);
+$PAGE->requires->js_call_amd
+(
+    'mod_bookit/calendar',
+    'init',
+    [
+        $cm->id,
+        $eventsource,
+        $capabilities,
+        current_language(),
+        $configcalendar,
+    ]);
 
 echo $OUTPUT->footer();

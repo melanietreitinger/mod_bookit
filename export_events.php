@@ -32,11 +32,11 @@ use mod_bookit\local\manager\event_manager;
 /* ------------------------------------------------------------------
    0.  Parameters & capability check
    ------------------------------------------------------------------ */
-$cmid    = required_param('id',  PARAM_INT);          /* course-module id */
+$cmid    = required_param('id', PARAM_INT);          /* course-module id */
 $ids     = optional_param_array('ids', [], PARAM_INT); /* ids[]=1 & ids[]=2…  No codechecker this is not code!!!!*/
-$room    = optional_param('room',    0,        PARAM_INT);
-$faculty = optional_param('faculty', '',       PARAM_TEXT);
-$status  = optional_param('status',  -1,       PARAM_INT);
+$room    = optional_param('room', 0, PARAM_INT);
+$faculty = optional_param('faculty', '', PARAM_TEXT);
+$status  = optional_param('status',  -1, PARAM_INT);
 
 $cm      = get_coursemodule_from_id('bookit', $cmid, 0, false, MUST_EXIST);
 $course  = get_course($cm->course);
@@ -55,9 +55,8 @@ require_capability('mod/bookit:viewownoverview', $context);
 
    $viewalldetailsofevent    = has_capability('mod/bookit:viewalldetailsofevent', $context);
    $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-   
    $events = [];
-   
+
    if (!empty($ids)) {
        // Export specific IDs, but only those the user is allowed to see in detail.
        list($in, $inparams) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
@@ -67,7 +66,6 @@ require_capability('mod/bookit:viewownoverview', $context);
                      FROM {bookit_event}
                     WHERE id $in";
            $events = $DB->get_records_sql($sql, $inparams);
-   
        } else if ($viewalldetailsofownevent) {
            $like = $DB->sql_like('otherexaminers', ':otherex');
            $sql  = "SELECT *
@@ -80,12 +78,10 @@ require_capability('mod/bookit:viewownoverview', $context);
                      )";
            $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
            $events = $DB->get_records_sql($sql, $params);
-   
        } else {
            // No details capability: nothing exportable.
            $events = [];
        }
-   
    } else {
        // Time-range export, capability-safe.
        $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
@@ -127,7 +123,6 @@ require_capability('mod/bookit:viewownoverview', $context);
            $events = [];
        }
    }
-   
 
 /* additional UI filters ------------------------------------------------ */
 $events = array_filter($events, static function($e) use ($room, $faculty, $status): bool {
@@ -146,7 +141,6 @@ $events = array_filter($events, static function($e) use ($room, $faculty, $statu
 if (!$events) {
     throw new moodle_exception('noevents', 'mod_bookit');
 }
-
 
 /* add the event room */
 if ($events) {

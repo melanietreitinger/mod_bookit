@@ -48,7 +48,8 @@ if ($hassiteconfig) {
      * Hidden bucket to hold the real admin_settingpage instances so they don't
      * show up in the left-hand tree (or the search list) as separate entries.
      */
-    $ADMIN->add('modsettings',
+    $ADMIN->add(
+        'modsettings',
         new admin_category('mod_bookit_hidden', get_string('pluginname', 'mod_bookit'), /*hidden*/ true)
     );
 

@@ -215,7 +215,7 @@ function printcolorevaluation(string $color, string $color2): string {
 function bookit_extend_settings_navigation(
     settings_navigation $settingsnav,
     navigation_node $modnode = null
-    ) {
+) {
     global $PAGE;
 
     if (!$modnode) {
@@ -227,9 +227,14 @@ function bookit_extend_settings_navigation(
         $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id]);
 
         // THIS is the line that puts the entry under the current Bookit node.
-        $modnode->add(get_string('overview', 'bookit'), $url,
-            navigation_node::TYPE_SETTING, null, 'bookitoverview',
-            new pix_icon('i/calendar', ''));
+        $modnode->add(
+            get_string('overview', 'bookit'),
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'bookitoverview',
+            new pix_icon('i/calendar', '')
+        );
     }
 }
 

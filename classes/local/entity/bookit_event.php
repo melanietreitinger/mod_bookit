@@ -126,30 +126,30 @@ class bookit_event {
     public static function from_record(array|object $record): self {
         $record = (object)$record;
         return new self(
-                $record->id ?? null,
-                $record->name,
-                $record->semester,
-                $record->department,
-                $record->starttime,
-                $record->endtime,
-                $record->duration,
-                $record->participantsamount ?? null,
-                $record->timecompensation ?? null,
-                $record->compensationfordisadvantages ?? null,
-                $record->bookingstatus ?? 0,
-                $record->personinchargeid ?? null,
-                ltrim(implode(',', $record->otherexaminers ?? []), ','),
-                $record->coursetemplate ?? 0,
-                $record->notes ?? null,
-                $record->internalnotes ?? null,
-                $record->supportpersons ?? null,
-                $record->resources ?? [],
-                $record->refcourseid ?? null,
-                $record->usermodified ?? null,
-                $record->timecreated ?? null,
-                $record->timemodified ?? null,
-                /* if examinerid column is present, use it; else fallback */
-                $record->examinerid ?? $record->personinchargeid ?? null
+            $record->id ?? null,
+            $record->name,
+            $record->semester,
+            $record->department,
+            $record->starttime,
+            $record->endtime,
+            $record->duration,
+            $record->participantsamount ?? null,
+            $record->timecompensation ?? null,
+            $record->compensationfordisadvantages ?? null,
+            $record->bookingstatus ?? 0,
+            $record->personinchargeid ?? null,
+            ltrim(implode(',', $record->otherexaminers ?? []), ','),
+            $record->coursetemplate ?? 0,
+            $record->notes ?? null,
+            $record->internalnotes ?? null,
+            $record->supportpersons ?? null,
+            $record->resources ?? [],
+            $record->refcourseid ?? null,
+            $record->usermodified ?? null,
+            $record->timecreated ?? null,
+            $record->timemodified ?? null,
+            /* if examinerid column is present, use it; else fallback */
+            $record->examinerid ?? $record->personinchargeid ?? null
         );
     }
 
@@ -193,5 +193,4 @@ class bookit_event {
             ]);
         }
     }
-
 }
