@@ -90,7 +90,9 @@ if ($hassiteconfig) {
 
     // Top switcher (Calendar active).
     $calendar->add(new admin_setting_heading(
-        'mod_bookit_nav_calendar', '', $buildbookitheadingselect('calendar')
+        'mod_bookit_nav_calendar',
+        '',
+        $buildbookitheadingselect('calendar')
     ));
 
     // Event setting eventmaxyears.
@@ -146,7 +148,9 @@ if ($hassiteconfig) {
 
     // Top switcher (Resources active).
     $resources->add(new admin_setting_heading(
-        'mod_bookit_nav_resources', '', $buildbookitheadingselect('resources')
+        'mod_bookit_nav_resources',
+        '',
+        $buildbookitheadingselect('resources')
     ));
 
     // Text colour (white / black).
@@ -197,8 +201,8 @@ if ($hassiteconfig) {
 
     // Top switcher (Checklist active).
     $checklist->add(new admin_setting_heading(
-        'mod_bookit_nav_checklist', 
-        '', 
+        'mod_bookit_nav_checklist',
+        '',
         $buildbookitheadingselect('checklist')
     ));
 

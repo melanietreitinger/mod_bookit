@@ -277,8 +277,11 @@ echo html_writer::end_tag('select');
 echo html_writer::end_div(); // Bookit-filters.
 
 /* export button */
-echo html_writer::tag('button', get_string('exportevents', 'mod_bookit'),
-    ['id' => 'bookit-export', 'class' => 'btn btn-secondary mb-3']);
+echo html_writer::tag(
+    'button',
+    get_string('exportevents', 'mod_bookit'),
+    ['id' => 'bookit-export', 'class' => 'btn btn-secondary mb-3']
+);
 
 /* calendar */
 echo html_writer::div('', '', ['id' => 'ec']);
@@ -289,7 +292,7 @@ echo '
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">'.get_string('exportevents', 'mod_bookit').'</h5>
+        <h5 class="modal-title">' . get_string('exportevents', 'mod_bookit') . '</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -300,7 +303,7 @@ echo '
         <!-- searchbar ------------------------------------------------>
     <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
         <label for="bookit-modal-search" class="mb-0">
-        '.get_string('search').':
+        ' . get_string('search') . ':
         </label>
 
         <input type="text" id="bookit-modal-search"
@@ -312,9 +315,9 @@ echo '
         <!-- check/uncheck buttons --------------------------------------->
         <div class="mb-2">
           <button type="button" class="btn btn-sm btn-light mr-1" id="bookit-check-all">'
-            .get_string('selectall').'</button>
+            . get_string('selectall') . '</button>
           <button type="button" class="btn btn-sm btn-light"       id="bookit-uncheck-all">'
-            .get_string('deselectall').'</button>
+            . get_string('deselectall') . '</button>
         </div>
 
         <!-- list of events --------------------------------------------->
@@ -323,9 +326,9 @@ echo '
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">'
-            .get_string('cancel').'</button>
+            . get_string('cancel') . '</button>
         <button type="button" class="btn btn-primary" id="bookit-export-confirm">'
-            .get_string('export', 'mod_bookit').'</button>
+            . get_string('export', 'mod_bookit') . '</button>
       </div>
     </div>
   </div>

@@ -62,11 +62,11 @@ echo html_writer::link(
 // Render the form (dynamic_form handles readonly when editevent = 0).
 require_once($CFG->dirroot . '/mod/bookit/classes/form/edit_event_form.php');
 $form = new \mod_bookit\form\edit_event_form(
-    null, 
-    null, 
-    'POST', 
-    '', 
-    [], 
+    null,
+    null,
+    'POST',
+    '',
+    [],
     true,
     [
         'cmid'         => $cmid,
