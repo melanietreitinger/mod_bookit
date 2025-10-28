@@ -36,7 +36,7 @@ $cmid    = required_param('id', PARAM_INT);          /* course-module id */
 $ids     = optional_param_array('ids', [], PARAM_INT); /* ids[]=1 & ids[]=2…  No codechecker this is not code!!!!*/
 $room    = optional_param('room', 0, PARAM_INT);
 $faculty = optional_param('faculty', '', PARAM_TEXT);
-$status  = optional_param('status',  -1, PARAM_INT);
+$status  = optional_param('status', -1, PARAM_INT);
 
 $cm      = get_coursemodule_from_id('bookit', $cmid, 0, false, MUST_EXIST);
 $course  = get_course($cm->course);
@@ -48,84 +48,82 @@ require_capability('mod/bookit:viewownoverview', $context);
 /* ------------------------------------------------------------------
    1.  Fetch events (either explicit ids[] or time-range)
    ------------------------------------------------------------------ */
-/* ------------------------------------------------------------------
-   1.  Fetch events (either explicit ids[] or time-range) — capability-safe
-   ------------------------------------------------------------------ */
-   global $DB, $USER;
+global $DB, $USER;
 
-   $viewalldetailsofevent    = has_capability('mod/bookit:viewalldetailsofevent', $context);
-   $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-   $events = [];
+$viewalldetailsofevent    = has_capability('mod/bookit:viewalldetailsofevent', $context);
+$viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
+$events = [];
 
-   if (!empty($ids)) {
-       // Export specific IDs, but only those the user is allowed to see in detail.
-       list($in, $inparams) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
-   
-       if ($viewalldetailsofevent) {
-           $sql = "SELECT *
-                     FROM {bookit_event}
-                    WHERE id $in";
-           $events = $DB->get_records_sql($sql, $inparams);
-       } else if ($viewalldetailsofownevent) {
-           $like = $DB->sql_like('otherexaminers', ':otherex');
-           $sql  = "SELECT *
-                      FROM {bookit_event}
-                     WHERE id $in
-                       AND (
-                            usermodified = :uid
-                         OR personinchargeid = :uid2
-                         OR $like
-                     )";
-           $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
-           $events = $DB->get_records_sql($sql, $params);
-       } else {
-           // No details capability: nothing exportable.
-           $events = [];
-       }
-   } else {
-       // Time-range export, capability-safe.
-       $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
-       $end   = optional_param('end',   '2100-01-01T00:00', PARAM_TEXT);
-   
-       $startts = (new DateTime(str_replace('T',' ', $start)))->getTimestamp();
-       $endts   = (new DateTime(str_replace('T',' ', $end)))->getTimestamp();
-   
-       if ($viewalldetailsofevent) {
-           $sql = "SELECT *
-                     FROM {bookit_event}
+if (!empty($ids)) {
+    // Export specific IDs, but only those the user is allowed to see in detail.
+    $inorequal = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
+    $in = $inorequal[0];
+    $inparams = $inorequal[1];
+    
+    if ($viewalldetailsofevent) {
+        $sql = "SELECT *
+                    FROM {bookit_event}
+                WHERE id $in";
+        $events = $DB->get_records_sql($sql, $inparams);
+    } else if ($viewalldetailsofownevent) {
+        $like = $DB->sql_like('otherexaminers', ':otherex');
+        $sql  = "SELECT *
+                    FROM {bookit_event}
+                    WHERE id $in
+                    AND (
+                        usermodified = :uid
+                        OR personinchargeid = :uid2
+                        OR $like
+                    )";
+        $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
+        $events = $DB->get_records_sql($sql, $params);
+    } else {
+        // No details capability: nothing exportable.
+        $events = [];
+    }
+} else {
+    // Time-range export, capability-safe.
+    $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
+    $end   = optional_param('end',   '2100-01-01T00:00', PARAM_TEXT);
+
+    $startts = (new DateTime(str_replace('T',' ', $start)))->getTimestamp();
+    $endts   = (new DateTime(str_replace('T',' ', $end)))->getTimestamp();
+
+    if ($viewalldetailsofevent) {
+        $sql = "SELECT *
+                    FROM {bookit_event}
+                WHERE endtime >= :starttime
+                    AND starttime <= :endtime";
+        $params = ['starttime' => $startts, 'endtime' => $endts];
+        $events = $DB->get_records_sql($sql, $params);
+
+    } else if ($viewalldetailsofownevent) {
+        $like = $DB->sql_like('otherexaminers', ':otherex');
+        $sql  = "SELECT *
+                    FROM {bookit_event}
                     WHERE endtime >= :starttime
-                      AND starttime <= :endtime";
-           $params = ['starttime' => $startts, 'endtime' => $endts];
-           $events = $DB->get_records_sql($sql, $params);
-   
-       } else if ($viewalldetailsofownevent) {
-           $like = $DB->sql_like('otherexaminers', ':otherex');
-           $sql  = "SELECT *
-                      FROM {bookit_event}
-                     WHERE endtime >= :starttime
-                       AND starttime <= :endtime
-                       AND (
-                            usermodified = :uid
-                         OR personinchargeid = :uid2
-                         OR $like
-                     )";
-           $params = [
-               'starttime' => $startts,
-               'endtime'   => $endts,
-               'uid'       => $USER->id,
-               'uid2'      => $USER->id,
-               'otherex'   => $USER->id
-           ];
-           $events = $DB->get_records_sql($sql, $params);
-   
-       } else {
-           // No details capability: nothing exportable.
-           $events = [];
-       }
-   }
+                    AND starttime <= :endtime
+                    AND (
+                        usermodified = :uid
+                        OR personinchargeid = :uid2
+                        OR $like
+                    )";
+        $params = [
+            'starttime' => $startts,
+            'endtime'   => $endts,
+            'uid'       => $USER->id,
+            'uid2'      => $USER->id,
+            'otherex'   => $USER->id,
+        ];
+        $events = $DB->get_records_sql($sql, $params);
+    } else {
+        // No details capability: nothing exportable.
+        $events = [];
+    }
+}
 
 /* additional UI filters ------------------------------------------------ */
-$events = array_filter($events, static function($e) use ($room, $faculty, $status): bool {
+$events = array_filter($events, static function ($e) use ($room, $faculty, $status): bool {
     if ($room     && (int)$room !== (int)($e->roomid ?? 0)) {
         return false;
     }
@@ -145,12 +143,14 @@ if (!$events) {
 /* add the event room */
 if ($events) {
     $eventids = array_keys($events);
-    list($in, $p) = $DB->get_in_or_equal($eventids, SQL_PARAMS_NAMED);
+    $inorequal = $DB->get_in_or_equal($eventids, SQL_PARAMS_NAMED);
+    $in = $inorequal[0];
+    $p  = $inorequal[1];
     $sql = "SELECT er.eventid, MIN(r.name) AS room
-              FROM {bookit_event_resources} er
-         JOIN {bookit_resource}        r  ON r.id = er.resourceid
-             WHERE er.eventid $in
-          GROUP BY er.eventid";
+            FROM {bookit_event_resources} er
+        JOIN {bookit_resource}        r  ON r.id = er.resourceid
+            WHERE er.eventid $in
+        GROUP BY er.eventid";
 
     foreach ($DB->get_records_sql($sql, $p) as $rec) {
         $events[$rec->eventid]->room = $rec->room ?? '';
@@ -224,18 +224,18 @@ if ($events) {
     ------------------------------------------------------------------ */
     $filename = clean_filename('bookit-events-' . date('Ymd-His') . '.ics');
     header('Content-Type: text/calendar; charset=utf-8');
-    header('Content-Disposition: attachment; filename="'.$filename.'"');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
     echo $ics;
     exit;
 
 
-    /** 
+    /**
      * Helper: escape newline / comma / semicolon according to RFC 5545
      */
     function ics_escape(string $s): string {
         return str_replace(
-            ['\\',   ',',  ';',  "\r", "\n"],
-            ['\\\\', '\,', '\;', '',   '\N'],
+            ['\\', ',', ';', "\r", "\n"],
+            ['\\\\', '\,', '\;', '', '\N'],
             $s
         );
     }

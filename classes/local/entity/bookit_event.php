@@ -37,59 +37,58 @@ use dml_exception;
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class bookit_event {
     /**
      * Create a new instance of this class.
      *
-     * @param int         $id name
-     * @param string      $name name
+     * @param int $id name
+     * @param string  $name name
      * @param string|null $semester semester
-     * @param string      $department department
-     * @param int         $starttime starttime
-     * @param int         $endtime endtime
-     * @param int|null    $duration duration
-     * @param int|null    $participantsamount participantsamount
-     * @param int|null    $timecompensation timecompensation
+     * @param string $department department
+     * @param int $starttime starttime
+     * @param int $endtime endtime
+     * @param int|null $duration duration
+     * @param int|null $participantsamount participantsamount
+     * @param int|null $timecompensation timecompensation
      * @param string|null $compensationfordisadvantages compensationdisadvantages
-     * @param int|null    $bookingstatus bokkingstatus
-     * @param int|null    $personinchargeid personincharce_ID
+     * @param int|null $bookingstatus bokkingstatus
+     * @param int|null $personinchargeid personincharce_ID
      * @param string|null $otherexaminers otherexaminers
-     * @param int|null    $coursetemplate coursetemplate
+     * @param int|null $coursetemplate coursetemplate
      * @param string|null $notes notes
      * @param string|null $internalnotes internalnotes
      * @param string|null $supportpersons supportpersons
-     * @param array       $resources rescources
-     * @param mixed       $refcourseid refcourseid
-     * @param int|null    $usermodified usermodified
-     * @param int|null    $timecreated timecreated
-     * @param int|null    $timemodified timemodified
-     * @param int|null    $examinerid (optional) User ID of the examiner responsible
+     * @param array $resources rescources
+     * @param mixed $refcourseid refcourseid
+     * @param int|null $usermodified usermodified
+     * @param int|null $timecreated timecreated
+     * @param int|null $timemodified timemodified
+     * @param int|null $examinerid (optional) User ID of the examiner responsible
      */
     public function __construct(
-        public int     $id,
-        public string  $name,
+        public int $id,
+        public string $name,
         public ?string $semester,
-        public string  $department,
-        public int     $starttime,
-        public int     $endtime,
-        public ?int    $duration,
-        public ?int    $participantsamount,
-        public ?int    $timecompensation,
+        public string $department,
+        public int $starttime,
+        public int $endtime,
+        public ?int $duration,
+        public ?int $participantsamount,
+        public ?int $timecompensation,
         public ?string $compensationfordisadvantages,
-        public ?int    $bookingstatus,
-        public ?int    $personinchargeid,
+        public ?int $bookingstatus,
+        public ?int $personinchargeid,
         public ?string $otherexaminers,
-        public ?int    $coursetemplate,
+        public ?int $coursetemplate,
         public ?string $notes,
         public ?string $internalnotes,
         public ?string $supportpersons,
-        public array   $resources,
-        public mixed   $refcourseid,
-        public ?int    $usermodified,
-        public ?int    $timecreated,
-        public ?int    $timemodified,
-        public ?int    $examinerid = null
+        public array $resources,
+        public mixed $refcourseid,
+        public ?int $usermodified,
+        public ?int $timecreated,
+        public ?int $timemodified,
+        public ?int $examinerid = null
     ) {
     }
 

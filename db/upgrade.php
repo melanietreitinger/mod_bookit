@@ -47,7 +47,8 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         $table = new xmldb_table('bookit_event');
 
         // Rename fields: status -> bookingstatus.
-        $field1 = new xmldb_field('status', 
+        $field1 = new xmldb_field(
+            'status',
             XMLDB_TYPE_INTEGER,
             '6',
             null,
