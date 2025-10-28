@@ -75,6 +75,7 @@
         <table>
             <thead>
                 <tr>
+                    <th style="width:5%;">&nbsp;</th>
                     <th style="width:40%;">{{#str}} checklistitem, mod_bookit {{/str}}</th>
                     <th style="width:30%;">{{#str}} rooms, mod_bookit {{/str}}</th>
                     <th style="width:30%;">{{#str}} responsibility, mod_bookit {{/str}}</th>
@@ -83,7 +84,10 @@
             <tbody>
                 {{#checklistitems}}
                 <tr>
-                    <td style="width:40%; font-size:14px;">{{title}}</td>
+                    <td style="width:5%; font-family:monospace; font-size:14px;">[ ]</td>
+                    <td style="width:40%; font-size:14px;">
+                    {{title}}
+                    </td>
                     <td style="width:30%;">
                         {{#roomnames}}
                             <span>{{roomname}}</span><br>
