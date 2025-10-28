@@ -211,7 +211,7 @@ function printcolorevaluation(string $color, string $color2): string {
 /**
  * This function adds settings navigation (has to be nullable, sorry!)
  * @param settings_navigation $settingsnav
- * @param navigation_node $modnode|null
+ * @param navigation_node|null $modnode
  */
 function bookit_extend_settings_navigation(
     settings_navigation $settingsnav,
