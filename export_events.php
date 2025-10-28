@@ -230,6 +230,7 @@ if ($events) {
 
     /**
      * Helper: escape newline / comma / semicolon according to RFC 5545
+     * @param string $s input string
      */
     function ics_escape(string $s): string {
         return str_replace(
