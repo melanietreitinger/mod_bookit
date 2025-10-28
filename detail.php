@@ -21,11 +21,11 @@
  * @copyright   2025 Vadym Kuzyak, Humboldt Universität Berlin
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-require(__DIR__.'/../../config.php');
+require(__DIR__ . '/../../config.php');
 
 
 // Single wrapper for both read-only detail and editable form.
-$cmid    = required_param('id',    PARAM_INT);   /* course-module id */
+$cmid    = required_param('id', PARAM_INT);   /* course-module id */
 $eventid = required_param('event', PARAM_INT);   /* booking event id */
 $readonly = optional_param('readonly', 0, PARAM_BOOL); /* force view-only */
 
@@ -62,7 +62,12 @@ echo html_writer::link(
 // Render the form (dynamic_form handles readonly when editevent = 0).
 require_once($CFG->dirroot . '/mod/bookit/classes/form/edit_event_form.php');
 $form = new \mod_bookit\form\edit_event_form(
-    null, null, 'POST', '', [], true,
+    null, 
+    null, 
+    'POST', 
+    '', 
+    [], 
+    true,
     [
         'cmid'         => $cmid,
         'id'           => $eventid,

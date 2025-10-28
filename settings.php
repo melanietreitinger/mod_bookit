@@ -35,7 +35,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
-
     /*
      * Root entry as an external page.
      */
@@ -54,9 +53,9 @@ if ($hassiteconfig) {
     );
 
     /* --- Helper: render a heading-like select to jump between sub-pages. -------- */
-    $buildbookitheadingselect = function(string $active): string {
+    $buildbookitheadingselect = function (string $active): string {
         $defs = [
-            'calendar'  => ['id' => 'mod_bookit_calendar',  'label' => get_string('calendar',  'mod_bookit')],
+            'calendar'  => ['id' => 'mod_bookit_calendar', 'label' => get_string('calendar', 'mod_bookit')],
             'resources' => ['id' => 'mod_bookit_resources', 'label' => get_string('resources', 'mod_bookit')],
             'checklist' => ['id' => 'mod_bookit_checklist', 'label' => get_string('checklist', 'mod_bookit')],
         ];
@@ -123,17 +122,17 @@ if ($hassiteconfig) {
 
     // Weekday visibility.
     $weekdaychoices = [
-        1 => get_string('monday',    'calendar'),
-        2 => get_string('tuesday',   'calendar'),
+        1 => get_string('monday', 'calendar'),
+        2 => get_string('tuesday', 'calendar'),
         3 => get_string('wednesday', 'calendar'),
-        4 => get_string('thursday',  'calendar'),
-        5 => get_string('friday',    'calendar'),
-        6 => get_string('saturday',  'calendar'),
-        0 => get_string('sunday',    'calendar'),
+        4 => get_string('thursday', 'calendar'),
+        5 => get_string('friday', 'calendar'),
+        6 => get_string('saturday', 'calendar'),
+        0 => get_string('sunday', 'calendar'),
     ];
     $calendar->add(new admin_setting_configmulticheckbox(
         'mod_bookit/weekdaysvisible',
-        get_string('config_weekdaysvisible',      'mod_bookit'),
+        get_string('config_weekdaysvisible', 'mod_bookit'),
         get_string('config_weekdaysvisible_desc', 'mod_bookit'),
         [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Default Mon–Fri.
         $weekdaychoices
@@ -153,7 +152,7 @@ if ($hassiteconfig) {
     // Text colour (white / black).
     $resources->add(new admin_setting_configselect(
         'mod_bookit/textcolor',
-        get_string('settings_textcolor',      'mod_bookit'),
+        get_string('settings_textcolor', 'mod_bookit'),
         get_string('settings_textcolor_desc', 'mod_bookit'),
         '#ffffff',
         ['#ffffff' => 'white', '#000000' => 'black']
@@ -171,7 +170,7 @@ if ($hassiteconfig) {
     foreach ($catresourceslist['Rooms']['resources'] ?? [] as $rid => $catresource) {
         $resources->add(new admin_setting_configcolourpicker(
             'mod_bookit/roomcolor_' . $rid,
-            get_string('settings_roomcolor',      'mod_bookit', $catresource['name'], true),
+            get_string('settings_roomcolor', 'mod_bookit', $catresource['name'], true),
             get_string('settings_roomcolor_desc', 'mod_bookit', null, true),
             ''
         ));
@@ -198,7 +197,9 @@ if ($hassiteconfig) {
 
     // Top switcher (Checklist active).
     $checklist->add(new admin_setting_heading(
-        'mod_bookit_nav_checklist', '', $buildbookitheadingselect('checklist')
+        'mod_bookit_nav_checklist', 
+        '', 
+        $buildbookitheadingselect('checklist')
     ));
 
     $checklist->add(new admin_setting_heading(

@@ -204,13 +204,20 @@ foreach ($events as $ev) {
     echo html_writer::tag('td', $ev->id);
     echo html_writer::tag('td', $titlelink);
     echo html_writer::tag('td', s($room));
-    echo html_writer::tag('td', s($statustxt),
-            ['style' => "background-color:$statusbg;color:$statusfg;"]);
+    echo html_writer::tag(
+        'td', 
+        s($statustxt),
+        ['style' => "background-color:$statusbg;color:$statusfg;"]
+    );
     echo html_writer::tag('td', $date);
-    echo html_writer::tag('td',
-            html_writer::tag('span', '--', ['class' => 'badge bg-secondary']));
-    echo html_writer::tag('td',
-            html_writer::link('#', 'Checklist', ['class' => 'btn btn-sm btn-primary']));
+    echo html_writer::tag(
+        'td',
+        html_writer::tag('span', '--', ['class' => 'badge bg-secondary'])
+    );
+    echo html_writer::tag(
+        'td',
+        html_writer::link('#', 'Checklist', ['class' => 'btn btn-sm btn-primary'])
+    );
     echo html_writer::end_tag('tr');
 }
 echo html_writer::end_tag('tbody');

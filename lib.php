@@ -212,8 +212,10 @@ function printcolorevaluation(string $color, string $color2): string {
  * This function adds settings navigation.
  * (has to be nullable, sorry!)
  */
-function bookit_extend_settings_navigation(settings_navigation $settingsnav,
-                                           navigation_node $modnode = null) {
+function bookit_extend_settings_navigation(
+    settings_navigation $settingsnav,
+    navigation_node $modnode = null) 
+    {
     global $PAGE;
 
     if (!$modnode) {
@@ -254,4 +256,3 @@ function bookit_allowed_weekdays(): array {
 function bookit_get_allowed_weekdays(): array {
     return bookit_allowed_weekdays();
 }
-
