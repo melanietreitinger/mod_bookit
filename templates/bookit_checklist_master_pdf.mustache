@@ -50,79 +50,24 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
-            margin: 0;
-            padding: 20px;
         }
-        h1 {
-            color: #333;
-            font-size: 18px;
-            margin-bottom: 20px;
-            text-align: center;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-        }
-        h2 {
-            color: #495057;
-            font-size: 14px;
-            margin: 15px 0 10px 0;
-            background-color: #f8f9fa;
-            padding: 8px 12px;
-            border-left: 4px solid #007bff;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
+
         th {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 8px;
-            text-align: left;
             font-weight: bold;
-            border: 1px solid #dee2e6;
+            border-bottom: 2px solid black;
+            height: 32px;
+            line-height: 2.5;
         }
+
         td {
-            padding: 8px;
-            border: 1px solid #dee2e6;
-            vertical-align: top;
+            border-bottom: 1px solid gray;
+            line-height: 1.5;
         }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        tr:nth-child(odd) {
-            background-color: white;
-        }
-        .room-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            margin: 2px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        .role-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            margin: 2px;
-            border-radius: 12px;
-            font-size: 10px;
-            background-color: #6c757d;
-            color: white;
-        }
-        .category-header {
-            font-weight: bold;
-            background-color: #e9ecef !important;
-            color: #495057;
-        }
-        .item-title {
-            font-weight: 500;
-        }
+
     </style>
 </head>
 <body>
-    <h1>{{name}}</h1>
+    <h1>Master Checklist</h1>
 
     {{#checklistcategories}}
         <h2>{{name}}</h2>
@@ -130,64 +75,30 @@
         <table>
             <thead>
                 <tr>
-                    <th width="40%">{{#str}} checklistitem, mod_bookit {{/str}}</th>
-                    <th width="30%">{{#str}} rooms, mod_bookit {{/str}}</th>
-                    <th width="30%">{{#str}} responsibility, mod_bookit {{/str}}</th>
+                    <th style="width:40%;">{{#str}} checklistitem, mod_bookit {{/str}}</th>
+                    <th style="width:30%;">{{#str}} rooms, mod_bookit {{/str}}</th>
+                    <th style="width:30%;">{{#str}} responsibility, mod_bookit {{/str}}</th>
                 </tr>
             </thead>
             <tbody>
                 {{#checklistitems}}
                 <tr>
-                    <td class="item-title">{{title}}</td>
-                    <td>
+                    <td style="width:40%; font-size:14px;">{{title}}</td>
+                    <td style="width:30%;">
                         {{#roomnames}}
-                            <span class="room-badge" style="background-color: {{eventcolor}}; color: white;">
-                                {{roomname}}
-                            </span>
-                        {{/roomnames}}
-                        {{^roomnames}}
-                            -
+                            <span>{{roomname}}</span><br>
                         {{/roomnames}}
                     </td>
-                    <td>
+                    <td style="width:30%;">
                         {{#rolenames}}
-                            <span class="role-badge">{{rolename}}</span>
+                            <span>{{rolename}}</span><br>
                         {{/rolenames}}
-                        {{^rolenames}}
-                            -
-                        {{/rolenames}}
-                    </td>
-                </tr>
-                {{/checklistitems}}
-                {{^checklistitems}}
-                <tr>
-                    <td colspan="3" style="text-align: center; font-style: italic; color: #6c757d;">
-                        {{#str}} nocontent, mod_bookit {{/str}}
                     </td>
                 </tr>
                 {{/checklistitems}}
             </tbody>
         </table>
 
-    {{/checklistcategories}}
-
-    {{^checklistcategories}}
-        <table>
-            <thead>
-                <tr>
-                    <th width="40%">{{#str}} checklistitem, mod_bookit {{/str}}</th>
-                    <th width="30%">{{#str}} rooms, mod_bookit {{/str}}</th>
-                    <th width="30%">{{#str}} responsibility, mod_bookit {{/str}}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td colspan="3" style="text-align: center; font-style: italic; color: #6c757d;">
-                        {{#str}} nocontent, mod_bookit {{/str}}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
     {{/checklistcategories}}
 </body>
 </html>

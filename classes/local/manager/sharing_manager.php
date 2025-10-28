@@ -569,7 +569,8 @@ class sharing_manager {
         $master = bookit_checklist_master::from_database($masterid);
 
         if (empty($filename)) {
-            $filename = clean_filename($master->name . '_checklist_export');
+            $timestamp = date('Y-m-d_H-i-s');
+            $filename = clean_filename('master_checklist_export_' . $timestamp);
         }
 
         // Prepare data structure manually to avoid renderer type issues
@@ -649,6 +650,25 @@ class sharing_manager {
 
         // Create PDF instance
         $pdf = new \pdf();
+
+        // Set header data (logo, logo_width, title, string, text_color, line_color)
+        $pdf->setHeaderData('', 0, 'Master Checklist', 'BookIt Module', array(0,0,0), array(0,0,0));
+
+        // Set footer data (text_color, line_color)
+        $pdf->setFooterData(array(0,0,0), array(0,0,0));
+
+        // Set header and footer fonts
+        $pdf->setHeaderFont(array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // Set margins
+        $pdf->setMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->setHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->setFooterMargin(PDF_MARGIN_FOOTER);
+
+        // Set auto page breaks
+        $pdf->setAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
         $pdf->AddPage();
         $pdf->writeHTML($html);
         $pdf->Output($filename . '.pdf', 'D');
