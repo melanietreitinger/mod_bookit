@@ -69,6 +69,16 @@ class export_checklist_form extends dynamic_form {
         $mform->addGroup($formats, 'format_group', get_string('export_format', 'mod_bookit'), '<br/>', false);
         $mform->addRule('format_group', null, 'required', null, 'client');
         $mform->setDefault('format', 'csv');
+
+        // PDF sub-options (shown only when PDF is selected)
+        $pdfoptions = [];
+        $pdfoptions[] = $mform->createElement('radio', 'pdf_method', '', get_string('pdf_from_html', 'mod_bookit'), 'html');
+        $pdfoptions[] = $mform->createElement('radio', 'pdf_method', '', get_string('pdf_from_data', 'mod_bookit'), 'data');
+
+        $mform->addGroup($pdfoptions, 'pdf_method_group', get_string('pdf_method', 'mod_bookit'), '<br/>', false);
+        $mform->addHelpButton('pdf_method_group', 'pdf_method', 'mod_bookit');
+        $mform->setDefault('pdf_method', 'data');
+        $mform->hideIf('pdf_method_group', 'format', 'neq', 'pdf');
     }
 
     /**
@@ -112,16 +122,45 @@ class export_checklist_form extends dynamic_form {
         if (!empty($ajaxdata['masterid']) && !empty($data->format)) {
             $masterid = (int)$ajaxdata['masterid'];
 
-            $exporturl = new \moodle_url('/mod/bookit/export.php', [
-                'masterid' => $masterid,
-                'format' => $data->format
-            ]);
+            // For PDF format, check the method
+            if ($data->format === 'pdf') {
+                $pdf_method = $data->pdf_method ?? 'data';
 
-            return [
-                'success' => true,
-                'message' => 'Export ready',
-                'downloadurl' => $exporturl->out(false)
-            ];
+                if ($pdf_method === 'html') {
+                    // Return success without download URL for client-side HTML2PDF
+                    return [
+                        'success' => true,
+                        'message' => 'Export ready',
+                        'method' => 'html',
+                        'downloadurl' => null
+                    ];
+                } else {
+                    // Server-side PDF generation
+                    $exporturl = new \moodle_url('/mod/bookit/export.php', [
+                        'masterid' => $masterid,
+                        'format' => $data->format
+                    ]);
+
+                    return [
+                        'success' => true,
+                        'message' => 'Export ready',
+                        'method' => 'data',
+                        'downloadurl' => $exporturl->out(false)
+                    ];
+                }
+            } else {
+                // CSV or other formats
+                $exporturl = new \moodle_url('/mod/bookit/export.php', [
+                    'masterid' => $masterid,
+                    'format' => $data->format
+                ]);
+
+                return [
+                    'success' => true,
+                    'message' => 'Export ready',
+                    'downloadurl' => $exporturl->out(false)
+                ];
+            }
         }
 
         return ['success' => false, 'message' => 'Missing required data'];
