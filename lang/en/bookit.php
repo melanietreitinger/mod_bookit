@@ -293,6 +293,7 @@ $string['csv_format'] = 'CSV (Comma Separated Values)';
 $string['pdf_format'] = 'PDF (Portable Document Format)';
 $string['export_success'] = 'Export completed successfully';
 $string['export_error'] = 'Export failed. Please try again.';
+$string['exportedon'] = 'Exported on: {$a}';
 $string['invalidformat'] = 'Invalid export format specified';
 $string['exportfailed'] = 'Export failed: {$a}';
 $string['import_help'] = 'Upload a CSV file to import categories and checklist items. The imported data will be added below existing entries. Use the same format as exported CSV files.';

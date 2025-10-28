@@ -27,9 +27,12 @@ namespace mod_bookit\local\manager;
 
 // global $CFG;
 require_once($CFG->libdir . '/csvlib.class.php');
+require_once($CFG->libdir . '/pdflib.php');
 
 use dml_exception;
 use mod_bookit\local\entity\bookit_checklist_master;
+
+
 
 /**
  * Sharing manager class for checklist import/export functionality.
@@ -651,13 +654,14 @@ class sharing_manager {
         // Create PDF instance
         $pdf = new \pdf();
 
-        // Set header data (logo, logo_width, title, string, text_color, line_color)
-        $pdf->setHeaderData('', 0, 'Master Checklist', 'BookIt Module', array(0,0,0), array(0,0,0));
+        // Create export timestamp
+        $exported_on = get_string('exportedon', 'mod_bookit', userdate(time(), '%A, %d %B %Y, %H:%M'));
+
+        // Set header data with export timestamp (logo, logo_width, title, string, text_color, line_color)
+        $pdf->setHeaderData('', 0, 'Master Checklist', 'BookIt Module - ' . $exported_on, array(0,0,0), array(0,0,0));
 
         // Set footer data (text_color, line_color)
-        $pdf->setFooterData(array(0,0,0), array(0,0,0));
-
-        // Set header and footer fonts
+        $pdf->setFooterData(array(0,0,0), array(0,0,0));        // Set header and footer fonts
         $pdf->setHeaderFont(array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
         $pdf->setFooterFont(array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
 
