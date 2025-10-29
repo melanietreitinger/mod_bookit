@@ -69,6 +69,14 @@ class export_checklist_form extends dynamic_form {
         $mform->addGroup($formats, 'format_group', get_string('export_format', 'mod_bookit'), '<br/>', false);
         $mform->addRule('format_group', null, 'required', null, 'client');
         $mform->setDefault('format', 'csv');
+
+        // Add title field for PDF export
+        $mform->addElement('text', 'pdf_title', get_string('pdf_title', 'mod_bookit'), ['size' => 50]);
+        $mform->setType('pdf_title', PARAM_TEXT);
+        $mform->addHelpButton('pdf_title', 'pdf_title', 'mod_bookit');
+
+        // Hide title field initially (show only when PDF is selected)
+        $mform->hideIf('pdf_title', 'format', 'neq', 'pdf');
     }
 
     /**
@@ -112,10 +120,17 @@ class export_checklist_form extends dynamic_form {
         if (!empty($ajaxdata['masterid']) && !empty($data->format)) {
             $masterid = (int)$ajaxdata['masterid'];
 
-            $exporturl = new \moodle_url('/mod/bookit/export.php', [
+            $exportparams = [
                 'masterid' => $masterid,
                 'format' => $data->format
-            ]);
+            ];
+
+            // Add PDF title if format is PDF and title is provided
+            if ($data->format === 'pdf' && !empty($data->pdf_title)) {
+                $exportparams['title'] = $data->pdf_title;
+            }
+
+            $exporturl = new \moodle_url('/mod/bookit/export.php', $exportparams);
 
             return [
                 'success' => true,
@@ -133,6 +148,9 @@ class export_checklist_form extends dynamic_form {
 
         if (!empty($this->_ajaxformdata['masterid'])) {
             $data['masterid'] = $this->_ajaxformdata['masterid'];
+
+            // Set default PDF title to simple string
+            $data['pdf_title'] = 'Master Checklist';
         }
 
         $this->set_data($data);

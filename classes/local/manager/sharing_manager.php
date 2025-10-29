@@ -50,7 +50,7 @@ class sharing_manager {
      * Get the logo file for PDF export based on configuration settings.
      *
      * @param string $source Logo source setting ('site', 'theme', 'custom')
-     * @return stored_file|null The logo file, or null if no logo available
+     * @return \stored_file|null The logo file, or null if no logo available
      */
     private static function get_pdf_logo_file(string $source): ?\stored_file {
         global $CFG;
@@ -102,19 +102,16 @@ class sharing_manager {
      * @throws dml_exception
      */
     public static function export_master_checklist_csv(int $masterid, string $filename = ''): void {
-        // Get the master checklist
+
         $master = bookit_checklist_master::from_database($masterid);
 
         if (empty($filename)) {
-            // $filename = clean_filename($master->name . '_checklist_export');
             $filename = 'checklist_master_export';
         }
 
-        // Initialize CSV writer.
         $csvwriter = new \csv_export_writer('comma', '"', 'application/download');
         $csvwriter->set_filename($filename, '.csv');
 
-        // Add comprehensive CSV headers for all data.
         $headers = [
             'type',
             'level',
@@ -138,7 +135,6 @@ class sharing_manager {
         ];
         $csvwriter->add_data($headers);
 
-        // First, export all rooms used in this checklist.
         $allrooms = checklist_manager::get_bookit_rooms();
         foreach ($allrooms as $room) {
             $roomdata = [
@@ -172,7 +168,6 @@ class sharing_manager {
             $csvwriter->add_data($roomdata);
         }
 
-        // Add master checklist information.
         $masterdata = [
             'master',
             '0',
@@ -293,29 +288,24 @@ class sharing_manager {
         }
 
         try {
-            // Verify that the master checklist exists
             if (!$DB->record_exists('bookit_checklist_master', ['id' => $masterid])) {
                 return ['success' => false, 'message' => "Master checklist with ID $masterid does not exist"];
             }
 
-            // Parse CSV data
             $lines = str_getcsv($csvdata, "\n");
             if (count($lines) < 2) {
                 return ['success' => false, 'message' => get_string('invalidcsvformat', 'mod_bookit')];
             }
 
-            // Get headers
             $headers = str_getcsv($lines[0]);
             $requiredHeaders = ['type', 'name'];
 
-            // Validate headers
             foreach ($requiredHeaders as $required) {
                 if (!in_array($required, $headers)) {
                     return ['success' => false, 'message' => get_string('invalidcsvformat', 'mod_bookit')];
                 }
             }
 
-            // Get current max sort orders for proper positioning
             $maxCategorySortOrder = $DB->get_field_sql(
                 "SELECT COALESCE(MAX(sortorder), 0) FROM {bookit_checklist_category} WHERE masterid = ?",
                 [$masterid]
@@ -326,7 +316,6 @@ class sharing_manager {
             $roomIdToNameMap = [];
             $categoriesData = [];
 
-            // First pass: Process rooms and organize data by category
             $currentCategoryName = null;
 
             for ($i = 1; $i < count($lines); $i++) {
@@ -337,14 +326,12 @@ class sharing_manager {
 
                 $row = array_combine($headers, $data);
 
-                // Process rooms first to build room cache (only if import_rooms is enabled)
                 if ($importrooms && $row['type'] === 'room' && !empty($row['name']) && !empty($row['room_data'])) {
                     $roomData = json_decode($row['room_data'], true);
                     if ($roomData) {
                         $roomName = $row['name'];
                         $roomIdFromCsv = $roomData['id'] ?? null;
 
-                        // Build mapping from CSV room ID to room name
                         if ($roomIdFromCsv) {
                             $roomIdToNameMap[$roomIdFromCsv] = $roomName;
                         }
@@ -353,7 +340,7 @@ class sharing_manager {
                         if ($existingRoom) {
                             $roomCache[$roomName] = $existingRoom->id;
                         } else {
-                            // Create new room if it doesn't exist
+
                             $newRoomId = self::create_room_from_data($roomData);
                             if ($newRoomId) {
                                 $roomCache[$roomName] = $newRoomId;
@@ -362,7 +349,6 @@ class sharing_manager {
                     }
                 }
 
-                // Track current category and collect items under it
                 if ($row['type'] === 'category' && !empty($row['name'])) {
                     $currentCategoryName = $row['name'];
                     if (!isset($categoriesData[$currentCategoryName])) {
@@ -374,12 +360,10 @@ class sharing_manager {
                         ];
                     }
                 } elseif ($row['type'] === 'item' && !empty($row['name']) && $currentCategoryName) {
-                    // Add item to current category
                     $categoriesData[$currentCategoryName]['items'][] = $row;
                 }
             }
 
-            // Second pass: Create categories and their items
             $categoryMapping = [];
 
             foreach ($categoriesData as $categoryName => $categoryInfo) {
@@ -607,7 +591,7 @@ class sharing_manager {
      * @param string $filename Optional custom filename for the export
      * @return void Downloads the PDF file directly
      */
-    public static function export_master_checklist_pdf(int $masterid, string $filename = ''): void {
+    public static function export_master_checklist_pdf(int $masterid, string $filename = '', string $title = ''): void {
         global $OUTPUT, $CFG;
 
         // Include PDF library
@@ -693,6 +677,12 @@ class sharing_manager {
             $data->checklistcategories[] = $categorydata;
         }
 
+        // Determine the PDF title: use custom title if provided, otherwise use master checklist name
+        $pdf_title = !empty($title) ? $title : $master->name;
+
+        // Add the title to template data so it can be used in the Mustache template
+        $data->title = $pdf_title;
+
         // Render the PDF template
         $html = $OUTPUT->render_from_template('mod_bookit/bookit_checklist_master_pdf', $data);
 
@@ -718,9 +708,7 @@ class sharing_manager {
         }
 
         // Set header data with configurable logo and export timestamp (logo, logo_width, title, string, text_color, line_color)
-        $pdf->setHeaderData($logo_path, 25, 'Master Checklist', 'BookIt Module - ' . $exported_on, array(0,0,0), array(0,0,0));
-
-        // Set footer data (text_color, line_color)
+        $pdf->setHeaderData($logo_path, 25, $pdf_title, 'BookIt Module - ' . $exported_on, array(0,0,0), array(0,0,0));        // Set footer data (text_color, line_color)
         $pdf->setFooterData(array(0,0,0), array(0,0,0));
 
         // Set header and footer fonts

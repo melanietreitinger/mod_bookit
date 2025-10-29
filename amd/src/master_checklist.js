@@ -173,7 +173,6 @@ export default class extends BaseComponent {
 
         modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async (response) => {
             if (response.detail.success && response.detail.downloadurl) {
-                // Server-side export (TCPDF, CSV, etc.)
                 window.open(response.detail.downloadurl, '_blank');
                 Toast.add(await getString('export_success', 'mod_bookit'), {type: 'success'});
             } else {
