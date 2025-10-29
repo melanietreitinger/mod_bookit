@@ -251,3 +251,12 @@ Do 07:45-10:00,10-12,13-15
 $string['weekplan_room'] = 'Wochenplan-Zuweisungen zu Räumen';
 $string['weekplans'] = 'Wochenpläne';
 $string['winter_semester'] = 'Wintersemester';
+$string['export'] = 'Export';
+$string['import'] = 'Import';
+$string['export_help'] = 'Sie können für den Export zwischen zwei Dateiformaten wählen. Nutzen Sie PDF, wenn Sie die Liste außerhalb des Systems zur Ansicht nutzen wollen. Nutzen Sie CSV, um eine Sicherungsdatei zu erzeugen oder die Checkliste in ein anderes System zu übertragen.';
+$string['import_help'] = 'Nutzen Sie für den Import eine Sicherungsdatei einer Checkliste in CSV-Format. Die in der CSV-Datei enthaltenen Checklistenpunkte und -Kategorien werden in Ihre Checkliste übernommen und werden unterhalb bestehender Punkte erstellt.';
+$string['export_format'] = 'Exportformat';
+$string['csv_format'] = 'CSV (Komma-getrennte Werte)';
+$string['pdf_format'] = 'PDF (Portable Document Format)';
+$string['pdf_title'] = 'PDF Titel';
+$string['pdf_title_help'] = 'Geben Sie einen benutzerdefinierten Titel für das PDF-Dokument ein. Dieser Titel erscheint in der Kopfzeile der exportierten PDF-Datei. Falls leer gelassen, wird der Name der Master-Checkliste als Standard-Titel verwendet.';
