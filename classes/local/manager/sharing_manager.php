@@ -31,92 +31,7 @@ require_once($CFG->libdir . '/pdflib.php');
 
 use dml_exception;
 use mod_bookit\local\entity\bookit_checklist_master;
-
-/**
- * Custom PDF class that only modifies header text alignment to right-align.
- * Extends Moodle's PDF class with minimal changes.
- */
-class bookit_pdf extends \pdf {
-
-    /**
-     * Override header method to right-align the text while keeping logo on left.
-     */
-    public function Header() {
-        if ($this->header_xobjid === false) {
-            // Start a new XObject Template (copied from parent)
-            $this->header_xobjid = $this->startTemplate($this->w, $this->tMargin);
-            $headerfont = $this->getHeaderFont();
-            $headerdata = $this->getHeaderData();
-            $this->y = $this->header_margin;
-            if ($this->rtl) {
-                $this->x = $this->w - $this->original_rMargin;
-            } else {
-                $this->x = $this->original_lMargin;
-            }
-
-            // Logo positioning (unchanged from parent)
-            if (($headerdata['logo']) AND ($headerdata['logo'] != K_BLANK_IMAGE)) {
-                $imgtype = \TCPDF_IMAGES::getImageFileType(K_PATH_IMAGES.$headerdata['logo']);
-                if (($imgtype == 'eps') OR ($imgtype == 'ai')) {
-                    $this->ImageEps(K_PATH_IMAGES.$headerdata['logo'], '', '', $headerdata['logo_width']);
-                } elseif ($imgtype == 'svg') {
-                    $this->ImageSVG(K_PATH_IMAGES.$headerdata['logo'], '', '', $headerdata['logo_width']);
-                } else {
-                    $this->Image(K_PATH_IMAGES.$headerdata['logo'], '', '', $headerdata['logo_width']);
-                }
-                $imgy = $this->getImageRBY();
-            } else {
-                $imgy = $this->y;
-            }
-
-            $cell_height = $this->getCellHeight($headerfont[2] / $this->k);
-            // Text positioning (unchanged from parent)
-            if ($this->getRTL()) {
-                $header_x = $this->original_rMargin + ($headerdata['logo_width'] * 1.1);
-            } else {
-                $header_x = $this->original_lMargin + ($headerdata['logo_width'] * 1.1);
-            }
-            $cw = $this->w - $this->original_lMargin - $this->original_rMargin - ($headerdata['logo_width'] * 1.1);
-            $this->setTextColorArray($this->header_text_color);
-
-            // Header title - CHANGED: Added 'R' for right alignment
-            $this->setFont($headerfont[0], 'B', $headerfont[2] + 1);
-            $this->setX($header_x);
-            $this->Cell($cw, $cell_height, $headerdata['title'], 0, 1, 'R', 0, '', 0);
-
-            // Header string - CHANGED: Added 'R' for right alignment
-            $this->setFont($headerfont[0], $headerfont[1], $headerfont[2]);
-            $this->setX($header_x);
-            $this->MultiCell($cw, $cell_height, $headerdata['string'], 0, 'R', 0, 1, '', '', true, 0, false, true, 0, 'T', false);
-
-            // Header line (unchanged from parent)
-            $this->setLineStyle(array('width' => 0.85 / $this->k, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => $headerdata['line_color']));
-            $this->setY((2.835 / $this->k) + max($imgy, $this->y));
-            if ($this->rtl) {
-                $this->setX($this->original_rMargin);
-            } else {
-                $this->setX($this->original_lMargin);
-            }
-            $this->Cell(($this->w - $this->original_lMargin - $this->original_rMargin), 0, '', 'T', 0, 'C');
-            $this->endTemplate();
-        }
-        // Print header template (unchanged from parent)
-        $x = 0;
-        $dx = 0;
-        if (!$this->header_xobj_autoreset AND $this->booklet AND (($this->page % 2) == 0)) {
-            $dx = ($this->original_lMargin - $this->original_rMargin);
-        }
-        if ($this->rtl) {
-            $x = $this->w + $dx;
-        } else {
-            $x = 0 + $dx;
-        }
-        $this->printTemplate($this->header_xobjid, $x, 0, 0, 0, '', '', false);
-        if ($this->header_xobj_autoreset) {
-            $this->header_xobjid = false;
-        }
-    }
-}
+use mod_bookit\local\pdf\bookit_pdf;
 
 /**
  * Sharing manager class for checklist import/export functionality.
@@ -130,6 +45,50 @@ class bookit_pdf extends \pdf {
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class sharing_manager {
+
+    /**
+     * Get the logo file for PDF export based on configuration settings.
+     *
+     * @param string $source Logo source setting ('site', 'theme', 'custom')
+     * @return stored_file|null The logo file, or null if no logo available
+     */
+    private static function get_pdf_logo_file(string $source): ?\stored_file {
+        global $CFG;
+
+        switch ($source) {
+            case 'site':
+                $context = \context_system::instance();
+                $fs = get_file_storage();
+                $files = $fs->get_area_files($context->id, 'core_admin', 'logo', 0, 'itemid, filepath, filename', false);
+                if (!empty($files)) {
+                    return reset($files);
+                }
+                break;
+
+            case 'theme':
+                $theme_boost_union_path = $CFG->dirroot . '/theme/boost_union';
+                if (file_exists($theme_boost_union_path) && is_dir($theme_boost_union_path)) {
+                    $context = \context_system::instance();
+                    $fs = get_file_storage();
+                    $files = $fs->get_area_files($context->id, 'theme_boost_union', 'logo', 0, 'itemid, filepath, filename', false);
+                    if (!empty($files)) {
+                        return reset($files);
+                    }
+                }
+                return self::get_pdf_logo_file('site');
+
+            case 'custom':
+                $context = \context_system::instance();
+                $fs = get_file_storage();
+                $files = $fs->get_area_files($context->id, 'mod_bookit', 'pdf_logo_custom', 0, 'itemid, filepath, filename', false);
+                if (!empty($files)) {
+                    return reset($files);
+                }
+                return self::get_pdf_logo_file('site');
+        }
+
+        return null;
+    }
 
     /**
      * Export master checklist to CSV format.
@@ -743,9 +702,23 @@ class sharing_manager {
         // Create export timestamp
         $exported_on = get_string('exportedon', 'mod_bookit', userdate(time(), '%A, %d %B %Y, %H:%M'));
 
-        // Set header data with Moodle logo and export timestamp (logo, logo_width, title, string, text_color, line_color)
-        // Logo path is relative to K_PATH_IMAGES which is set to $CFG->dirroot in pdflib.php
-        $pdf->setHeaderData('pix/moodlelogo.png', 25, 'Master Checklist', 'BookIt Module - ' . $exported_on, array(0,0,0), array(0,0,0));
+        // Get logo configuration for PDF header
+        $logo_enabled = get_config('mod_bookit', 'pdf_logo_enable');
+        $logo_path = '';
+
+        if ($logo_enabled) {
+            $logo_source = get_config('mod_bookit', 'pdf_logo_source');
+            $logo_file = self::get_pdf_logo_file($logo_source);
+
+            if ($logo_file) {
+                $logo_path = '@' . $logo_file->get_content();
+            } else {
+                $logo_path = 'pix/moodlelogo.png';
+            }
+        }
+
+        // Set header data with configurable logo and export timestamp (logo, logo_width, title, string, text_color, line_color)
+        $pdf->setHeaderData($logo_path, 25, 'Master Checklist', 'BookIt Module - ' . $exported_on, array(0,0,0), array(0,0,0));
 
         // Set footer data (text_color, line_color)
         $pdf->setFooterData(array(0,0,0), array(0,0,0));

@@ -109,6 +109,56 @@ if ($hassiteconfig) {
         }
         $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
         $settings->add($setting);
+
+        // PDF Checklist settings section.
+        $settings->add(new admin_setting_heading(
+            'mod_bookit/pdf_checklist_heading',
+            get_string('settings_pdf_checklist_heading', 'mod_bookit'),
+            ''
+        ));
+
+        // Enable/disable logo in PDF checklist.
+        $settings->add(new admin_setting_configcheckbox(
+            'mod_bookit/pdf_logo_enable',
+            get_string('settings_pdf_logo_enable', 'mod_bookit'),
+            get_string('settings_pdf_logo_enable_desc', 'mod_bookit'),
+            1 // Default: enabled
+        ));
+
+        // Logo source selection - dynamically build options based on available themes.
+        $logosource_options = [
+            'site' => get_string('settings_pdf_logo_source_site', 'mod_bookit'),
+        ];
+
+        // Check if boost_union theme is installed before adding it as an option.
+        $theme_boost_union_path = $CFG->dirroot . '/theme/boost_union';
+        if (file_exists($theme_boost_union_path) && is_dir($theme_boost_union_path)) {
+            $logosource_options['theme'] = get_string('settings_pdf_logo_source_theme', 'mod_bookit');
+        }
+
+        // Always add custom option.
+        $logosource_options['custom'] = get_string('settings_pdf_logo_source_custom', 'mod_bookit');
+
+        $settings->add(new admin_setting_configselect(
+            'mod_bookit/pdf_logo_source',
+            get_string('settings_pdf_logo_source', 'mod_bookit'),
+            get_string('settings_pdf_logo_source_desc', 'mod_bookit'),
+            'site', // Default: use site logo
+            $logosource_options
+        ));
+
+        // Custom logo file upload - only show when "custom" logo source is selected above.
+        $settings->add(new admin_setting_configstoredfile(
+            'mod_bookit/pdf_logo_custom',
+            get_string('settings_pdf_logo_custom', 'mod_bookit'),
+            get_string('settings_pdf_logo_custom_desc', 'mod_bookit'),
+            'pdf_logo_custom',
+            0,
+            ['maxfiles' => 1, 'accepted_types' => ['.png', '.jpg', '.jpeg']]
+        ));
+
+        // Hide the custom logo upload unless "custom" is selected in the logo source dropdown
+        $settings->hide_if('mod_bookit/pdf_logo_custom', 'mod_bookit/pdf_logo_source', 'neq', 'custom');
     }
 
     $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
