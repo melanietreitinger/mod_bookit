@@ -158,7 +158,8 @@ export default class extends BaseComponent {
     }
 
     async _handleExportChecklistButtonClick(e) {
-        const masterid = e.target.dataset.masterId;
+        // Get masterid from reactive state instead of dataset to avoid timing issues
+        const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
 
         const modalForm = new ModalForm({
             formClass: "mod_bookit\\form\\export_checklist_form",
@@ -184,7 +185,8 @@ export default class extends BaseComponent {
     }
 
     async _handleImportChecklistButtonClick(e) {
-        const masterid = e.target.dataset.masterId;
+        // Get masterid from reactive state instead of dataset to avoid timing issues
+        const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
 
         const modalForm = new ModalForm({
             formClass: "mod_bookit\\form\\import_checklist_form",
