@@ -56,7 +56,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     if (window.screen.width <= 1000) {
         viewType = 'listWeek';
     }
-    // weekday visibility from admin settings (injected by PHP)
+    //Weekday visibility from admin settings (injected by PHP)
     const allowedWeekdays = (window.M && M.cfg && Array.isArray(M.cfg.bookit_allowedweekdays))
         ? M.cfg.bookit_allowedweekdays.map(x => Number(x))
         : [1, 2, 3, 4, 5];
@@ -82,7 +82,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         eventBackgroundColor: '#035AA3',
         eventStartEditable: false,
         eventDurationEditable: false,
-        buttonText: function (text){
+        buttonText: function(text) {
             text.today = str_today;
             text.dayGridMonth = str_month;
             text.timeGridWeek = str_week;
@@ -96,9 +96,9 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             console.log('[BookIT] loading =', isLoading);
         },
         eventsSet: function(events) {
-            //console.log('[BookIT] eventsSet: received', events.length, 'events');
+            // Comment console.log('[BookIT] eventsSet: received', events.length, 'events');
             if (events.length) {
-                /*
+                /* Comment
                 console.log('[BookIT] sample event', {
                     id: events[0].id,
                     title: events[0].title,
@@ -119,8 +119,8 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 click: function() {
                     const modalForm = new ModalForm({
                         formClass: 'mod_bookit\\form\\edit_event_form',
-                        args: { cmid: cmid },
-                        modalConfig: { title: getString('edit_event', 'mod_bookit') },
+                        args: {cmid: cmid},
+                        modalConfig: {title: getString('edit_event', 'mod_bookit')},
                     });
                     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
@@ -132,9 +132,9 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
 
         /* Date click (create new event) */
         dateClick: function(info) {
-            const weekday = info.date.getUTCDay();   // 0=Sun … 6=Sat
+            const weekday = info.date.getUTCDay(); // 0=Sun … 6=Sat
             if (!allowedWeekdays.includes(weekday)) {
-                return; 
+                return;
             }
 
             let d = new Date();
@@ -157,7 +157,9 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         /* Event click (edit) */
         eventClick: function(info) {
             let id = info.event.id;
-            if (info.event.extendedProps.reserved) { return; }
+            if (info.event.extendedProps.reserved) {
+                return; 
+            }
 
             const modalForm = new ModalForm({
                 formClass: "mod_bookit\\form\\edit_event_form",
@@ -177,7 +179,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
 
-        resources   : [],
+        resources: [],
 
         // Feed with logged extra params
         eventSources: [{
@@ -204,7 +206,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     window.bookitCalendar = calendar;
 
     /* Expose update for the filter form (called from view.php) */
-    window.bookitCalendarUpdate = function (paramObj = {}) {
+    window.bookitCalendarUpdate = function(paramObj = {}) {
         extraFilterParams = paramObj;
         window.currentFilterParams = extraFilterParams;
         calendar.refetchEvents();
