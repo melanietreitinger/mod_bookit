@@ -44,12 +44,12 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     await prefetchStrings('mod_bookit', ['addbooking', 'edit_event']);
     await prefetchStrings('core', ['today', 'month', 'week']);
     await prefetchStrings('calendar', ['day', 'upcomingevents']);
-    const str_request_booking   = await getString('addbooking', 'mod_bookit');
-    const str_today             = await getString('today');
-    const str_month             = await getString('month');
-    const str_week              = await getString('week');
-    const str_day               = await getString('day', 'calendar');
-    const str_list              = await getString('upcomingevents', 'calendar');
+    const str_request_booking = await getString('addbooking', 'mod_bookit');
+    const str_today = await getString('today');
+    const str_month = await getString('month');
+    const str_week = await getString('week');
+    const str_day = await getString('day', 'calendar');
+    const str_list = await getString('upcomingevents', 'calendar');
 
     // Define viewtype
     let viewType = 'timeGridWeek';
@@ -61,28 +61,28 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         ? M.cfg.bookit_allowedweekdays.map(x => Number(x))
         : [1, 2, 3, 4, 5];
 
-    const hiddenDays = [0,1,2,3,4,5,6].filter(d => !allowedWeekdays.includes(d));
+    const hiddenDays = [0, 1, 2, 3, 4, 5, 6].filter(d => !allowedWeekdays.includes(d));
 
     // Runtime filter parameters – mutable via bookitCalendarUpdate()
-    let extraFilterParams = {};   // {room:123, status:2, faculty:'ENG', …}
+    let extraFilterParams = {}; // {room:123, status:2, faculty:'ENG', …}
 
     const calendar = new window.EventCalendar(document.getElementById('ec'), {
         /* Appearance / behaviour */
-        locale            : lang,
-        view              : viewType,
-        firstDay          : 1,
-        weekends          : allowedWeekdays.includes(0) || allowedWeekdays.includes(6),
-        scrollTime        : '09:00:00',
-        slotMinTime       : '07:00:00',
-        dayMaxEvents      : true,
-        nowIndicator      : true,
-        hiddenDays        : hiddenDays,
-        selectable        : false,
-        eventTextColor    : textcolor,
-        eventBackgroundColor : '#035AA3',
-        eventStartEditable   : false,
+        locale: lang,
+        view: viewType,
+        firstDay: 1,
+        weekends: allowedWeekdays.includes(0) || allowedWeekdays.includes(6),
+        scrollTime: '09:00:00',
+        slotMinTime: '07:00:00',
+        dayMaxEvents: true,
+        nowIndicator: true,
+        hiddenDays: hiddenDays,
+        selectable: false,
+        eventTextColor: textcolor,
+        eventBackgroundColor: '#035AA3',
+        eventStartEditable: false,
         eventDurationEditable: false,
-        buttonText: function (text) {
+        buttonText: function (text){
             text.today = str_today;
             text.dayGridMonth = str_month;
             text.timeGridWeek = str_week;
@@ -96,8 +96,9 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             console.log('[BookIT] loading =', isLoading);
         },
         eventsSet: function(events) {
-            console.log('[BookIT] eventsSet: received', events.length, 'events');
+            //console.log('[BookIT] eventsSet: received', events.length, 'events');
             if (events.length) {
+                /*
                 console.log('[BookIT] sample event', {
                     id: events[0].id,
                     title: events[0].title,
@@ -107,6 +108,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     department: events[0].extendedProps?.department,
                     bookingstatus: events[0].extendedProps?.bookingstatus
                 });
+                */
             }
         },
 
@@ -120,7 +122,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                         args: { cmid: cmid },
                         modalConfig: { title: getString('edit_event', 'mod_bookit') },
                     });
-                    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED,() => {
+                    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
                     });
                     modalForm.show();
@@ -131,7 +133,9 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         /* Date click (create new event) */
         dateClick: function(info) {
             const weekday = info.date.getUTCDay();   // 0=Sun … 6=Sat
-            if (!allowedWeekdays.includes(weekday)) { return; }
+            if (!allowedWeekdays.includes(weekday)) {
+                return; 
+            }
 
             let d = new Date();
             let dateoff = new Date(d.setMinutes(d.getMinutes() - d.getTimezoneOffset()));
@@ -140,8 +144,8 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             if (capabilities.addevent && startdate > dateoff.toISOString()) {
                 const modalForm = new ModalForm({
                     formClass: 'mod_bookit\\form\\edit_event_form',
-                    args: { cmid: cmid, startdate: startdate },
-                    modalConfig: { title: getString('edit_event', 'mod_bookit') },
+                    args: {cmid: cmid, startdate: startdate},
+                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
                 });
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();

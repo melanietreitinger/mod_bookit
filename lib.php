@@ -215,7 +215,7 @@ function printcolorevaluation(string $color, string $color2): string {
  */
 function bookit_extend_settings_navigation(
     settings_navigation $settingsnav,
-    navigation_node $modnode = null
+    ?navigation_node $modnode = null
 ) {
     global $PAGE;
 

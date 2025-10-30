@@ -54,7 +54,7 @@ class bookit_resource_categories {
         string|null $description,
         int|null $usermodified = null,
         int|null $timecreated = null,
-        int|null $timemodified = null, 
+        int|null $timemodified = null,
         int|null $id = null
     ) {
         $this->id = $id;

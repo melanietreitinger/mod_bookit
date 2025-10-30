@@ -159,7 +159,7 @@ class bookit_event {
      * @return void
      * @throws dml_exception
      */
-    final public function save(int $userid = null): void {
+    final public function save(?int $userid = null): void {
         global $DB, $USER;
 
         /* Ensure examinerid is set for the overview. */
