@@ -198,7 +198,7 @@ if ($hassiteconfig) {
     // Register under hidden container.
     $ADMIN->add('mod_bookit_hidden', $resources);
 
-    // CHECKLIST – placeholder (optional add-on).
+    // CHECKLIST – checklist management.
     $checklist = new admin_settingpage('mod_bookit_checklist', get_string('checklist', 'mod_bookit'));
 
     // Top switcher (Checklist active).
@@ -208,10 +208,18 @@ if ($hassiteconfig) {
         $buildbookitheadingselect('checklist')
     ));
 
-    $checklist->add(new admin_setting_heading(
-        'mod_bookit_checklist_info',
+    // Master checklist link as a description with a prominent link.
+    $masterchecklisturl = new moodle_url('/mod/bookit/master_checklist.php');
+    $masterchecklistlink = html_writer::link(
+        $masterchecklisturl,
+        get_string('master_checklist', 'mod_bookit'),
+        ['class' => 'btn btn-primary btn-lg mb-3']
+    );
+
+    $checklist->add(new admin_setting_description(
+        'mod_bookit_master_checklist_link',
         '',
-        get_string('checklist_placeholder', 'mod_bookit')
+        $masterchecklistlink
     ));
 
     // Register under hidden container.
