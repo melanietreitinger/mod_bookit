@@ -28,14 +28,13 @@ defined('MOODLE_INTERNAL') || die();
 // More information about the backup process: {@link https://docs.moodle.org/dev/Backup_API}.
 // More information about the restore process: {@link https://docs.moodle.org/dev/Restore_API}.
 
-require_once($CFG->dirroot.'//mod/bookit/backup/moodle2/backup_bookit_stepslib.php');
-require_once($CFG->dirroot.'//mod/bookit/backup/moodle2/backup_bookit_settingslib.php');
+require_once($CFG->dirroot . '/mod/bookit/backup/moodle2/backup_bookit_stepslib.php');
+require_once($CFG->dirroot . '/mod/bookit/backup/moodle2/backup_bookit_settingslib.php');
 
 /**
  * Provides all the settings and steps to perform a complete backup of mod_bookit.
  */
 class backup_bookit_activity_task extends backup_activity_task {
-
     /**
      * Defines particular settings for the plugin.
      */
@@ -62,11 +61,11 @@ class backup_bookit_activity_task extends backup_activity_task {
         $base = preg_quote($CFG->wwwroot, '/');
 
         // Link to the list of choices.
-        $search = "/(".$base."\/mod\/bookit\/index.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/bookit\/index.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@BOOKITINDEX*$2@$', $content);
 
         // Link to choice view by moduleid.
-        $search = "/(".$base."\/mod\/bookit\/view.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/bookit\/view.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@BOOKITVIEWBYID*$2@$', $content);
 
         return $content;

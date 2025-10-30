@@ -30,7 +30,6 @@
  * Defines the structure step to restore one mod_bookit activity.
  */
 class restore_bookit_activity_structure_step extends restore_activity_structure_step {
-
     /**
      * Defines the structure to be restored.
      *

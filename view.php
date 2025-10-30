@@ -23,6 +23,7 @@
  */
 
 use mod_bookit\event\course_module_viewed;
+use mod_bookit\local\manager\resource_manager;
 
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
@@ -47,26 +48,27 @@ require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
 
-// Events via URl.
-$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
-
-// Capabilities of current user.
-$capabilities = [
-        'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
+// Helper data for the filter <select>s  (WORK IN PROGRESS).
+// $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced'.
+$eventstatus = explode(',', get_string('event_bookingstatus_list', 'mod_bookit'));
+$statusmap = [
+    0 => $eventstatus[0],
+    1 => $eventstatus[1],
+    2 => $eventstatus[2],
+    3 => $eventstatus[3],
+    4 => $eventstatus[4],
 ];
 
-// Get the plugin config.
-$config = get_config('mod_bookit');
-$configcalendar = [];
-foreach ($config as $key => $value) {
-    switch ($key) {
-        case 'textcolor':
-            $configcalendar[$key] = $value;
-            break;
-        default:
-            break;
-    }
-}
+$rooms = array_map(function ($r) {
+    return $r['name'];
+}, resource_manager::get_resources()['Rooms']['resources'] ?? []);
+
+$faculties = $DB->get_fieldset_sql("
+    SELECT DISTINCT department
+      FROM {bookit_event}
+     WHERE department <> ''
+  ORDER BY department
+");
 
 // Log view event of calendar.
 $event = course_module_viewed::create([
@@ -75,28 +77,276 @@ $event = course_module_viewed::create([
 ]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
+
+// JavaScript – filter communication + Export‑modal logic (WORK IN PROGRESS).
+$PAGE->requires->jquery();
+
+/* -------- send filter changes to the AMD calendar -------------------- */
+$PAGE->requires->js_init_code("
+    (function() {
+        function pushFilters() {
+            const p = {};
+            const r = $('#filter-room').val();
+            const f = $('#filter-faculty').val();
+            const s = $('#filter-status').val();
+            if (r) p.room    = r;
+            if (f) p.faculty = f;
+            if (s) p.status  = s;
+            window.currentFilterParams = p;
+            if (window.bookitCalendarUpdate) { window.bookitCalendarUpdate(p); }
+        }
+        $('#filter-room, #filter-faculty, #filter-status').on('change', pushFilters);
+    })();
+");
+
+/* -------- Export modal ------------------------------------------------ */
+$PAGE->requires->js_init_code("
+require(['jquery'], function($) {
+
+    /* open modal & load events --------------------------------------- */
+    $('#bookit-export').on('click', function () {
+
+        // build query string with current filters (but ALL dates)
+        const qs = { id: $cm->id, start:'1970-01-01T00:00', end:'2100-01-01T00:00' };
+        if (window.currentFilterParams) { Object.assign(qs, window.currentFilterParams); }
+
+        // show spinner while loading
+        const list = $('#bookit-export-list');
+        list.html('<div class=\"text-center p-3\"><i class=\"fa fa-spinner fa-spin\"></i></div>');
+        $('#bookit-export-modal').modal('show');
+
+        // load events JSON
+        $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function(data){
+            list.empty();
+            if (!data.length) {
+                list.append('<div class=\"text-muted\">" . get_string('noevents', 'mod_bookit') . "</div>');
+                return;
+            }
+
+            data.forEach(function (e) {
+                var roomTxt   = (e.location || e.room || '').trim();
+                var faculty   = (e.department || '').trim();
+                var statusMap = {0:'New',1:'In progress',2:'Accepted',3:'Cancelled',4:'Rejected'};
+                var statusTxt = statusMap[e.bookingstatus] || '';
+
+                var startStr  = (e.start || '');
+                var dateTxt   = startStr ? startStr.substr(0,16).replace('T',' ') : '';
+                var metaLine  = roomTxt ? (roomTxt + ' ' + dateTxt) : dateTxt;
+
+                // Treat events with no details (reserved placeholders) as not exportable.
+                var isReserved = false;
+                if (e.extendedProps && (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)) {
+                    isReserved = true;
+                }
+
+                var checkbox = isReserved
+                    ? '<input class=\"form-check-input mt-1\" type=\"checkbox\" disabled>'
+                    : '<input class=\"form-check-input mt-1\" type=\"checkbox\" value=\"'+ e.id +'\">';
+
+                var badge = isReserved
+                    ? ' <span class=\"badge bg-secondary ms-2\">Reserved</span>'
+                    : '';
+
+                var row = $(
+                    '<label class=\"list-group-item d-flex gap-2 align-items-start\" ' +
+                    ' data-room=\"'+ roomTxt.toLowerCase() +'\" ' +
+                    ' data-faculty=\"'+ faculty.toLowerCase() +'\" ' +
+                    ' data-status=\"'+ statusTxt.toLowerCase() +'\" ' +
+                    ' data-reserved=\"'+ (isReserved ? '1' : '0') +'\">' +
+                        checkbox +
+                        '<span>'+ (e.title || '') +' <small class=\"text-muted\">(' + metaLine + ')</small>'+ badge +'</span>' +
+                    '</label>'
+                );
+                list.append(row);
+            });
+
+            filterExportList();
+        });
+    });
+
+    /* ---------- live search inside modal -------------------------------- */
+    function filterExportList() {
+        const val = ($('#bookit-modal-search').val() || '').toLowerCase().trim();
+        $('#bookit-export-list label').each(function () {
+            const \$row = $(this);                           // \$ escaped for PHP
+            const show = \$row.text().toLowerCase().includes(val);
+            // keep Bootstrap’s flex layout when visible, or switch to d-none when hidden
+            \$row.toggleClass('d-flex',  show)
+                 .toggleClass('d-none', !show);
+        });
+    }
+
+    /* fire on every keystroke in the search box ------------------------- */
+    $('#bookit-modal-search').on('input', function () {
+        filterExportList();
+    });
+
+    /* check-all / uncheck-all buttons -------------------------------- */
+    $('#bookit-check-all').on('click', function () {
+        // check only those check-boxes whose row is currently visible AND enabled
+        $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', true);
+    });
+
+    $('#bookit-uncheck-all').on('click', function () {
+        // uncheck only the boxes of visible & enabled rows (keeps hidden-row state intact)
+        $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', false);
+    });
+
+    /* Confirm-Export  redirect to export_events.php ----------------- */
+    $('#bookit-export-confirm').on('click', function () {
+        // export only enabled, checked ids (reserved entries are disabled)
+        const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
+            .map(function(){ return this.value; }).get();
+        if (!ids.length) { alert('" . get_string('chooseevent', 'mod_bookit') . "'); return; }
+
+        const qs = new URLSearchParams({id: $cm->id});
+        if (window.currentFilterParams) {
+            Object.entries(window.currentFilterParams).forEach(([k,v]) => qs.append(k, v));
+        }
+        ids.forEach(id => qs.append('ids[]', id));
+
+        window.location = M.cfg.wwwroot + '/mod/bookit/export_events.php?' + qs.toString();
+        $('#bookit-export-modal').modal('hide');
+    });
+
+});
+");
+
+
+// Calendar feed URL & caps passed to AMD module.
+$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id, 'debug' => 1]))->out(false);
+$capabilities   = [
+    'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
+];
+
+// Minor change to main: Handles edge cases better now.
+$configcalendar = [];
+$tc = get_config('mod_bookit', 'textcolor');
+if ($tc !== false && $tc !== null && $tc !== '') {
+    $configcalendar['textcolor'] = $tc;
+}
+
+
+// Inject allowed weekdays for JS (NEW FEATURE).
+$PAGE->requires->js_init_code('M.cfg.bookit_allowedweekdays = [' . implode(',', bookit_allowed_weekdays()) . '];');
+
+// Log the view event (WORK IN PROGRESS).
+$event = course_module_viewed::create(['objectid' => $moduleinstance->id, 'context' => $modulecontext]);
+$event->add_record_snapshot('course', $course);
+$event->add_record_snapshot('bookit', $moduleinstance);
 $event->trigger();
 
 // Set page settings.
 $PAGE->set_url('/mod/bookit/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
-$PAGE->requires->js(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.js'), true);
-$PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.css'));
-$PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/custom-calendar.min.css'));
+$PAGE->requires->js(new moodle_url('/mod/bookit/assets/event-calendar.min.js'), true);
+$PAGE->requires->css(new moodle_url('/mod/bookit/assets/event-calendar.min.css'));
+$PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendar.min.css'));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
-// Page output.
+// Page Output.
 echo $OUTPUT->header();
 
-echo '<div id="ec"></div>';
-$PAGE->requires->js_call_amd('mod_bookit/calendar', 'init',
-        [
-                $cm->id,
-                $eventsource,
-                $capabilities,
-                current_language(),
-                $configcalendar,
-        ]);
+// NEW FEATURE: Filter bar + Export button.
+echo html_writer::start_div('bookit-filters d-flex gap-2 mb-3');
+
+/* room select */
+echo html_writer::start_tag('select', ['id' => 'filter-room', 'class' => 'form-select w-auto']);
+echo html_writer::tag('option', get_string('allrooms', 'mod_bookit'), ['value' => '']);
+foreach ($rooms as $rid => $rname) {
+    echo html_writer::tag('option', format_string($rname), ['value' => $rid]);
+}
+echo html_writer::end_tag('select');
+
+/* faculty select */
+echo html_writer::start_tag('select', ['id' => 'filter-faculty', 'class' => 'form-select w-auto']);
+echo html_writer::tag('option', get_string('allfaculties', 'mod_bookit'), ['value' => '']);
+foreach ($faculties as $fac) {
+    echo html_writer::tag('option', format_string($fac), ['value' => $fac]);
+}
+echo html_writer::end_tag('select');
+
+/* status select */
+echo html_writer::start_tag('select', ['id' => 'filter-status', 'class' => 'form-select w-auto']);
+echo html_writer::tag('option', get_string('allstatuses', 'mod_bookit'), ['value' => '']);
+foreach ($statusmap as $scode => $label) {
+    echo html_writer::tag('option', $label, ['value' => $scode]);
+}
+echo html_writer::end_tag('select');
+
+echo html_writer::end_div(); // Bookit-filters.
+
+/* export button */
+echo html_writer::tag(
+    'button',
+    get_string('exportevents', 'mod_bookit'),
+    ['id' => 'bookit-export', 'class' => 'btn btn-secondary mb-3']
+);
+
+/* calendar */
+echo html_writer::div('', '', ['id' => 'ec']);
+
+// Export‑selection modal (NEW FEATURE).
+echo '
+<div class="modal fade" id="bookit-export-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">' . get_string('exportevents', 'mod_bookit') . '</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- searchbar ------------------------------------------------>
+    <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
+        <label for="bookit-modal-search" class="mb-0">
+        ' . get_string('search') . ':
+        </label>
+
+        <input type="text" id="bookit-modal-search"
+            class="form-control w-auto d-inline">
+    </div>
+
+
+
+        <!-- check/uncheck buttons --------------------------------------->
+        <div class="mb-2">
+          <button type="button" class="btn btn-sm btn-light mr-1" id="bookit-check-all">'
+            . get_string('selectall') . '</button>
+          <button type="button" class="btn btn-sm btn-light"       id="bookit-uncheck-all">'
+            . get_string('deselectall') . '</button>
+        </div>
+
+        <!-- list of events --------------------------------------------->
+        <div id="bookit-export-list" class="list-group small"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">'
+            . get_string('cancel') . '</button>
+        <button type="button" class="btn btn-primary" id="bookit-export-confirm">'
+            . get_string('export', 'mod_bookit') . '</button>
+      </div>
+    </div>
+  </div>
+</div>';
+
+
+// Initialise AMD calendar (from original file).
+$PAGE->requires->js_call_amd(
+    'mod_bookit/calendar',
+    'init',
+    [
+        $cm->id,
+        $eventsource,
+        $capabilities,
+        current_language(),
+        $configcalendar,
+    ]
+);
 
 echo $OUTPUT->footer();
