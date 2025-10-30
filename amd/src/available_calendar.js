@@ -16,68 +16,41 @@
 /**
  * Manage the calendar
  *
- * @module     mod_bookit/calendar
+ * @module     mod_bookit/available_calendar
  * @copyright  2024 Melanie Treitinger, Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+import * as Ajax from 'core/ajax';
 import {getString} from 'core/str';
+import ModalEvents from 'core/modal_events';
 import ModalForm from 'core_form/modalform';
 import {prefetchStrings} from 'core/prefetch';
-import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
-
-export const theGlobalProperty = (globalPropertyName) => {
-    return new Promise((resolve) => {
-       const innerWait = () => {
-           if (!window[globalPropertyName]) {
-               setTimeout(innerWait, 20);
-           }
-           resolve();
-       };
-       innerWait();
-    });
-};
+import {theGlobalProperty} from "mod_bookit/calendar";
 
 /**
  * Initializes the calendar.
- * @param {int} cmid
  * @param {string} eventsource
  * @param {array} capabilities
  * @param {string} lang
- * @param {array} config
  * @returns {Promise<void>}
  */
-export async function init(cmid, eventsource, capabilities, lang, config) {
+export async function init(eventsource, capabilities, lang) {
     await theGlobalProperty('EventCalendar');
 
-    // Set textcolor.
-    let textcolor = '#ffffff';
-    if (Object.hasOwn(config, 'textcolor')) {
-        textcolor = config.textcolor;
-    }
-
     // Define toolbarbuttons.
-    let toolbarbuttons = 'prev,next today';
-    if (capabilities.addevent) {
-        toolbarbuttons = 'prev,next today, addButton';
-    }
+    const toolbarbuttons = 'prev, next, today, addButton';
 
     // String variables.
-    prefetchStrings('mod_bookit', ['addbooking']);
+    prefetchStrings('mod_bookit', ['add_blocker']);
     prefetchStrings('core', ['today', 'month', 'week']);
     prefetchStrings('calendar', ['day', 'upcomingevents']);
-    const str_request_booking   = await getString('addbooking', 'mod_bookit');
-    const str_today             = await getString('today');
-    const str_month             = await getString('month');
-    const str_week              = await getString('week');
-    const str_day               = await getString('day', 'calendar');
-    const str_list              = await getString('upcomingevents', 'calendar');
-    /*const str_request_booking = 'XXX';
-    const str_today             = 'XXX';
-    const str_month             = 'XXX';
-    const str_week              = 'XXX';
-    const str_day               = 'XXX';
-    const str_list              = 'XXX';*/
+    const str_request_booking = await getString('add_blocker', 'mod_bookit');
+    const str_today = await getString('today');
+    const str_month = await getString('month');
+    const str_week = await getString('week');
+    const str_day = await getString('day', 'calendar');
+    const str_list = await getString('upcomingevents', 'calendar');
 
     // Define viewtype.
     let viewType = 'timeGridWeek';
@@ -96,11 +69,10 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         dayMaxEvents: true,
         nowIndicator: true,
         selectable: false,
-        eventTextColor: textcolor,
         eventBackgroundColor: '#035AA3',
         eventStartEditable: false,
         eventDurationEditable: false,
-        buttonText: function (text) {
+        buttonText: function(text) {
             text.today = str_today;
             text.dayGridMonth = str_month;
             text.timeGridWeek = str_week;
@@ -113,17 +85,15 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 text: str_request_booking,
                 click: function() {
                     const modalForm = new ModalForm({
-                                    formClass: "mod_bookit\\form\\edit_event_form",
-                                    args: {
-                                        cmid: cmid,
-                                    },
-                                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
-                                });
-                                modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-                                    calendar.refetchEvents();
-                                });
-                                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
-                                modalForm.show();
+                        formClass: "mod_bookit\\local\\form\\edit_blocker_form",
+                        args: {
+                        },
+                        modalConfig: {title: getString('add_blocker', 'mod_bookit')},
+                    });
+                    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
+                        calendar.refetchEvents();
+                    });
+                    modalForm.show();
                 }
             }
         },
@@ -131,38 +101,41 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             let d = new Date();
             let dateoff = new Date(d.setMinutes(d.getMinutes() - d.getTimezoneOffset()));
             let startdate = info.dateStr;
-            if (capabilities.addevent && startdate > dateoff.toISOString()) {
+            if (startdate > dateoff.toISOString()) {
                 const modalForm = new ModalForm({
-                    formClass: "mod_bookit\\form\\edit_event_form",
+                    formClass: "mod_bookit\\local\\form\\edit_blocker_form",
                     args: {
-                        cmid: cmid,
-                        timeclicked: startdate,
+                        startdate: startdate,
                     },
-                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                    modalConfig: {title: getString('add_blocker', 'mod_bookit')},
                 });
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
                 });
-                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
                 modalForm.show();
             }
         },
-        eventClick: function (info) {
-            let id = info.event.id;
-
-            if (!info.event.extendedProps.reserved) {
+        eventClick: function(info) {
+            if (info.event.extendedProps.type === 'blocker') {
                 const modalForm = new ModalForm({
-                    formClass: "mod_bookit\\form\\edit_event_form",
+                    formClass: "mod_bookit\\local\\form\\edit_blocker_form",
                     args: {
-                        cmid: cmid,
-                        id: id,
+                        id: info.event.id,
                     },
-                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                    modalConfig: {
+                        title: getString('edit_blocker', 'mod_bookit'),
+                    },
+                    moduleName: 'mod_bookit/modal_delete_save_cancel',
                 });
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
                 });
-                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
+                modalForm.addEventListener(modalForm.events.LOADED, () => {
+                    modalForm.modal.getRoot().on(ModalEvents.delete, async() => {
+                        await deleteBlocker(info.event.id);
+                        calendar.refetchEvents();
+                    });
+                });
                 modalForm.show();
             }
         },
@@ -189,4 +162,19 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             }
         },
     });
+}
+
+/**
+ * Deletes a blocker.
+ *
+ * @param {int} blockerId
+ * @returns Promise<any>
+ */
+function deleteBlocker(blockerId) {
+    return Ajax.call([{
+        methodname: 'mod_bookit_delete_blocker',
+        args: {
+            blockerid: blockerId
+        }
+    }])[0];
 }

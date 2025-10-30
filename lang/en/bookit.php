@@ -25,7 +25,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['add_blocker'] = 'Add blocker';
 $string['addbooking'] = 'Request booking';
+$string['active_weekplan'] = 'Active weekplan';
 $string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'Add BookIt instance';
 $string['bookit:addresource'] = 'Add a resource';
@@ -36,6 +38,7 @@ $string['bookit:view'] = 'View BookIt instance';
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';
 $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookitfieldset'] = 'PLACEHOLDER';
+$string['calendar'] = 'Calendar';
 $string['category_name'] = 'Category name';
 $string['checklistcategory'] = 'Checklist category';
 $string['checklistcategorydeleted'] = 'Checklist category deleted successfully.';
@@ -46,18 +49,33 @@ $string['checklistitemdeleted'] = 'Checklist item deleted successfully.';
 $string['checklistitemname'] = 'Checklist item name';
 $string['checklistitemsuccess'] = 'Checklist item created successfully.';
 $string['checklistitemupdatesuccess'] = 'Checklist item updated successfully.';
+$string['color'] = 'Color';
+$string['could_not_parse_line'] = 'Could not parse line.';
+$string['could_not_parse_time_period_x'] = 'Could not parse time period "{$a}".';
 $string['customtemplate'] = 'Message';
 $string['customtemplatedefaultmessage'] = 'Lorem ipsum dolor sit amet ###RECIPIENT###,'
-.'<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
-.'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
-.'<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
-.'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
-.'<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
-.'###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
-.'<p>Nulla vitae elit libero,<br>'
-.'Cras justo odio.</p>';
+. '<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### ullamcorper etiam sit. ###CHECKLISTITEM### vulputate '
+. 'velit esse. ###ITEMDUETIME### suscipit in posuere. ###ITEMSTATUS### mollis dolor.</p>'
+. '<p>Non ###SEMESTERTERM###, commodo luctus ###EVENTTITLE###. Elit libero, ###DEPARTMENT### euismod ###ROOM### '
+. 'semper. ###EVENTSTART### quis blandit turpis. ###EVENTDURATION### risus auctor, ###TOTALDURATION### in.</p>'
+. '<p>Curabitur blandit tempus ###COURSETEMPLATE###, sollicitudin ###PERSONINCHARGE###. Nullam quis risus eget '
+. '###OTHEREXAMINERS### congue leo. ###NUMBEROFPARTICIPANTS### sagittis ###BOOKINGPERSON### integer ###BOOKINGSTATUS###.</p>'
+. '<p>Nulla vitae elit libero,<br>'
+. 'Cras justo odio.</p>';
+$string['define_institutions'] = 'Define institutions';
+$string['did_not_begin_with_weekday'] = "Did not begin with weekday abbreviation";
 $string['edit'] = 'Edit';
+$string['edit_blocker'] = 'Edit blocker';
 $string['edit_event'] = "Edit event";
+$string['edit_institution'] = 'Edit institution';
+$string['edit_room'] = 'Edit room';
+$string['edit_room_data'] = 'Edit room data';
+$string['edit_weekplan'] = 'Edit week plan';
+$string['edit_weekplan_assignment'] = 'Edit weekplan assignment';
+$string['end'] = 'End';
+$string['end_before_start_in_timeperiod_x'] = 'The end time was before the start time in time period "{$a}".';
+$string['end_before_start'] = 'The end date has to be after the start date!';
+$string['end_of_period'] = 'End of period';
 $string['event_bookingstatus'] = 'Booking status';
 $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced';
 $string['event_compensationfordisadvantages'] = 'Other compensations of disadvantages';
@@ -67,7 +85,7 @@ $string['event_department_help'] = 'Enter your department.';
 $string['event_duration'] = 'Duration (in minutes)';
 $string['event_duration_help'] = 'Enter the duration of the event.';
 $string['event_error_mintime'] = 'You cannot enter events in the past.';
-$string['event_extratime_description'] = '<i>Note that an extra time of {$a} minutes is automatically added to each event to allow preparation and wrap-up works to be done.</i>';
+$string['event_extratime_description'] = '<i>Note that extra time before and after the event is automatically added to allow preparation and wrap-up works to be done.</i>';
 $string['event_extratime_label'] = '<i>Extra time for the event</i>';
 $string['event_internalnotes'] = 'Internal notes';
 $string['event_internalnotes_help'] = 'These notes are just for internal use and not shown to the booking person.';
@@ -94,18 +112,42 @@ $string['event_supportperson_help'] = 'Support persons assigned to this event.';
 $string['event_timecompensation'] = 'Time compensation';
 $string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
 $string['event_usermodified'] = 'Created by user';
+$string['from_x_onwards'] = 'From {$a} onwards';
+$string['general_settings'] = 'General Settings';
+$string['global_blocker'] = 'Global blocker';
+$string['globally'] = 'Globally';
 $string['header_internal'] = 'Internal fields';
 $string['instancename'] = 'Name';
+$string['institution'] = 'Institution';
+$string['institution_active'] = 'Active';
+$string['institution_active_help'] = 'If this institution will be available to select in new events.';
+$string['institution_name'] = 'Institution name';
+$string['institutions'] = 'Institutions';
+$string['internalnotes'] = 'Internal notes';
+$string['internalnotes_help'] = 'These notes are just for internal use and not shown to the booking person.';
 $string['item_state_done'] = 'Done';
 $string['item_state_open'] = 'Open';
 $string['item_state_processing'] = 'Processing';
 $string['item_state_unknown'] = 'Unknown';
+$string['legend'] = 'Legend';
+$string['line_x'] = 'Line {$a}:';
+$string['local_blocker'] = 'Local blocker (only for this room)';
+$string['location'] = 'Location';
 $string['master_checklist'] = 'Master checklist';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
 $string['modulenameplural'] = 'BookIt instances';
 $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
+$string['new_institution'] = 'New institution';
+$string['new_room'] = 'New room';
+$string['new_timeslot'] = 'New time slot';
+$string['new_weekplan'] = 'New week plan';
+$string['new_weekplan_assignment'] = 'New weekplan assignment';
+$string['normal_slot'] = 'Normal slot';
+$string['overwrite_extratimeafter'] = 'Overwrite global extratimeafter setting?';
+$string['overwrite_extratimebefore'] = 'Overwrite global extratimebefore setting?';
+$string['period'] = 'Period';
 $string['please_select_and_enter'] = 'Please select or enter a number';
 $string['pluginadministration'] = 'BookIt administration';
 $string['pluginname'] = 'BookIt';
@@ -114,16 +156,29 @@ $string['resource_amount'] = 'Amount';
 $string['responsibility'] = 'Responsibility';
 $string['role'] = 'Role';
 $string['room'] = 'Room';
+$string['room_active'] = 'Active';
+$string['room_active_help'] = 'If this room will be available to select in new events.';
+$string['roommode'] = 'Room mode';
+$string['roommode_free'] = 'Free selection inside slots';
+$string['roommode_slots'] = 'Bookings can only start at beginnings of slots';
+$string['rooms'] = 'Rooms';
+$string['seats'] = 'Amount of seats';
 $string['select_coursetemplate'] = 'Select a course template';
 $string['select_coursetemplate_help'] = 'Select a course template for the course in which your exam will take place.';
 $string['select_semester'] = 'Term';
 $string['select_semester_help'] = 'Select term of event.';
-$string['settings_eventmaxyears'] = 'Maxmum year to select for event';
-$string['settings_eventmaxyears_desc'] = 'Set the maxmum year to select for event. Note: this only applies to roles with the capability <code>caneditinternal</code>.';
+$string['settings_eventdefaultduration'] = 'Default duration of an event (min)';
+$string['settings_eventdurationstepwidth'] = 'The step width for the duration of an event (min)';
+$string['settings_eventmaxduration'] = 'Maximum duration of an event (min)';
+$string['settings_eventmaxyears'] = 'Maximum year to select for event';
+$string['settings_eventmaxyears_desc'] = 'Set the maximum year to select for event.';
 $string['settings_eventminyears'] = 'Minimum year to select for event';
 $string['settings_eventminyears_desc'] = 'Set the minimum year to select for event. Note: this only applies to roles with the capability <code>caneditinternal</code>.';
-$string['settings_extratime'] = 'Extra time for event';
-$string['settings_extratime_desc'] = 'Extra time which will be added automatically to each event to allow preparation and wrap-up works to be done.';
+$string['settings_eventstartstepwidth'] = 'The step width for the event start time (min)';
+$string['settings_extratime_after'] = 'Extra time after event (min)';
+$string['settings_extratime_after_desc'] = 'Extra time in minutes which will be added automatically after each event to allow preparation and wrap-up works to be done.';
+$string['settings_extratime_before'] = 'Extra time before event (min)';
+$string['settings_extratime_before_desc'] = 'Extra time in minutes which will be added automatically before each event to allow preparation and wrap-up works to be done.';
 $string['settings_roomcolor'] = 'Color for room {$a}';
 $string['settings_roomcolor_desc'] = 'Select a color to be used for the calendar view.';
 $string['settings_roomcolor_wcagcheck'] = 'Color contrast check for room {$a}';
@@ -131,13 +186,23 @@ $string['settings_roomcolor_wcagcheck_desc'] = 'Contrast check for color <i>#{$a
 $string['settings_roomcolorheading'] = 'Room colors';
 $string['settings_textcolor'] = 'Event text color';
 $string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
+$string['shortname'] = 'Shortname';
 $string['sort'] = 'Sort';
+$string['start'] = 'Start';
+$string['start_of_period'] = 'Start of period';
 $string['summer_semester'] = 'Summer Term';
-$string['time'] = 'Time';
-$string['type_before_due'] = 'Before due';
-$string['type_before_due_date'] = 'Before due date';
-$string['type_overdue'] = 'Reminder when overdue';
-$string['type_overdue_date'] = 'After overdue date';
-$string['type_when_done'] = 'When done';
-$string['type_when_due'] = 'When due';
+$string['timeslots'] = 'Time slots';
+$string['tools'] = 'Tools';
+$string['weekplan'] = 'Week plan';
+$string['weekplan_assignment_overlaps'] = 'The entered period is overlapping an already existing weekplan assignment.';
+$string['weekplan_assignments'] = 'Weekplan assignments';
+$string['weekplan_help'] = 'Here, you can define week plans. Each line should start with a abbreviated day of the week, followed by a list of comma separated timeslots.<br>
+These are examples for valid lines:
+<pre>
+Di 8-11:30, 14:00-17
+Mi 09-16
+Do 07:45-10:00,10-12,13-15
+</pre>';
+$string['weekplan_room'] = 'Weekplan assignments to rooms';
+$string['weekplans'] = 'Week plans';
 $string['winter_semester'] = 'Winter Term';

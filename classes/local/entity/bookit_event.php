@@ -25,6 +25,7 @@
 namespace mod_bookit\local\entity;
 
 use dml_exception;
+use mod_bookit\local\persistent\room;
 
 /**
  * Database class for bookit_events.
@@ -41,7 +42,8 @@ class bookit_event {
      * @param int $id
      * @param string $name
      * @param string|null $semester
-     * @param string $department
+     * @param int $institutionid
+     * @param int $roomid
      * @param int $starttime
      * @param int $endtime
      * @param int|null $duration
@@ -57,6 +59,8 @@ class bookit_event {
      * @param string|null $supportpersons
      * @param array $resources
      * @param mixed $refcourseid
+     * @param int $extratimebefore
+     * @param int $extratimeafter
      * @param int|null $usermodified
      * @param int|null $timecreated
      * @param int|null $timemodified
@@ -68,8 +72,10 @@ class bookit_event {
         public string $name,
         /** @var ?string semester */
         public ?string $semester,
-        /** @var string department */
-        public string $department,
+        /** @var int institutionid */
+        public int $institutionid,
+        /** @var int roomid */
+        public int $roomid,
         /** @var int starttime */
         public int $starttime,
         /** @var int endtime */
@@ -100,6 +106,10 @@ class bookit_event {
         public array $resources,
         /** @var mixed refcourseid */
         public mixed $refcourseid,
+        /** @var int */
+        public int $extratimebefore,
+        /** @var int */
+        public int $extratimeafter,
         /** @var ?int usermodified */
         public ?int $usermodified,
         /** @var ?int timecreated */
@@ -139,11 +149,14 @@ class bookit_event {
     public static function from_record(array|object $record): self {
         $record = (object) $record;
 
+        $room = room::get_record(['id' => $record->roomid], MUST_EXIST);
+
         return new self(
                 $record->id ?? null,
                 $record->name,
                 $record->semester,
-                $record->department,
+                $record->institutionid,
+                $record->roomid,
                 $record->starttime,
                 $record->endtime,
                 $record->duration,
@@ -159,6 +172,8 @@ class bookit_event {
                 $record->supportpersons,
                 $record->resources,
                 $record->refcourseid ?? 0,
+                $record->extratimebefore ?? $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore'),
+                $record->extratimeafter ?? $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter'),
                 $record->usermodified ?? null,
                 $record->timecreated ?? null,
                 $record->timemodified ?? null,

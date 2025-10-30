@@ -15,18 +15,26 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Declaration of external services.
  *
  * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @copyright   2025 Justus Dieckmann, RUB
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_bookit';
-$plugin->version = 2025102100;
-$plugin->release = '0.1.0';
-$plugin->requires = 2024100700; // Moodle 4.5 (LTS).
-$plugin->supported = [405, 406];
-$plugin->maturity = MATURITY_ALPHA;
+$functions = [
+    'mod_bookit_delete_blocker' => [
+        'classname'   => 'mod_bookit\external\delete_blocker',
+        'description' => 'Deletes a blocker.',
+        'type'        => 'write',
+        'ajax'        => true,
+    ],
+    'mod_bookit_get_possible_starttimes' => [
+        'classname'   => 'mod_bookit\external\get_possible_starttimes',
+        'description' => 'Gets all possible start times.',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
+];

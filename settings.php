@@ -36,12 +36,68 @@ if ($hassiteconfig) {
     if ($ADMIN->fulltree) {
         // ...TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
 
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/eventdefaultduration',
+            get_string('settings_eventdefaultduration', 'mod_bookit'),
+            null,
+            60,
+            PARAM_INT
+        ));
+
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/eventmaxduration',
+            get_string('settings_eventmaxduration', 'mod_bookit'),
+            null,
+            480,
+            PARAM_INT
+        ));
+
+        $settings->add(new admin_setting_configselect(
+            'mod_bookit/eventdurationstepwidth',
+            get_string('settings_eventdurationstepwidth', 'mod_bookit'),
+            null,
+            15,
+            [
+                5 => '5',
+                10 => '10',
+                15 => '15',
+                30 => '30',
+                60 => '60',
+            ],
+        ));
+
+        $settings->add(new admin_setting_configselect(
+            'mod_bookit/eventstartstepwidth',
+            get_string('settings_eventstartstepwidth', 'mod_bookit'),
+            null,
+            15,
+            [
+                5 => '5',
+                10 => '10',
+                15 => '15',
+                30 => '30',
+                60 => '60',
+            ],
+        ));
+
         // Event setting extra time.
-        $name = 'mod_bookit/extratime';
-        $title = get_string('settings_extratime', 'mod_bookit');
-        $description = get_string('settings_extratime_desc', 'mod_bookit');
-        $setting = new admin_setting_configtext($name, $title, $description, 30, PARAM_INT, 5);
-        $settings->add($setting);
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/extratimebefore',
+            new lang_string('settings_extratime_before', 'mod_bookit'),
+            new lang_string('settings_extratime_before_desc', 'mod_bookit'),
+            15,
+            PARAM_INT,
+            5
+        ));
+
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/extratimeafter',
+            new lang_string('settings_extratime_after', 'mod_bookit'),
+            new lang_string('settings_extratime_after_desc', 'mod_bookit'),
+            15,
+            PARAM_INT,
+            5
+        ));
 
         // Event setting eventminyears.
         $name = 'mod_bookit/eventminyears';
@@ -64,52 +120,6 @@ if ($hassiteconfig) {
         }
         $setting = new admin_setting_configselect($name, $title, $description, date('Y', strtotime('+1 year')), $minyearlist);
         $settings->add($setting);
-
-        // Room colors heading.
-        $name = 'mod_bookit/roomcolorheading';
-        $title = get_string('settings_roomcolorheading', 'mod_bookit', null, true);
-        $setting = new admin_setting_heading($name, $title, null);
-        $settings->add($setting);
-
-        // Set text color to black or white (default).
-        $name = 'mod_bookit/textcolor';
-        $title = get_string('settings_textcolor', 'mod_bookit');
-        $description = get_string('settings_textcolor_desc', 'mod_bookit');
-        $choices = ['#ffffff' => 'white', '#000000' => 'black'];
-        $setting = new admin_setting_configselect($name, $title, $description, '#ffffff', $choices);
-        $settings->add($setting);
-
-        // Set a color for each room defined in resources - at least one.
-        // Get the ressources.
-        $catresourceslist = resource_manager::get_resources();
-        foreach ($catresourceslist as $category => $value) {
-            if ($category === 'Rooms') {
-                foreach ($value['resources'] as $rid => $catresource) {
-                    $name = 'mod_bookit/roomcolor_' . $rid;
-                    $title = get_string('settings_roomcolor', 'mod_bookit', $catresource['name'], true);
-                    $description = get_string('settings_roomcolor_desc', 'mod_bookit', null, true);
-                    $setting = new admin_setting_configcolourpicker($name, $title, $description, '');
-                    $settings->add($setting);
-
-                    // Add color contrast check.
-                    $fcolor = get_config('mod_bookit', 'textcolor');
-                    $fcolor = (!empty($fcolor) ? substr($fcolor, 1) : 'FFFFFF');
-                    $bcolor = get_config('mod_bookit', 'roomcolor_' . $rid);
-                    $bcolor = (!empty($bcolor) ? substr($bcolor, 1) : false);
-                    if (!empty($bcolor)) {
-                        $check = printcolorevaluation($fcolor, $bcolor);
-                        $a = new StdClass();
-                        $a->fcolor = $fcolor;
-                        $a->bcolor = $bcolor;
-                        $setting = new admin_setting_description($name . '_wcag',
-                                get_string('settings_roomcolor_wcagcheck', 'mod_bookit', $rid),
-                                get_string('settings_roomcolor_wcagcheck_desc', 'mod_bookit', $a) . $check);
-                        $settings->add($setting);
-                    }
-                }
-            }
-        }
-
     }
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
@@ -119,5 +129,27 @@ if ($hassiteconfig) {
         ));
 
     $ADMIN->add('mod_bookit_category', $settings);
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_institutions',
+        get_string('institutions', 'mod_bookit'),
+        new moodle_url('/mod/bookit/institutions.php'),
+        // TODO specify required capability.
+    ));
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_rooms',
+        get_string('rooms', 'mod_bookit'),
+        new moodle_url('/mod/bookit/rooms.php'),
+        // TODO specify required capability.
+    ));
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+        'mod_bookit_weekplans',
+        get_string('weekplans', 'mod_bookit'),
+        new moodle_url('/mod/bookit/weekplans.php'),
+        // TODO specify required capability.
+    ));
+
     $settings = null;
 }
