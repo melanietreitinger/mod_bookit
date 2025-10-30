@@ -32,6 +32,7 @@
     <FIELD NAME="timecompensation" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
     <FIELD NAME="compensationfordisadvantages" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
     <FIELD NAME="bookingstatus" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+    <FIELD NAME="examinerid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
     <FIELD NAME="personinchargeid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
     <FIELD NAME="otherexaminers" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
     <FIELD NAME="coursetemplate" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
