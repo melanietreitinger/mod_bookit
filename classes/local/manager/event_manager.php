@@ -36,7 +36,6 @@ use dml_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class event_manager {
-
     /**
      * Get event from id.
      *
@@ -132,7 +131,7 @@ class event_manager {
             }
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved).' ('.$roomname.')',
+                'title' => ($record->name ?? $reserved) . ' (' . $roomname . ')',
                 'start' => date('Y-m-d H:i', $record->starttime),
                 'end' => date('Y-m-d H:i', $record->endtime),
                 'backgroundColor' => $color,
@@ -142,5 +141,47 @@ class event_manager {
         }
         return $events;
     }
-}
+     /**
+      * function get_exportable_events
+      * @param int|null $instanceid
+      * @param array $ids
+      * @return array
+      * @throws dml_exception
+      */
+    public static function get_exportable_events(int $instanceid, array $ids): array {
+        global $DB, $USER;
 
+        if (empty($ids)) {
+            return [];
+        }
+
+        $inequal = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
+        $in = $inequal[0];
+        $inparams = $inequal[1];
+        $context = \context_module::instance($instanceid);
+
+        $viewall = has_capability('mod/bookit:viewalldetailsofevent', $context);
+        $viewown = has_capability('mod/bookit:viewalldetailsofownevent', $context);
+        if ($viewall) {
+            $sql = "SELECT id, name, starttime, endtime, department, bookingstatus
+                      FROM {bookit_event}
+                     WHERE id $in";
+            return array_values($DB->get_records_sql($sql, $inparams));
+        }
+        if ($viewown) {
+            $like = $DB->sql_like('otherexaminers', ':otherex');
+            $sql  = "SELECT id, name, starttime, endtime, department, bookingstatus
+                       FROM {bookit_event}
+                      WHERE id $in
+                        AND (
+                             usermodified = :uid
+                          OR personinchargeid = :uid2
+                          OR $like
+                        )";
+            $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
+            return array_values($DB->get_records_sql($sql, $params));
+        }
+        // No details capability  nothing exportable.
+        return [];
+    }
+}
