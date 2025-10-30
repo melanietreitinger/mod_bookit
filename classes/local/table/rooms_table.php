@@ -80,7 +80,7 @@ class rooms_table extends \table_sql {
     public function col_activeweekplan($row) {
         if (isset($row->activeweekplanid)) {
             return \html_writer::link(
-                new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]),
+                new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->activeweekplanid]),
                 $row->activeweekplan,
             );
         }

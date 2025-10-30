@@ -126,7 +126,7 @@ class bool_timeline {
         // Update endindex, because start time was inserted.
         $endindex += $startindex - $oldstartindex;
 
-        for ($i = $startindex + 1; $i < $endindex; $i++) {
+        for ($i = $startindex + 1; $i <= $endindex; $i++) {
             $this->set_at_index($i, $value);
         }
         $this->set($endtime, $endvalue);
