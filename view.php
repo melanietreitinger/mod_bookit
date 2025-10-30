@@ -49,18 +49,19 @@ require_login($course, true, $cm);
 $modulecontext = context_module::instance($cm->id);
 
 // Helper data for the filter <select>s  (WORK IN PROGRESS).
+// $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced'.
+$eventstatus = explode(',', get_string('event_bookingstatus_list', 'mod_bookit'));
 $statusmap = [
-    0 => get_string('new', 'mod_bookit'),
-    1 => get_string('inprogress', 'mod_bookit'),
-    2 => get_string('accepted', 'mod_bookit'),
-    3 => get_string('cancelled', 'mod_bookit'),
-    4 => get_string('rejected', 'mod_bookit'),
+    0 => $eventstatus[0],
+    1 => $eventstatus[1],
+    2 => $eventstatus[2],
+    3 => $eventstatus[3],
+    4 => $eventstatus[4],
 ];
 
-$rooms = [];
-foreach (resource_manager::get_resources()['Rooms']['resources'] ?? [] as $rid => $r) {
-    $rooms[$rid] = $r['name'];
-}
+$rooms = array_map(function ($r) {
+    return $r['name'];
+}, resource_manager::get_resources()['Rooms']['resources'] ?? []);
 
 $faculties = $DB->get_fieldset_sql("
     SELECT DISTINCT department
@@ -106,7 +107,7 @@ require(['jquery'], function($) {
     $('#bookit-export').on('click', function () {
 
         // build query string with current filters (but ALL dates)
-        const qs = { id: {$cm->id}, start:'1970-01-01T00:00', end:'2100-01-01T00:00' };
+        const qs = { id: $cm->id, start:'1970-01-01T00:00', end:'2100-01-01T00:00' };
         if (window.currentFilterParams) { Object.assign(qs, window.currentFilterParams); }
 
         // show spinner while loading
@@ -198,7 +199,7 @@ require(['jquery'], function($) {
             .map(function(){ return this.value; }).get();
         if (!ids.length) { alert('" . get_string('chooseevent', 'mod_bookit') . "'); return; }
 
-        const qs = new URLSearchParams({id: {$cm->id}});
+        const qs = new URLSearchParams({id: $cm->id});
         if (window.currentFilterParams) {
             Object.entries(window.currentFilterParams).forEach(([k,v]) => qs.append(k, v));
         }
@@ -239,8 +240,8 @@ $event->trigger();
 $PAGE->set_url('/mod/bookit/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->requires->js(new moodle_url('/mod/bookit/assets/event-calendar.min.js'), true);
-$PAGE->requires->css(new moodle_url('/mod/bookit/assets/event-calendar.min.css'), true);
-$PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendar.min.css'), true);
+$PAGE->requires->css(new moodle_url('/mod/bookit/assets/event-calendar.min.css'));
+$PAGE->requires->css(new moodle_url('/mod/bookit/assets/custom-calendar.min.css'));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 

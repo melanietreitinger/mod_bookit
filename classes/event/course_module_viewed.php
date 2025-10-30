@@ -67,16 +67,4 @@ class course_module_viewed extends \core\event\course_module_viewed {
         $event->add_record_snapshot('bookit', $instance);
         return $event;
     }
-
-
-    /**
-     * Custom validations.
-     *
-     * @throws coding_exception in case of any problems.
-     */
-    protected function validate_data(): void {
-        parent::validate_data();
-        // ...TODO: add validation or remove function.
-    }
-
 }

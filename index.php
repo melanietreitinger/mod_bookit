@@ -22,9 +22,9 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require(__DIR__.'/../../config.php');
+require(__DIR__ . '/../../config.php');
 
-require_once(__DIR__.'/lib.php');
+require_once(__DIR__ . '/lib.php');
 
 $id = required_param('id', PARAM_INT);
 
@@ -74,11 +74,13 @@ foreach ($bookits as $bookit) {
         $link = html_writer::link(
             new moodle_url('/mod/bookit/view.php', ['id' => $bookit->coursemodule]),
             format_string($bookit->name, true),
-            ['class' => 'dimmed']);
+            ['class' => 'dimmed']
+        );
     } else {
         $link = html_writer::link(
             new moodle_url('/mod/bookit/view.php', ['id' => $bookit->coursemodule]),
-            format_string($bookit->name, true));
+            format_string($bookit->name, true)
+        );
     }
 
     if ($course->format == 'weeks' || $course->format == 'topics') {

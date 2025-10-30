@@ -25,11 +25,6 @@ namespace mod_bookit\local\entity;
 
 use dml_exception;
 
-/*Summary changes vs optimizations:
--Added examiner ID (in first block until around line 130, there is nothing else new)
-- Rewrote function save
-*/
-
 /**
  * Database class for bookit_events.
  *
@@ -42,7 +37,7 @@ class bookit_event {
      * Create a new instance of this class.
      *
      * @param int $id name
-     * @param string  $name name
+     * @param string $name name
      * @param string|null $semester semester
      * @param string $department department
      * @param int $starttime starttime
@@ -64,30 +59,54 @@ class bookit_event {
      * @param int|null $timecreated timecreated
      * @param int|null $timemodified timemodified
      * @param int|null $examinerid (optional) User ID of the examiner responsible
+     *
      */
     public function __construct(
+        /** @var int $id name */
         public int $id,
+        /** @var string $name name */
         public string $name,
+        /** @var string $semester */
         public ?string $semester,
+        /** @var string $department department */
         public string $department,
+        /** @var int $starttime starttime */
         public int $starttime,
+        /** @var int $endtime endtime */
         public int $endtime,
+        /** @var int $duration duration */
         public ?int $duration,
+        /** @var int $participantsamount participantsamount  */
         public ?int $participantsamount,
+        /** @var int $timecompensation timecompensation */
         public ?int $timecompensation,
+        /** @var  string $compensationfordisadvantages compensationfordisadvantages */
         public ?string $compensationfordisadvantages,
+        /** @var int $bookingstatus bookingstatus  */
         public ?int $bookingstatus,
+        /** @var int $personinchargeid personinchargeid  */
         public ?int $personinchargeid,
+        /** @var string $otherexaminers otherexaminers  */
         public ?string $otherexaminers,
+        /** @var int $coursetemplate coursetemplate  */
         public ?int $coursetemplate,
+        /** @var string $notes notes */
         public ?string $notes,
+        /** @var string $internalnotes internalnotes  */
         public ?string $internalnotes,
+        /** @var string $supportpersons supportpersons  */
         public ?string $supportpersons,
+        /** @var array $resources resources */
         public array $resources,
+        /** @var mixed $refcourseid refcourseid */
         public mixed $refcourseid,
+        /** @var int $usermodified usermodified  */
         public ?int $usermodified,
+        /** @var int $timecreated timecreated  */
         public ?int $timecreated,
+        /** @var int $timemodified timemodified  */
         public ?int $timemodified,
+        /** @var int $examinerid examinerid  */
         public ?int $examinerid = null
     ) {
     }

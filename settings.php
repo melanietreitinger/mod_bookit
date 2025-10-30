@@ -135,8 +135,8 @@ if ($hassiteconfig) {
     ];
     $calendar->add(new admin_setting_configmulticheckbox(
         'mod_bookit/weekdaysvisible',
-        get_string('config_weekdaysvisible', 'mod_bookit'),
-        get_string('config_weekdaysvisible_desc', 'mod_bookit'),
+        get_string('settings_weekdaysvisible', 'mod_bookit'),
+        get_string('settings_weekdaysvisible_desc', 'mod_bookit'),
         [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Default Mon–Fri.
         $weekdaychoices
     ));

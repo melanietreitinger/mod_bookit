@@ -24,17 +24,22 @@
 
 namespace mod_bookit\form;
 
+use coding_exception;
 use context_course;
 use core\context;
 use core\context\module;
 use core\exception\moodle_exception;
 use core_form\dynamic_form;
+use core_user\fields;
+use DateTimeImmutable;
+use dml_exception;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\manager\categories_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
 use moodle_url;
 use stdClass;
+use function bookit_allowed_weekdays;
 
 /**
  * Form for creating and editing an event.
@@ -135,7 +140,7 @@ class edit_event_form extends dynamic_form {
 
         // Add the "bookingtimes" fields.
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
-        $curdate = new \DateTimeImmutable('+ 1 hour');
+        $curdate = new DateTimeImmutable('+ 1 hour');
         $starttimearray = [
                 'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
                 'step' => 15, // Step to increment minutes by.
@@ -220,7 +225,7 @@ class edit_event_form extends dynamic_form {
                 'courseid' => $course[0]->id,
                 'enrolid' => 0,
                 'perpage' => $CFG->maxusersperpage,
-                'userfields' => implode(',', \core_user\fields::get_identity_fields($contextcourse, true)),
+                'userfields' => implode(',', fields::get_identity_fields($contextcourse, true)),
         ];
         $examinerlist = [];
         // ...@TODO: Find better query to select users!
@@ -425,9 +430,10 @@ class edit_event_form extends dynamic_form {
      * All form setup that is dependent on form values should go in here.
      *
      * @return void
+     * @throws coding_exception
      */
     public function definition_after_data(): void {
-        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
+        global $USER, $PAGE;   // The $PAGE is needed for JS injection.
         $mform =& $this->_form;
 
         // Derive current booking-status & capability flags.
@@ -487,7 +493,7 @@ class edit_event_form extends dynamic_form {
                     $ts = (int)$val; // Fallback: already a Unix timestamp.
                 }
 
-                $allowed = \bookit_allowed_weekdays(); // 0 = Sun … 6 = Sat.
+                $allowed = bookit_allowed_weekdays(); // 0 = Sun … 6 = Sat.
                 $weekday = (int) date('w', $ts);
                 return in_array($weekday, $allowed, true);
             },
@@ -495,11 +501,11 @@ class edit_event_form extends dynamic_form {
         );
 
         // Quick client-side alert (does not block submission).
-        $allowed = implode(',', \bookit_allowed_weekdays());
+        $allowed = implode(',', bookit_allowed_weekdays());
         if ($allowed !== '') {
             $PAGE->requires->js_init_code("
                 require(['jquery'], function($) {
-                    const allowed = [{$allowed}];
+                    const allowed = [$allowed];
                     $('#id_starttime_day, #id_starttime_month, #id_starttime_year').on('change', function () {
                         const d = new Date(
                             $('#id_starttime_year').val(),
@@ -551,6 +557,7 @@ class edit_event_form extends dynamic_form {
      * Process the form submission, used if form was submitted via AJAX
      *
      * @return array ...
+     * @throws dml_exception
      */
     public function process_dynamic_submission(): array {
         $formdata = $this->get_data();

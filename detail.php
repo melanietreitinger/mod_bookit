@@ -21,8 +21,10 @@
  * @copyright   2025 Vadym Kuzyak, Humboldt Universität Berlin
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-require(__DIR__ . '/../../config.php');
 
+use mod_bookit\form\edit_event_form;
+
+require(__DIR__ . '/../../config.php');
 
 // Single wrapper for both read-only detail and editable form.
 $cmid    = required_param('id', PARAM_INT);   /* course-module id */
@@ -35,7 +37,6 @@ $context = context_module::instance($cm->id);
 require_login($course, false, $cm);
 
 // Decide capability: edit if user can, else view.
-
 $canedit = has_capability('mod/bookit:editevent', $context);
 $viewcap = 'mod/bookit:viewownoverview';
 if ($canedit) {
@@ -61,7 +62,7 @@ echo html_writer::link(
 
 // Render the form (dynamic_form handles readonly when editevent = 0).
 require_once($CFG->dirroot . '/mod/bookit/classes/form/edit_event_form.php');
-$form = new \mod_bookit\form\edit_event_form(
+$form = new edit_event_form(
     null,
     null,
     'POST',
