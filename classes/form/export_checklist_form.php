@@ -57,7 +57,7 @@ class export_checklist_form extends dynamic_form {
         $mform->setDefault('action', 'export');
 
         $data = [
-            'export_help' => get_string('export_help', 'mod_bookit')
+            'export_help' => get_string('export_help', 'mod_bookit'),
         ];
         $exportinfo = $OUTPUT->render_from_template('mod_bookit/masterchecklist/bookit_checklist_exportinfo', $data);
         $mform->addElement('static', 'export_info', '', $exportinfo);
@@ -70,12 +70,12 @@ class export_checklist_form extends dynamic_form {
         $mform->addRule('format_group', null, 'required', null, 'client');
         $mform->setDefault('format', 'csv');
 
-        // Add title field for PDF export
+        // Add title field for PDF export.
         $mform->addElement('text', 'pdf_title', get_string('pdf_title', 'mod_bookit'), ['size' => 50]);
         $mform->setType('pdf_title', PARAM_TEXT);
         $mform->addHelpButton('pdf_title', 'pdf_title', 'mod_bookit');
 
-        // Hide title field initially (show only when PDF is selected)
+        // Hide title field initially (show only when PDF is selected).
         $mform->hideIf('pdf_title', 'format', 'neq', 'pdf');
     }
 
@@ -83,7 +83,7 @@ class export_checklist_form extends dynamic_form {
      * Check if the current user has access to this form.
      */
     protected function check_access_for_dynamic_submission(): void {
-        // Add capability check if needed
+        // Add capability check if needed.
     }
 
     /**
@@ -122,10 +122,10 @@ class export_checklist_form extends dynamic_form {
 
             $exportparams = [
                 'masterid' => $masterid,
-                'format' => $data->format
+                'format' => $data->format,
             ];
 
-            // Add PDF title if format is PDF and title is provided
+            // Add PDF title if format is PDF and title is provided.
             if ($data->format === 'pdf' && !empty($data->pdf_title)) {
                 $exportparams['title'] = $data->pdf_title;
             }
@@ -135,21 +135,21 @@ class export_checklist_form extends dynamic_form {
             return [
                 'success' => true,
                 'message' => 'Export ready',
-                'downloadurl' => $exporturl->out(false)
+                'downloadurl' => $exporturl->out(false),
             ];
         }
 
         return ['success' => false, 'message' => 'Missing required data'];
     }    /**
-     * Set data for the form.
-     */
+          * Set data for the form.
+          */
     public function set_data_for_dynamic_submission(): void {
         $data = [];
 
         if (!empty($this->_ajaxformdata['masterid'])) {
             $data['masterid'] = $this->_ajaxformdata['masterid'];
 
-            // Set default PDF title to simple string
+            // Set default PDF title to simple string.
             $data['pdf_title'] = 'Master Checklist';
         }
 

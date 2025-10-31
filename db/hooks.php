@@ -30,5 +30,5 @@ $callbacks = [
         'hook' => core\hook\navigation\primary_extend::class,
         'callback' => [\mod_bookit\local\hook_callbacks::class, 'primary_navigation_extend'],
         'priority' => 500,
-    ]
+    ],
 ];

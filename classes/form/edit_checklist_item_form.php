@@ -82,7 +82,7 @@ class edit_checklist_item_form extends dynamic_form {
 
         $select = $mform->addElement('select', 'roomids', get_string('rooms', 'mod_bookit'), $allrooms, [
             'style' => 'width:50%; max-height:150px;',
-            'size' => '4'
+            'size' => '4',
         ]);
         $mform->setType('roomids', PARAM_TEXT);
         $mform->addRule('roomids', null, 'required', null, 'client');
@@ -91,7 +91,7 @@ class edit_checklist_item_form extends dynamic_form {
 
         $select = $mform->addElement('select', 'roleids', get_string('role', 'mod_bookit'), $allroles, [
             'style' => 'width:50%; max-height:150px;',
-            'size' => '4'
+            'size' => '4',
         ]);
         $mform->setType('roleids', PARAM_TEXT);
         $mform->addRule('roleids', null, 'required', null, 'client');
@@ -135,8 +135,6 @@ class edit_checklist_item_form extends dynamic_form {
             $select->setMultiple(true);
             $mform->addHelpButton($case->value . '_recipient', 'recipient', 'mod_bookit');
             $mform->hideIf($case->value . '_recipient', $case->value);
-            // $mform->addRule($case->value . '_recipient', null, 'required', null, 'client');
-            // $mform->disabledIf($case->value . '_recipient', $case->value, 'notchecked');
 
             if (array_search($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
                 $mform->addElement(
@@ -156,11 +154,11 @@ class edit_checklist_item_form extends dynamic_form {
             $mform->addElement('editor', $case->value . '_messagetext', get_string('customtemplate', 'mod_bookit'));
             $mform->setType($case->value . '_messagetext', PARAM_RAW);
 
-            $defaultMessageKey = 'customtemplatedefaultmessage_' . $case->value;
-            $defaultMessage = get_string($defaultMessageKey, 'mod_bookit');
+            $defaultmessagekey = 'customtemplatedefaultmessage_' . $case->value;
+            $defaultmessage = get_string($defaultmessagekey, 'mod_bookit');
 
             $mform->setDefault($case->value . '_messagetext', [
-                'text'   => $defaultMessage,
+                'text'   => $defaultmessage,
                 'format' => FORMAT_HTML,
                 'itemid' => 0,
             ]);
@@ -261,7 +259,7 @@ class edit_checklist_item_form extends dynamic_form {
                     $item->{$slottype->value . '_time'}['timeunit'] = DAYSECS;
                 }
                 $item->{$slottype->value . '_id'} = $slot->id;
-                $item->{$slottype->value} = $slot->isactive ;
+                $item->{$slottype->value} = $slot->isactive;
                 $item->{$slottype->value . '_recipient'} = json_decode($slot->roleids, true);
                 $item->{$slottype->value . '_messagetext'}['text'] = $slot->messagetext;
             }
@@ -346,14 +344,14 @@ class edit_checklist_item_form extends dynamic_form {
         if (!empty($data['categoryid'])) {
             $category = bookit_checklist_category::from_database($data['categoryid']);
 
-            $existingItems = [];
+            $existingitems = [];
             if (!empty($category->checklistitems)) {
-                $existingItems = array_map('intval', explode(',', trim($category->checklistitems, '"[]')));
+                $existingitems = array_map('intval', explode(',', trim($category->checklistitems, '"[]')));
             }
 
-            if (!in_array($id, $existingItems)) {
-                $existingItems[] = $id;
-                $category->checklistitems = implode(',', $existingItems);
+            if (!in_array($id, $existingitems)) {
+                $existingitems[] = $id;
+                $category->checklistitems = implode(',', $existingitems);
                 $category->save();
             }
         }
@@ -453,7 +451,7 @@ class edit_checklist_item_form extends dynamic_form {
 
         $fields['rolenames'] = [];
         foreach ($data['roleids'] as $roleid) {
-                if (checklist_manager::user_has_bookit_role((int) $roleid)) {
+            if (checklist_manager::user_has_bookit_role((int) $roleid)) {
                 $extraclasses = 'badge badge-warning text-dark';
             } else {
                 $extraclasses = 'badge badge-primary text-light';
@@ -488,18 +486,18 @@ class edit_checklist_item_form extends dynamic_form {
         if (!empty($categoryid)) {
             $category = bookit_checklist_category::from_database($categoryid);
 
-            $existingItems = [];
+            $existingitems = [];
             if (!empty($category->checklistitems)) {
-                $existingItems = array_map('intval', explode(',', trim($category->checklistitems, '"[]')));
+                $existingitems = array_map('intval', explode(',', trim($category->checklistitems, '"[]')));
             }
 
-            $updatedItems = array_filter($existingItems, function($itemId) use ($id) {
-                return $itemId !== (int) $id;
+            $updateditems = array_filter($existingitems, function($itemid) use ($id) {
+                return $itemid !== (int) $id;
             });
 
-            $updatedItems = array_values($updatedItems);
+            $updateditems = array_values($updateditems);
 
-            $category->checklistitems = empty($updatedItems) ? '' : implode(',', $updatedItems);
+            $category->checklistitems = empty($updateditems) ? '' : implode(',', $updateditems);
             $category->save();
         }
 
@@ -515,6 +513,13 @@ class edit_checklist_item_form extends dynamic_form {
         ];
     }
 
+    /**
+     * Validate form data.
+     *
+     * @param array $data Form data
+     * @param array $files Form files
+     * @return array Array of validation errors
+     */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
@@ -526,7 +531,7 @@ class edit_checklist_item_form extends dynamic_form {
 
         foreach (bookit_notification_type::cases() as $case) {
             if (!empty($data[$case->value])) {
-                // Checkbox enabled → validate its fields
+                // Checkbox enabled → validate its fields.
                 if (empty($data[$case->value . '_recipient'])) {
                     $errors[$case->value . '_recipient'] = get_string('required');
                 }
@@ -553,14 +558,14 @@ class edit_checklist_item_form extends dynamic_form {
     public function definition_after_data() {
         parent::definition_after_data();
 
-        // Fix main duedaysoffset field
+        // Fix main duedaysoffset field.
         $this->fix_duration_field('duedaysoffset');
 
-        // Fix notification time fields
+        // Fix notification time fields.
         foreach (bookit_notification_type::cases() as $case) {
             if (in_array($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE])) {
-                $fieldName = $case->value . '_time';
-                $this->fix_duration_field($fieldName);
+                $fieldname = $case->value . '_time';
+                $this->fix_duration_field($fieldname);
             }
         }
     }
@@ -568,23 +573,23 @@ class edit_checklist_item_form extends dynamic_form {
     /**
      * Fix a duration field to ensure it has the correct array format
      */
-    private function fix_duration_field($fieldName) {
-        if (!$this->_form->elementExists($fieldName)) {
+    private function fix_duration_field($fieldname) {
+        if (!$this->_form->elementExists($fieldname)) {
             return;
         }
 
-        $element = $this->_form->getElement($fieldName);
-        $currentValue = $element->getValue();
+        $element = $this->_form->getElement($fieldname);
+        $currentvalue = $element->getValue();
 
         $duration = [
             'number' => 0,
             'timeunit' => DAYSECS,
         ];
 
-        if (is_array($currentValue)) {
-            $duration['number'] = isset($currentValue['number']) ? (int)$currentValue['number'] : 0;
-        } else if (is_numeric($currentValue)) {
-            $duration['number'] = (int)$currentValue;
+        if (is_array($currentvalue)) {
+            $duration['number'] = isset($currentvalue['number']) ? (int)$currentvalue['number'] : 0;
+        } else if (is_numeric($currentvalue)) {
+            $duration['number'] = (int)$currentvalue;
         }
 
         $element->setValue($duration);

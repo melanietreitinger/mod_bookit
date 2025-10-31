@@ -25,6 +25,8 @@
 
 namespace mod_bookit\form;
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->dirroot.'/repository/lib.php');
 
 use core_form\dynamic_form;
@@ -58,35 +60,34 @@ class import_checklist_form extends dynamic_form {
         $mform->setType('action', PARAM_TEXT);
         $mform->setDefault('action', 'import');
 
-        // Add info box with help text
+        // Add info box with help text.
         $data = [
-            'import_help' => get_string('import_help', 'mod_bookit')
+            'import_help' => get_string('import_help', 'mod_bookit'),
         ];
         $importinfo = $OUTPUT->render_from_template('mod_bookit/masterchecklist/bookit_checklist_importinfo', $data);
         $mform->addElement('static', 'import_info', '', $importinfo);
 
-        // Add file picker for CSV upload
+        // Add file picker for CSV upload.
         $mform->addElement('filepicker', 'csvfile', get_string('csvfile', 'mod_bookit'), null,
             [
-                // 'maxbytes' => 1024 * 1024, // 1MB max file size
                 'accepted_types' => ['*.csv'],
-                'return_types' => FILE_INTERNAL
+                'return_types' => FILE_INTERNAL,
             ]
         );
         $mform->addRule('csvfile', get_string('required'), 'required', null, 'client');
 
-        // Add checkbox to control room imports
+        // Add checkbox to control room imports.
         $mform->addElement('checkbox', 'import_rooms', get_string('import_rooms', 'mod_bookit'),
             get_string('import_rooms_desc', 'mod_bookit'));
         $mform->setType('import_rooms', PARAM_BOOL);
-        $mform->setDefault('import_rooms', 1); // Default to checked
+        $mform->setDefault('import_rooms', 1);
     }
 
     /**
      * Check if the current user has access to this form.
      */
     protected function check_access_for_dynamic_submission(): void {
-        // Add capability check if needed
+        // Add capability check if needed.
     }
 
     /**
@@ -125,10 +126,7 @@ class import_checklist_form extends dynamic_form {
         if (!empty($ajaxdata['masterid']) && !empty($data->csvfile)) {
             $masterid = (int)$ajaxdata['masterid'];
 
-            // Debug logging
-            error_log("Import form: masterid = " . $masterid);
-
-            // Use user context for file storage (like contentbank does)
+            // Use user context for file storage (like contentbank does).
             $usercontext = \context_user::instance($USER->id);
             $fs = get_file_storage();
             $files = $fs->get_area_files($usercontext->id, 'user', 'draft', $data->csvfile, 'itemid, filepath, filename', false);
@@ -140,7 +138,7 @@ class import_checklist_form extends dynamic_form {
             $file = reset($files);
             $csvdata = $file->get_content();
 
-            // Process the CSV import
+            // Process the CSV import.
             $sharingmanager = new sharing_manager();
             $importrooms = !empty($data->import_rooms);
             $result = $sharingmanager->import_master_checklist_csv($masterid, $csvdata, $importrooms);
@@ -149,12 +147,12 @@ class import_checklist_form extends dynamic_form {
                 return [
                     'success' => true,
                     'message' => get_string('importsuccessful', 'mod_bookit', $result['imported']),
-                    'reload' => true
+                    'reload' => true,
                 ];
             } else {
                 return [
                     'success' => false,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ];
             }
         }

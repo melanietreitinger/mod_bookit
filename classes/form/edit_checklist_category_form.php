@@ -191,8 +191,6 @@ class edit_checklist_category_form extends dynamic_form {
             $masterchecklist->save();
         }
 
-        // die(print_r(explode(',', $ajaxdata['checklistitems']), true));
-
         return [
             [
                 'name' => 'checklistcategories',

@@ -44,9 +44,6 @@ class hook_callbacks {
         if (\has_capability('mod/bookit:managemasterchecklist', $context) && !\is_siteadmin()) {
             $url = new \moodle_url('/mod/bookit/master_checklist.php');
 
-            // FIXME: we need to add a node to the settings tree for non-admin, non-manager users.
-
-            // die(print_r($hook->get_primaryview(), true));
             $hook->get_primaryview()->find('siteadminnode', null)?->add(
                 get_string('master_checklist', 'mod_bookit'),
                 $url,
@@ -54,35 +51,8 @@ class hook_callbacks {
                 null,
                 'bookit_master_checklist'
             );
-            // $PAGE->navigation->extend_for_user($USER);
-            // $PAGE->navbar->includesettingsbase = true;
-            // $view = $PAGE->navigation;
-            // $adminnode = $view->find('siteadminnode', null);
-            // $adminroot = \admin_get_root();
-            // $settingsnav = $PAGE->settingsnav;
-            // $settingsnav = $hook->get_primaryview();
 
-            // $element = $settingsnav->find('siteadminnode', null);
-            // $PAGE->add_header_action($OUTPUT->render_from_template('core_admin/header_search_input', [
-            //     'action' => new \moodle_url('/admin/search.php'),
-            // ]));
-
-            // $element->add(
-            //     get_string('master_checklist', 'mod_bookit'),
-            //     $url,
-            //     navigation_node::TYPE_ROOTNODE,
-            //     null,
-            //     'bookit_master_checklist'
-            // );
-
-            error_log("HERE");
-            // $hook->get_primaryview()->add(
-            //     get_string('pluginname', 'mod_bookit'),
-            //     $url,
-            //     navigation_node::TYPE_CUSTOM,
-            //     null,
-            //     'bookit_master_checklist'
-            // );
+            debugging("HERE");
         }
     }
 }

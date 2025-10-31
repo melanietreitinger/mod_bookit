@@ -37,7 +37,6 @@ use mod_bookit\local\pdf\bookit_pdf;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class sharing_manager {
-
     /**
      * Get the logo file for PDF export based on configuration settings.
      *
@@ -187,7 +186,6 @@ class sharing_manager {
         $categories = checklist_manager::get_categories_by_master_id($masterid);
 
         foreach ($categories as $category) {
-
             // Add category row.
             $categorydata = [
                 'category',
@@ -216,7 +214,6 @@ class sharing_manager {
             $items = checklist_manager::get_items_by_category_id($category->id);
 
             foreach ($items as $item) {
-
                 // Convert room IDs to prefixed room IDs for CSV reference.
                 $roomidscsv = [];
                 if (!empty($item->roomids)) {
@@ -333,7 +330,6 @@ class sharing_manager {
                         if ($existingroom) {
                             $roomcache[$roomname] = $existingroom->id;
                         } else {
-
                             $newroomid = self::create_room_from_data($roomdata);
                             if ($newroomid) {
                                 $roomcache[$roomname] = $newroomid;
@@ -447,24 +443,24 @@ class sharing_manager {
 
                     // Create new item with all attributes.
                     $item = new \mod_bookit\local\entity\bookit_checklist_item(
-                        0,                              // ID.
-                        $masterid,                      // Master ID.
-                        $categoryid,                    // Category ID.
-                        null,                           // Parent ID.
-                        $roomids,                       // Room IDs.
-                        $roleids,                       // Role IDs.
-                        $itemrow['name'],               // Title.
-                        $itemrow['description'] ?? '',  // Description.
-                        $itemtype,                      // Item type.
-                        $options,                       // Options.
-                        $sortorder,                     // Sort order.
-                        $isrequired,                    // Is required.
-                        $defaultvalue,                  // Default value.
-                        $duedaysoffset,                 // Due days offset.
-                        $duedaysrelation,               // Due days relation.
-                        $USER->id,                      // User modified.
-                        time(),                         // Time created.
-                        time()                          // Time modified.
+                        0,
+                        $masterid,
+                        $categoryid,
+                        null,
+                        $roomids,
+                        $roleids,
+                        $itemrow['name'],
+                        $itemrow['description'] ?? '',
+                        $itemtype,
+                        $options,
+                        $sortorder,
+                        $isrequired,
+                        $defaultvalue,
+                        $duedaysoffset,
+                        $duedaysrelation,
+                        $USER->id,
+                        time(),
+                        time()
                     );
 
                     $itemid = $item->save();
@@ -493,12 +489,14 @@ class sharing_manager {
                 'message' => get_string('importfailed', 'mod_bookit', $e->getMessage()),
             ];
         }
-    }    /**
-          * Update category items list.
-          *
-          * @param int $categoryId
-          * @param array $itemIds
-          */
+    }
+
+    /**
+     * Update category items list.
+     *
+     * @param int $categoryId
+     * @param array $itemIds
+     */
     private static function update_category_items(int $categoryid, array $itemids): void {
         $category = \mod_bookit\local\entity\bookit_checklist_category::from_database($categoryid);
         $category->checklistitems = implode(',', $itemids);
@@ -720,5 +718,4 @@ class sharing_manager {
         $pdf->writeHTML($html);
         $pdf->Output($filename . '.pdf', 'D');
     }
-
 }
