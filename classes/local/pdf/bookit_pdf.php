@@ -38,6 +38,7 @@ class bookit_pdf extends \pdf {
     /**
      * Override header method to right-align the text while keeping logo on left.
      */
+    // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseMethod
     public function Header() {
         if ($this->header_xobjid === false) {
             $this->header_xobjid = $this->startTemplate($this->w, $this->tMargin);
@@ -50,7 +51,7 @@ class bookit_pdf extends \pdf {
                 $this->x = $this->original_lMargin;
             }
 
-            if (($headerdata['logo']) AND ($headerdata['logo'] != K_BLANK_IMAGE)) {
+            if (($headerdata['logo']) && ($headerdata['logo'] != K_BLANK_IMAGE)) {
                 if (substr($headerdata['logo'], 0, 1) === '@') {
                     $this->Image($headerdata['logo'], '', '', $headerdata['logo_width']);
                 } else {
@@ -60,7 +61,7 @@ class bookit_pdf extends \pdf {
             } else {
                 $imgy = $this->y;
             }
-
+            // phpcs:ignore moodle.NamingConventions.ValidVariableName.VariableNameUnderscore
             $cell_height = $this->getCellHeight($headerfont[2] / $this->k);
             if ($this->getRTL()) {
                 $header_x = $this->original_rMargin + ($headerdata['logo_width'] * 1.1);
