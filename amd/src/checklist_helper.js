@@ -5,7 +5,9 @@ export default class {
         const foundElementIds = new Set();
 
         for (const component of components) {
-            if (!component.element) continue;
+            if (!component.element) {
+                continue;
+            }
 
             const elementId = component.element.id;
             if (foundElementIds.has(elementId)) {

@@ -282,7 +282,7 @@ class install_helper {
 
         $success = true;
 
-        // Import roles first
+        // Import roles first.
         if ($verbose) {
             mtrace('Step 1: Importing default roles...');
         }
@@ -291,7 +291,7 @@ class install_helper {
             mtrace('No roles were imported or roles already exist.');
         }
 
-        // Import users (depends on roles)
+        // Import users (depends on roles).
         if ($verbose) {
             mtrace('Step 2: Importing default users...');
         }
@@ -300,7 +300,7 @@ class install_helper {
             mtrace('No users were imported or users already exist.');
         }
 
-        // Create default checklists (includes rooms creation)
+        // Create default checklists (includes rooms creation).
         if ($verbose) {
             mtrace('Step 3: Creating default checklists and rooms...');
         }
@@ -646,7 +646,7 @@ class install_helper {
                 if ($verbose) {
                     mtrace("User '$username' already exists (ID: {$existinguser->id}). Skipping.");
                 }
-                // Still check role assignment for existing users
+                // Still check role assignment for existing users.
                 self::assign_bookit_role_to_user($existinguser, $verbose);
                 continue;
             }
@@ -689,7 +689,6 @@ class install_helper {
                 self::assign_bookit_role_to_user($createduser, $verbose);
 
                 $usersimported = true;
-
             } catch (\Exception $e) {
                 if ($verbose) {
                     mtrace("  Error creating user '$username': " . $e->getMessage());
@@ -780,5 +779,4 @@ class install_helper {
             }
         }
     }
-
 }

@@ -569,6 +569,8 @@ class edit_checklist_item_form extends dynamic_form {
 
     /**
      * Fix a duration field to ensure it has the correct array format
+     *
+     * @param string $fieldname The name of the field to fix
      */
     private function fix_duration_field($fieldname) {
         if (!$this->_form->elementExists($fieldname)) {

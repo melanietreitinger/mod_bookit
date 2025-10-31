@@ -419,7 +419,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        // Create test rooms in the database
+        // Create test rooms in the database.
         $room1 = new \stdClass();
         $room1->name = 'Test Room 1';
         $room1->description = 'First test room';
@@ -451,7 +451,7 @@ final class bookit_checklist_item_test extends advanced_testcase {
             5,
             6,
             null,
-            [$room1id, $room2id], // Use the actual room IDs
+            [$room1id, $room2id],
             [9, 10],
             'Export Item Test',
             'Description for export test',
@@ -477,7 +477,6 @@ final class bookit_checklist_item_test extends advanced_testcase {
         $this->assertEquals(json_encode([9, 10]), $data->roleids);
         $this->assertEquals('item', $data->type);
 
-        // Verify room names are properly exported
         $this->assertCount(2, $data->roomnames);
         $this->assertEquals('Test Room 1', $data->roomnames[0]['roomname']);
         $this->assertEquals($room1id, $data->roomnames[0]['roomid']);

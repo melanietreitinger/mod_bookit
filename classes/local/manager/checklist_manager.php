@@ -146,7 +146,7 @@ class checklist_manager {
 
         $records = $DB->get_records('bookit_room', null, 'name ASC');
 
-        return array_values(array_map(function($record) {
+        return array_values(array_map(function ($record) {
             $eventcolor = $record->eventcolor ?? '';
             $textcolor = color_manager::get_textcolor_for_background($eventcolor);
             $textclass = $textcolor === '#000' ? 'text-dark' : 'text-light';
@@ -183,11 +183,11 @@ class checklist_manager {
     }
 
     /**
-    * Get the readable name for a checklist item state.
-    *
-    * @param int $state The state value
-    * @return string Localized state name
-    */
+     * Get the readable name for a checklist item state.
+     *
+     * @param int $state The state value
+     * @return string Localized state name
+     */
     public static function get_checklistitem_statename(int $state): string {
 
         $reflection = new \ReflectionClass(bookit_checklist_item::class);

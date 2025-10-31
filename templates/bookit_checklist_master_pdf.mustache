@@ -22,6 +22,7 @@
     {
         "id": 1,
         "name": "Master Checklist",
+        "title": "Master Checklist",
         "checklistcategories": [
             {
                 "id": 1,
@@ -44,9 +45,10 @@
     }
 }}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>{{#title}}{{title}}{{/title}}{{^title}}BookIt Checklist{{/title}}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -67,7 +69,8 @@
     </style>
 </head>
 <body>
-    <h1>{{title}}</h1>
+    {{#title}}<h1>{{title}}</h1>{{/title}}
+    {{^title}}<h1>BookIt Checklist</h1>{{/title}}
 
     {{#checklistcategories}}
         <h2>{{name}}</h2>

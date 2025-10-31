@@ -143,8 +143,8 @@ class export_checklist_form extends dynamic_form {
     }
 
     /**
-    * Set data for the form.
-    */
+     * Set data for the form.
+     */
     public function set_data_for_dynamic_submission(): void {
         $data = [];
 

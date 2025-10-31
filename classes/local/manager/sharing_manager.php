@@ -493,8 +493,8 @@ class sharing_manager {
     /**
      * Update category items list.
      *
-     * @param int $categoryId
-     * @param array $itemIds
+     * @param int $categoryid
+     * @param array $itemids
      */
     private static function update_category_items(int $categoryid, array $itemids): void {
         $category = \mod_bookit\local\entity\bookit_checklist_category::from_database($categoryid);
@@ -537,7 +537,7 @@ class sharing_manager {
     /**
      * Create room from CSV data.
      *
-     * @param array $roomData
+     * @param array $roomdata
      * @return int|null
      */
     private static function create_room_from_data(array $roomdata): ?int {

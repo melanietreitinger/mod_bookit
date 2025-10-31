@@ -146,7 +146,7 @@ class bookit_notification_slot implements \renderable, \templatable {
 
         $params = [
             'checklistitemid' => $checklistitemid,
-            'type' => $type
+            'type' => $type,
         ];
 
         $record = $DB->get_record_sql($sql, $params);
@@ -155,12 +155,14 @@ class bookit_notification_slot implements \renderable, \templatable {
             return self::from_record($record);
         }
         return null;
-    }    /**
-     * Create object from record.
-     *
-     * @param array|object $record
-     * @return self
-     */
+    }
+
+    /**
+    * Create object from record.
+    *
+    * @param array|object $record
+    * @return self
+    */
     public static function from_record(array|object $record): self {
         $record = (object) $record;
 
