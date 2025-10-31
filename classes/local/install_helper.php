@@ -548,7 +548,7 @@ class install_helper {
             ],
         ];
 
-        $roomsCreated = 0;
+        $roomscreated = 0;
         foreach ($rooms as $roomdata) {
             $room = new \stdClass();
             $room->name = $roomdata['name'];
@@ -566,14 +566,14 @@ class install_helper {
                 mtrace("Created room: {$room->name} (ID: $roomid)");
             }
 
-            $roomsCreated++;
+            $roomscreated++;
         }
 
         if ($verbose) {
-            mtrace("Successfully created $roomsCreated default rooms!");
+            mtrace("Successfully created $roomscreated default rooms!");
         }
 
-        return $roomsCreated > 0;
+        return $roomscreated > 0;
     }
 
     /**
@@ -728,13 +728,13 @@ class install_helper {
 
         if (strpos($username, 'serviceteam') !== false) {
             $roleshortname = 'bookit_serviceteam';
-        } elseif (strpos($username, 'examiner') !== false) {
+        } else if (strpos($username, 'examiner') !== false) {
             $roleshortname = 'bookit_examiner';
-        } elseif (strpos($username, 'observer') !== false) {
+        } else if (strpos($username, 'observer') !== false) {
             $roleshortname = 'bookit_observer';
-        } elseif (strpos($username, 'support') !== false) {
+        } else if (strpos($username, 'support') !== false) {
             $roleshortname = 'bookit_supportonsite';
-        } elseif (strpos($username, 'booker') !== false) {
+        } else if (strpos($username, 'booker') !== false) {
             $roleshortname = 'bookit_bookingperson';
         }
 
@@ -758,7 +758,7 @@ class install_helper {
         $existing = $DB->get_record('role_assignments', [
             'roleid' => $role->id,
             'userid' => $user->id,
-            'contextid' => $systemcontext->id
+            'contextid' => $systemcontext->id,
         ]);
 
         if ($existing) {

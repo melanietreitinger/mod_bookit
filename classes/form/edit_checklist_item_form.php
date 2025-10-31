@@ -121,7 +121,6 @@ class edit_checklist_item_form extends dynamic_form {
         $mform->setExpanded('notifications', false);
 
         foreach (bookit_notification_type::cases() as $case) {
-
             $mform->addElement('html', '<hr/>');
 
             $mform->addElement('checkbox', $case->value, get_string($case->value, 'mod_bookit'));
@@ -491,9 +490,7 @@ class edit_checklist_item_form extends dynamic_form {
                 $existingitems = array_map('intval', explode(',', trim($category->checklistitems, '"[]')));
             }
 
-            $updateditems = array_filter($existingitems, function($itemid) use ($id) {
-                return $itemid !== (int) $id;
-            });
+            $updateditems = array_filter($existingitems, fn($itemid) => $itemid !== (int) $id);
 
             $updateditems = array_values($updateditems);
 
@@ -594,5 +591,4 @@ class edit_checklist_item_form extends dynamic_form {
 
         $element->setValue($duration);
     }
-
 }

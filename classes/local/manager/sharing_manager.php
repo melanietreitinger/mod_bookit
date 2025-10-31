@@ -482,7 +482,6 @@ class sharing_manager {
                 'imported' => $importedcount,
                 'message' => get_string('importsuccessful', 'mod_bookit', $importedcount),
             ];
-
         } catch (\Exception $e) {
             return [
                 'success' => false,

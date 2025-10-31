@@ -31,7 +31,6 @@ use navigation_node;
  * Hook callbacks for BookIt plugin.
  */
 class hook_callbacks {
-
     /**
      * Hook callback for primary navigation extension.
      *

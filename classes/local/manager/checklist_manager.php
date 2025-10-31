@@ -75,11 +75,11 @@ class checklist_manager {
     /**
      * Get checklist categories by master ID.
      *
-     * @param int $masterid ID of the master checklist
+     * @param int|null $masterid ID of the master checklist
      * @return array Array of bookit_checklist_category objects
      * @throws dml_exception
      */
-    public static function get_categories_by_master_id(int $masterid = null): array {
+    public static function get_categories_by_master_id(?int $masterid): array {
         global $DB;
 
         if ($masterid === null) {
@@ -180,12 +180,14 @@ class checklist_manager {
         $record->textclass = $textclass;
 
         return $record;
-    }    /**
-     * Get the readable name for a checklist item state.
-     *
-     * @param int $state The state value
-     * @return string Localized state name
-     */
+    }
+
+    /**
+    * Get the readable name for a checklist item state.
+    *
+    * @param int $state The state value
+    * @return string Localized state name
+    */
     public static function get_checklistitem_statename(int $state): string {
 
         $reflection = new \ReflectionClass(bookit_checklist_item::class);

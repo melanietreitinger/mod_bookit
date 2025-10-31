@@ -27,7 +27,7 @@ namespace mod_bookit\form;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/repository/lib.php');
+require_once($CFG->dirroot . '/repository/lib.php');
 
 use core_form\dynamic_form;
 use mod_bookit\local\manager\sharing_manager;
@@ -68,7 +68,11 @@ class import_checklist_form extends dynamic_form {
         $mform->addElement('static', 'import_info', '', $importinfo);
 
         // Add file picker for CSV upload.
-        $mform->addElement('filepicker', 'csvfile', get_string('csvfile', 'mod_bookit'), null,
+        $mform->addElement(
+            'filepicker',
+            'csvfile',
+            get_string('csvfile', 'mod_bookit'),
+            null,
             [
                 'accepted_types' => ['*.csv'],
                 'return_types' => FILE_INTERNAL,
@@ -77,8 +81,12 @@ class import_checklist_form extends dynamic_form {
         $mform->addRule('csvfile', get_string('required'), 'required', null, 'client');
 
         // Add checkbox to control room imports.
-        $mform->addElement('checkbox', 'import_rooms', get_string('import_rooms', 'mod_bookit'),
-            get_string('import_rooms_desc', 'mod_bookit'));
+        $mform->addElement(
+            'checkbox',
+            'import_rooms',
+            get_string('import_rooms', 'mod_bookit'),
+            get_string('import_rooms_desc', 'mod_bookit')
+        );
         $mform->setType('import_rooms', PARAM_BOOL);
         $mform->setDefault('import_rooms', 1);
     }
