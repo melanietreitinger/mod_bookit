@@ -14,18 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-/**
- * Sharing manager class for checklist import/export functionality.
- *
- * @package     mod_bookit
- * @copyright   2025 ssystems GmbH <oss@ssystems.de>
- * @author      Andreas Rosenthal
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace mod_bookit\local\manager;
 
-// global $CFG;
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->libdir . '/csvlib.class.php');
 require_once($CFG->libdir . '/pdflib.php');
 
@@ -66,8 +58,8 @@ class sharing_manager {
                 break;
 
             case 'theme':
-                $theme_boost_union_path = $CFG->dirroot . '/theme/boost_union';
-                if (file_exists($theme_boost_union_path) && is_dir($theme_boost_union_path)) {
+                $themeboostunionpath = $CFG->dirroot . '/theme/boost_union';
+                if (file_exists($themeboostunionpath) && is_dir($themeboostunionpath)) {
                     $context = \context_system::instance();
                     $fs = get_file_storage();
                     $files = $fs->get_area_files($context->id, 'theme_boost_union', 'logo', 0, 'itemid, filepath, filename', false);
@@ -278,6 +270,7 @@ class sharing_manager {
      *
      * @param int $masterid The ID of the master checklist to import into
      * @param string $csvdata CSV data content
+     * @param bool $importrooms Whether to import room assignments (default: true)
      * @return array Result array with success status and import details
      */
     public static function import_master_checklist_csv(int $masterid, string $csvdata, bool $importrooms = true): array {
@@ -292,34 +285,34 @@ class sharing_manager {
                 return ['success' => false, 'message' => "Master checklist with ID $masterid does not exist"];
             }
 
-            $lines = str_getcsv($csvdata, "\n");
+            $lines = str_getcsv($csvdata, "\n", '"', '\\');
             if (count($lines) < 2) {
                 return ['success' => false, 'message' => get_string('invalidcsvformat', 'mod_bookit')];
             }
 
-            $headers = str_getcsv($lines[0]);
-            $requiredHeaders = ['type', 'name'];
+            $headers = str_getcsv($lines[0], ',', '"', '\\');
+            $requiredheaders = ['type', 'name'];
 
-            foreach ($requiredHeaders as $required) {
+            foreach ($requiredheaders as $required) {
                 if (!in_array($required, $headers)) {
                     return ['success' => false, 'message' => get_string('invalidcsvformat', 'mod_bookit')];
                 }
             }
 
-            $maxCategorySortOrder = $DB->get_field_sql(
+            $maxcategorysortorder = $DB->get_field_sql(
                 "SELECT COALESCE(MAX(sortorder), 0) FROM {bookit_checklist_category} WHERE masterid = ?",
                 [$masterid]
             );
 
-            $importedCount = 0;
-            $roomCache = [];
-            $roomIdToNameMap = [];
-            $categoriesData = [];
+            $importedcount = 0;
+            $roomcache = [];
+            $roomidtonamemap = [];
+            $categoriesdata = [];
 
-            $currentCategoryName = null;
+            $currentcategoryname = null;
 
             for ($i = 1; $i < count($lines); $i++) {
-                $data = str_getcsv($lines[$i]);
+                $data = str_getcsv($lines[$i], ',', '"', '\\');
                 if (count($data) < count($headers)) {
                     continue;
                 }
@@ -327,188 +320,188 @@ class sharing_manager {
                 $row = array_combine($headers, $data);
 
                 if ($importrooms && $row['type'] === 'room' && !empty($row['name']) && !empty($row['room_data'])) {
-                    $roomData = json_decode($row['room_data'], true);
-                    if ($roomData) {
-                        $roomName = $row['name'];
-                        $roomIdFromCsv = $roomData['id'] ?? null;
+                    $roomdata = json_decode($row['room_data'], true);
+                    if ($roomdata) {
+                        $roomname = $row['name'];
+                        $roomidfromcsv = $roomdata['id'] ?? null;
 
-                        if ($roomIdFromCsv) {
-                            $roomIdToNameMap[$roomIdFromCsv] = $roomName;
+                        if ($roomidfromcsv) {
+                            $roomidtonamemap[$roomidfromcsv] = $roomname;
                         }
 
-                        $existingRoom = self::find_room_by_name($roomName);
-                        if ($existingRoom) {
-                            $roomCache[$roomName] = $existingRoom->id;
+                        $existingroom = self::find_room_by_name($roomname);
+                        if ($existingroom) {
+                            $roomcache[$roomname] = $existingroom->id;
                         } else {
 
-                            $newRoomId = self::create_room_from_data($roomData);
-                            if ($newRoomId) {
-                                $roomCache[$roomName] = $newRoomId;
+                            $newroomid = self::create_room_from_data($roomdata);
+                            if ($newroomid) {
+                                $roomcache[$roomname] = $newroomid;
                             }
                         }
                     }
                 }
 
                 if ($row['type'] === 'category' && !empty($row['name'])) {
-                    $currentCategoryName = $row['name'];
-                    if (!isset($categoriesData[$currentCategoryName])) {
-                        $categoriesData[$currentCategoryName] = [
+                    $currentcategoryname = $row['name'];
+                    if (!isset($categoriesdata[$currentcategoryname])) {
+                        $categoriesdata[$currentcategoryname] = [
                             'name' => $row['name'],
                             'description' => $row['description'] ?? '',
                             'checklist_items' => $row['checklist_items'] ?? '',
-                            'items' => []
+                            'items' => [],
                         ];
                     }
-                } elseif ($row['type'] === 'item' && !empty($row['name']) && $currentCategoryName) {
-                    $categoriesData[$currentCategoryName]['items'][] = $row;
+                } else if ($row['type'] === 'item' && !empty($row['name']) && $currentcategoryname) {
+                    $categoriesdata[$currentcategoryname]['items'][] = $row;
                 }
             }
 
-            $categoryMapping = [];
+            $categorymapping = [];
 
-            foreach ($categoriesData as $categoryName => $categoryInfo) {
-                // Create category
+            foreach ($categoriesdata as $categoryname => $categoryinfo) {
+                // Create category.
                 $category = new \mod_bookit\local\entity\bookit_checklist_category(
                     0,
                     $masterid,
-                    $categoryInfo['name'],
-                    $categoryInfo['description'],
-                    null, // Will be updated later with item IDs
-                    ++$maxCategorySortOrder,
+                    $categoryinfo['name'],
+                    $categoryinfo['description'],
+                    null, // Will be updated later with item IDs.
+                    ++$maxcategorysortorder,
                     $USER->id,
                     time(),
                     time()
                 );
 
-                $categoryId = $category->save();
-                $categoryMapping[$categoryName] = $categoryId;
-                $importedCount++;
+                $categoryid = $category->save();
+                $categorymapping[$categoryname] = $categoryid;
+                $importedcount++;
 
-                // Create items for this category
-                $categoryItemIds = [];
-                foreach ($categoryInfo['items'] as $itemRow) {
-                    // Parse room IDs from CSV (only if import_rooms is enabled)
-                    $roomIds = [];
-                    if ($importrooms && !empty($itemRow['room_ids'])) {
-                        $roomIdsFromCsv = json_decode($itemRow['room_ids'], true);
-                        if (is_array($roomIdsFromCsv)) {
-                            foreach ($roomIdsFromCsv as $roomRef) {
-                                // Extract room ID from "room_X" format
-                                if (preg_match('/room_(\d+)/', $roomRef, $matches)) {
-                                    $csvRoomId = (int)$matches[1];
-                                    // Find room name by CSV room ID
-                                    if (isset($roomIdToNameMap[$csvRoomId])) {
-                                        $roomName = $roomIdToNameMap[$csvRoomId];
-                                        // Get actual database room ID by name
-                                        if (isset($roomCache[$roomName])) {
-                                            $roomIds[] = $roomCache[$roomName];
+                // Create items for this category.
+                $categoryitemids = [];
+                foreach ($categoryinfo['items'] as $itemrow) {
+                    // Parse room IDs from CSV (only if import_rooms is enabled).
+                    $roomids = [];
+                    if ($importrooms && !empty($itemrow['room_ids'])) {
+                        $roomidsfromcsv = json_decode($itemrow['room_ids'], true);
+                        if (is_array($roomidsfromcsv)) {
+                            foreach ($roomidsfromcsv as $roomref) {
+                                // Extract room ID from "room_X" format.
+                                if (preg_match('/room_(\d+)/', $roomref, $matches)) {
+                                    $csvroomid = (int)$matches[1];
+                                    // Find room name by CSV room ID.
+                                    if (isset($roomidtonamemap[$csvroomid])) {
+                                        $roomname = $roomidtonamemap[$csvroomid];
+                                        // Get actual database room ID by name.
+                                        if (isset($roomcache[$roomname])) {
+                                            $roomids[] = $roomcache[$roomname];
                                         } else {
-                                            error_log("Room '$roomName' not found in roomCache");
+                                            debugging("Room '$roomname' not found in roomCache");
                                         }
                                     } else {
-                                        error_log("CSV room ID '$csvRoomId' not found in roomIdToNameMap");
+                                        debugging("CSV room ID '$csvroomid' not found in roomIdToNameMap");
                                     }
                                 } else {
-                                    error_log("Invalid room reference format: '$roomRef'");
+                                    debugging("Invalid room reference format: '$roomref'");
                                 }
                             }
                         }
                     }
 
-                    // Debug logging
-                    error_log("Item '{$itemRow['name']}' - Room IDs: " . json_encode($roomIds));
+                    // Debug logging.
+                    debugging("Item '{$itemrow['name']}' - Room IDs: " . json_encode($roomids));
 
-                    // Parse role IDs from CSV - check if roles exist
-                    $roleIds = [];
-                    if (!empty($itemRow['role_shortnames'])) {
-                        $roleShortnames = json_decode($itemRow['role_shortnames'], true);
-                        if (is_array($roleShortnames)) {
-                            foreach ($roleShortnames as $shortname) {
+                    // Parse role IDs from CSV - check if roles exist.
+                    $roleids = [];
+                    if (!empty($itemrow['role_shortnames'])) {
+                        $roleshortnames = json_decode($itemrow['role_shortnames'], true);
+                        if (is_array($roleshortnames)) {
+                            foreach ($roleshortnames as $shortname) {
                                 $role = self::find_role_by_shortname($shortname);
                                 if ($role) {
-                                    $roleIds[] = $role->id;
+                                    $roleids[] = $role->id;
                                 }
                             }
                         }
                     }
 
-                    // If no valid roles found, use role ID 0 as fallback
-                    if (empty($roleIds)) {
-                        $roleIds = [0];
+                    // If no valid roles found, use role ID 0 as fallback.
+                    if (empty($roleids)) {
+                        $roleids = [0];
                     }
 
-                    // Get max sort order for items in this category
-                    $maxItemSortOrder = $DB->get_field_sql(
+                    // Get max sort order for items in this category.
+                    $maxitemsortorder = $DB->get_field_sql(
                         "SELECT COALESCE(MAX(sortorder), 0) FROM {bookit_checklist_item} WHERE categoryid = ?",
-                        [$categoryId]
+                        [$categoryid]
                     );
 
-                    // Properly cast CSV values to correct types
-                    $itemType = !empty($itemRow['item_type']) ? (int)$itemRow['item_type'] : 1;
-                    $sortOrder = !empty($itemRow['sort_order']) ? (int)$itemRow['sort_order'] : ++$maxItemSortOrder;
-                    $isRequired = !empty($itemRow['is_required']) ? (int)$itemRow['is_required'] : 0;
-                    $dueDaysOffset = !empty($itemRow['due_days_offset']) ? (int)$itemRow['due_days_offset'] : null;
-                    $dueDaysRelation = !empty($itemRow['due_days_relation']) ? $itemRow['due_days_relation'] : null;
-                    $defaultValue = !empty($itemRow['default_value']) ? $itemRow['default_value'] : null;
-                    $options = !empty($itemRow['options']) ? $itemRow['options'] : null;
+                    // Properly cast CSV values to correct types.
+                    $itemtype = !empty($itemrow['item_type']) ? (int)$itemrow['item_type'] : 1;
+                    $sortorder = !empty($itemrow['sort_order']) ? (int)$itemrow['sort_order'] : ++$maxitemsortorder;
+                    $isrequired = !empty($itemrow['is_required']) ? (int)$itemrow['is_required'] : 0;
+                    $duedaysoffset = !empty($itemrow['due_days_offset']) ? (int)$itemrow['due_days_offset'] : null;
+                    $duedaysrelation = !empty($itemrow['due_days_relation']) ? $itemrow['due_days_relation'] : null;
+                    $defaultvalue = !empty($itemrow['default_value']) ? $itemrow['default_value'] : null;
+                    $options = !empty($itemrow['options']) ? $itemrow['options'] : null;
 
-                    // Create new item with all attributes
+                    // Create new item with all attributes.
                     $item = new \mod_bookit\local\entity\bookit_checklist_item(
-                        0,                              // id
-                        $masterid,                      // masterid
-                        $categoryId,                    // categoryid
-                        null,                           // parentid
-                        $roomIds,                       // roomids
-                        $roleIds,                       // roleids
-                        $itemRow['name'],               // title
-                        $itemRow['description'] ?? '',  // description
-                        $itemType,                      // itemtype
-                        $options,                       // options
-                        $sortOrder,                     // sortorder
-                        $isRequired,                    // isrequired
-                        $defaultValue,                  // defaultvalue
-                        $dueDaysOffset,                 // duedaysoffset
-                        $dueDaysRelation,               // duedaysrelation
-                        $USER->id,                      // usermodified
-                        time(),                         // timecreated
-                        time()                          // timemodified
+                        0,                              // ID.
+                        $masterid,                      // Master ID.
+                        $categoryid,                    // Category ID.
+                        null,                           // Parent ID.
+                        $roomids,                       // Room IDs.
+                        $roleids,                       // Role IDs.
+                        $itemrow['name'],               // Title.
+                        $itemrow['description'] ?? '',  // Description.
+                        $itemtype,                      // Item type.
+                        $options,                       // Options.
+                        $sortorder,                     // Sort order.
+                        $isrequired,                    // Is required.
+                        $defaultvalue,                  // Default value.
+                        $duedaysoffset,                 // Due days offset.
+                        $duedaysrelation,               // Due days relation.
+                        $USER->id,                      // User modified.
+                        time(),                         // Time created.
+                        time()                          // Time modified.
                     );
 
-                    $itemId = $item->save();
-                    $categoryItemIds[] = $itemId;
-                    $importedCount++;
+                    $itemid = $item->save();
+                    $categoryitemids[] = $itemid;
+                    $importedcount++;
                 }
 
-                // Update category with item IDs
-                if (!empty($categoryItemIds)) {
-                    self::update_category_items($categoryId, $categoryItemIds);
+                // Update category with item IDs.
+                if (!empty($categoryitemids)) {
+                    self::update_category_items($categoryid, $categoryitemids);
                 }
             }
 
-            // Update master category order
+            // Update master category order.
             self::update_master_category_order($masterid);
 
             return [
                 'success' => true,
-                'imported' => $importedCount,
-                'message' => get_string('importsuccessful', 'mod_bookit', $importedCount)
+                'imported' => $importedcount,
+                'message' => get_string('importsuccessful', 'mod_bookit', $importedcount),
             ];
 
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => get_string('importfailed', 'mod_bookit', $e->getMessage())
+                'message' => get_string('importfailed', 'mod_bookit', $e->getMessage()),
             ];
         }
     }    /**
-     * Update category items list.
-     *
-     * @param int $categoryId
-     * @param array $itemIds
-     */
-    private static function update_category_items(int $categoryId, array $itemIds): void {
-        $category = \mod_bookit\local\entity\bookit_checklist_category::from_database($categoryId);
-        $category->checklistitems = implode(',', $itemIds);
+          * Update category items list.
+          *
+          * @param int $categoryId
+          * @param array $itemIds
+          */
+    private static function update_category_items(int $categoryid, array $itemids): void {
+        $category = \mod_bookit\local\entity\bookit_checklist_category::from_database($categoryid);
+        $category->checklistitems = implode(',', $itemids);
         $category->save();
     }
 
@@ -520,14 +513,14 @@ class sharing_manager {
     private static function update_master_category_order(int $masterid): void {
         try {
             $categories = checklist_manager::get_categories_by_master_id($masterid);
-            $categoryIds = array_map(fn($cat) => $cat->id, $categories);
+            $categoryids = array_map(fn($cat) => $cat->id, $categories);
 
             $master = bookit_checklist_master::from_database($masterid);
-            $master->mastercategoryorder = implode(',', $categoryIds);
+            $master->mastercategoryorder = implode(',', $categoryids);
             $master->save();
         } catch (\Exception $e) {
-            // Log the error but don't fail the import for this
-            error_log("Failed to update master category order for master ID $masterid: " . $e->getMessage());
+            // Log the error but don't fail the import for this.
+            debugging("Failed to update master category order for master ID $masterid: " . $e->getMessage());
         }
     }
 
@@ -550,16 +543,16 @@ class sharing_manager {
      * @param array $roomData
      * @return int|null
      */
-    private static function create_room_from_data(array $roomData): ?int {
+    private static function create_room_from_data(array $roomdata): ?int {
         global $DB, $USER;
 
         try {
             $record = new \stdClass();
-            $record->name = $roomData['name'] ?? '';
-            $record->description = $roomData['description'] ?? '';
-            $record->eventcolor = $roomData['eventcolor'] ?? '#000000';
-            $record->textclass = $roomData['textclass'] ?? 'text-dark';
-            $record->capacity = $roomData['capacity'] ?? 0;
+            $record->name = $roomdata['name'] ?? '';
+            $record->description = $roomdata['description'] ?? '';
+            $record->eventcolor = $roomdata['eventcolor'] ?? '#000000';
+            $record->textclass = $roomdata['textclass'] ?? 'text-dark';
+            $record->capacity = $roomdata['capacity'] ?? 0;
             $record->usercreated = $USER->id;
             $record->usermodified = $USER->id;
             $record->timecreated = time();
@@ -589,15 +582,16 @@ class sharing_manager {
      *
      * @param int $masterid The ID of the master checklist to export
      * @param string $filename Optional custom filename for the export
+     * @param string $title Optional custom title for the PDF document
      * @return void Downloads the PDF file directly
      */
     public static function export_master_checklist_pdf(int $masterid, string $filename = '', string $title = ''): void {
         global $OUTPUT, $CFG;
 
-        // Include PDF library
+        // Include PDF library.
         require_once($CFG->libdir . '/pdflib.php');
 
-        // Get the master checklist
+        // Get the master checklist.
         $master = bookit_checklist_master::from_database($masterid);
 
         if (empty($filename)) {
@@ -605,17 +599,17 @@ class sharing_manager {
             $filename = clean_filename('master_checklist_export_' . $timestamp);
         }
 
-        // Prepare data structure manually to avoid renderer type issues
+        // Prepare data structure manually to avoid renderer type issues.
         $data = new \stdClass();
         $data->id = $master->id;
         $data->name = $master->name;
         $data->checklistcategories = [];
 
-        // Get all rooms and roles once for efficiency
+        // Get all rooms and roles once for efficiency.
         $allrooms = checklist_manager::get_bookit_rooms();
         $allroles = checklist_manager::get_bookit_roles();
 
-        // Create lookup arrays for faster access
+        // Create lookup arrays for faster access.
         $roomlookup = [];
         foreach ($allrooms as $room) {
             $roomlookup[$room->id] = $room;
@@ -626,7 +620,7 @@ class sharing_manager {
             $rolelookup[$role->id] = $role;
         }
 
-        // Get categories and items directly
+        // Get categories and items directly.
         foreach ($master->checklistcategories as $category) {
             $categorydata = new \stdClass();
             $categorydata->id = $category->id;
@@ -645,7 +639,7 @@ class sharing_manager {
                     $itemdata->roomnames = [];
                     $itemdata->rolenames = [];
 
-                    // Get room names
+                    // Get room names.
                     if (!empty($item->roomids)) {
                         foreach ($item->roomids as $roomid) {
                             if (isset($roomlookup[$roomid])) {
@@ -658,7 +652,7 @@ class sharing_manager {
                         }
                     }
 
-                    // Get role names
+                    // Get role names.
                     if (!empty($item->roleids)) {
                         foreach ($item->roleids as $roleid) {
                             if (isset($rolelookup[$roleid])) {
@@ -677,51 +671,50 @@ class sharing_manager {
             $data->checklistcategories[] = $categorydata;
         }
 
-        // Determine the PDF title: use custom title if provided, otherwise use master checklist name
-        $pdf_title = !empty($title) ? $title : $master->name;
+        // Determine the PDF title: use custom title if provided, otherwise use master checklist name.
+        $pdftitle = !empty($title) ? $title : $master->name;
 
-        // Add the title to template data so it can be used in the Mustache template
-        $data->title = $pdf_title;
+        // Add the title to template data so it can be used in the Mustache template.
+        $data->title = $pdftitle;
 
-        // Render the PDF template
+        // Render the PDF template.
         $html = $OUTPUT->render_from_template('mod_bookit/bookit_checklist_master_pdf', $data);
 
-        // Create PDF instance with right-aligned header text
+        // Create PDF instance with right-aligned header text.
         $pdf = new bookit_pdf();
 
-        // Create export timestamp
-        $exported_on = get_string('exportedon', 'mod_bookit', userdate(time(), '%A, %d %B %Y, %H:%M'));
+        // Create export timestamp.
+        $exportedon = get_string('exportedon', 'mod_bookit', userdate(time(), '%A, %d %B %Y, %H:%M'));
 
-        // Get logo configuration for PDF header
-        $logo_enabled = get_config('mod_bookit', 'pdf_logo_enable');
-        $logo_path = '';
+        // Get logo configuration for PDF header.
+        $logoenabled = get_config('mod_bookit', 'pdf_logo_enable');
+        $logopath = '';
 
-        if ($logo_enabled) {
-            $logo_source = get_config('mod_bookit', 'pdf_logo_source');
-            $logo_file = self::get_pdf_logo_file($logo_source);
+        if ($logoenabled) {
+            $logosource = get_config('mod_bookit', 'pdf_logo_source');
+            $logofile = self::get_pdf_logo_file($logosource);
 
-            if ($logo_file) {
-                $logo_path = '@' . $logo_file->get_content();
+            if ($logofile) {
+                $logopath = '@' . $logofile->get_content();
             } else {
-                $logo_path = 'pix/moodlelogo.png';
+                $logopath = 'pix/moodlelogo.png';
             }
         }
 
-        // Set header data with configurable logo and export timestamp (logo, logo_width, title, string, text_color, line_color)
-        $pdf->setHeaderData($logo_path, 25, $pdf_title, 'BookIt Module - ' . $exported_on, array(0,0,0), array(0,0,0));        // Set footer data (text_color, line_color)
-        $pdf->setFooterData(array(0,0,0), array(0,0,0));
+        $pdf->setHeaderData($logopath, 25, $pdftitle, 'BookIt Module - ' . $exportedon, [0, 0, 0], [0, 0, 0]);
+        $pdf->setFooterData([0, 0, 0], [0, 0, 0]);
 
-        // Set header and footer fonts
-        $pdf->setHeaderFont(array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-        $pdf->setFooterFont(array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+        // Set header and footer fonts.
+        $pdf->setHeaderFont([PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN]);
+        $pdf->setFooterFont([PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA]);
 
-        // Set margins
+        // Set margins.
         $pdf->setMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
         $pdf->setHeaderMargin(PDF_MARGIN_HEADER);
         $pdf->setFooterMargin(PDF_MARGIN_FOOTER);
 
-        // Set auto page breaks
-        $pdf->setAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+        // Set auto page breaks.
+        $pdf->setAutoPageBreak(true, PDF_MARGIN_BOTTOM);
 
         $pdf->AddPage();
         $pdf->writeHTML($html);
