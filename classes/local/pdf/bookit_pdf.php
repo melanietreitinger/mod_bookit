@@ -37,12 +37,11 @@ class bookit_pdf extends \pdf {
     /**
      * Override header method to right-align the text while keeping logo on left.
      *
-	 * This method is used to render the page header.
-	 * It is automatically called by AddPage() and could be overwritten in your own inherited class.
-	 * @public
-	 */
-    // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseMethod
-    public function Header() {
+     * This method is used to render the page header.
+     * It is automatically called by AddPage() and could be overwritten in your own inherited class.
+     * @return void
+     */
+    public function Header() { // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseMethod
         // phpcs:disable moodle.NamingConventions.ValidVariableName.VariableNameUnderscore
         if ($this->header_xobjid === false) {
             $this->header_xobjid = $this->startTemplate($this->w, $this->tMargin);
@@ -83,13 +82,13 @@ class bookit_pdf extends \pdf {
             $this->setX($header_x);
             $this->MultiCell($cw, $cell_height, $headerdata['string'], 0, 'R', 0, 1, '', '', true, 0, false, true, 0, 'T', false);
 
-            $this->setLineStyle(array(
+            $this->setLineStyle([
                 'width' => 0.85 / $this->k,
                 'cap' => 'butt',
                 'join' => 'miter',
                 'dash' => 0,
-                'color' => $headerdata['line_color']
-            ));
+                'color' => $headerdata['line_color'],
+            ]);
             $this->setY((2.835 / $this->k) + max($imgy, $this->y));
             if ($this->rtl) {
                 $this->setX($this->original_rMargin);
