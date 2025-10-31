@@ -201,14 +201,14 @@ if ($hassiteconfig) {
     // CHECKLIST – checklist management.
     $checklist = new admin_settingpage('mod_bookit_checklist', get_string('checklist', 'mod_bookit'));
 
-    // Top switcher (Checklist active).
+        // Top switcher (Checklist active).
     $checklist->add(new admin_setting_heading(
         'mod_bookit_nav_checklist',
         '',
         $buildbookitheadingselect('checklist')
     ));
 
-    // Master checklist link as a description with a prominent link.
+        // Master checklist link as a description with a prominent link.
     $masterchecklisturl = new moodle_url('/mod/bookit/master_checklist.php');
     $masterchecklistlink = html_writer::link(
         $masterchecklisturl,
@@ -221,6 +221,68 @@ if ($hassiteconfig) {
         '',
         $masterchecklistlink
     ));
+
+    $checklist->add(new admin_setting_heading(
+            'mod_bookit/pdf_checklist_heading',
+            get_string('settings_pdf_checklist_heading', 'mod_bookit'),
+            ''
+        ));
+
+    $checklist->add(new admin_setting_configcheckbox(
+            'mod_bookit/pdf_logo_enable',
+            get_string('settings_pdf_logo_enable', 'mod_bookit'),
+            get_string('settings_pdf_logo_enable_desc', 'mod_bookit'),
+            1
+        ));
+
+    $logosourceoptions = [
+            'site' => get_string('settings_pdf_logo_source_site', 'mod_bookit'),
+            'custom' => get_string('settings_pdf_logo_source_custom', 'mod_bookit'),
+        ];
+
+    $themeboostunionpath = $CFG->dirroot . '/theme/boost_union';
+
+    if (file_exists($themeboostunionpath) && is_dir($themeboostunionpath)) {
+            $logosourceoptions['theme'] = get_string('settings_pdf_logo_source_theme', 'mod_bookit');
+    }
+
+    $checklist->add(new admin_setting_configselect(
+            'mod_bookit/pdf_logo_source',
+            get_string('settings_pdf_logo_source', 'mod_bookit'),
+            get_string('settings_pdf_logo_source_desc', 'mod_bookit'),
+            'site',
+            $logosourceoptions
+    ));
+
+    $checklist->add(new admin_setting_configstoredfile(
+            'mod_bookit/pdf_logo_custom',
+            get_string('settings_pdf_logo_custom', 'mod_bookit'),
+            get_string('settings_pdf_logo_custom_desc', 'mod_bookit'),
+            'pdf_logo_custom',
+            0,
+            ['maxfiles' => 1, 'accepted_types' => ['.png', '.jpg', '.jpeg']]
+    ));
+
+    $checklist->hide_if('mod_bookit/pdf_logo_custom', 'mod_bookit/pdf_logo_source', 'neq', 'custom');
+
+    $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
+
+    if (empty($installhelperfinished)) {
+        $installurl = new moodle_url('/mod/bookit/install_helper_run.php', ['sesskey' => sesskey()]);
+        $description = new lang_string('runinstallhelperinfo', 'mod_bookit');
+        $description .= \core\output\html_writer::empty_tag('br');
+        $description .= \core\output\html_writer::link($installurl,
+                new lang_string('runinstallhelper', 'mod_bookit'),
+                ['class' => 'btn btn-secondary mt-3', 'role' => 'button']);
+
+        $runinstallhelper = new admin_setting_heading(
+            'mod_bookit/runinstallhelper',
+            new lang_string('runinstallhelper', 'mod_bookit'),
+            $description
+        );
+
+        $checklist->add($runinstallhelper);
+    }
 
     // Register under hidden container.
     $ADMIN->add('mod_bookit_hidden', $checklist);
