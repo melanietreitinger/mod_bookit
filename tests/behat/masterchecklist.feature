@@ -204,7 +204,7 @@ Feature: Edit the master checklist
     And I press "Save changes"
     And I should see "My Test Item"
     And I wait "1" seconds
-        And I click on "add-checklist-item-button" "button"
+    And I click on "add-checklist-item-button" "button"
     And I should see "Checklist item"
     And I set the following fields to these values:
       | Checklist item name      | My Second Test Item   |
