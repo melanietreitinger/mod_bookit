@@ -32,15 +32,11 @@ export default class extends BaseComponent {
             {watch: 'checklistcategories:created', handler: this._handleCategoryCreatedEvent},
             {watch: 'checklistcategories:deleted', handler: this._handleCategoryDeletedEvent},
             {watch: 'checklistcategories.name:updated', handler: this._handleCategoryNameUpdatedEvent},
-
             {watch: 'checklistitems:created', handler: this._handleItemCreatedEvent},
             {watch: 'checklistitems:deleted', handler: this._handleItemDeletedEvent},
-            // {watch: 'checklistitems.categoryid:updated', handler: this._handleItemCategoryUpdatedEvent},
             {watch: 'checklistitems.title:updated', handler: this._replaceRenderedItem},
             {watch: 'checklistitems.roomids:updated', handler: this._replaceRenderedItem},
             {watch: 'checklistitems.roleids:updated', handler: this._replaceRenderedItem},
-            // {watch: 'activeRole:updated', handler: this._handleRoleUpdate},
-            // {watch: 'activeRoom:updated', handler: this._handleRoomUpdate},
             {watch: 'activeRoom:created', handler: this._handleFilterUpdate},
         ];
     }
@@ -157,7 +153,7 @@ export default class extends BaseComponent {
         modalForm.show();
     }
 
-    async _handleExportChecklistButtonClick(e) {
+    async _handleExportChecklistButtonClick() {
         // Get masterid from reactive state instead of dataset to avoid timing issues
         const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
 
@@ -172,7 +168,7 @@ export default class extends BaseComponent {
             saveButtonText: await getString('export', 'mod_bookit'),
         });
 
-        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async (response) => {
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async(response) => {
             if (response.detail.success && response.detail.downloadurl) {
                 window.open(response.detail.downloadurl, '_blank');
                 Toast.add(await getString('export_success', 'mod_bookit'), {type: 'success'});
@@ -184,7 +180,7 @@ export default class extends BaseComponent {
         modalForm.show();
     }
 
-    async _handleImportChecklistButtonClick(e) {
+    async _handleImportChecklistButtonClick() {
         // Get masterid from reactive state instead of dataset to avoid timing issues
         const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
 
@@ -199,7 +195,7 @@ export default class extends BaseComponent {
             saveButtonText: await getString('import', 'mod_bookit'),
         });
 
-        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async (response) => {
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async(response) => {
             if (response.detail.success) {
                 Toast.add(response.detail.message || await getString('importsuccessful', 'mod_bookit'), {type: 'success'});
                 if (response.detail.reload) {
@@ -232,10 +228,10 @@ export default class extends BaseComponent {
                 type: 'category',
             })
             .then(({html, js}) => {
-                Templates.appendNodeContents(this.getElement(this.selectors.TABLE), html, js);
+                return Templates.appendNodeContents(this.getElement(this.selectors.TABLE), html, js);
             })
-            .then(async () => {
-                Toast.add(await getString('checklistcategorysuccess', 'mod_bookit'),
+            .then(async() => {
+                await Toast.add(await getString('checklistcategorysuccess', 'mod_bookit'),
                     {type: 'success'});
 
                 if (this.reactive.state.activeRole.id !== 0 || this.reactive.state.activeRoom.id !== 0) {
@@ -246,11 +242,15 @@ export default class extends BaseComponent {
                     });
 
                     const categoryComponent = categoryResults.find(comp => typeof comp._handleFilterUpdate === 'function');
-                    categoryComponent._handleFilterUpdate(event);
+                    if (categoryComponent) {
+                        categoryComponent._handleFilterUpdate(event);
+                    }
                 }
+                return;
             })
             .catch(error => {
-                window.console.error('Error rendering checklist item:', error);
+                window.console.error('Error rendering checklist category:', error);
+                return;
             });
     }
 
@@ -298,10 +298,10 @@ export default class extends BaseComponent {
                 type: 'item',
             })
             .then(({html, js}) => {
-                Templates.appendNodeContents(targetElement, html, js);
+                return Templates.appendNodeContents(targetElement, html, js);
             })
-            .then(async () => {
-                Toast.add(await getString('checklistitemsuccess', 'mod_bookit'),
+            .then(async() => {
+                await Toast.add(await getString('checklistitemsuccess', 'mod_bookit'),
                     {type: 'success'});
                 window.console.log('ITEM IS RENDERED');
 
@@ -318,9 +318,11 @@ export default class extends BaseComponent {
                         categoryComponent._handleFilterUpdate(event);
                     }
                 }
+                return;
             })
             .catch(error => {
                 window.console.error('Error rendering checklist item:', error);
+                return;
             });
     }
 
@@ -366,10 +368,10 @@ export default class extends BaseComponent {
 
             Templates.renderForPromise(templateName, templateData)
             .then(({html, js}) => {
-                Templates.replaceNode(targetElement, html, js);
+                return Templates.replaceNode(targetElement, html, js);
             })
-            .then(async () => {
-                Toast.add(await getString('checklistitemupdatesuccess', 'mod_bookit'),
+            .then(async() => {
+                return Toast.add(await getString('checklistitemupdatesuccess', 'mod_bookit'),
                     {type: 'success'});
             })
             .catch(error => {
@@ -410,15 +412,14 @@ export default class extends BaseComponent {
                 type: 'category',
             })
             .then(({html, js}) => {
-                Templates.replaceNode(targetElement, html, js);
-
+                return Templates.replaceNode(targetElement, html, js);
             })
-            .then(async () => {
-                Toast.add(await getString('checklistcategoryupdatesuccess', 'mod_bookit'),
+            .then(async() => {
+                await Toast.add(await getString('checklistcategoryupdatesuccess', 'mod_bookit'),
                     {type: 'success'});
-                    this.dispatchEvent(this.events.categoryRendered, {
-                        categoryId: event.element.id
-                    });
+                return this.dispatchEvent(this.events.categoryRendered, {
+                    categoryId: event.element.id
+                });
             })
             .catch(error => {
                 window.console.error('Error rendering checklist category:', error);
@@ -445,7 +446,7 @@ export default class extends BaseComponent {
 
                 if (activeRoom === 0) {
 
-                    if (parseInt(itemElement.dataset.bookitChecklistitemRole) === event.element.id ||  event.element.id === 0) {
+                    if (parseInt(itemElement.dataset.bookitChecklistitemRole) === event.element.id || event.element.id === 0) {
                         itemElement.classList.remove('d-none');
                         if (!hasVisibleItems) {
                             hasVisibleItems = true;
@@ -476,69 +477,5 @@ export default class extends BaseComponent {
             }
 
         });
-
     }
-
-    _handleRoomUpdate(event) {
-
-        const allCategoryElements = document.querySelectorAll(this.selectors.ALL_CATEGORY_TABLE_ROWS);
-        allCategoryElements.forEach(categoryElement => {
-
-            const category = this.reactive.state.checklistcategories.get(categoryElement.dataset.bookitCategoryId);
-
-            const items = [...category.items];
-
-            var hasVisibleItems = false;
-
-            const activeRole = this.reactive.state.activeRole.id;
-
-            // items.forEach(itemId => {
-
-            //     const stateItem = this.reactive.state.checklistitems.get(itemId);
-
-            //     var isInRoom = false;
-
-            //     const roomIds = stateItem.roomids;
-
-            //     if (roomIds.includes(event.element.id.toString())) {
-            //         isInRoom = true;
-            //         window.console.log('ITEM IS IN ROOM: ', itemId);
-            //     } else {
-            //         window.console.log('ITEM IS NOT IN ROOM: ', itemId);
-            //     }
-
-            //     const itemElement = document.querySelector(`tr[data-bookit-checklistitem-id="${itemId}"]`);
-
-            //     if (isInRoom) {
-            //         if (activeRole === 0 || parseInt(itemElement.dataset.bookitChecklistitemRole) === activeRole) {
-            //             itemElement.classList.remove('d-none');
-            //             if (!hasVisibleItems) {
-            //                 hasVisibleItems = true;
-            //             }
-            //         } else {
-            //             itemElement.classList.add('d-none');
-            //         }
-            //     } else {
-
-            //         if (event.element.id === 0 &&
-            //             (parseInt(itemElement.dataset.bookitChecklistitemRole) === activeRole || activeRole === 0)) {
-            //             itemElement.classList.remove('d-none');
-            //             if (!hasVisibleItems) {
-            //                 hasVisibleItems = true;
-            //             }
-            //         } else {
-            //             itemElement.classList.add('d-none');
-            //         }
-            //     }
-            // });
-
-            // if (!hasVisibleItems) {
-            //     categoryElement.classList.add('d-none');
-            // } else {
-            //     categoryElement.classList.remove('d-none');
-            // }
-
-        });
-    }
-
 }

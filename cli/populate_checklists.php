@@ -33,7 +33,7 @@ require_once($CFG->dirroot . '/mod/bookit/classes/local/install_helper.php');
 use mod_bookit\local\install_helper;
 
 // Get cli options.
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     [
         'help' => false,
         'force' => false,
