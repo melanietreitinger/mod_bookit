@@ -1,6 +1,6 @@
-import { BaseComponent, DragDrop } from 'core/reactive';
-import { masterChecklistReactiveInstance } from 'mod_bookit/master_checklist_reactive';
-import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
+import {BaseComponent, DragDrop} from 'core/reactive';
+import {masterChecklistReactiveInstance} from 'mod_bookit/master_checklist_reactive';
+import {SELECTORS} from 'mod_bookit/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import {getString} from 'core/str';
 import ChecklistHelper from 'mod_bookit/checklist_helper';
@@ -13,10 +13,12 @@ export default class extends BaseComponent {
 
         const categoryEditBtnSelector = 'EDIT_CHECKLISTCATEGORY_BTN_' + descriptor.element.dataset.bookitCategoryId;
 
-        this.selectors[categoryEditBtnSelector] = `#edit-checklistcategory-${descriptor.element.dataset.bookitCategoryId}`;
+        this.selectors[categoryEditBtnSelector] =
+            `#edit-checklistcategory-${descriptor.element.dataset.bookitCategoryId}`;
 
         const categoryTbodySelector = 'CATEGORY_TBODY_' + descriptor.element.dataset.bookitCategoryId;
-        this.selectors[categoryTbodySelector] = `#bookit-master-checklist-tbody-category-${descriptor.element.dataset.bookitCategoryId}`;
+        this.selectors[categoryTbodySelector] =
+            `#bookit-master-checklist-tbody-category-${descriptor.element.dataset.bookitCategoryId}`;
     }
 
     static init(target, selectors) {
@@ -38,11 +40,11 @@ export default class extends BaseComponent {
             {watch: 'checklistitems.roomids:updated', handler: this._handleFilterUpdate},
             {watch: 'checklistitems.roleids:updated', handler: this._handleFilterUpdate},
 
-            // item rooms and roles watchers
+            // Item rooms and roles watchers
         ];
     }
 
-    stateReady(state) {
+    stateReady() {
 
         this.dragdrop = new DragDrop(this);
 
@@ -66,33 +68,35 @@ export default class extends BaseComponent {
         }
     }
 
-    validateDropData(dropdata) {
+    validateDropData() {
         return true;
     }
 
-    async _handleEditChecklistCategoryButtonClick(event) {
+    async _handleEditChecklistCategoryButtonClick() {
         const modalForm = new ModalForm({
             formClass: 'mod_bookit\\form\\edit_checklist_category_form',
             moduleName: 'mod_bookit/modal_delete_save_cancel',
             args: {
                 id: this.element.dataset.bookitCategoryId,
                 masterid: 1,
-                checklistitems: JSON.stringify(this.reactive.state.checklistcategories.get(this.element.dataset.bookitCategoryId).items),
+                checklistitems: JSON.stringify(
+                    this.reactive.state.checklistcategories.get(this.element.dataset.bookitCategoryId).items
+                ),
             },
             modalConfig: {
                 title: await getString('checklistcategory', 'mod_bookit'),
             },
-        })
+        });
 
         modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (response) => {
             this.reactive.stateManager.processUpdates(response.detail);
         });
 
-        modalForm.addEventListener(modalForm.events.LOADED, (response) => {
+        modalForm.addEventListener(modalForm.events.LOADED, () => {
 
             const deleteButton = modalForm.modal.getRoot().find('button[data-action="delete"]');
 
-            deleteButton.on('click', async (e) => {
+            deleteButton.on('click', async(e) => {
                 e.preventDefault();
                 const confirmTitle = await getString('confirm', 'core');
                 const confirmMessage = await getString('areyousure', 'core');
@@ -105,16 +109,15 @@ export default class extends BaseComponent {
                     () => {
                         modalForm.getFormNode().querySelector('input[name="action"]').value = 'delete';
                         modalForm.submitFormAjax();
-                    },
-                    () => {}
+                    }
                 );
             });
         });
 
         modalForm.show();
-    };
+    }
 
-    _refreshEditButtonListener(event) {
+    _refreshEditButtonListener() {
         this.removeAllEventListeners();
 
         const categoryEditBtnSelector = 'EDIT_CHECKLISTCATEGORY_BTN_' + this.element.dataset.bookitCategoryId;
@@ -125,20 +128,20 @@ export default class extends BaseComponent {
         });
     }
 
-    drop(dropdata, event) {
+    drop(dropdata) {
         switch (dropdata.type) {
             case 'item':
-                this._handleItemDrop(dropdata, event);
+                this._handleItemDrop(dropdata);
                 break;
             case 'category':
-                this._handleCategoryDrop(dropdata, event);
+                this._handleCategoryDrop(dropdata);
                 break;
             default:
                 throw new Error(`Unknown drop type: ${dropdata.type}`);
         }
     }
 
-    showDropZone(dropdata, event) {
+    showDropZone() {
         const root = document.querySelector('html');
         const primaryColor = getComputedStyle(root).getPropertyValue('--primary');
 
@@ -146,13 +149,13 @@ export default class extends BaseComponent {
         this.element.style.transition = 'box-shadow 0.1s ease';
     }
 
-    hideDropZone(dropdata, event) {
+    hideDropZone() {
         this.element.style.boxShadow = '';
         this.element.style.backgroundBlendMode = '';
         this.element.style.transition = '';
     }
 
-    _handleItemDrop(dropdata, event) {
+    _handleItemDrop(dropdata) {
 
         const categoryObject = this.reactive.state.checklistcategories.get(this.element.dataset.bookitCategoryId);
 
@@ -179,7 +182,7 @@ export default class extends BaseComponent {
     }
 
 
-    _handleCategoryDrop(dropdata, event) {
+    _handleCategoryDrop(dropdata) {
 
         dropdata.targetId = parseInt(this.element.dataset.bookitCategoryId);
         dropdata.targetParentId = parseInt(this.element.dataset.bookitCategoryMasterid);
@@ -196,7 +199,7 @@ export default class extends BaseComponent {
 
     }
 
-     _handleFilterUpdate(event) {
+     _handleFilterUpdate() {
         window.console.log('handle filter update for category', this.element.dataset.bookitCategoryId);
         const components = this.reactive.components;
         const results = this.helper.findComponents(components, {
@@ -217,7 +220,7 @@ export default class extends BaseComponent {
         } else {
 
             var hasVisibleItems = false;
-            results.forEach((component, index) => {
+            results.forEach((component) => {
                 const itemIsVisible = component.shouldBeVisible();
                 if (itemIsVisible) {
                     hasVisibleItems = true;
