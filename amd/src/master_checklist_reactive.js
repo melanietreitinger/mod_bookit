@@ -1,4 +1,4 @@
-import { Reactive } from 'core/reactive';
+import {Reactive} from 'core/reactive';
 import Mutations from 'mod_bookit/master_checklist_mutations';
 
 export const SELECTORS = {
@@ -21,7 +21,7 @@ export const SELECTORS = {
         };
 
 
-const EVENTNAME = 'mod_bookit:master_checklist_state_event'
+const EVENTNAME = 'mod_bookit:master_checklist_state_event';
 
 export const masterChecklistReactiveInstance = new Reactive({
         eventName: EVENTNAME,
@@ -30,11 +30,17 @@ export const masterChecklistReactiveInstance = new Reactive({
         name: 'Moodle Bookit Master Checklist',
     });
 
-export const init = (elementId) => {
+export const init = () => {
 
     loadState(masterChecklistReactiveInstance);
-}
+};
 
+/**
+ * Dispatch the master checklist state event.
+ *
+ * @param {Object} detail - The event detail.
+ * @param {HTMLElement} target - The target element.
+ */
 function dispatchMasterChecklistStateEvent(detail, target) {
 
     window.console.log('dispatch master checklist state event function');
@@ -84,17 +90,19 @@ const loadState = async(reactive) => {
             id: 0,
         },
         activeRoom: [
-            { id: 0, name: 'No selection' }
+            {id: 0, name: 'No selection'}
         ],
     };
     const checklistCategoryRows = document.querySelectorAll(SELECTORS.ALL_CATEGORY_TABLE_ROWS);
     checklistCategoryRows.forEach(categoryRow => {
 
-        const categoryItemRows = document.querySelectorAll(`tr[data-bookit-checklistitem-categoryid="${categoryRow.dataset.bookitCategoryId}"]`);
+        const categoryItemRows = document.querySelectorAll(
+            `tr[data-bookit-checklistitem-categoryid="${categoryRow.dataset.bookitCategoryId}"]`
+        );
 
         const checklistItems = [];
         categoryItemRows.forEach(itemRow => {
-            checklistItems.push(parseInt(itemRow.dataset.bookitChecklistitemId))
+            checklistItems.push(parseInt(itemRow.dataset.bookitChecklistitemId));
         });
 
         stateData.checklistcategories.push({
@@ -113,7 +121,7 @@ const loadState = async(reactive) => {
         const roomNames = [];
         roomElements.forEach(roomElement => {
 
-            // const itemId = itemRow.dataset.bookitChecklistitemId;
+            // Const itemId = itemRow.dataset.bookitChecklistitemId;
 
             roomNames.push({
                 'roomid': roomElement.dataset.bookitChecklistitemTabledataRoomId,

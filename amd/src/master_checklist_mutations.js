@@ -1,8 +1,8 @@
 import Ajax from 'core/ajax';
 
 export default class {
-    masterChecklistStateEvent(stateManager, data) {
-
+    masterChecklistStateEvent() {
+        // This method is intentionally empty - it's a placeholder for state events.
     }
 
     _callDynamicForm(stateManager, data, processUpdates = true) {
@@ -21,6 +21,7 @@ export default class {
             if (processUpdates) {
                 stateManager.processUpdates(JSON.parse(response.data));
             }
+            return;
         })
         .catch(exception => {
             window.console.error('AJAX error:', exception);
@@ -121,6 +122,9 @@ export default class {
 
                 currentItems.splice(newTargetIndex + 1, 0, idToMove);
             } else if (currentIndex !== -1) {
+                // Handle case where target is not found but current index exists.
+                currentItems.splice(currentIndex, 1);
+                currentItems.push(idToMove);
             }
 
             category.items = currentItems;
@@ -183,7 +187,7 @@ export default class {
             categoryOrder.push(idToMove);
         }
 
-        const updatedCategoryOrder =  categoryOrder.join(',');
+        const updatedCategoryOrder = categoryOrder.join(',');
 
         const formDataObj = {
             id: data.parentId,

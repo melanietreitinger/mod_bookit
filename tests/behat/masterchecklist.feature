@@ -31,9 +31,9 @@ Feature: Edit the master checklist
     Then I should see "My Test Category"
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   Scenario Outline: Admin and Service-Team can edit a master checklist category
     Given I log in as "<user>"
@@ -46,9 +46,9 @@ Feature: Edit the master checklist
     Then I should see "Exam Preparation EDITED"
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   Scenario Outline: Admin and Service-Team can delete a master checklist category
     Given I log in as "<user>"
@@ -62,9 +62,9 @@ Feature: Edit the master checklist
     Then I should not see "Exam Preparation"
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   Scenario Outline: Admin and Service-Team can create a new master checklist item
     Given I log in as "<user>"
@@ -80,9 +80,9 @@ Feature: Edit the master checklist
     Then I should see "My Test Item"
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   Scenario Outline: Admin and Service-Team can edit a master checklist item
     Given I log in as "<user>"
@@ -121,9 +121,9 @@ Feature: Edit the master checklist
     Then the field "before_due_messagetext[text]" does not match value "This is my behat notification edit test message. Cool."
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   Scenario Outline: Admin and Service-Team can delete a master checklist item
     Given I log in as "<user>"
@@ -137,9 +137,9 @@ Feature: Edit the master checklist
     Then I should not see "Reserve room"
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   Scenario Outline: Edited notification slot messages are preserved regardless if the slot is active or not
     Given I log in as "<user>"
@@ -167,9 +167,9 @@ Feature: Edit the master checklist
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   Scenario Outline: Admin and Service-Team can filter master checklist items by role and rooms
     Given I log in as "<user>"
@@ -220,9 +220,9 @@ Feature: Edit the master checklist
     Then I should see "My Second Test Item"
 
     Examples:
-        | user         |
-        | admin        |
-        | serviceteam1 |
+      | user         |
+      | admin        |
+      | serviceteam1 |
 
   # The existing drag and drop test steps are not sufficient for this use case and do not work properly.
   # Currently, manual testing is required for drag and drop.

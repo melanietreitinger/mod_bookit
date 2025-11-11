@@ -1,8 +1,8 @@
-import { BaseComponent, DragDrop } from 'core/reactive';
-import { masterChecklistReactiveInstance } from 'mod_bookit/master_checklist_reactive';
-import { SELECTORS } from 'mod_bookit/master_checklist_reactive';
+import {BaseComponent, DragDrop} from 'core/reactive';
+import {masterChecklistReactiveInstance} from 'mod_bookit/master_checklist_reactive';
+import {SELECTORS} from 'mod_bookit/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
-import { getString } from 'core/str';
+import {getString} from 'core/str';
 import Templates from 'core/templates';
 import Notification from 'core/notification';
 
@@ -28,7 +28,7 @@ export default class extends BaseComponent {
         return [];
     }
 
-    stateReady(state) {
+    stateReady() {
 
         this.dragdrop = new DragDrop(this);
 
@@ -49,7 +49,7 @@ export default class extends BaseComponent {
         }
     }
 
-    validateDropData(dropdata) {
+    validateDropData() {
         return true;
     }
 
@@ -67,17 +67,18 @@ export default class extends BaseComponent {
     }
 
 
-    showDropZone(dropdata, event) {
+    showDropZone(dropdata) {
 
         const root = document.querySelector('html');
         const primaryColor = getComputedStyle(root).getPropertyValue('--primary');
 
         switch (dropdata.type) {
-            case 'item':
-            this.element.style.boxShadow = `0px -5px 0px 0px ${primaryColor} inset`;
-            this.element.style.transition = 'box-shadow 0.1s ease';
+            case 'item': {
+                this.element.style.boxShadow = `0px -5px 0px 0px ${primaryColor} inset`;
+                this.element.style.transition = 'box-shadow 0.1s ease';
                 break;
-            case 'category':
+            }
+            case 'category': {
                 const itemParentId = parseInt(this.element.dataset.bookitChecklistitemCategoryid);
                 const categoryParentElement = document.getElementById(`bookit-master-checklist-tbody-category-${itemParentId}`);
                 var isActive = parseInt(categoryParentElement.dataset.bookitCategoryActive || 0);
@@ -91,20 +92,22 @@ export default class extends BaseComponent {
                 categoryLastChild.style.boxShadow = `0px -5px 0px 0px ${primaryColor} inset`;
                 categoryLastChild.style.transition = 'box-shadow 0.1s ease';
                 break;
+            }
             default:
                 throw new Error(`Unknown drop type: ${dropdata.type}`);
         }
 
     }
 
-    hideDropZone(dropdata, event) {
+    hideDropZone(dropdata) {
 
         switch (dropdata.type) {
-            case 'item':
+            case 'item': {
                 this.element.style.boxShadow = '';
                 this.element.style.transition = '';
                 break;
-            case 'category':
+            }
+            case 'category': {
                 const itemParentId = parseInt(this.element.dataset.bookitChecklistitemCategoryid);
                 const categoryParentElement = document.getElementById(`bookit-master-checklist-tbody-category-${itemParentId}`);
                 const categoryLastChild = categoryParentElement.lastElementChild;
@@ -114,13 +117,14 @@ export default class extends BaseComponent {
                     categoryLastChild.style.transition = '';
                 }
                 break;
+            }
             default:
                 throw new Error(`Unknown drop type: ${dropdata.type}`);
         }
 
     }
 
-    _handleItemDrop(dropdata, event) {
+    _handleItemDrop(dropdata) {
         dropdata.targetId = parseInt(this.element.dataset.bookitChecklistitemId);
         dropdata.targetParentId = parseInt(this.element.dataset.bookitChecklistitemCategoryid);
 
@@ -191,7 +195,8 @@ export default class extends BaseComponent {
 
             if (parentId !== updatedParentId) {
 
-                const targetParentCategoryObject = this.reactive.state.checklistcategories.get(response.detail[0].fields.categoryid);
+                const targetParentCategoryObject =
+                    this.reactive.state.checklistcategories.get(response.detail[0].fields.categoryid);
                 const copiedArray = [...targetParentCategoryObject.items];
                 const lastItemOfParentCategoryId = copiedArray.pop();
 
@@ -201,22 +206,23 @@ export default class extends BaseComponent {
                     parentId: parentId,
                     targetId: lastItemOfParentCategoryId,
                     targetParentId: updatedParentId,
-                }
+                };
 
                 this.reactive.dispatch('reOrderCategoryItems', data);
                 this.element.dataset.bookitChecklistitemCategoryid = data.targetParentId;
 
-                const targetParentElement = document.getElementById(`bookit-master-checklist-tbody-category-${data.targetParentId}`);
+                const targetParentElement =
+                    document.getElementById(`bookit-master-checklist-tbody-category-${data.targetParentId}`);
                 targetParentElement.append(this.element);
             }
 
 
         });
 
-        modalForm.addEventListener(modalForm.events.LOADED, (response) => {
+        modalForm.addEventListener(modalForm.events.LOADED, () => {
             const deleteButton = modalForm.modal.getRoot().find('button[data-action="delete"]');
 
-            deleteButton.on('click', async (e) => {
+            deleteButton.on('click', async(e) => {
                 e.preventDefault();
 
                 const confirmTitle = await getString('confirm', 'core');
@@ -230,8 +236,7 @@ export default class extends BaseComponent {
                     () => {
                         modalForm.getFormNode().querySelector('input[name="action"]').value = 'delete';
                         modalForm.submitFormAjax();
-                    },
-                    () => {}
+                    }
                 );
 
             });
@@ -246,7 +251,7 @@ export default class extends BaseComponent {
 
         });
 
-        modalForm.addEventListener(modalForm.events.SERVER_VALIDATION_ERROR, (response) => {
+        modalForm.addEventListener(modalForm.events.SERVER_VALIDATION_ERROR, () => {
             setTimeout(() => {
                 this._addResetButtonsToNotificationEditors(modalForm);
                 this._addRequiredIconsToNotificationFields(modalForm);
@@ -321,6 +326,7 @@ export default class extends BaseComponent {
             const iconHtml = result.html;
             const requiredIconHtml = `<div class="text-danger" title="Required" aria-hidden="true">${iconHtml}</div>`;
             anchorElement.insertAdjacentHTML('beforebegin', requiredIconHtml);
+            return;
         })
         .catch((error) => {
             window.console.log(`Template error for ${type}_${fieldType}:`, error);
@@ -338,7 +344,7 @@ export default class extends BaseComponent {
             const resetButton = modalForm.getFormNode().querySelector(`button[name="${type}_reset"]`);
 
             if (resetButton) {
-                resetButton.addEventListener('click', async (e) => {
+                resetButton.addEventListener('click', async(e) => {
                     e.preventDefault();
 
                     try {
@@ -349,10 +355,9 @@ export default class extends BaseComponent {
                             confirmTitle,
                             confirmMessage,
                             await getString('reset', 'core'),
-                            async () => {
+                            async() => {
                                 await this._performReset(modalForm, type);
-                            },
-                            () => {}
+                            }
                         );
 
                     } catch (error) {
@@ -376,8 +381,8 @@ export default class extends BaseComponent {
 
         if (textarea) {
             textarea.value = defaultMessage;
-            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+            textarea.dispatchEvent(new Event('input', {bubbles: true}));
+            textarea.dispatchEvent(new Event('change', {bubbles: true}));
 
             if (window.M && window.M.editor_atto && textarea.id) {
                 const editorInstance = window.M.editor_atto.get(textarea.id);
@@ -402,7 +407,7 @@ export default class extends BaseComponent {
     shouldBeVisible() {
         const activeRooms = this.reactive.state.activeRoom;
         const activeRoleId = this.reactive.state.activeRole.id;
-        const itemId = parseInt(this.element.dataset.bookitChecklistitemId)
+        const itemId = parseInt(this.element.dataset.bookitChecklistitemId);
         const stateItem = this.reactive.state.checklistitems.get(itemId);
         const roomIds = stateItem.roomids;
         const roleIds = stateItem.roleids;
