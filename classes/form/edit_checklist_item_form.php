@@ -45,6 +45,26 @@ use mod_bookit\local\entity\bookit_notification_type;
  */
 class edit_checklist_item_form extends dynamic_form {
     /**
+     * Convert form field name to object property name.
+     *
+     * Converts snake_case form field names (e.g., 'before_due') to camelCase property names (e.g., 'beforedue').
+     *
+     * @param string $fieldname The form field name
+     * @param string $suffix Optional suffix to append (e.g., 'time', 'messagetext', 'recipient', 'id')
+     * @return string The object property name
+     */
+    private function get_property_name(string $fieldname, string $suffix = ''): string {
+        // Remove underscores to convert to camelCase.
+        $propertyname = str_replace('_', '', $fieldname);
+
+        if ($suffix) {
+            $propertyname .= $suffix;
+        }
+
+        return $propertyname;
+    }
+
+    /**
      * Form definition.
      *
      * This method defines the form elements for checklist item editing.
@@ -254,13 +274,21 @@ class edit_checklist_item_form extends dynamic_form {
                 $slottype = bookit_notification_type::tryFrom($slot->type);
 
                 if (array_search($slottype, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
-                    $item->{$slottype->value . '_time'}['number'] = $slot->duedaysoffset;
-                    $item->{$slottype->value . '_time'}['timeunit'] = DAYSECS;
+                    $timeprop = $this->get_property_name($slottype->value, 'time');
+                    $item->{$timeprop}['number'] = $slot->duedaysoffset;
+                    $item->{$timeprop}['timeunit'] = DAYSECS;
                 }
-                $item->{$slottype->value . '_id'} = $slot->id;
-                $item->{$slottype->value} = $slot->isactive;
-                $item->{$slottype->value . '_recipient'} = json_decode($slot->roleids, true);
-                $item->{$slottype->value . '_messagetext'}['text'] = $slot->messagetext;
+                $idprop = $this->get_property_name($slottype->value, 'id');
+                $item->{$idprop} = $slot->id;
+
+                $mainprop = $this->get_property_name($slottype->value);
+                $item->{$mainprop} = $slot->isactive;
+
+                $recipientprop = $this->get_property_name($slottype->value, 'recipient');
+                $item->{$recipientprop} = json_decode($slot->roleids, true);
+
+                $messageprop = $this->get_property_name($slottype->value, 'messagetext');
+                $item->{$messageprop}['text'] = $slot->messagetext;
             }
 
             if ($hasactiveslots) {
@@ -270,7 +298,29 @@ class edit_checklist_item_form extends dynamic_form {
 
         $item->duedate = $item->duedaysrelation ?? 'none';
 
-        $this->set_data($item);
+        // Transform object property names to form field names.
+        $formdata = clone $item;
+        foreach (bookit_notification_type::cases() as $case) {
+            $fieldname = $case->value; // E.g., 'before_due'.
+            $propname = $this->get_property_name($fieldname); // E.g., 'beforedue'.
+
+            // Map camelCase properties to underscore form fields.
+            if (isset($item->{$propname})) {
+                $formdata->{$fieldname} = $item->{$propname};
+            }
+
+            $suffixes = ['time', 'messagetext', 'recipient', 'id'];
+            foreach ($suffixes as $suffix) {
+                $fieldnamewithsuffix = $fieldname . '_' . $suffix;
+                $propnamewithsuffix = $this->get_property_name($fieldname, $suffix);
+
+                if (isset($item->{$propnamewithsuffix})) {
+                    $formdata->{$fieldnamewithsuffix} = $item->{$propnamewithsuffix};
+                }
+            }
+        }
+
+        $this->set_data($formdata);
     }
 
     /**

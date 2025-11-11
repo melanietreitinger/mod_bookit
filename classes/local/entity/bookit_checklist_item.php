@@ -48,81 +48,81 @@ class bookit_checklist_item implements \renderable, \templatable {
     /** @var int|null Order of the checklist item */
     public ?int $order;
 
-    // Notification properties
-    /** @var bool|null Before due notification enabled */
-    public ?bool $before_due = null;
+    // Notification properties.
+    /** @var bool|null Before due notification enabled. */
+    public ?bool $beforedue = null;
 
-    /** @var array|null Before due notification time duration */
-    public ?array $before_due_time = null;
+    /** @var array|null Before due notification time duration. */
+    public ?array $beforeduetime = null;
 
-    /** @var array|null Before due notification message text */
-    public ?array $before_due_messagetext = null;
+    /** @var array|null Before due notification message text. */
+    public ?array $beforeduemessagetext = null;
 
-    /** @var array|null Before due notification recipient */
-    public ?array $before_due_recipient = null;
+    /** @var array|null Before due notification recipient. */
+    public ?array $beforeduerecipient = null;
 
-    /** @var int|null Before due notification slot ID */
-    public ?int $before_due_id = null;
+    /** @var int|null Before due notification slot ID. */
+    public ?int $beforedueid = null;
 
-    /** @var bool|null Before exam notification enabled */
-    public ?bool $before_exam = null;
+    /** @var bool|null Before exam notification enabled. */
+    public ?bool $beforeexam = null;
 
-    /** @var array|null Before exam notification time duration */
-    public ?array $before_exam_time = null;
+    /** @var array|null Before exam notification time duration. */
+    public ?array $beforeexamtime = null;
 
-    /** @var array|null Before exam notification message text */
-    public ?array $before_exam_messagetext = null;
+    /** @var array|null Before exam notification message text. */
+    public ?array $beforeexammessagetext = null;
 
-    /** @var array|null Before exam notification recipient */
-    public ?array $before_exam_recipient = null;
+    /** @var array|null Before exam notification recipient. */
+    public ?array $beforeexamrecipient = null;
 
-    /** @var int|null Before exam notification slot ID */
-    public ?int $before_exam_id = null;
+    /** @var int|null Before exam notification slot ID. */
+    public ?int $beforeexamid = null;
 
-    /** @var bool|null After exam notification enabled */
-    public ?bool $after_exam = null;
+    /** @var bool|null After exam notification enabled. */
+    public ?bool $afterexam = null;
 
-    /** @var array|null After exam notification time duration */
-    public ?array $after_exam_time = null;
+    /** @var array|null After exam notification time duration. */
+    public ?array $afterexamtime = null;
 
-    /** @var array|null After exam notification message text */
-    public ?array $after_exam_messagetext = null;
+    /** @var array|null After exam notification message text. */
+    public ?array $afterexammessagetext = null;
 
-    /** @var array|null After exam notification recipient */
-    public ?array $after_exam_recipient = null;
+    /** @var array|null After exam notification recipient. */
+    public ?array $afterexamrecipient = null;
 
-    /** @var int|null After exam notification slot ID */
-    public ?int $after_exam_id = null;
+    /** @var int|null After exam notification slot ID. */
+    public ?int $afterexamid = null;
 
-    /** @var bool|null During exam notification enabled */
-    public ?bool $during_exam = null;
+    /** @var bool|null During exam notification enabled. */
+    public ?bool $duringexam = null;
 
-    /** @var array|null During exam notification time duration */
-    public ?array $during_exam_time = null;
+    /** @var array|null During exam notification time duration. */
+    public ?array $duringexamtime = null;
 
-    /** @var array|null During exam notification message text */
-    public ?array $during_exam_messagetext = null;
+    /** @var array|null During exam notification message text. */
+    public ?array $duringexammessagetext = null;
 
-    /** @var array|null During exam notification recipient */
-    public ?array $during_exam_recipient = null;
+    /** @var array|null During exam notification recipient. */
+    public ?array $duringexamrecipient = null;
 
-    /** @var int|null During exam notification slot ID */
-    public ?int $during_exam_id = null;
+    /** @var int|null During exam notification slot ID. */
+    public ?int $duringexamid = null;
 
-    /** @var bool|null Overdue notification enabled */
+    /** @var bool|null Overdue notification enabled. */
     public ?bool $overdue = null;
 
-    /** @var array|null Overdue notification time duration */
-    public ?array $overdue_time = null;
+    /** @var array|null Overdue notification time duration. */
+    public ?array $overduetime = null;
 
-    /** @var array|null Overdue notification message text */
-    public ?array $overdue_messagetext = null;
+    /** @var array|null Overdue notification message text. */
+    public ?array $overduemessagetext = null;
 
-    /** @var array|null Overdue notification recipient */
-    public ?array $overdue_recipient = null;
+    /** @var array|null Overdue notification recipient. */
+    public ?array $overduerecipient = null;
 
-    /** @var int|null Overdue notification slot ID */
-    public ?int $overdue_id = null;
+    /** @var int|null Overdue notification slot ID. */
+    public ?int $overdueid = null;
 
 
 
@@ -313,16 +313,16 @@ class bookit_checklist_item implements \renderable, \templatable {
         foreach ($this->roleids as $roleid) {
             $role = checklist_manager::get_role_by_id((int) $roleid);
 
-            // Handle missing role (role ID 0)
+            // Handle missing role (role ID 0).
             if ((int) $roleid === 0 || !$role) {
-                $roleData = [
+                $roledata = [
                     'rolename' => get_string('missing_role', 'mod_bookit'),
                     'roleid' => (int) $roleid,
                     'extraclasses' => 'badge badge-warning text-dark',
                     'is_missing_role' => true,
                 ];
             } else {
-                $roleData = [
+                $roledata = [
                     'rolename' => $role->name,
                     'roleid' => (int) $roleid,
                     'is_missing_role' => false,
@@ -330,18 +330,16 @@ class bookit_checklist_item implements \renderable, \templatable {
 
                 // Check if current user has this specific role.
                 if (checklist_manager::user_has_bookit_role((int) $roleid)) {
-                    $roleData['extraclasses'] = 'badge badge-warning text-dark';
+                    $roledata['extraclasses'] = 'badge badge-warning text-dark';
                 } else {
-                    $roleData['extraclasses'] = 'badge badge-primary text-light';
+                    $roledata['extraclasses'] = 'badge badge-primary text-light';
                 }
             }
 
-            $data->rolenames[] = $roleData;
+            $data->rolenames[] = $roledata;
         }
 
         $data->type = 'item';
-
-        // die(print_r($data, true));
 
         return $data;
     }

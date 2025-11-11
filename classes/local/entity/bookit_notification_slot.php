@@ -158,11 +158,11 @@ class bookit_notification_slot implements \renderable, \templatable {
     }
 
     /**
-    * Create object from record.
-    *
-    * @param array|object $record
-    * @return self
-    */
+     * Create object from record.
+     *
+     * @param array|object $record
+     * @return self
+     */
     public static function from_record(array|object $record): self {
         $record = (object) $record;
 
