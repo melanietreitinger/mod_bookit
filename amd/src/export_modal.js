@@ -12,11 +12,12 @@ define(['jquery', 'core/str'], function($, str) {
             str.get_strings(stringKeys).done(function(strings) {
                 const noEventsStr = strings[0];
                 const chooseEventStr = strings[1];
-                
-                // Filter the export list
+                /*
+                function to filter the export list
+                */
                 function filterExportList() {
                     const val = ($('#bookit-modal-search').val() || '').toLowerCase().trim();
-                    $('#bookit-export-list label').each(function () {
+                    $('#bookit-export-list label').each(function (){
                         const $row = $(this);
                         const show = $row.text().toLowerCase().includes(val);
                         $row.toggleClass('d-flex', show)
@@ -24,8 +25,8 @@ define(['jquery', 'core/str'], function($, str) {
                     });
                 }
 
-                $('#bookit-export').on('click', function () {
-                    const qs = { id: cmId, start:'1970-01-01T00:00', end:'2100-01-01T00:00' };
+                $('#bookit-export').on('click', function (){
+                    const qs = {id: cmId, start: '1970-01-01T00:00', end: '2100-01-01T00:00'};
                     if (window.currentFilterParams) {
                         Object.assign(qs, window.currentFilterParams);
                     }
@@ -38,7 +39,7 @@ define(['jquery', 'core/str'], function($, str) {
                     );
                     $('#bookit-export-modal').modal('show');
 
-                    $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function(data){
+                    $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function (data){
                         list.empty();
 
                         // Remove reserved events entirely (Fix for Issue #102)
@@ -49,17 +50,18 @@ define(['jquery', 'core/str'], function($, str) {
                             return;
                         }
 
-                        const statusMap = {'0':'New', '1':'In progress', '2':'Accepted', '3':'Cancelled', '4':'Rejected'};
+                        const statusMap = {'0': 'New', '1': 'In progress', '2': 'Accepted', 
+                            '3': 'Cancelled', '4': 'Rejected'};
 
-                        data.forEach(function (e) {
+                        data.forEach(function (e){
                             const roomTxt = (e.location || e.room || '').trim();
                             const faculty = (e.department || '').trim();
                             const statusTxt = statusMap[e.bookingstatus] || '';
                             const startStr = (e.start || '');
-                            const dateTxt = startStr ? startStr.substr(0,16).replace('T',' ') : '';
+                            const dateTxt = startStr ? startStr.substr(0,16).replace('T', ' ') : '';
                             const metaLine = roomTxt ? (roomTxt + ' ' + dateTxt) : dateTxt;
 
-                            const checkbox = '<input class="form-check-input mt-1" type="checkbox" value="'+ e.id +'">';
+                            const checkbox = '<input class="form-check-input mt-1" type="checkbox" value="' + e.id + '">';
 
                             const row = $(
                                 '<label class="list-group-item d-flex gap-2 align-items-start" ' +
@@ -67,7 +69,7 @@ define(['jquery', 'core/str'], function($, str) {
                                 ' data-faculty="' + faculty.toLowerCase() + '" ' +
                                 ' data-status="' + statusTxt.toLowerCase() + '">' +
                                     checkbox +
-                                    '<span>'+ (e.title || '') +' <small class="text-muted">(' + metaLine + ')</small></span>' +
+                                    '<span>' + (e.title || '') + ' <small class="text-muted">(' + metaLine + ')</small></span>' +
                                 '</label>'
                             );
                             list.append(row);
@@ -79,21 +81,24 @@ define(['jquery', 'core/str'], function($, str) {
 
                 $('#bookit-modal-search').on('input', filterExportList);
 
-                $('#bookit-check-all').on('click', function () {
+                $('#bookit-check-all').on('click', function (){
                     $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', true);
                 });
-                $('#bookit-uncheck-all').on('click', function () {
+                $('#bookit-uncheck-all').on('click', function (){
                     $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', false);
                 });
 
-                $('#bookit-export-confirm').on('click', function () {
+                $('#bookit-export-confirm').on('click', function (){
                     const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
                         .map(function(){ return this.value; }).get();
-                    if (!ids.length) { alert(chooseEventStr); return; }
+                    if (!ids.length) {
+                        // alert(chooseEventStr);
+                        return;
+                    }
 
                     const qs = new URLSearchParams({id: cmId});
                     if (window.currentFilterParams) {
-                        Object.entries(window.currentFilterParams).forEach(([k,v]) => qs.append(k, v));
+                        Object.entries(window.currentFilterParams).forEach(([k, v]) => qs.append(k, v));
                     }
                     ids.forEach(id => qs.append('ids[]', id));
 

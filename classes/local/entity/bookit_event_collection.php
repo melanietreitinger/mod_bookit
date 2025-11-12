@@ -23,10 +23,10 @@
  */
 namespace mod_bookit\local\entity;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Class for Event Collection used in events.php
+ */
 class bookit_event_collection {
-
     /**
      * Returns distinct departments (faculties) from bookit_event.
      * @return array

@@ -80,15 +80,19 @@ $events = event_manager::get_events_in_timerange($start, $end, $id);
 // Access helpers that work for arrays and objects.
 $aget = static function ($src, array $keys) {
     foreach ($keys as $k) {
-        if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) { return $src[$k]; }
-        if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) { return $src->$k; }
+        if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) {
+            return $src[$k];
+        }
+        if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) {
+            return $src->$k;
+        }
     }
     return null;
 };
 $aset = static function (&$dst, $key, $val) {
     if (is_array($dst)) {
         $dst[$key] = $val;
-    } else { 
+    } else {
         $dst->$key = $val;
     }
 };
@@ -115,7 +119,9 @@ foreach ($events as &$ev) {
       LIMIT 1", [$evid]);
 
     // Skip if nothing found.
-    if (!$row) { continue; }
+    if (!$row) {
+        continue;
+    }
 
     // Assign values safely for array or object.
     if (is_array($ev)) {
@@ -144,7 +150,7 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
             if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) {
                 return $src[$k];
             }
-            if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) { 
+            if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) {
                 return $src->$k;
             }
         }
@@ -191,24 +197,21 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
     if ($search !== '') {
         $needle = mb_strtolower($search);
         $title = (string) ($get($ev, ['title', 'name', 'summary']) ?? '');
-        $dept = (string) ($get($ev, ['department', 'faculty','dept']) ?? '');
+        $dept = (string) ($get($ev, ['department', 'faculty', 'dept']) ?? '');
         $haystack = mb_strtolower($title . ' ' . $dept);
         if (mb_strpos($haystack, $needle) === false) {
             return false;
         }
     }
-
     return true;
 });
 
-
-
 // Normalize times to ISO 8601 so week/day views render them.
-$events = array_values(array_map(function($e){
-    if (isset($e->start)) { 
+$events = array_values(array_map(function ($e){
+    if (isset($e->start)) {
         $e->start = str_replace(' ', 'T', $e->start) . ':00';
     }
-    if (isset($e->end)){
+    if (isset($e->end)) {
         $e->end = str_replace(' ', 'T', $e->end) . ':00';
     }
     return $e;
@@ -235,7 +238,7 @@ if (optional_param('debug', 0, PARAM_INT)) {
     if (!empty($events)) {
         $debuginfo['sample'] = array_slice(array_values($events), 0, 1);
     }
-    // Wrap everything together. 
+    // Wrap everything together.
     $out = [
         'debug' => $debuginfo,
         'events' => array_values($events),

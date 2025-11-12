@@ -23,15 +23,12 @@
  */
 namespace mod_bookit\local\entity;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Repository for fetching events for examiners.
  *
  * @package   mod_bookit
  */
 class examiner_event_repository {
-
     /**
      * Returns all events created or owned by the examiner (personinchargeid = $userid).
      *
