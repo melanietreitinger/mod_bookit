@@ -86,7 +86,7 @@ $PAGE->requires->js_init_code("
             const s = $('#filter-status').val();
             if (r) p.room    = r;
             if (f) p.faculty = f;
-            if (s) p.status  = s;
+            if (s !== '') p.status  = s;
             window.currentFilterParams = p;
             if (window.bookitCalendarUpdate) { window.bookitCalendarUpdate(p); }
         }
@@ -95,8 +95,8 @@ $PAGE->requires->js_init_code("
 ");
 
 /* -------- Export modal ------------------------------------------------ */
-#$PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$cm->id]);
-$PAGE->requires->js(new moodle_url('/mod/bookit/amd/src/export_modal.js'), true);
+$PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$cm->id]);
+#$PAGE->requires->js(new moodle_url('/mod/bookit/amd/src/export_modal.js'), true);
 
 
 
@@ -221,6 +221,20 @@ echo '
     </div>
   </div>
 </div>';
+
+$PAGE->requires->js_init_code("
+    (function() {
+        console.log('[BookIT DEBUG] Event feed URL →', " . json_encode($eventsource) . ");
+        fetch(" . json_encode($eventsource) . ")
+            .then(r => r.json())
+            .then(d => {
+                console.log('[BookIT DEBUG] events.php returned', d.length, 'events');
+                if (d.length) console.log('[BookIT DEBUG] sample', d[0]);
+            })
+            .catch(e => console.error('[BookIT DEBUG] error fetching events.php:', e));
+    })();
+");
+
 
 
 // Initialise AMD calendar (from original file).

@@ -45,7 +45,7 @@ require_login();           // User must be logged-in.
 // ...@TODO: The id of the instance should become required in future!
 
 
-$id     = optional_param('id', 0, PARAM_INT);   // Course-module id.
+$id     = required_param('id', PARAM_INT);      // Course-module id (required).
 $start  = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end    = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
 
@@ -61,46 +61,175 @@ try {
     exit(1);
 }
 
-// WORK IN PROGRESS by vadym - new optional filter parameters (for Filter user story).
+// Work in progress by Vadym - new optional filter parameters (for filter user story).
 $roomid  = optional_param('room', 0, PARAM_INT);
 $faculty = optional_param('faculty', '', PARAM_TEXT);
-$status  = optional_param('status', '', PARAM_INT);
 $search  = optional_param('search', '', PARAM_TEXT);
+
+// Status: accept ?status= or ?bookingstatus=. Empty → -1 (no filter).
+$statusraw = optional_param('status', null, PARAM_RAW_TRIMMED);
+if ($statusraw === null) {
+    $statusraw = optional_param('bookingstatus', null, PARAM_RAW_TRIMMED);
+}
+$status = ($statusraw === null || $statusraw === '') ? -1 : clean_param($statusraw, PARAM_INT);
 
 
 // Fetch events using the helper.
 $events = event_manager::get_events_in_timerange($start, $end, $id);
 
+// Access helpers that work for arrays and objects.
+$aget = static function($src, array $keys) {
+    foreach ($keys as $k) {
+        if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) { return $src[$k]; }
+        if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) { return $src->$k; }
+    }
+    return null;
+};
+$aset = static function(&$dst, $key, $val) {
+    if (is_array($dst)) { $dst[$key] = $val; } else { $dst->$key = $val; }
+};
+
+global $DB;
+
+foreach ($events as &$ev) {
+    // Works for array or object.
+    $evid = is_array($ev) ? ($ev['id'] ?? null) : ($ev->id ?? null);
+    if (!$evid) { continue; }
+
+    // Fetch a single enrichment row.
+    $row = $DB->get_record_sql("
+        SELECT e.bookingstatus,
+               e.department,
+               r.id   AS roomid,
+               r.name AS roomname
+          FROM {bookit_event} e
+     LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+     LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
+         WHERE e.id = ?
+      LIMIT 1", [$evid]);
+
+    // Skip if nothing found.
+    if (!$row) { continue; }
+
+    // Assign values safely for array or object.
+    if (is_array($ev)) {
+        $ev['bookingstatus'] = (int)($row->bookingstatus ?? 0);
+        $ev['department']    = (string)($row->department ?? '');
+        $ev['roomid']        = (int)($row->roomid ?? 0);
+        $ev['roomname']      = (string)($row->roomname ?? '');
+    } else {
+        $ev->bookingstatus = (int)($row->bookingstatus ?? 0);
+        $ev->department    = (string)($row->department ?? '');
+        $ev->roomid        = (int)($row->roomid ?? 0);
+        $ev->roomname      = (string)($row->roomname ?? '');
+    }
+}
+unset($ev);
+
+
+
+
 // WORK IN PROGRESS by vadym: Apply in-memory filters (only if parameter present). For Filter user story.
-$events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, $search) {
+// Apply in-memory filters (enhanced version, merged from older file).
+$events = array_filter($events, function($ev) use ($roomid, $faculty, $status, $search) {
+    // Helper to read from array or object.
+    $get = function($src, array $keys) {
+        foreach ($keys as $k) {
+            if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) { return $src[$k]; }
+            if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) { return $src->$k; }
+        }
+        return null;
+    };
 
-    // Room filter (resource id – note: $ev->roomid comes from event_manager).
-    if ($roomid && (!isset($ev->roomid) || (int)$ev->roomid !== $roomid)) {
-        return false;
-    }
+    // ROOM filter (by resource id; supports multiple roomids).
+    if ($roomid) {
+        $evRoomIds = $get($ev, ['roomids']);
+        $evRoomId  = $get($ev, ['roomid','resourceid','rid']);
 
-    // Faculty / department filter (exact match).
-    if ($faculty !== '' && (!isset($ev->department) || $ev->department !== $faculty)) {
-        return false;
-    }
+        $hasMatch = false;
+        if (is_array($evRoomIds) && !empty($evRoomIds)) {
+            $hasMatch = in_array((int)$roomid, array_map('intval', $evRoomIds), true);
+        } else if ($evRoomId !== null && $evRoomId !== '') {
+            $hasMatch = ((int)$evRoomId === (int)$roomid);
+        }
 
-    // Status filter (0 … 4).
-    if ($status !== '' && (int)$ev->bookingstatus !== (int)$status) {
-        return false;
-    }
-
-    // Free-text search (case-insensitive) in name OR department.
-    if ($search !== '') {
-        $haystack  = strtolower(($ev->name ?? '') . ' ' .
-                                ($ev->department ?? ''));
-        if (!str_contains($haystack, strtolower($search))) {
+        if (!$hasMatch) {
             return false;
         }
     }
 
-    return true;   // Passes all active filters.
+    // FACULTY filter (trim + case-insensitive exact match).
+    if ($faculty !== '') {
+        $evDept = (string)($get($ev, ['department','faculty','dept']) ?? '');
+        $evDeptNorm = mb_strtolower(trim($evDept));
+        $wantNorm   = mb_strtolower(trim((string)$faculty));
+
+        if ($evDeptNorm === '' || $evDeptNorm !== $wantNorm) {
+            return false;
+        }
+    }
+
+    // STATUS filter (strict equality).
+    if ($status > -1) {
+        $evStatus = $get($ev, ['bookingstatus']);
+        if ($evStatus === null || (int)$evStatus !== (int)$status) {
+            return false;
+        }
+    }
+
+    // SEARCH filter (substring in title + department, case-insensitive).
+    if ($search !== '') {
+        $needle   = mb_strtolower($search);
+        $title    = (string)($get($ev, ['title','name','summary']) ?? '');
+        $dept     = (string)($get($ev, ['department','faculty','dept']) ?? '');
+        $haystack = mb_strtolower($title . ' ' . $dept);
+        if (mb_strpos($haystack, $needle) === false) {
+            return false;
+        }
+    }
+
+    return true;
 });
 
-// Output JSON  => wird noch erledigt.
-header('Content-Type: application/json; charset=utf-8');
-echo json_encode(array_values($events));
+
+
+// Normalize times to ISO 8601 so week/day views render them.
+$events = array_values(array_map(function($e){
+    if (isset($e->start)) { $e->start = str_replace(' ', 'T', $e->start) . ':00'; }
+    if (isset($e->end))   { $e->end   = str_replace(' ', 'T', $e->end)   . ':00'; }
+    return $e;
+}, $events));
+
+// Output JSON.
+// Debug block – visible only if ?debug=1 is passed.
+if (optional_param('debug', 0, PARAM_INT)) {
+    $debuginfo = [
+        'debug' => true,
+        'input' => [
+            'roomid' => $roomid,
+            'faculty' => $faculty,
+            'status' => $status,
+            'search' => $search,
+            'start' => $start,
+            'end' => $end,
+        ],
+        'counts' => [
+            'before_filter' => isset($events) ? count($events) : 'n/a',
+        ],
+    ];
+    // Add partial sample of first event to check fields.
+    if (!empty($events)) {
+        $debuginfo['sample'] = array_slice(array_values($events), 0, 1);
+    }
+    // Wrap everything together (debug + events)
+    $out = [
+        'debug' => $debuginfo,
+        'events' => array_values($events),
+    ];
+    // Normal JSON output (no debug).
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(array_values($events), JSON_UNESCAPED_UNICODE);
+    exit;
+
+}
+
