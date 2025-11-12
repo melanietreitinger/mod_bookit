@@ -78,15 +78,19 @@ $status = ($statusraw === null || $statusraw === '') ? -1 : clean_param($statusr
 $events = event_manager::get_events_in_timerange($start, $end, $id);
 
 // Access helpers that work for arrays and objects.
-$aget = static function($src, array $keys) {
+$aget = static function ($src, array $keys) {
     foreach ($keys as $k) {
         if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) { return $src[$k]; }
         if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) { return $src->$k; }
     }
     return null;
 };
-$aset = static function(&$dst, $key, $val) {
-    if (is_array($dst)) { $dst[$key] = $val; } else { $dst->$key = $val; }
+$aset = static function (&$dst, $key, $val) {
+    if (is_array($dst)) {
+        $dst[$key] = $val;
+    } else { 
+        $dst->$key = $val;
+    }
 };
 
 global $DB;
@@ -94,7 +98,9 @@ global $DB;
 foreach ($events as &$ev) {
     // Works for array or object.
     $evid = is_array($ev) ? ($ev['id'] ?? null) : ($ev->id ?? null);
-    if (!$evid) { continue; }
+    if (!$evid) {
+        continue;
+    }
 
     // Fetch a single enrichment row.
     $row = $DB->get_record_sql("
@@ -131,57 +137,61 @@ unset($ev);
 
 // WORK IN PROGRESS by vadym: Apply in-memory filters (only if parameter present). For Filter user story.
 // Apply in-memory filters (enhanced version, merged from older file).
-$events = array_filter($events, function($ev) use ($roomid, $faculty, $status, $search) {
+$events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, $search) {
     // Helper to read from array or object.
-    $get = function($src, array $keys) {
+    $get = function ($src, array $keys) {
         foreach ($keys as $k) {
-            if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) { return $src[$k]; }
-            if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) { return $src->$k; }
+            if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) {
+                return $src[$k];
+            }
+            if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) { 
+                return $src->$k;
+            }
         }
         return null;
     };
 
     // ROOM filter (by resource id; supports multiple roomids).
     if ($roomid) {
-        $evRoomIds = $get($ev, ['roomids']);
-        $evRoomId  = $get($ev, ['roomid','resourceid','rid']);
+        $eventroomids = $get($ev, ['roomids']);
+        $eventroomid  = $get($ev, ['roomid', 'resourceid', 'rid']);
 
-        $hasMatch = false;
-        if (is_array($evRoomIds) && !empty($evRoomIds)) {
-            $hasMatch = in_array((int)$roomid, array_map('intval', $evRoomIds), true);
-        } else if ($evRoomId !== null && $evRoomId !== '') {
-            $hasMatch = ((int)$evRoomId === (int)$roomid);
+        $hasmatch = false;
+        if (is_array($eventroomids) && !empty($eventroomids)) {
+            $hasmatch = in_array((int)$roomid, array_map('intval', $eventroomids), true);
+        } else if ($eventroomid !== null && $eventroomid !== '') {
+            $hasmatch = ((int)$eventroomid === (int)$roomid);
         }
 
-        if (!$hasMatch) {
+        if (!$hasmatch) {
             return false;
         }
     }
 
     // FACULTY filter (trim + case-insensitive exact match).
     if ($faculty !== '') {
-        $evDept = (string)($get($ev, ['department','faculty','dept']) ?? '');
-        $evDeptNorm = mb_strtolower(trim($evDept));
-        $wantNorm   = mb_strtolower(trim((string)$faculty));
+        $evdept = (string)($get($ev, ['department', 'faculty', 'dept']) ?? '');
+        $evdeptnorm = mb_strtolower(trim($evdept));
+        $wantnorm   = mb_strtolower(trim((string)$faculty));
 
-        if ($evDeptNorm === '' || $evDeptNorm !== $wantNorm) {
+        if ($evdeptnorm === '' || $evdeptnorm !== $wantnorm) {
             return false;
         }
     }
 
     // STATUS filter (strict equality).
     if ($status > -1) {
-        $evStatus = $get($ev, ['bookingstatus']);
-        if ($evStatus === null || (int)$evStatus !== (int)$status) {
+        $evstatus = $get($ev, ['bookingstatus']);
+        if ($evstatus === null || (int)$evstatus !== (int)$status) {
             return false;
         }
     }
 
     // SEARCH filter (substring in title + department, case-insensitive).
     if ($search !== '') {
-        $needle   = mb_strtolower($search);
-        $title    = (string)($get($ev, ['title','name','summary']) ?? '');
-        $dept     = (string)($get($ev, ['department','faculty','dept']) ?? '');
+        $needle = mb_strtolower($search);
+        $title = (string) ($get($ev, ['title', 'name', 'summary']) ?? '');
+        $dept = (string) ($get($ev, ['department', 'faculty','dept']) ?? '');
         $haystack = mb_strtolower($title . ' ' . $dept);
         if (mb_strpos($haystack, $needle) === false) {
             return false;
@@ -195,8 +205,12 @@ $events = array_filter($events, function($ev) use ($roomid, $faculty, $status, $
 
 // Normalize times to ISO 8601 so week/day views render them.
 $events = array_values(array_map(function($e){
-    if (isset($e->start)) { $e->start = str_replace(' ', 'T', $e->start) . ':00'; }
-    if (isset($e->end))   { $e->end   = str_replace(' ', 'T', $e->end)   . ':00'; }
+    if (isset($e->start)) { 
+        $e->start = str_replace(' ', 'T', $e->start) . ':00';
+    }
+    if (isset($e->end)){
+        $e->end = str_replace(' ', 'T', $e->end) . ':00';
+    }
     return $e;
 }, $events));
 
@@ -221,7 +235,7 @@ if (optional_param('debug', 0, PARAM_INT)) {
     if (!empty($events)) {
         $debuginfo['sample'] = array_slice(array_values($events), 0, 1);
     }
-    // Wrap everything together (debug + events)
+    // Wrap everything together. 
     $out = [
         'debug' => $debuginfo,
         'events' => array_values($events),
@@ -230,6 +244,4 @@ if (optional_param('debug', 0, PARAM_INT)) {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(array_values($events), JSON_UNESCAPED_UNICODE);
     exit;
-
 }
-
