@@ -1,10 +1,9 @@
-// File: mod/bookit/amd/src/export_modal.js
 define(['jquery', 'core/str'], function($, str) {
 
     return {
         init: function(cmId) {
 
-            // preload needed strings
+            // Preload needed strings
             const stringKeys = [
                 {key: 'noevents', component: 'mod_bookit'},
                 {key: 'chooseevent', component: 'mod_bookit'}
@@ -13,7 +12,8 @@ define(['jquery', 'core/str'], function($, str) {
             str.get_strings(stringKeys).done(function(strings) {
                 const noEventsStr = strings[0];
                 const chooseEventStr = strings[1];
-
+                
+                // Filter the export list
                 function filterExportList() {
                     const val = ($('#bookit-modal-search').val() || '').toLowerCase().trim();
                     $('#bookit-export-list label').each(function () {
@@ -26,16 +26,22 @@ define(['jquery', 'core/str'], function($, str) {
 
                 $('#bookit-export').on('click', function () {
                     const qs = { id: cmId, start:'1970-01-01T00:00', end:'2100-01-01T00:00' };
-                    if (window.currentFilterParams) Object.assign(qs, window.currentFilterParams);
+                    if (window.currentFilterParams) {
+                        Object.assign(qs, window.currentFilterParams);
+                    }
 
                     const list = $('#bookit-export-list');
-                    list.html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin"></i></div>');
+                    list.html(
+                        '<div class="text-center p-3">' +
+                            '<i class="fa fa-spinner fa-spin"></i>' +
+                        '</div>'
+                    );
                     $('#bookit-export-modal').modal('show');
 
                     $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function(data){
                         list.empty();
 
-                        // remove reserved events entirely (Fix for Issue #102)
+                        // Remove reserved events entirely (Fix for Issue #102)
                         data = data.filter(e => !(e.extendedProps && (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)));
 
                         if (!data.length) {
@@ -43,7 +49,7 @@ define(['jquery', 'core/str'], function($, str) {
                             return;
                         }
 
-                        const statusMap = {0:'New',1:'In progress',2:'Accepted',3:'Cancelled',4:'Rejected'};
+                        const statusMap = {'0':'New', '1':'In progress', '2':'Accepted', '3':'Cancelled', '4':'Rejected'};
 
                         data.forEach(function (e) {
                             const roomTxt = (e.location || e.room || '').trim();
@@ -57,9 +63,9 @@ define(['jquery', 'core/str'], function($, str) {
 
                             const row = $(
                                 '<label class="list-group-item d-flex gap-2 align-items-start" ' +
-                                ' data-room="'+ roomTxt.toLowerCase() +'" ' +
-                                ' data-faculty="'+ faculty.toLowerCase() +'" ' +
-                                ' data-status="'+ statusTxt.toLowerCase() +'">' +
+                                ' data-room="' + roomTxt.toLowerCase() + '" ' +
+                                ' data-faculty="' + faculty.toLowerCase() + '" ' +
+                                ' data-status="' + statusTxt.toLowerCase() + '">' +
                                     checkbox +
                                     '<span>'+ (e.title || '') +' <small class="text-muted">(' + metaLine + ')</small></span>' +
                                 '</label>'
