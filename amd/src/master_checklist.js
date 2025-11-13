@@ -158,7 +158,7 @@ export default class extends BaseComponent {
         const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
 
         const modalForm = new ModalForm({
-            formClass: "mod_bookit\\form\\export_checklist_form",
+            formClass: "mod_bookit\\local\\form\\masterchecklist\\export_checklist_form",
             args: {
                 masterid: masterid
             },
@@ -185,7 +185,7 @@ export default class extends BaseComponent {
         const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
 
         const modalForm = new ModalForm({
-            formClass: "mod_bookit\\form\\import_checklist_form",
+            formClass: "mod_bookit\\local\\form\\masterchecklist\\import_checklist_form",
             args: {
                 masterid: masterid
             },
