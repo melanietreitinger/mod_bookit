@@ -205,8 +205,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->add_field($table, $field);
         }
 
-        debugging('Added examinerid field to bookit_event', DEBUG_DEVELOPER);
-
         upgrade_mod_savepoint(true, 2025050600, 'bookit');
     }
 
