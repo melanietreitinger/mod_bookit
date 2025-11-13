@@ -208,7 +208,7 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
 });
 
 // Normalize times to ISO 8601 so week/day views render them.
-$events = array_values(array_map(function ($e){
+$events = array_values(array_map(function ($e) {
     if (isset($e->start)) {
         $e->start = str_replace(' ', 'T', $e->start) . ':00';
     }
@@ -240,7 +240,6 @@ if ($debug) {
     header('X-BookIT-Debug: ' . json_encode($debuginfo));
 }
 
-// Always return only the event array itself
+// Always return only the event array itself.
 echo json_encode(array_values($events), JSON_UNESCAPED_UNICODE);
 exit;
-
