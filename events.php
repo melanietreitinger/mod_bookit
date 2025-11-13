@@ -98,6 +98,7 @@ $aset = static function (&$dst, $key, $val) {
     }
 };
 
+//TODO outsource? 
 global $DB;
 
 foreach ($events as &$ev) {
