@@ -25,8 +25,10 @@
 
 namespace mod_bookit\local\entity\masterchecklist;
 
+use core\output\named_templatable;
 use dml_exception;
 use mod_bookit\local\manager\checklist_manager;
+use renderer_base;
 
 /**
  * Database class for bookit_checklist_master.
@@ -36,7 +38,18 @@ use mod_bookit\local\manager\checklist_manager;
  * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class bookit_checklist_master implements \renderable, \templatable {
+class bookit_checklist_master implements \renderable, named_templatable {
+
+    /**
+     * Get the template name for this renderable.
+     *
+     * @param renderer_base $renderer The renderer requesting the template name
+     * @return string
+     */
+    public function get_template_name(renderer_base $renderer): string {
+        return 'mod_bookit/masterchecklist/bookit_checklist_master';
+    }
+
     /**
      * Table columns
      */
