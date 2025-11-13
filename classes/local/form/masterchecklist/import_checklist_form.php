@@ -23,7 +23,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_bookit\form;
+namespace mod_bookit\local\form\masterchecklist;
 
 defined('MOODLE_INTERNAL') || die();
 

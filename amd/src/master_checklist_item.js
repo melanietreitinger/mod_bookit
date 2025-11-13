@@ -164,7 +164,7 @@ export default class extends BaseComponent {
 
     async _handleEditChecklistItemButtonClick(event) {
         const modalForm = new ModalForm({
-            formClass: "mod_bookit\\form\\edit_checklist_item_form",
+            formClass: "mod_bookit\\local\\form\\masterchecklist\\edit_checklist_item_form",
             moduleName: 'mod_bookit/modal_delete_save_cancel',
             args: {
                 masterid: 1,

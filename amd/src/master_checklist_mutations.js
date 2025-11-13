@@ -7,14 +7,14 @@ export default class {
 
     _callDynamicForm(stateManager, data, processUpdates = true) {
         const type = data.formType;
-        data.formData[`_qf__mod_bookit_form_edit_checklist_${type}_form`] = 1;
+        data.formData[`_qf__mod_bookit_local_form_masterchecklist_edit_checklist_${type}_form`] = 1;
         const formData = new URLSearchParams(data.formData).toString();
 
         Ajax.call([{
             methodname: 'core_form_dynamic_form',
             args: {
                 formdata: formData,
-                form: `mod_bookit\\form\\edit_checklist_${type}_form`
+                form: `mod_bookit\\local\\form\\masterchecklist\\edit_checklist_${type}_form`
             }
         }])[0]
         .then((response) => {

@@ -74,7 +74,7 @@ export default class extends BaseComponent {
 
     async _handleEditChecklistCategoryButtonClick() {
         const modalForm = new ModalForm({
-            formClass: 'mod_bookit\\form\\edit_checklist_category_form',
+            formClass: 'mod_bookit\\local\\form\\masterchecklist\\edit_checklist_category_form',
             moduleName: 'mod_bookit/modal_delete_save_cancel',
             args: {
                 id: this.element.dataset.bookitCategoryId,

@@ -114,7 +114,7 @@ export default class extends BaseComponent {
 
     async _handleAddChecklistItemButtonClick() {
         const modalForm = new ModalForm({
-            formClass: "mod_bookit\\form\\edit_checklist_item_form",
+            formClass: "mod_bookit\\local\\form\\masterchecklist\\edit_checklist_item_form",
             args: {
                 masterid: 1,
                 itemid: null,
@@ -136,7 +136,7 @@ export default class extends BaseComponent {
 
     async _handleAddChecklistCategoryButtonClick() {
         const modalForm = new ModalForm({
-            formClass: "mod_bookit\\form\\edit_checklist_category_form",
+            formClass: "mod_bookit\\local\\form\\masterchecklist\\edit_checklist_category_form",
             args: {
                 masterid: 1
             },
