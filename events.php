@@ -35,6 +35,7 @@
  * status   (int)    → bookingstatus 0-4
  * search   (string) → free-text search in event name OR faculty
  */
+
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
@@ -217,34 +218,29 @@ $events = array_values(array_map(function ($e){
     return $e;
 }, $events));
 
-// Output JSON.
-// Debug block – visible only if ?debug=1 is passed.
-if (optional_param('debug', 0, PARAM_INT)) {
+// Output JSON. Debug block – visible only if ?debug=1 is passed.
+header('Content-Type: application/json; charset=utf-8');
+
+$debug = optional_param('debug', 0, PARAM_INT);
+
+if ($debug) {
+    // Debug info is added, but still output plain events array for compatibility.
     $debuginfo = [
-        'debug' => true,
         'input' => [
-            'roomid' => $roomid,
+            'roomid'  => $roomid,
             'faculty' => $faculty,
-            'status' => $status,
-            'search' => $search,
-            'start' => $start,
-            'end' => $end,
+            'status'  => $status,
+            'search'  => $search,
+            'start'   => $start,
+            'end'     => $end,
         ],
-        'counts' => [
-            'before_filter' => isset($events) ? count($events) : 'n/a',
-        ],
+        'event_count' => count($events),
     ];
-    // Add partial sample of first event to check fields.
-    if (!empty($events)) {
-        $debuginfo['sample'] = array_slice(array_values($events), 0, 1);
-    }
-    // Wrap everything together.
-    $out = [
-        'debug' => $debuginfo,
-        'events' => array_values($events),
-    ];
-    // Normal JSON output (no debug).
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(array_values($events), JSON_UNESCAPED_UNICODE);
-    exit;
+    // Send headers for developer (browser console).
+    header('X-BookIT-Debug: ' . json_encode($debuginfo));
 }
+
+// Always return only the event array itself
+echo json_encode(array_values($events), JSON_UNESCAPED_UNICODE);
+exit;
+
