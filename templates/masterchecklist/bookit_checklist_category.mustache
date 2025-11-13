@@ -45,13 +45,13 @@
        data-bookit-category-name="{{name}}"
        data-bookit-category-id="{{id}}"
        data-bookit-category-masterid="{{masterid}}">
-{{> mod_bookit/bookit_checklist_category_row }}
+{{> mod_bookit/masterchecklist/bookit_checklist_category_row }}
 {{#checklistitems}}
-    {{> mod_bookit/bookit_checklist_item }}
+    {{> mod_bookit/masterchecklist/bookit_checklist_item }}
 {{/checklistitems}}
 </tbody>
 {{#js}}
-require(['mod_bookit/master_checklist_category'], function(component) {
+require(['mod_bookit/masterchecklist/master_checklist_category'], function(component) {
     component.init('#bookit-master-checklist-tbody-category-{{id}}');
 });
 {{/js}}

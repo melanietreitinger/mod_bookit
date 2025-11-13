@@ -49,18 +49,18 @@
                     <span class="font-weight-medium" data-bookit-checklistitem-tabledata-title-id="{{id}}">{{title}}</span>
                 </td>
 
-                    {{> mod_bookit/bookit_checklist_item_rooms }}
+                    {{> mod_bookit/masterchecklist/bookit_checklist_item_rooms }}
 
-                    {{> mod_bookit/bookit_checklist_item_roles }}
+                    {{> mod_bookit/masterchecklist/bookit_checklist_item_roles }}
                 <td class="align-middle py-3 text-center">
                     <button type="button" class="btn btn-sm rounded-pill btn-light pl-3 text-dark" value="{{id}}" name="edit-checklistitem-{{id}}" id="edit-checklistitem-{{id}}">
                         {{#pix}} i/edit, core {{/pix}}
                     </button>
                 </td>
-                {{> mod_bookit/bookit_checklist_drag_handle }}
+                {{> mod_bookit/masterchecklist/bookit_checklist_drag_handle }}
 </tr>
 {{#js}}
-require(['mod_bookit/master_checklist_item'], function(component) {
+require(['mod_bookit/masterchecklist/master_checklist_item'], function(component) {
     component.init('#bookit-master-checklist-item-{{id}}');
 });
 {{/js}}

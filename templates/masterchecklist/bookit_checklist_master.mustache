@@ -107,7 +107,7 @@
                 </tr>
             </thead>
                 {{#checklistcategories}}
-                    {{> mod_bookit/bookit_checklist_category }}
+                    {{> mod_bookit/masterchecklist/bookit_checklist_category }}
 
                 {{/checklistcategories}}
                 {{^checklistcategories}}
@@ -128,7 +128,7 @@
 </div>
 </div>
 {{#js}}
-require(['mod_bookit/master_checklist'], function(component) {
+require(['mod_bookit/masterchecklist/master_checklist'], function(component) {
     component.init('#mod-bookit-master-checklist');
 });
 {{/js}}

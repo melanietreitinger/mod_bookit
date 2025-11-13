@@ -90,7 +90,7 @@ class bookit_checklist_master implements \renderable, \templatable {
         $this->timecreated ??= $now;
         $this->timemodified ??= $now;
 
-        $PAGE->requires->js_call_amd('mod_bookit/master_checklist_reactive', 'init', ['mod-bookit-master-checklist']);
+        $PAGE->requires->js_call_amd('mod_bookit/masterchecklist/master_checklist_reactive', 'init', ['mod-bookit-master-checklist']);
     }
 
     /**

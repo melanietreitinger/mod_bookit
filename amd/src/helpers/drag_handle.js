@@ -1,6 +1,6 @@
 import {BaseComponent, DragDrop} from 'core/reactive';
-import {masterChecklistReactiveInstance} from 'mod_bookit/master_checklist_reactive';
-import {SELECTORS} from 'mod_bookit/master_checklist_reactive';
+import {masterChecklistReactiveInstance} from 'mod_bookit/masterchecklist/master_checklist_reactive';
+import {SELECTORS} from 'mod_bookit/masterchecklist/master_checklist_reactive';
 
 export default class extends BaseComponent {
 

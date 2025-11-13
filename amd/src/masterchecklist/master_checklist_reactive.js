@@ -1,5 +1,5 @@
 import {Reactive} from 'core/reactive';
-import Mutations from 'mod_bookit/master_checklist_mutations';
+import Mutations from 'mod_bookit/masterchecklist/master_checklist_mutations';
 
 export const SELECTORS = {
             TABLE: '#mod-bookit-master-checklist-table',

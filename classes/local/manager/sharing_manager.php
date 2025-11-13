@@ -675,7 +675,7 @@ class sharing_manager {
         $data->title = $pdftitle;
 
         // Render the PDF template.
-        $html = $OUTPUT->render_from_template('mod_bookit/bookit_checklist_master_pdf', $data);
+        $html = $OUTPUT->render_from_template('mod_bookit/masterchecklist/bookit_checklist_master_pdf', $data);
 
         // Create PDF instance with right-aligned header text.
         $pdf = new bookit_pdf();

@@ -1,11 +1,11 @@
 import {BaseComponent} from 'core/reactive';
-import {masterChecklistReactiveInstance} from 'mod_bookit/master_checklist_reactive';
-import {SELECTORS} from 'mod_bookit/master_checklist_reactive';
+import {masterChecklistReactiveInstance} from 'mod_bookit/masterchecklist/master_checklist_reactive';
+import {SELECTORS} from 'mod_bookit/masterchecklist/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import Templates from 'core/templates';
 import * as Toast from 'core/toast';
 import {getString} from 'core/str';
-import ChecklistHelper from 'mod_bookit/checklist_helper';
+import ChecklistHelper from 'mod_bookit/helpers/checklist_helper';
 
 export default class extends BaseComponent {
 

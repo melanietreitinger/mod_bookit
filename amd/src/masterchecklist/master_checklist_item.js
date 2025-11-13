@@ -1,6 +1,6 @@
 import {BaseComponent, DragDrop} from 'core/reactive';
-import {masterChecklistReactiveInstance} from 'mod_bookit/master_checklist_reactive';
-import {SELECTORS} from 'mod_bookit/master_checklist_reactive';
+import {masterChecklistReactiveInstance} from 'mod_bookit/masterchecklist/master_checklist_reactive';
+import {SELECTORS} from 'mod_bookit/masterchecklist/master_checklist_reactive';
 import ModalForm from 'core_form/modalform';
 import {getString} from 'core/str';
 import Templates from 'core/templates';
