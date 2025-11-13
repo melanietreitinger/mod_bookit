@@ -26,7 +26,7 @@
 namespace mod_bookit\local\form\masterchecklist;
 
 use core_form\dynamic_form;
-use mod_bookit\local\entity\bookit_checklist_category;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
 use mod_bookit\local\manager\checklist_manager;
 
 /**

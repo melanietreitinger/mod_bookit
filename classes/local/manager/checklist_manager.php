@@ -25,9 +25,9 @@
 namespace mod_bookit\local\manager;
 
 use dml_exception;
-use mod_bookit\local\entity\bookit_checklist_master;
-use mod_bookit\local\entity\bookit_checklist_category;
-use mod_bookit\local\entity\bookit_checklist_item;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
 use mod_bookit\local\entity\bookit_notification_slot;
 use mod_bookit\local\manager\color_manager;
 

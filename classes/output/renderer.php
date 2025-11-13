@@ -25,9 +25,9 @@
 
 namespace mod_bookit\output;
 
-use mod_bookit\local\entity\bookit_checklist_category;
-use mod_bookit\local\entity\bookit_checklist_master;
-use mod_bookit\local\entity\bookit_checklist_item;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
 use mod_bookit\local\entity\bookit_notification_slot;
 
 /**

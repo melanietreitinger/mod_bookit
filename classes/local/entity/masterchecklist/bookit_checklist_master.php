@@ -23,7 +23,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_bookit\local\entity;
+namespace mod_bookit\local\entity\masterchecklist;
 
 use dml_exception;
 use mod_bookit\local\manager\checklist_manager;

@@ -30,7 +30,7 @@ require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 global $OUTPUT;
 
-use mod_bookit\local\entity\bookit_checklist_master;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
 
 require_login();
 $context = context_system::instance();
