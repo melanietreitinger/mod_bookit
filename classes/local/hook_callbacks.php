@@ -34,24 +34,37 @@ class hook_callbacks {
     /**
      * Hook callback for primary navigation extension.
      *
+     * This adds a BookIt settings link to the primary navigation for users with the capability.
+     *
      * @param \core\hook\navigation\primary_extend $hook
      */
     public static function primary_navigation_extend(\core\hook\navigation\primary_extend $hook): void {
-        global $USER, $PAGE, $OUTPUT;
+        global $PAGE;
+
         $context = \context_system::instance();
 
-        if (\has_capability('mod/bookit:managemasterchecklist', $context) && !\is_siteadmin()) {
-            $url = new \moodle_url('/mod/bookit/master_checklist.php');
+        // Check if user has the required capability.
+        if (!\has_capability('mod/bookit:managemasterchecklist', $context) || is_siteadmin()) {
+            return;
+        }
 
-            $hook->get_primaryview()->find('siteadminnode', null)?->add(
-                get_string('master_checklist', 'mod_bookit'),
-                $url,
-                navigation_node::TYPE_CUSTOM,
-                null,
-                'bookit_master_checklist'
-            );
+        // Get the primary navigation.
+        $primarynav = $hook->get_primaryview();
 
-            debugging("HERE");
+        // Add BookIt settings node to the primary navigation.
+        $node = $primarynav->add(
+            get_string('pluginname', 'mod_bookit'),
+            new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'bookit_settings',
+            new \pix_icon('i/settings', '')
+        );
+
+        // Set it as active if we're on any bookit admin page.
+        if ($PAGE->url->compare(new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'), URL_MATCH_BASE) ||
+            $PAGE->url->compare(new \moodle_url('/mod/bookit/master_checklist.php'), URL_MATCH_BASE)) {
+            $node->make_active();
         }
     }
 }
