@@ -81,31 +81,8 @@ $PAGE->requires->js_init_code("
 ");
 
 /* ----- inline ModalForm handler -------------------------------------- */
-$PAGE->requires->js_init_code("
-    require(['core_form/modalform'], function(ModalForm) {
-        document.addEventListener('click', function (e) {
-            const link = e.target.closest('.bookit-event-link');
-            if (!link) {
-                return;
-            }
-            e.preventDefault();
-            const cmid  = link.dataset.cmid;
-            const event = link.dataset.eventid;
+$PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 
-            const modal = new ModalForm({
-                formClass  : 'mod_bookit\\\\form\\\\edit_event_form',
-                args       : {cmid: cmid, id: event, readonly:1},
-                modalConfig: {title: link.textContent.trim()}
-            });
-
-            modal.addEventListener(modal.events.FORM_SUBMITTED, function () {
-                window.location.reload();
-            });
-
-            modal.show();
-        });
-    });
-");
 
 /* =======================================================================
    2.  Page headings
@@ -119,19 +96,11 @@ echo $OUTPUT->header();
 /* =======================================================================
    3.  Fetch examiner’s events
    ======================================================================= */
-global $DB, $USER;
+use mod_bookit\local\entity\examiner_event_repository;
 
-$sql = "SELECT e.id,
-               e.name,
-               e.bookingstatus,
-               e.starttime,
-               r.name AS room
-          FROM {bookit_event} e
-     LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-     LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-         WHERE e.personinchargeid  = ?
-      GROUP BY e.id";
-$events = $DB->get_records_sql($sql, [$USER->id]);
+global $USER;
+$events = examiner_event_repository::get_events_for_examiner($USER->id);
+
 
 /* ----- status → label / colours -------------------------------------- */
 $statusmap = [

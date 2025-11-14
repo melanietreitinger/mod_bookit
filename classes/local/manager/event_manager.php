@@ -24,9 +24,11 @@
 
 namespace mod_bookit\local\manager;
 
+use coding_exception;
 use context_module;
 use DateTime;
 use dml_exception;
+use stdClass;
 
 /**
  * Manager for accessing and fetching events.
@@ -40,10 +42,10 @@ class event_manager {
      * Get event from id.
      *
      * @param int $id
-     * @return false|mixed|\stdClass
+     * @return false|mixed|stdClass
      * @throws dml_exception
      */
-    public static function get_event(int $id) {
+    public static function get_event(int $id): mixed {
         global $DB;
         $event = $DB->get_record('bookit_event', ['id' => $id]);
         $eventresources = resource_manager::get_resources_of_event($id);
@@ -67,7 +69,7 @@ class event_manager {
      * @param string $endtime
      * @param int|null $instanceid
      * @return array
-     * @throws dml_exception
+     * @throws dml_exception|coding_exception
      */
     public static function get_events_in_timerange(string $starttime, string $endtime, int|null $instanceid): array {
         global $DB, $USER;
@@ -113,6 +115,9 @@ class event_manager {
             $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
         }
 
+        // Order events by starttime.
+        $sql .= ' ORDER BY starttime';
+
         $records = $DB->get_records_sql($sql, $params);
         $events = [];
 
@@ -129,48 +134,5 @@ class event_manager {
             ];
         }
         return $events;
-    }
-     /**
-      * function get_exportable_events
-      * @param int|null $instanceid
-      * @param array $ids
-      * @return array
-      * @throws dml_exception
-      */
-    public static function get_exportable_events(int $instanceid, array $ids): array {
-        global $DB, $USER;
-
-        if (empty($ids)) {
-            return [];
-        }
-
-        $inequal = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
-        $in = $inequal[0];
-        $inparams = $inequal[1];
-        $context = \context_module::instance($instanceid);
-
-        $viewall = has_capability('mod/bookit:viewalldetailsofevent', $context);
-        $viewown = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-        if ($viewall) {
-            $sql = "SELECT id, name, starttime, endtime, department, bookingstatus
-                      FROM {bookit_event}
-                     WHERE id $in";
-            return array_values($DB->get_records_sql($sql, $inparams));
-        }
-        if ($viewown) {
-            $like = $DB->sql_like('otherexaminers', ':otherex');
-            $sql  = "SELECT id, name, starttime, endtime, department, bookingstatus
-                       FROM {bookit_event}
-                      WHERE id $in
-                        AND (
-                             usermodified = :uid
-                          OR personinchargeid = :uid2
-                          OR $like
-                        )";
-            $params = $inparams + ['uid' => $USER->id, 'uid2' => $USER->id, 'otherex' => $USER->id];
-            return array_values($DB->get_records_sql($sql, $params));
-        }
-        // No details capability  nothing exportable.
-        return [];
     }
 }
