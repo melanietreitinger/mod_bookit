@@ -23,6 +23,8 @@ require_once($CFG->libdir . '/pdflib.php');
 
 use dml_exception;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
 use mod_bookit\local\pdf\bookit_pdf;
 
 /**
@@ -357,7 +359,7 @@ class sharing_manager {
 
             foreach ($categoriesdata as $categoryname => $categoryinfo) {
                 // Create category.
-                $category = new \mod_bookit\local\entity\bookit_checklist_category(
+                $category = new bookit_checklist_category(
                     0,
                     $masterid,
                     $categoryinfo['name'],
@@ -442,7 +444,7 @@ class sharing_manager {
                     $options = !empty($itemrow['options']) ? $itemrow['options'] : null;
 
                     // Create new item with all attributes.
-                    $item = new \mod_bookit\local\entity\bookit_checklist_item(
+                    $item = new bookit_checklist_item(
                         0,
                         $masterid,
                         $categoryid,
@@ -497,7 +499,7 @@ class sharing_manager {
      * @param array $itemids
      */
     private static function update_category_items(int $categoryid, array $itemids): void {
-        $category = \mod_bookit\local\entity\bookit_checklist_category::from_database($categoryid);
+        $category = bookit_checklist_category::from_database($categoryid);
         $category->checklistitems = implode(',', $itemids);
         $category->save();
     }
@@ -628,7 +630,7 @@ class sharing_manager {
                 $itemids = explode(',', $category->checklistitems);
 
                 foreach ($itemids as $itemid) {
-                    $item = \mod_bookit\local\entity\bookit_checklist_item::from_database((int)$itemid);
+                    $item = bookit_checklist_item::from_database((int)$itemid);
 
                     $itemdata = new \stdClass();
                     $itemdata->id = $item->id;
@@ -648,6 +650,7 @@ class sharing_manager {
                             }
                         }
                     }
+                    wsidjasldksahdkld
 
                     // Get role names.
                     if (!empty($item->roleids)) {
