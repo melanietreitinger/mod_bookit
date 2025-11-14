@@ -81,22 +81,26 @@ class event_manager {
         $context = context_module::instance($instanceid);
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-        $color = ''; // Default background color of event.
-        $roomname = ''; // Default room name = empty.
 
-        $sqlreserved = 'SELECT id, NULL as name, starttime, endtime FROM {bookit_event} ' .
+        $sqlreserved = 'SELECT e.id, NULL as name, e.starttime, e.endtime, r.eventcolor, r.name as roomname ' .
+                'FROM {bookit_event} e ' .
+                'JOIN {bookit_room} r ON r.id = e.roomid ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
 
         // Service-Team: can view all events in detail.
         if ($viewalldetailsofevent) {
-            $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event} ' .
-                    'WHERE endtime >= :starttime AND starttime <= :endtime';
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, r.eventcolor, r.name as roomname ' .
+                'FROM {bookit_event} e ' .
+                'JOIN {bookit_room} r ON r.id = e.roomid ' .
+                'WHERE endtime >= :starttime AND starttime <= :endtime';
             $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
         } else if ($viewalldetailsofownevent) {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
             // Every user: can view own events in detail.
-            $sql = 'SELECT id, name, starttime, endtime FROM {bookit_event}
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, r.eventcolor, r.name as roomname
+                    FROM {bookit_event} e
+                    JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
                     AND (usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
                     UNION ' . $sqlreserved . '
@@ -117,29 +121,14 @@ class event_manager {
         $records = $DB->get_records_sql($sql, $params);
         $events = [];
 
-        // Get room colors from plugin config.
-        $config = get_config('mod_bookit');
-        $roomcolors = [];
-        foreach ($config as $key => $value) {
-            if (false !== preg_match('/roomcolor_/', $key)) {
-                $roomcolors[substr($key, 10)] = $value;
-            }
-        }
-
         foreach ($records as $record) {
-            $eventresources = resource_manager::get_resources_of_event($record->id);
-            foreach ($eventresources as $object) {
-                if (1 == $object->categoryid) {
-                    $color = $roomcolors[$object->resourceid] ?? '';
-                    $roomname = $object->name;
-                }
-            }
             $events[] = [
                 'id' => $record->id,
                 'title' => ($record->name ?? $reserved) . ' (' . $roomname . ')',
                 'start' => date('Y-m-d H:i', $record->starttime),
                 'end' => date('Y-m-d H:i', $record->endtime),
-                'backgroundColor' => $color,
+                'backgroundColor' => $record->eventcolor,
+                'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
                 'extendedProps' => (object)['reserved' => !$record->name],
 
             ];

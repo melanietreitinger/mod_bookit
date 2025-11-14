@@ -1,0 +1,79 @@
+
+variables:
+  DEBIAN_FRONTEND: 'noninteractive'
+  COMPOSER_ALLOW_SUPERUSER: 1
+  COMPOSER_CACHE_DIR: "$CI_PROJECT_DIR/.cache/composer"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.cache/npm"
+  CI_BUILD_DIR: '/tmp/plugin'
+  #MOODLE_BEHAT_WWWROOT: 'http://localhost:8000' gets set in before_script
+  MOODLE_BEHAT_WDHOST: 'http://behat:4444/wd/hub'
+  MOODLE_START_BEHAT_SERVERS: 'no'
+  # set in parallel:matrix
+  #MOODLE_BRANCH: 'MOODLE_405_STABLE'
+  #PHP_VERSION: '8.3'
+  #DB: 'pgsql'
+
+default:
+  services:
+    - name: selenium/standalone-chrome:3
+      alias: behat
+    - name: mariadb:10.6
+      alias: mariadb
+      command:
+        - '--character-set-server=utf8mb4'
+        - '--collation-server=utf8mb4_unicode_ci'
+        - '--innodb_file_per_table=On'
+        - '--wait-timeout=28800'
+        - '--skip-log-bin'
+      variables:
+        MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
+    - name: postgres:14
+      alias: pgsql
+      variables:
+        POSTGRES_USER: 'postgres'
+        POSTGRES_HOST_AUTH_METHOD: 'trust'
+  cache:
+    paths:
+      - .cache
+  image: moodlehq/moodle-php-apache:$PHP_VERSION
+  before_script:
+    - mkdir -pv "$CI_BUILD_DIR"
+    - cp -ru "$CI_PROJECT_DIR/"* "$CI_BUILD_DIR"
+    - mkdir -p /usr/share/man/man1 /usr/share/man/man3 /usr/share/man/man7
+    # Install packages for DBs and mustache tests
+    - apt-get -qq update
+    - apt-get -yqq install --no-install-suggests default-jre-headless mariadb-client postgresql-client
+    # Install npm
+    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash'
+    - . ~/.bashrc
+    - nvm install --default --latest-npm lts/jod
+    - 'curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer'
+    # Setup Behat.
+    - export IPADDRESS=`grep "$HOSTNAME$" /etc/hosts | awk '{print $1}'`
+    - export MOODLE_BEHAT_WWWROOT="http://$IPADDRESS:8000"
+    # Install moodle-plugin-ci
+    - composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci /opt/mci ^4
+    - export PATH="/opt/mci/bin:/opt/mci/vendor/bin:$PATH"
+    - moodle-plugin-ci install --db-host "$DB" --db-name moodle
+    - '{ php -S 0.0.0.0:8000 -t "$CI_PROJECT_DIR/moodle" >/dev/null 2>&1 & }'
+
+tests:
+  script:
+    - moodle-plugin-ci phplint
+    - moodle-plugin-ci phpmd
+    - moodle-plugin-ci phpcs --max-warnings 0
+    - moodle-plugin-ci phpdoc --max-warnings 0
+    - moodle-plugin-ci validate
+    - moodle-plugin-ci savepoints
+    - moodle-plugin-ci mustache
+    - moodle-plugin-ci grunt --max-lint-warnings 0
+    - moodle-plugin-ci phpunit --fail-on-warning
+    - moodle-plugin-ci behat --profile chrome --scss-deprecations
+  tags:
+    - stage
+
+  parallel:
+    matrix:
+      - MOODLE_BRANCH: [MOODLE_405_STABLE]
+        PHP_VERSION: ['8.1', '8.3']
+        DB: [pgsql, mariadb]

@@ -112,4 +112,5 @@ function xmldb_bookit_install() {
 
         $event->save(2);
     }
+    set_config('installhelperfinished', 0, 'mod_bookit');
 }

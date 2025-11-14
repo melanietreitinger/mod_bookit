@@ -3,10 +3,11 @@
 	<shortname>bookit_serviceteam</shortname>
 	<name>BookIt_Service-Team</name>
 	<description>A person who works in the e-assessment service and manage exam bookings.</description>
-	<archetype>student</archetype>
+	<archetype>manager</archetype>
 	<contextlevels>
 		<level>course</level>
 		<level>module</level>
+		<level>system</level>
 	</contextlevels>
 	<allowassign>
 		<shortname>serviceteam</shortname>
@@ -950,11 +951,13 @@
 		<allow>mod/bookit:editevent</allow>
 		<allow>mod/bookit:editinternal</allow>
 		<allow>mod/bookit:editresource</allow>
+		<allow>mod/bookit:managemasterchecklist</allow>
 		<allow>mod/bookit:view</allow>
 		<allow>mod/bookit:viewalldetailsofevent</allow>
 		<allow>mod/bookit:viewalldetailsofownevent</allow>
 		<allow>moodle/course:enrolreview</allow>
 		<allow>moodle/role:assign</allow>
 		<allow>moodle/user:viewdetails</allow>
+		<allow>moodle/site:configview</allow>
 	</permissions>
 </role>

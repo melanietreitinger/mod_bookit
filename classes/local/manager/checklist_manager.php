@@ -25,10 +25,11 @@
 namespace mod_bookit\local\manager;
 
 use dml_exception;
-use mod_bookit\local\entity\bookit_checklist_master;
-use mod_bookit\local\entity\bookit_checklist_category;
-use mod_bookit\local\entity\bookit_checklist_item;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
 use mod_bookit\local\entity\bookit_notification_slot;
+use mod_bookit\local\manager\color_manager;
 
 /**
  * Checklist manager class.
@@ -74,12 +75,16 @@ class checklist_manager {
     /**
      * Get checklist categories by master ID.
      *
-     * @param int $masterid ID of the master checklist
+     * @param int|null $masterid ID of the master checklist
      * @return array Array of bookit_checklist_category objects
      * @throws dml_exception
      */
-    public static function get_categories_by_master_id(int $masterid): array {
+    public static function get_categories_by_master_id(?int $masterid): array {
         global $DB;
+
+        if ($masterid === null) {
+            $masterid = self::get_default_master()->id;
+        }
 
         $sql = "SELECT * FROM {bookit_checklist_category} WHERE masterid = :masterid";
         $params = ['masterid' => $masterid];
@@ -133,16 +138,48 @@ class checklist_manager {
     /**
      * Get all rooms available for BookIt.
      *
-     * @return array Array of room resources
+     * @return array Array of room records from database
+     * @throws dml_exception
      */
     public static function get_bookit_rooms() {
+        global $DB;
 
-        $categories = categories_manager::get_categories();
+        $records = $DB->get_records('bookit_room', null, 'name ASC');
 
-        $roomsarray = array_filter($categories, fn($cat) => $cat['name'] === 'Rooms');
-        $rooms = reset($roomsarray)['resources'];
+        return array_values(array_map(function ($record) {
+            $eventcolor = $record->eventcolor ?? '';
+            $textcolor = color_manager::get_textcolor_for_background($eventcolor);
+            $textclass = $textcolor === '#000' ? 'text-dark' : 'text-light';
 
-        return $rooms;
+            $record->textclass = $textclass;
+
+            return $record;
+        }, $records));
+    }
+
+    /**
+     * Get a single room by ID.
+     *
+     * @param int $roomid The ID of the room
+     * @return object|null Room record or null if not found
+     * @throws dml_exception
+     */
+    public static function get_room_by_id(int $roomid): ?object {
+        global $DB;
+
+        $record = $DB->get_record('bookit_room', ['id' => $roomid]);
+
+        if (!$record) {
+            return null;
+        }
+
+        $eventcolor = $record->eventcolor ?? '';
+        $textcolor = color_manager::get_textcolor_for_background($eventcolor);
+        $textclass = $textcolor === '#000' ? 'text-dark' : 'text-light';
+
+        $record->textclass = $textclass;
+
+        return $record;
     }
 
     /**
@@ -192,12 +229,8 @@ class checklist_manager {
      * @return string Room name or empty string if not found
      */
     public static function get_roomname_by_id(int $roomid): string {
-        $rooms = self::get_bookit_rooms();
-        $roommatch = array_filter($rooms, fn($item) => $item['id'] == $roomid);
-        if (!empty($roommatch)) {
-            return reset($roommatch)['name'];
-        }
-        return '';
+        $room = self::get_room_by_id($roomid);
+        return $room ? $room->name : '';
     }
 
     /**
@@ -213,5 +246,37 @@ class checklist_manager {
             return reset($rolematch)->name;
         }
         return '';
+    }
+
+    /**
+     * Get role by role ID.
+     *
+     * @param int $roleid The ID of the role
+     * @return object|null Role object or null if not found
+     */
+    public static function get_role_by_id(int $roleid): ?object {
+        $roles = self::get_bookit_roles();
+        $rolematch = array_filter($roles, fn($item) => $item->id == $roleid);
+        if (!empty($rolematch)) {
+            return reset($rolematch);
+        }
+        return null;
+    }
+
+    /**
+     * Check if current user has a specific role ID in any context.
+     *
+     * @param int $roleid Role ID to check
+     * @return bool True if user has the role
+     */
+    public static function user_has_bookit_role(int $roleid): bool {
+        global $USER, $DB;
+
+        $sql = "SELECT COUNT(*)
+                FROM {role_assignments} ra
+                WHERE ra.roleid = ?
+                AND ra.userid = ?";
+
+        return $DB->count_records_sql($sql, [$roleid, $USER->id]) > 0;
     }
 }

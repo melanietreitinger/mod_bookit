@@ -30,20 +30,22 @@ require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 global $OUTPUT;
 
-use mod_bookit\local\entity\bookit_checklist_master;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
 
 require_login();
+$context = context_system::instance();
+is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
 
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context($context);
 
 
 $PAGE->set_url(new moodle_url('/mod/bookit/master_checklist.php'));
 $PAGE->set_heading(get_string('master_checklist', 'mod_bookit'));
+$PAGE->set_title(get_string('master_checklist', 'mod_bookit'));
 
 $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
-
 
 $defaultchecklistmaster = checklist_manager::get_default_master();
 

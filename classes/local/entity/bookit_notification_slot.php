@@ -27,6 +27,7 @@ namespace mod_bookit\local\entity;
 
 use dml_exception;
 use mod_bookit\local\manager\checklist_manager;
+use mod_bookit\local\entity\bookit_notification_type;
 
 /**
  * Database class for bookit_notification_slots.
@@ -62,7 +63,7 @@ class bookit_notification_slot implements \renderable, \templatable {
      *
      * @param int|null $id
      * @param int $checklistitemid
-     * @param int $type Type of notification (e.g. email, dashboard, etc.)
+     * @param string $type Type of notification (e.g. email, dashboard, etc.)
      * @param string|null $roleids JSON-encoded list of role IDs to notify
      * @param int|null $duedaysoffset
      * @param string|null $duedaysrelation
@@ -77,8 +78,8 @@ class bookit_notification_slot implements \renderable, \templatable {
         public ?int $id,
         /** @var int checklistitemid */
         public int $checklistitemid,
-        /** @var int type */
-        public int $type,
+        /** @var string type */
+        public string $type,
         /** @var string|null roleids */
         public ?string $roleids,
         /** @var int|null duedaysoffset */
@@ -129,6 +130,34 @@ class bookit_notification_slot implements \renderable, \templatable {
     }
 
     /**
+     * Get notification slot for a specific checklist item and type
+     *
+     * @param int $checklistitemid ID of the checklist item
+     * @param string $type Notification type
+     * @return self|null Notification slot object or null if not found
+     * @throws dml_exception
+     */
+    public static function get_slot_by_item_and_type(int $checklistitemid, string $type): ?self {
+        global $DB;
+
+        $sql = "SELECT * FROM {bookit_notification_slots}
+                WHERE checklistitemid = :checklistitemid
+                AND " . $DB->sql_compare_text('type') . " = " . $DB->sql_compare_text(':type');
+
+        $params = [
+            'checklistitemid' => $checklistitemid,
+            'type' => $type,
+        ];
+
+        $record = $DB->get_record_sql($sql, $params);
+
+        if ($record) {
+            return self::from_record($record);
+        }
+        return null;
+    }
+
+    /**
      * Create object from record.
      *
      * @param array|object $record
@@ -140,7 +169,7 @@ class bookit_notification_slot implements \renderable, \templatable {
         return new self(
             $record->id ?? null,
             $record->checklistitemid,
-            $record->type ?? 0,
+            $record->type ?? '',
             $record->roleids,
             $record->duedaysoffset,
             $record->duedaysrelation,

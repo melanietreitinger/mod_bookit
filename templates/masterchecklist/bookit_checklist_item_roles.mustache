@@ -1,0 +1,48 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/masterchecklist/bookit_checklist_item_roles
+    This template renders a checklist table data element with rolenames (table row fragment).
+
+    Example context (json):
+    {
+        "rolenames": [
+            {"roleid": 3, "rolename": "Role A"},
+            {"roleid": 4, "rolename": "Role B"}
+        ]
+    }
+}}
+<td class="align-middle py-3" data-bookit-checklistitem-tabledata-roleids-id="{{id}}">
+{{#rolenames}}
+    <div>
+        {{#is_missing_role}}
+        <span class="badge badge-warning text-dark" style="opacity: 0.8;"
+            data-bookit-checklistitem-tabledata-role-id="{{roleid}}"
+            data-bookit-checklistitem-rolename="{{rolename}}"
+            data-bookit-checklistitem-tabledata-is-role-element>
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {{rolename}}
+        </span>
+        {{/is_missing_role}}
+        {{^is_missing_role}}
+        <span class="badge {{extraclasses}}" style="opacity: 0.8;"
+            data-bookit-checklistitem-tabledata-role-id="{{roleid}}"
+            data-bookit-checklistitem-rolename="{{rolename}}"
+            data-bookit-checklistitem-tabledata-is-role-element>{{rolename}}</span>
+        {{/is_missing_role}}
+    </div>
+{{/rolenames}}
+</td>

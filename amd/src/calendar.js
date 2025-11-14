@@ -1,6 +1,30 @@
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Manage the calendar
+ *
+ * @module     mod_bookit/calendar
+ * @copyright  2024 Melanie Treitinger, Justus Dieckmann RUB
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 import {getString} from 'core/str';
 import ModalForm from 'core_form/modalform';
 import {prefetchStrings} from 'core/prefetch';
+import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
 
 /**
  * Wait until a global property exists (EventCalendar is loaded asynchronously).
@@ -150,6 +174,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
                 });
+                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
                 modalForm.show();
             }
         },
@@ -158,7 +183,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         eventClick: function(info) {
             let id = info.event.id;
             if (info.event.extendedProps.reserved) {
-                return; 
+                return;
             }
 
             const modalForm = new ModalForm({
