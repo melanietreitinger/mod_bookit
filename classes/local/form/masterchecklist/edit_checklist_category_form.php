@@ -27,6 +27,7 @@ namespace mod_bookit\local\form\masterchecklist;
 
 use core_form\dynamic_form;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
 use mod_bookit\local\manager\checklist_manager;
 
 /**
@@ -180,7 +181,7 @@ class edit_checklist_category_form extends dynamic_form {
 
             $id = $category->save();
 
-            $masterchecklist = \mod_bookit\local\entity\bookit_checklist_master::from_database((int)$ajaxdata['masterid']);
+            $masterchecklist = bookit_checklist_master::from_database((int)$ajaxdata['masterid']);
 
             $mastercategories = checklist_manager::get_categories_by_master_id($masterchecklist->id);
 

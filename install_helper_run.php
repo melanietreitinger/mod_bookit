@@ -40,5 +40,5 @@ $usersimported = install_helper::import_default_users(false, false);
 $result = install_helper::create_default_checklists(false, false);
 
 // Redirect back to settings.
-$returnurl = new moodle_url('/admin/settings.php', ['section' => 'mod_bookit_settings']);
+$returnurl = new moodle_url('/admin/settings.php', ['section' => 'mod_bookit_checklist']);
 redirect($returnurl, 'Installation helper completed successfully.');

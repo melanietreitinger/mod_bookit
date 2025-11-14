@@ -219,7 +219,7 @@ export default class extends BaseComponent {
             }
         }
 
-        Templates.renderForPromise('mod_bookit/bookit_checklist_category',
+        Templates.renderForPromise('mod_bookit/masterchecklist/bookit_checklist_category',
             {
                 id: event.element.id,
                 name: event.element.name,
@@ -285,7 +285,7 @@ export default class extends BaseComponent {
             });
         }
 
-        Templates.renderForPromise('mod_bookit/bookit_checklist_item',
+        Templates.renderForPromise('mod_bookit/masterchecklist/bookit_checklist_item',
             {
                 id: event.element.id,
                 title: event.element.title,
@@ -350,14 +350,14 @@ export default class extends BaseComponent {
 
             if (fieldPart.startsWith('room')) {
 
-                templateName = 'mod_bookit/bookit_checklist_item_rooms';
+                templateName = 'mod_bookit/masterchecklist/bookit_checklist_item_rooms';
                 templateData = {
                     id: event.element.id,
                     roomnames: stateItem.roomnames
                 };
             } else if (fieldPart.startsWith('role')) {
 
-                templateName = 'mod_bookit/bookit_checklist_item_roles';
+                templateName = 'mod_bookit/masterchecklist/bookit_checklist_item_roles';
                 templateData = {
                     id: event.element.id,
                     rolenames: stateItem.rolenames
@@ -404,7 +404,7 @@ export default class extends BaseComponent {
     _handleCategoryNameUpdatedEvent(event) {
         const targetElement = this.getElement(`#bookit-master-checklist-category-row-${event.element.id}`);
 
-        Templates.renderForPromise('mod_bookit/bookit_checklist_category_row',
+        Templates.renderForPromise('mod_bookit/masterchecklist/bookit_checklist_category_row',
             {
                 id: event.element.id,
                 name: event.element.name,

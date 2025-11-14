@@ -38,7 +38,6 @@ use renderer_base;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_checklist_category implements \renderable, named_templatable {
-
     /**
      * Get the template name for this renderable.
      *

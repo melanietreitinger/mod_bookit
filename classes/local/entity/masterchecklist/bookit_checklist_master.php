@@ -39,7 +39,6 @@ use renderer_base;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class bookit_checklist_master implements \renderable, named_templatable {
-
     /**
      * Get the template name for this renderable.
      *
@@ -103,7 +102,11 @@ class bookit_checklist_master implements \renderable, named_templatable {
         $this->timecreated ??= $now;
         $this->timemodified ??= $now;
 
-        $PAGE->requires->js_call_amd('mod_bookit/masterchecklist/master_checklist_reactive', 'init', ['mod-bookit-master-checklist']);
+        $PAGE->requires->js_call_amd(
+            'mod_bookit/masterchecklist/master_checklist_reactive',
+            'init',
+            ['mod-bookit-master-checklist']
+        );
     }
 
     /**

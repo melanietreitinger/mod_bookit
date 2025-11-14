@@ -10,7 +10,8 @@ Feature: Edit master checklist item
       | username     | firstname | lastname | email                    |
       | serviceteam1 | Service   | Team     | serviceteam@example.com |
     And I log in as "admin"
-    And I navigate to "Plugins > Activity modules > BookIt > General Settings" in site administration
+    And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I click on "Checklist" "link"
     And I click on "Run install helper" "link"
     And the following "role assigns" exist:
       | user         | role               | contextlevel | reference |
@@ -19,7 +20,10 @@ Feature: Edit master checklist item
 
   Scenario Outline: Admin and Service-Team can edit a master checklist item
     Given I log in as "<user>"
-    And I navigate to "Plugins > Activity modules > BookIt > Master checklist" in site administration
+    And I change window size to "large"
+    And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I click on "Checklist" "link"
+    And I click on "Master checklist" "link"
     And I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I should see "Save"

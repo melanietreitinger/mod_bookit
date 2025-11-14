@@ -62,8 +62,10 @@ class hook_callbacks {
         );
 
         // Set it as active if we're on any bookit admin page.
-        if ($PAGE->url->compare(new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'), URL_MATCH_BASE) ||
-            $PAGE->url->compare(new \moodle_url('/mod/bookit/master_checklist.php'), URL_MATCH_BASE)) {
+        if (
+            $PAGE->url->compare(new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'), URL_MATCH_BASE) ||
+            $PAGE->url->compare(new \moodle_url('/mod/bookit/master_checklist.php'), URL_MATCH_BASE)
+        ) {
             $node->make_active();
         }
     }
