@@ -27,6 +27,7 @@
 namespace mod_bookit\local\entity;
 
 use advanced_testcase;
+use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
 
 /**
  * Unit tests for bookit_checklist_master class.
@@ -36,7 +37,7 @@ use advanced_testcase;
  * @copyright   2025 ssystems GmbH <oss@ssystems.de>
  * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \mod_bookit\local\entity\bookit_checklist_master
+ * @covers      \mod_bookit\local\entity\masterchecklist\bookit_checklist_master
  */
 final class bookit_checklist_master_test extends advanced_testcase {
     /**
