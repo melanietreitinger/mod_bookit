@@ -310,10 +310,8 @@ export default class extends BaseComponent {
     /**
      * Helper method to add required icon to an element
      * @param {Element} anchorElement The anchor element to insert before
-     * @param {string} type The notification type
-     * @param {string} fieldType The field type (recipient, time, messagetext)
      */
-    _addRequiredIcon(anchorElement, type, fieldType) {
+    _addRequiredIcon(anchorElement) {
         Templates.renderForPromise('core/pix_icon_fontawesome', {
             key: 'fa-circle-exclamation',
             title: 'Required',
@@ -328,8 +326,8 @@ export default class extends BaseComponent {
             anchorElement.insertAdjacentHTML('beforebegin', requiredIconHtml);
             return;
         })
-        .catch((error) => {
-            window.console.log(`Template error for ${type}_${fieldType}:`, error);
+        .catch(() => {
+            // Template error silently ignored.
         });
     }
 
@@ -412,17 +410,9 @@ export default class extends BaseComponent {
         const roomIds = stateItem.roomids;
         const roleIds = stateItem.roleids;
 
-        window.console.log('=== shouldBeVisible Debug ===');
-        window.console.log('itemId:', itemId);
-        window.console.log('activeRooms:', activeRooms);
-        window.console.log('activeRoleId:', activeRoleId);
-        window.console.log('roomIds (raw):', roomIds);
-        window.console.log('roleIds:', roleIds);
-
         var isInRoom = false;
 
         const noRoomSelection = activeRooms.some(room => {
-            window.console.log('ROOM IN NO ROOM SELECTION CALLBACK FUNC:', room);
             return room.id == 0;
         });
 
@@ -430,12 +420,8 @@ export default class extends BaseComponent {
         try {
             parsedRoomIds = JSON.parse(roomIds);
         } catch (error) {
-            window.console.log('Failed to parse roomIds as JSON, treating as string:', roomIds);
             parsedRoomIds = roomIds;
         }
-
-        window.console.log('roomIds (parsed):', parsedRoomIds);
-        window.console.log('parsedRoomIds is array:', Array.isArray(parsedRoomIds));
 
         let hasMatchingRoom = false;
         if (Array.isArray(parsedRoomIds)) {
@@ -448,15 +434,9 @@ export default class extends BaseComponent {
             );
         }
 
-        window.console.log('noRoomSelection:', noRoomSelection);
-        window.console.log('parsedRoomIds:', parsedRoomIds);
-        window.console.log('hasMatchingRoom:', hasMatchingRoom);
-
         if (noRoomSelection || hasMatchingRoom) {
             isInRoom = true;
         }
-
-        window.console.log('isInRoom:', isInRoom);
 
         var hasRole = false;
 
@@ -464,12 +444,7 @@ export default class extends BaseComponent {
             hasRole = true;
         }
 
-        window.console.log('hasRole:', hasRole);
-
         const shouldBeVisible = isInRoom && hasRole;
-
-        window.console.log('shouldBeVisible:', shouldBeVisible);
-        window.console.log('=== End Debug ===');
 
         if (!shouldBeVisible) {
             this.element.classList.add('d-none');

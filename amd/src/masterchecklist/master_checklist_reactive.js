@@ -43,7 +43,6 @@ export const init = () => {
  */
 function dispatchMasterChecklistStateEvent(detail, target) {
 
-    window.console.log('dispatch master checklist state event function');
     if (target === undefined) {
         target = document;
     }
@@ -68,8 +67,6 @@ function dispatchMasterChecklistStateEvent(detail, target) {
  * @return {Promise<void>}
  */
 const loadState = async(reactive) => {
-
-    window.console.log('loading state');
 
     const tableElement = document.querySelector(SELECTORS.TABLE);
 

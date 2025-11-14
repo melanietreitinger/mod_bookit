@@ -64,8 +64,6 @@ export default class extends BaseComponent {
         });
         this.addEventListener(this.getElement(this.selectors.ROOM_SELECT), 'change', (e) => {
 
-            window.console.log('ROOM SELECT CHANGED: ', e);
-
             // TODO we need to dispatch all selected values
 
             this.reactive.dispatch('roomChanged', {options: e.target.selectedOptions});
@@ -93,11 +91,9 @@ export default class extends BaseComponent {
     }
 
     _handleFilterUpdate(event) {
-        window.console.log('Filter update in master checklist:', event);
 
         // Check if the created element has id 0 (No selection)
         if (event.element.id === "0") {
-            window.console.log('No selection detected - clearing other room selections');
 
             const roomSelect = this.getElement(this.selectors.ROOM_SELECT);
 
@@ -256,15 +252,11 @@ export default class extends BaseComponent {
 
     _handleItemCreatedEvent(event) {
 
-        window.console.log('HANDLE ITEM CREATED EVENT: ', event);
-
         const targetElement = this.getElement(`#bookit-master-checklist-tbody-category-${event.element.category}`);
 
         const roomNames = [];
         if (event.element.roomnames) {
-            window.console.log('ROOMNAMES: ', event.element.roomnames);
             event.element.roomnames.forEach((room) => {
-                window.console.log('ROOM: ', room);
                 roomNames.push({
                     'roomid': room.roomid,
                     'roomname': room.roomname,
@@ -303,7 +295,6 @@ export default class extends BaseComponent {
             .then(async() => {
                 await Toast.add(await getString('checklistitemsuccess', 'mod_bookit'),
                     {type: 'success'});
-                window.console.log('ITEM IS RENDERED');
 
                 // Find and trigger filter update on parent category component
                 const components = this.reactive.components;

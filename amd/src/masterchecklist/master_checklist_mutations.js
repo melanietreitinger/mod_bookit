@@ -226,7 +226,6 @@ export default class {
         const itemIndex = currentItems.indexOf(data.id);
 
         if (itemIndex !== -1) {
-            window.console.log('item found in category items - removing');
             currentItems.splice(itemIndex, 1);
             category.items = currentItems;
         }
@@ -238,18 +237,11 @@ export default class {
         const state = stateManager.state;
 
         const optionsArray = Array.from(data.options);
-        window.console.log(optionsArray);
 
         stateManager.setReadOnly(false);
 
-        window.console.log('DEBUG: state.activeRoom before modification:', state.activeRoom);
-        window.console.log('DEBUG: typeof state.activeRoom:', typeof state.activeRoom);
-        window.console.log('DEBUG: Array.isArray(state.activeRoom):', Array.isArray(state.activeRoom));
-        window.console.log('DEBUG: state.activeRoom.constructor:', state.activeRoom.constructor);
-
         let tempArray = [];
         optionsArray.forEach(option => {
-            window.console.log('ROOM OPTION:', option);
             tempArray.push({
                 id: option.value,
                 name: option.textContent
@@ -259,7 +251,6 @@ export default class {
         const hasNoSelection = tempArray.some(room => room.id === "0");
         if (hasNoSelection) {
             tempArray = tempArray.filter(room => room.id === "0");
-            window.console.log('No selection found - keeping only No selection option');
         }
 
         // Clear the existing StateMap and add new elements

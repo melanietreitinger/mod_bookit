@@ -31,7 +31,6 @@ export default class extends BaseComponent {
 
     getWatchers() {
 
-        window.console.log('getting watchers for checklist category', this.element.dataset.bookitCategoryId);
         return [
             {watch: 'checklistcategories.name:updated', handler: this._refreshEditButtonListener},
             {watch: 'activeRole:updated', handler: this._handleFilterUpdate},
@@ -52,7 +51,6 @@ export default class extends BaseComponent {
 
         this.addEventListener(this.getElement(this.selectors[categoryEditBtnSelector]), 'click', (e) => {
             e.preventDefault();
-            window.console.log('EDIT CHECKLIST CATEGORY BUTTON CLICKED', e.currentTarget);
             this._handleEditChecklistCategoryButtonClick(e);
         });
 
@@ -200,7 +198,6 @@ export default class extends BaseComponent {
     }
 
      _handleFilterUpdate() {
-        window.console.log('handle filter update for category', this.element.dataset.bookitCategoryId);
         const components = this.reactive.components;
         const results = this.helper.findComponents(components, {
             dataset: {bookitChecklistitemCategoryid: this.element.dataset.bookitCategoryId},
