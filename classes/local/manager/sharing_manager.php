@@ -650,7 +650,6 @@ class sharing_manager {
                             }
                         }
                     }
-                    wsidjasldksahdkld
 
                     // Get role names.
                     if (!empty($item->roleids)) {
