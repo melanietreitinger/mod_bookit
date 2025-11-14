@@ -18,8 +18,8 @@ Feature: Create master checklist category
       | serviceteam1 | bookit_serviceteam | System       |           |
     And I log out
 
-  Scenario Outline: Admin and Service-Team can create a new master checklist category
-    Given I log in as "<user>"
+  Scenario: Admin can create a new master checklist category
+    Given I log in as "admin"
     And I change window size to "large"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
     And I click on "Checklist" "link"
@@ -29,11 +29,20 @@ Feature: Create master checklist category
     And I should see "Category name"
     And I should see "Required"
     And I set the following fields to these values:
-      | Category name | My Test Category |
+      | Category name | My Test Category Admin |
     And I press "Save changes"
-    Then I should see "My Test Category"
+    Then I should see "My Test Category Admin"
 
-    Examples:
-      | user         |
-      | admin        |
-      | serviceteam1 |
+  Scenario: Service-Team can create a new master checklist category
+    Given I log in as "serviceteam1"
+    And I change window size to "large"
+    And I click on "BookIt" "link" in the ".primary-navigation" "css_element"
+    And I click on "Master checklist" "link"
+    And I should see "Master checklist" in the "#page-header" "css_element"
+    When I click on "add-checklist-category-button" "button"
+    And I should see "Category name"
+    And I should see "Required"
+    And I set the following fields to these values:
+      | Category name | My Test Category ServiceTeam |
+    And I press "Save changes"
+    Then I should see "My Test Category ServiceTeam"

@@ -266,6 +266,9 @@ class edit_checklist_item_form extends dynamic_form {
 
         $hasactiveslots = false;
 
+        // Create a temporary object to hold notification slot data.
+        $slotdata = new \StdClass();
+
         if (!empty($itemslots)) {
             foreach ($itemslots as $slot) {
                 if ($slot->isactive == 1 && $hasactiveslots == false) {
@@ -275,20 +278,20 @@ class edit_checklist_item_form extends dynamic_form {
 
                 if (array_search($slottype, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
                     $timeprop = $this->get_property_name($slottype->value, 'time');
-                    $item->{$timeprop}['number'] = $slot->duedaysoffset;
-                    $item->{$timeprop}['timeunit'] = DAYSECS;
+                    $slotdata->{$timeprop}['number'] = $slot->duedaysoffset;
+                    $slotdata->{$timeprop}['timeunit'] = DAYSECS;
                 }
                 $idprop = $this->get_property_name($slottype->value, 'id');
-                $item->{$idprop} = $slot->id;
+                $slotdata->{$idprop} = $slot->id;
 
                 $mainprop = $this->get_property_name($slottype->value);
-                $item->{$mainprop} = $slot->isactive;
+                $slotdata->{$mainprop} = $slot->isactive;
 
                 $recipientprop = $this->get_property_name($slottype->value, 'recipient');
-                $item->{$recipientprop} = json_decode($slot->roleids, true);
+                $slotdata->{$recipientprop} = json_decode($slot->roleids, true);
 
                 $messageprop = $this->get_property_name($slottype->value, 'messagetext');
-                $item->{$messageprop}['text'] = $slot->messagetext;
+                $slotdata->{$messageprop}['text'] = $slot->messagetext;
             }
 
             if ($hasactiveslots) {
@@ -296,17 +299,23 @@ class edit_checklist_item_form extends dynamic_form {
             }
         }
 
-        $item->duedate = $item->duedaysrelation ?? 'none';
-
         // Transform object property names to form field names.
-        $formdata = clone $item;
+        // Use StdClass to avoid creating dynamic properties on entity object.
+        $formdata = new \StdClass();
+        foreach (get_object_vars($item) as $key => $value) {
+            $formdata->$key = $value;
+        }
+        $formdata->duedate = $item->duedaysrelation ?? 'none';
+
         foreach (bookit_notification_type::cases() as $case) {
             $fieldname = $case->value; // E.g., 'before_due'.
             $propname = $this->get_property_name($fieldname); // E.g., 'beforedue'.
 
             // Map camelCase properties to underscore form fields.
-            if (isset($item->{$propname})) {
+            if (property_exists($item, $propname) && isset($item->{$propname})) {
                 $formdata->{$fieldname} = $item->{$propname};
+            } else if (isset($slotdata->{$propname})) {
+                $formdata->{$fieldname} = $slotdata->{$propname};
             }
 
             $suffixes = ['time', 'messagetext', 'recipient', 'id'];
@@ -314,8 +323,10 @@ class edit_checklist_item_form extends dynamic_form {
                 $fieldnamewithsuffix = $fieldname . '_' . $suffix;
                 $propnamewithsuffix = $this->get_property_name($fieldname, $suffix);
 
-                if (isset($item->{$propnamewithsuffix})) {
+                if (property_exists($item, $propnamewithsuffix) && isset($item->{$propnamewithsuffix})) {
                     $formdata->{$fieldnamewithsuffix} = $item->{$propnamewithsuffix};
+                } else if (isset($slotdata->{$propnamewithsuffix})) {
+                    $formdata->{$fieldnamewithsuffix} = $slotdata->{$propnamewithsuffix};
                 }
             }
         }
