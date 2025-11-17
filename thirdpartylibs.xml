@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<libraries>
+    <library>
+        <location>thirdpartylibs/event-calendar</location>
+        <name>EventCalendar</name>
+        <description>Event Calendar</description>
+        <version>3.12.0</version>
+        <license>MIT</license>
+        <repository>https://github.com/vkurko/calendar</repository>
+    </library>
+</libraries>

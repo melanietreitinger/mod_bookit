@@ -33,7 +33,7 @@ require_once($CFG->dirroot . '/mod/bookit/classes/local/install_helper.php');
 use mod_bookit\local\install_helper;
 
 // Get cli options.
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     [
         'help' => false,
         'force' => false,
@@ -50,7 +50,7 @@ if ($unrecognized) {
 }
 
 if ($options['help']) {
-    $help = "CLI script to populate BookIt checklists with test data.
+    $help = "CLI script to populate BookIt with roles, users, and checklist test data.
 
 Options:
 -h, --help          Print this help.
@@ -63,12 +63,22 @@ Example:
     exit(0);
 }
 
-cli_heading('Creating test checklist data for BookIt');
+cli_heading('Populating BookIt with roles, users, and test data');
 cli_writeln('');
 
+// Import roles first.
+cli_writeln('Importing default roles...');
+$rolesimported = install_helper::import_default_roles($options['force'], true);
+
+// Import users after roles.
+cli_writeln('Importing default users...');
+$usersimported = install_helper::import_default_users($options['force'], true);
+
+// Create checklists and rooms.
+cli_writeln('Creating checklists and rooms...');
 $result = install_helper::create_default_checklists($options['force'], true);
 
-if ($result) {
+if ($rolesimported || $usersimported || $result) {
     cli_writeln('Test data population completed successfully!');
 } else {
     cli_writeln('Test data population skipped - data already exists.');

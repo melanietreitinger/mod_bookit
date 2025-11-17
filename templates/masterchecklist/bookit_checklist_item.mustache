@@ -1,0 +1,66 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/masterchecklist/bookit_checklist_item
+    This template renders a single checklist row (table row fragment).
+
+    Example context (json):
+    {
+        "id": 1,
+        "title": "Checklist Item",
+        "order": "1",
+        "categoryid": "2",
+        "roomids": "[3,4]",
+        "roomnames": [
+            {"roomid": 3, "roomname": "Room A"},
+            {"roomid": 4, "roomname": "Room B"}
+        ],
+        "roleids": "[4,5]",
+        "rolenames": [
+            {"roleid": 4, "rolename": "Student"},
+            {"roleid": 5, "rolename": "Teacher"}
+        ]
+    }
+}}
+<tr id="bookit-master-checklist-item-{{id}}" class="table-default border-bottom bookit-checklistitem"
+    data-bookit-checklistitem-id="{{id}}"
+    data-bookit-checklistitem-title="{{title}}"
+    data-bookit-checklistitem-order="{{order}}"
+    data-bookit-checklistitem-categoryid="{{categoryid}}"
+    data-bookit-checklistitem-roomids='{{{roomids}}}'
+    data-bookit-checklistitem-roleids='{{{roleids}}}'
+    data-bookit-drag-handle-item-id="{{id}}"
+    data-bookit-drag-handle-parent-id="{{categoryid}}">
+                 <td class="align-middle py-3 pl-4">
+                    <span class="font-weight-medium" data-bookit-checklistitem-tabledata-title-id="{{id}}">{{title}}</span>
+                </td>
+
+                    {{> mod_bookit/masterchecklist/bookit_checklist_item_rooms }}
+
+                    {{> mod_bookit/masterchecklist/bookit_checklist_item_roles }}
+                <td class="align-middle py-3 text-center">
+                    <button type="button" class="btn btn-sm rounded-pill btn-light pl-3 text-dark" value="{{id}}" name="edit-checklistitem-{{id}}" id="edit-checklistitem-{{id}}">
+                        {{#pix}} i/edit, core {{/pix}}
+                    </button>
+                </td>
+                {{> mod_bookit/masterchecklist/bookit_checklist_drag_handle }}
+</tr>
+{{#js}}
+require(['mod_bookit/masterchecklist/master_checklist_item'], function(component) {
+    component.init('#bookit-master-checklist-item-{{id}}');
+});
+{{/js}}
