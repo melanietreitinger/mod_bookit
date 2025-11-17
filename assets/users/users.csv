@@ -1,0 +1,6 @@
+username;email;firstname;lastname;auth;password
+bob.booker;bob@existiert.net;Bob;Booker;manual;x
+olaf.observer;olaf.observer@existiert.net;Olaf;Observer;manual;x
+eva.examiner ;eva.examiner@existiert.net;Eva;Examiner;manual;x
+steven.support ;steven.support@existiert.net;Steven;Support;manual;x
+susi.serviceteam;susi.serviceteam@existiert.net;Susi;Serviceteam;manual;x

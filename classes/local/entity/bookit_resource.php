@@ -62,8 +62,16 @@ class bookit_resource {
      * @param int|null $timemodified
      * @param int|null $id
      */
-    public function __construct(string $name, string $description, int $amount, int $categoryid,
-            int|null $usermodified = null, int|null $timecreated = null, int|null $timemodified = null, int|null $id = null) {
+    public function __construct(
+        string $name,
+        string $description,
+        int $amount,
+        int $categoryid,
+        int|null $usermodified = null,
+        int|null $timecreated = null,
+        int|null $timemodified = null,
+        int|null $id = null
+    ) {
         $this->id = $id;
         $this->name = $name;
         $this->description = $description;
@@ -97,14 +105,14 @@ class bookit_resource {
     public static function from_record(array|object $record): self {
         $record = (object) $record;
         return new self(
-                $record->name,
-                $record->description,
-                $record->amount,
-                $record->categoryid,
-                $record->usermodified ?? null,
-                $record->timecreated ?? null,
-                $record->timemodified ?? null,
-                $record->id ?? null
+            $record->name,
+            $record->description,
+            $record->amount,
+            $record->categoryid,
+            $record->usermodified ?? null,
+            $record->timecreated ?? null,
+            $record->timemodified ?? null,
+            $record->id ?? null
         );
     }
 

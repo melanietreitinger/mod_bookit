@@ -58,8 +58,8 @@ class resource_manager {
         global $DB;
         $records = $DB->get_records_sql(
             'SELECT r.id resource_id, r.name resource_name, r.description resource_desc, r.amount resource_amount,
-                     c.id category_id, c.name category_name, c.description category_desc
-                     FROM {bookit_resource} r LEFT JOIN {bookit_resource_categories} c ON c.id = r.categoryid'
+                    c.id category_id, c.name category_name, c.description category_desc
+                    FROM {bookit_resource} r LEFT JOIN {bookit_resource_categories} c ON c.id = r.categoryid'
         );
         $resources = [];
         foreach ($records as $record) {

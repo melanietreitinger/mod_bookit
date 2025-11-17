@@ -1,0 +1,111 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/masterchecklist/bookit_checklist_master_pdf
+    This template renders the master checklist for PDF export with inline styles.
+
+    Example context (json):
+    {
+        "id": 1,
+        "name": "Master Checklist",
+        "title": "Master Checklist",
+        "checklistcategories": [
+            {
+                "id": 1,
+                "name": "Category 1",
+                "checklistitems": [
+                    {
+                        "id": 3,
+                        "title": "Checklist Item 1",
+                        "roomnames": [
+                            {"roomname": "Room A", "eventcolor": "#ff0000"},
+                            {"roomname": "Room B", "eventcolor": "#00ff00"}
+                        ],
+                        "rolenames": [
+                            {"rolename": "Student"}
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{#title}}{{title}}{{/title}}{{^title}}BookIt Checklist{{/title}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        th {
+            font-weight: bold;
+            border-bottom: 2px solid black;
+            height: 32px;
+            line-height: 2.5;
+        }
+
+        td {
+            border-bottom: 1px solid gray;
+            line-height: 1.5;
+        }
+
+    </style>
+</head>
+<body>
+    {{#title}}<h1>{{title}}</h1>{{/title}}
+    {{^title}}<h1>BookIt Checklist</h1>{{/title}}
+
+    {{#checklistcategories}}
+        <h2>{{name}}</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:5%;">&nbsp;</th>
+                    <th style="width:40%;">{{#str}} checklistitem, mod_bookit {{/str}}</th>
+                    <th style="width:30%;">{{#str}} rooms, mod_bookit {{/str}}</th>
+                    <th style="width:30%;">{{#str}} responsibility, mod_bookit {{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#checklistitems}}
+                <tr>
+                    <td style="width:5%; font-family:monospace; font-size:14px;">[ ]</td>
+                    <td style="width:40%; font-size:14px;">
+                    {{title}}
+                    </td>
+                    <td style="width:30%;">
+                        {{#roomnames}}
+                            <span>{{roomname}}</span><br>
+                        {{/roomnames}}
+                    </td>
+                    <td style="width:30%;">
+                        {{#rolenames}}
+                            <span>{{rolename}}</span><br>
+                        {{/rolenames}}
+                    </td>
+                </tr>
+                {{/checklistitems}}
+            </tbody>
+        </table>
+
+    {{/checklistcategories}}
+</body>
+</html>

@@ -24,9 +24,11 @@
 
 namespace mod_bookit\local\manager;
 
+use coding_exception;
 use context_module;
 use DateTime;
 use dml_exception;
+use stdClass;
 
 /**
  * Manager for accessing and fetching events.
@@ -40,10 +42,10 @@ class event_manager {
      * Get event from id.
      *
      * @param int $id
-     * @return false|mixed|\stdClass
+     * @return false|mixed|stdClass
      * @throws dml_exception
      */
-    public static function get_event(int $id) {
+    public static function get_event(int $id): mixed {
         global $DB;
         $event = $DB->get_record('bookit_event', ['id' => $id]);
         $eventresources = resource_manager::get_resources_of_event($id);
@@ -67,7 +69,7 @@ class event_manager {
      * @param string $endtime
      * @param int|null $instanceid
      * @return array
-     * @throws dml_exception
+     * @throws dml_exception|coding_exception
      */
     public static function get_events_in_timerange(string $starttime, string $endtime, int|null $instanceid): array {
         global $DB, $USER;
@@ -112,6 +114,9 @@ class event_manager {
             $sql = $sqlreserved;
             $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
         }
+
+        // Order events by starttime.
+        $sql .= ' ORDER BY starttime';
 
         $records = $DB->get_records_sql($sql, $params);
         $events = [];
