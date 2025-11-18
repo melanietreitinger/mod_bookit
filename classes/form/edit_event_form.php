@@ -136,7 +136,7 @@ class edit_event_form extends dynamic_form {
             $departmentoptions[$d] = $d;
         }
 
-        // fallback if no events exist yet
+        // Fallback if no events exist yet.
         if (empty($departmentoptions)) {
             $departmentoptions = [
                 'Default' => 'Default',
@@ -147,26 +147,24 @@ class edit_event_form extends dynamic_form {
         $mform->addRule('department', null, 'required', null, 'client');
         $mform->addHelpButton('department', 'event_department', 'mod_bookit');
 
+        // Add Room Field.
+        $roomoptions = [];
+        $resources = resource_manager::get_resources();
 
-        // Add Room Field. 
-        // --- ROOM SELECT (restored old working logic) ---
-$roomoptions = [];
-$resources = resource_manager::get_resources();
+        if (!empty($resources['Rooms']['resources'])) {
+            foreach ($resources['Rooms']['resources'] as $rid => $r) {
+                $roomoptions[$rid] = $r['name'];
+            }
+        }
 
-if (!empty($resources['Rooms']['resources'])) {
-    foreach ($resources['Rooms']['resources'] as $rid => $r) {
-        $roomoptions[$rid] = $r['name'];
-    }
-}
+        // Fallback.
+        if (empty($roomoptions)) {
+            $roomoptions = ['0' => get_string('none')];
+        }
 
-// fallback
-if (empty($roomoptions)) {
-    $roomoptions = ['0' => get_string('none')];
-}
-
-$mform->addElement('select', 'room', get_string('event_room', 'mod_bookit'), $roomoptions);
-$mform->addRule('room', null, 'required', null, 'client');
-$mform->addHelpButton('room', 'event_room', 'mod_bookit');
+        $mform->addElement('select', 'room', get_string('event_room', 'mod_bookit'), $roomoptions);
+        $mform->addRule('room', null, 'required', null, 'client');
+        $mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
         // Add the "bookingtimes" fields.
         $startdatearr = $this->optional_param('startdate', null, PARAM_RAW);
@@ -258,15 +256,12 @@ $mform->addHelpButton('room', 'event_room', 'mod_bookit');
             $starttimearray['startyear'] = $config->eventminyears;
         } else {
             $starttimearray['startyear'] = date("Y");
-
         }
         $starttimearray['stopyear'] = $config->eventmaxyears;
 
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->addRule('startdate', null, 'required', null, 'client');
         $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
-
-        //$mform->addElement('select', 'starttime');
 
         // Add a static field to explain extra time.
         $mform->addElement(
@@ -686,7 +681,6 @@ $mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
         return [];
     }
-
     /**
      * Returns url to set in $PAGE->set_url() when form is being rendered or submitted via AJAX
      *

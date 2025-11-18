@@ -154,8 +154,7 @@ echo html_writer::start_tag('table', [
 // ... Header row ...
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr', ['style' => 'background-color:#cfe2ff;']);
-foreach ([
-    'ID',
+foreach (['ID',
     'Title',
     'Room',
     'Person in charge',
@@ -163,8 +162,7 @@ foreach ([
     'Booking status',
     'Date',
     'Checklist progress',
-    'Checklist'
-] as $head) {
+    'Checklist'] as $head) {
     echo html_writer::tag('th', $head);
 }
 echo html_writer::end_tag('tr');
@@ -178,8 +176,6 @@ foreach ($events as $ev) {
     $statusfg  = $textmap[$ev->bookingstatus] ?? '#000000';
     $statustxt = $statusmap[$ev->bookingstatus];
     $myrole = '-';
-
-$myrole = '-';
 
     // 1. Person in charge.
     if ($USER->id == $ev->personinchargeid) {
@@ -236,7 +232,7 @@ $myrole = '-';
     );
 
     echo html_writer::tag('td', $date, [
-        'data-sort' => $ev->starttime  //Unix timestamp to enable sorting. 
+        'data-sort' => $ev->starttime, // Unix timestamp to enable sorting. 
     ]);
     echo html_writer::tag(
         'td',

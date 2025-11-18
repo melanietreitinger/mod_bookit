@@ -49,7 +49,7 @@ require_login();           // User must be logged-in.
 $id     = required_param('id', PARAM_INT);      // Course-module id (required).
 $start  = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end    = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
-$export = optional_param('export', 0, PARAM_INT);   
+$export = optional_param('export', 0, PARAM_INT);
 
 $cm      = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
 $context = context_module::instance($cm->id);
@@ -85,7 +85,7 @@ $events = event_manager::get_events_in_timerange($start, $end, $id);
 // If this is an export request and the user is NOT service team,
 // remove reserved events completely from the response.
 if ($export && !has_capability('mod/bookit:viewalldetailsofevent', $context)) {
-    $events = array_filter($events, static function($ev) {
+    $events = array_filter($events, static function ($ev) {
         // Works for both array and object events.
         $extended = null;
         if (is_array($ev) && isset($ev['extendedProps'])) {
@@ -127,7 +127,7 @@ $aset = static function (&$dst, $key, $val) {
     }
 };
 
-//TODO outsource? 
+// TODO: outsource.
 global $DB;
 
 foreach ($events as &$ev) {
