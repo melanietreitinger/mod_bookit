@@ -96,10 +96,10 @@ echo $OUTPUT->header();
 /* =======================================================================
    3.  Fetch examiner’s events
    ======================================================================= */
-use mod_bookit\local\entity\examiner_event_repository;
+use mod_bookit\local\entity\event_manager;
 
 global $USER;
-$events = examiner_event_repository::get_events_for_examiner($USER->id);
+$events = event_manager::get_events_for_examiner($USER->id);
 
 
 /* ----- status → label / colours -------------------------------------- */
