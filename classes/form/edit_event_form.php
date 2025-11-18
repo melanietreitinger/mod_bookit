@@ -121,22 +121,82 @@ class edit_event_form extends dynamic_form {
         $mform->addRule('semester', null, 'required', null, 'client');
         $mform->addHelpButton('semester', 'select_semester', 'mod_bookit');
 
-        // Add the "institutionid" field.
-        $institutions = institution::get_records(['active' => true]);
-        $institutionoptions = [];
-        foreach ($institutions as $institution) {
-            $institutionoptions[$institution->get('id')] = $institution->get('name');
+        // Department dropdown based on existing event values (no dependency on institution table).
+        global $DB;
+
+        $departments = $DB->get_fieldset_sql("
+            SELECT DISTINCT department
+            FROM {bookit_event}
+            WHERE department IS NOT NULL AND department <> ''
+            ORDER BY department ASC
+        ");
+
+        $departmentoptions = [];
+        foreach ($departments as $d) {
+            $departmentoptions[$d] = $d;
         }
-        $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
-        $mform->addRule('institutionid', null, 'required', null, 'client');
-        $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
+
+        // fallback if no events exist yet
+        if (empty($departmentoptions)) {
+            $departmentoptions = [
+                'Default' => 'Default',
+            ];
+        }
+
+        $mform->addElement('select', 'department', get_string('event_department', 'mod_bookit'), $departmentoptions);
+        $mform->addRule('department', null, 'required', null, 'client');
+        $mform->addHelpButton('department', 'event_department', 'mod_bookit');
+
+
+        // Add Room Field. 
+        // --- ROOM SELECT (restored old working logic) ---
+$roomoptions = [];
+$resources = resource_manager::get_resources();
+
+if (!empty($resources['Rooms']['resources'])) {
+    foreach ($resources['Rooms']['resources'] as $rid => $r) {
+        $roomoptions[$rid] = $r['name'];
+    }
+}
+
+// fallback
+if (empty($roomoptions)) {
+    $roomoptions = ['0' => get_string('none')];
+}
+
+$mform->addElement('select', 'room', get_string('event_room', 'mod_bookit'), $roomoptions);
+$mform->addRule('room', null, 'required', null, 'client');
+$mform->addHelpButton('room', 'event_room', 'mod_bookit');
 
         // Add the "bookingtimes" fields.
-        $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
+        $startdatearr = $this->optional_param('startdate', null, PARAM_RAW);
+
+        if (is_array($startdatearr)) {
+            $startdate = sprintf(
+                '%04d-%02d-%02dT00:00',
+                $startdatearr['year'],
+                $startdatearr['month'],
+                $startdatearr['day']
+            );
+        } else {
+            $startdate = null;
+        }
+
+        if ($startdatearr && is_array($startdatearr)) {
+            $startdate = sprintf(
+                '%04d-%02d-%02dT00:00',
+                $startdatearr['year'],
+                $startdatearr['month'],
+                $startdatearr['day']
+            );
+        } else {
+            $startdate = null;
+        }
+
         $curdate = new DateTimeImmutable('+ 1 hour');
         $starttimearray = [
                 'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
-                'step' => 15, // Step to increment minutes by.
+                'step' => 15, // Step to increment minutes by 15.
                 'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
         ];
         // Set time restrictions based on "editinternal" capability.
@@ -206,7 +266,7 @@ class edit_event_form extends dynamic_form {
         $mform->addRule('startdate', null, 'required', null, 'client');
         $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
 
-        $mform->addElement('select', 'starttime');
+        //$mform->addElement('select', 'starttime');
 
         // Add a static field to explain extra time.
         $mform->addElement(

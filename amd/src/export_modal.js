@@ -25,7 +25,25 @@ define(['jquery', 'core/str'], function($, str) {
                 }
 
                 $('#bookit-export').on('click', function (){
-                    const qs = {id: cmId, start: '1970-01-01T00:00', end: '2100-01-01T00:00'};
+                let qs = {id: cmId};
+
+                // Get current time range from FullCalendar.
+                if (window.bookitCalendar) {
+                    const view = window.bookitCalendar.view;
+                    const start = view.activeStart.toISOString().slice(0,16);
+                    const end   = view.activeEnd.toISOString().slice(0,16);
+
+                    qs.start = start;
+                    qs.end   = end;
+                } else {
+                    // Fallback (should never be needed).
+                    qs.start = '1970-01-01T00:00';
+                    qs.end   = '2100-01-01T00:00';
+                }
+
+                if (window.currentFilterParams) {
+                    Object.assign(qs, window.currentFilterParams);
+                }
                     if(window.currentFilterParams) {
                         Object.assign(qs, window.currentFilterParams);
                     }

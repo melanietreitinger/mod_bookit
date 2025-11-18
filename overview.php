@@ -143,7 +143,17 @@ echo html_writer::start_tag('table', [
 // ... Header row ...
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr', ['style' => 'background-color:#cfe2ff;']);
-foreach (['ID', 'Title', 'Room', 'Booking status', 'Date', 'Checklist progress', 'Checklist'] as $head) {
+foreach ([
+    'ID',
+    'Title',
+    'Room',
+    'Person in charge',
+    'My role',
+    'Booking status',
+    'Date',
+    'Checklist progress',
+    'Checklist'
+] as $head) {
     echo html_writer::tag('th', $head);
 }
 echo html_writer::end_tag('tr');
@@ -156,9 +166,42 @@ foreach ($events as $ev) {
     $statusbg  = $colormap[$ev->bookingstatus];
     $statusfg  = $textmap[$ev->bookingstatus] ?? '#000000';
     $statustxt = $statusmap[$ev->bookingstatus];
-    $date      = userdate($ev->starttime, '%d.%m.%Y');
+    $myrole = '-';
 
-    // Title → ModalForm trigger.
+    // Person in charge.
+    if ($USER->id == $ev->personinchargeid) {
+        $myrole = 'Person in charge';
+    }
+    // Other examiners.
+    else if (!empty($ev->otherexaminers)) {
+        $others = is_array($ev->otherexaminers)
+            ? $ev->otherexaminers
+            : array_filter(array_map('intval', explode(',', $ev->otherexaminers)));
+
+        if (in_array($USER->id, $others)) {
+            $myrole = 'Other examiner';
+        }
+    }
+    // Booking person.
+    else if ($USER->id == $ev->usermodified) {
+        $myrole = 'Booking person';
+    }
+
+    // Support person.
+    else if (!empty($ev->supportpersons)) {
+        $support = is_array($ev->supportpersons)
+            ? $ev->supportpersons
+            : array_filter(array_map('intval', explode(',', $ev->supportpersons)));
+
+        if (in_array($USER->id, $support)) {
+            $myrole = 'Support person';
+        }
+    }
+
+
+    $date = userdate($ev->starttime, '%d.%m.%Y');
+
+    // Title -> ModalForm trigger.
     $titlelink = html_writer::link(
         '#',
         format_string($ev->name),
@@ -173,11 +216,21 @@ foreach ($events as $ev) {
     echo html_writer::tag('td', $ev->id);
     echo html_writer::tag('td', $titlelink);
     echo html_writer::tag('td', s($room));
+
+    // Person in charge.
+    $pic = $ev->personinchargeid ? fullname(core_user::get_user($ev->personinchargeid)) : '-';
+    echo html_writer::tag('td', s($pic));
+
+    // My role.
+    echo html_writer::tag('td', s($myrole));
+
+    // Continue with existing status column.
     echo html_writer::tag(
         'td',
         s($statustxt),
         ['style' => "background-color:$statusbg;color:$statusfg;"]
     );
+
     echo html_writer::tag('td', $date);
     echo html_writer::tag(
         'td',

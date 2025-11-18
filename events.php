@@ -49,6 +49,10 @@ require_login();           // User must be logged-in.
 $id     = required_param('id', PARAM_INT);      // Course-module id (required).
 $start  = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end    = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
+$export = optional_param('export', 0, PARAM_INT);   
+
+$cm      = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
+$context = context_module::instance($cm->id);
 
 // Validate and convert start and end times.
 try {
@@ -77,6 +81,31 @@ $status = ($statusraw === null || $statusraw === '') ? -1 : clean_param($statusr
 
 // Fetch events using the helper.
 $events = event_manager::get_events_in_timerange($start, $end, $id);
+
+// If this is an export request and the user is NOT service team,
+// remove reserved events completely from the response.
+if ($export && !has_capability('mod/bookit:viewalldetailsofevent', $context)) {
+    $events = array_filter($events, static function($ev) {
+        // Works for both array and object events.
+        $extended = null;
+        if (is_array($ev) && isset($ev['extendedProps'])) {
+            $extended = $ev['extendedProps'];
+        } else if (is_object($ev) && isset($ev->extendedProps)) {
+            $extended = $ev->extendedProps;
+        }
+
+        $reserved = false;
+        if (is_object($extended) && property_exists($extended, 'reserved')) {
+            $reserved = (bool)$extended->reserved;
+        }
+
+        // Keep only non-reserved events.
+        return !$reserved;
+    });
+    // Reindex after filtering.
+    $events = array_values($events);
+}
+
 
 // Access helpers that work for arrays and objects.
 $aget = static function ($src, array $keys) {
