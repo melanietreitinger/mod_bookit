@@ -196,8 +196,9 @@ foreach ($events as $ev) {
         if (in_array($USER->id, $support)) {
             $myrole = 'Support person';
         }
+    } else if (!empty($formdata->otherexaminers) && is_array($formdata->otherexaminers)) {
+        $formdata->otherexaminers = implode(',', array_filter($formdata->otherexaminers));
     }
-
 
     $date = userdate($ev->starttime, '%d.%m.%Y');
 

@@ -1,44 +1,41 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
-
-/**
- * Database class for bookit_events.
- *
- * @package     mod_bookit
- * @copyright   2025 Vadym Kuzyak, Humboldt Universität Berlin
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 namespace mod_bookit\local\entity;
 
-/**
- * Repository for fetching events for examiners.
- *
- * @package   mod_bookit
- */
+use mod_bookit\local\manager\resource_manager;
+
+defined('MOODLE_INTERNAL') || die();
+
 class examiner_event_repository {
-    /**
-     * Returns all events created or owned by the examiner (personinchargeid = $userid).
-     *
-     * @param int $userid
-     * @return array
-     */
+
     public static function get_events_for_examiner(int $userid): array {
         global $DB;
 
-        $sql = "SELECT e.id,
+        // -------------------------------
+        // 1. Get all room resource IDs
+        // -------------------------------
+        $resources = resource_manager::get_resources();
+
+        $roomids = [];
+        if (!empty($resources['Rooms']['resources'])) {
+            $roomids = array_keys($resources['Rooms']['resources']);
+        }
+
+        // If no room resources exist → fallback: return events but room = null
+        $roomidssql = '';
+        if (!empty($roomids)) {
+            list($inSql, $paramsRoom) = $DB->get_in_or_equal($roomids, SQL_PARAMS_NAMED, 'roomid');
+            $roomidssql = "AND er.resourceid $inSql";
+        } else {
+            $roomidssql = "AND 1 = 0"; // no room resources exist
+            $paramsRoom = [];
+        }
+
+        // -------------------------------
+        // 2. SQL query
+        // -------------------------------
+        $sql = "
+            SELECT
+                e.id,
                 e.name,
                 e.bookingstatus,
                 e.starttime,
@@ -47,13 +44,33 @@ class examiner_event_repository {
                 e.supportpersons,
                 e.usermodified,
                 r.name AS room
+
             FROM {bookit_event} e
-        LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-        LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-            WHERE e.personinchargeid = ?
-        GROUP BY e.id";
 
+            LEFT JOIN {bookit_event_resources} er
+                   ON er.eventid = e.id
+            LEFT JOIN {bookit_resource} r
+                   ON r.id = er.resourceid
+                  $roomidssql
 
-        return $DB->get_records_sql($sql, [$userid]);
+            WHERE
+                   e.personinchargeid = :uid1
+                OR e.usermodified    = :uid2
+                OR (e.otherexaminers <> '' AND FIND_IN_SET(:uid3, e.otherexaminers) > 0)
+                OR (e.supportpersons <> '' AND FIND_IN_SET(:uid4, e.supportpersons) > 0)
+
+            GROUP BY e.id
+
+            ORDER BY e.starttime ASC
+        ";
+
+        $params = array_merge([
+            'uid1' => $userid,
+            'uid2' => $userid,
+            'uid3' => $userid,
+            'uid4' => $userid
+        ], $paramsRoom);
+
+        return $DB->get_records_sql($sql, $params);
     }
 }
