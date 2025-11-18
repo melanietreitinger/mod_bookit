@@ -66,11 +66,22 @@ $PAGE->requires->js_init_code("
               .on('click', function () {
                   const rows = table.find('tbody tr').get();
                   rows.sort(function(a,b) {
-                      const A = $(a).children().eq(col).text().trim().toLowerCase();
-                      const B = $(b).children().eq(col).text().trim().toLowerCase();
-                      const cmp = ($.isNumeric(A) && $.isNumeric(B)) ? (A - B) : A.localeCompare(B);
-                      return asc ? cmp : -cmp;
-                  });
+                    const tdA = $(a).children().eq(col);
+                    const tdB = $(b).children().eq(col);
+
+                    const sortA = tdA.data('sort');
+                    const sortB = tdB.data('sort');
+
+                    if (sortA !== undefined && sortB !== undefined) {
+                        return asc ? (sortA - sortB) : (sortB - sortA);
+                    }
+
+                    const A = tdA.text().trim().toLowerCase();
+                    const B = tdB.text().trim().toLowerCase();
+
+                    const cmp = ($.isNumeric(A) && $.isNumeric(B)) ? (A - B) : A.localeCompare(B);
+                    return asc ? cmp : -cmp;
+                });
                   $.each(rows, (_, row) => table.children('tbody').append(row));
                   asc = !asc;
                   table.find('th .sortarrow').text('');
@@ -96,7 +107,7 @@ echo $OUTPUT->header();
 /* =======================================================================
    3.  Fetch examiner’s events
    ======================================================================= */
-use mod_bookit\local\entity\event_manager;
+use mod_bookit\local\manager\event_manager;
 
 global $USER;
 $events = event_manager::get_events_for_examiner($USER->id);
@@ -168,36 +179,28 @@ foreach ($events as $ev) {
     $statustxt = $statusmap[$ev->bookingstatus];
     $myrole = '-';
 
-    // Person in charge.
+$myrole = '-';
+
+    // 1. Person in charge.
     if ($USER->id == $ev->personinchargeid) {
         $myrole = 'Person in charge';
     }
-    // Other examiners.
-    else if (!empty($ev->otherexaminers)) {
-        $others = is_array($ev->otherexaminers)
-            ? $ev->otherexaminers
-            : array_filter(array_map('intval', explode(',', $ev->otherexaminers)));
 
-        if (in_array($USER->id, $others)) {
-            $myrole = 'Other examiner';
-        }
+    // 2. Other examiner.
+    $others = array_filter(array_map('intval', explode(',', $ev->otherexaminers ?? '')));
+    if ($myrole === '-' && in_array($USER->id, $others, true)) {
+        $myrole = 'Other examiner';
     }
-    // Booking person.
-    else if ($USER->id == $ev->usermodified) {
+
+    // 3. Booking person.
+    if ($myrole === '-' && $USER->id == $ev->usermodified) {
         $myrole = 'Booking person';
     }
 
-    // Support person.
-    else if (!empty($ev->supportpersons)) {
-        $support = is_array($ev->supportpersons)
-            ? $ev->supportpersons
-            : array_filter(array_map('intval', explode(',', $ev->supportpersons)));
-
-        if (in_array($USER->id, $support)) {
-            $myrole = 'Support person';
-        }
-    } else if (!empty($formdata->otherexaminers) && is_array($formdata->otherexaminers)) {
-        $formdata->otherexaminers = implode(',', array_filter($formdata->otherexaminers));
+    // 4. Support person.
+    $support = array_filter(array_map('intval', explode(',', $ev->supportpersons ?? '')));
+    if ($myrole === '-' && in_array($USER->id, $support, true)) {
+        $myrole = 'Support person';
     }
 
     $date = userdate($ev->starttime, '%d.%m.%Y');
@@ -232,7 +235,9 @@ foreach ($events as $ev) {
         ['style' => "background-color:$statusbg;color:$statusfg;"]
     );
 
-    echo html_writer::tag('td', $date);
+    echo html_writer::tag('td', $date, [
+        'data-sort' => $ev->starttime  //Unix timestamp to enable sorting. 
+    ]);
     echo html_writer::tag(
         'td',
         html_writer::tag('span', '--', ['class' => 'badge bg-secondary'])

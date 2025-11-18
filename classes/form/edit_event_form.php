@@ -667,14 +667,11 @@ $mform->addHelpButton('room', 'event_room', 'mod_bookit');
         // Calculate endtime.
         $formdata->endtime = $formdata->starttime + $formdata->duration * 60 + $formdata->extratime * 60;
 
-        if (is_array($formdata->otherexaminers)) {
-            $formdata->otherexaminers = implode(',', array_filter($formdata->otherexaminers));
-        }
+        
 
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));
         }
-        
         if (is_array($formdata->refcourseid)) {
             $r = $formdata->refcourseid;
             $formdata->refcourseid = $r[0];
