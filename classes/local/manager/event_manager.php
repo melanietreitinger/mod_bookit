@@ -275,4 +275,23 @@ if ($viewalldetailsofevent) {
 
         return $DB->get_records_sql($sql, $params);
     }
+
+        /**
+     * Get all faculties (departments) that appear in bookit events.
+     *
+     * @return array List of faculty names (strings).
+     * @throws \dml_exception
+     */
+    public static function get_faculties(): array {
+        global $DB;
+
+        $sql = "SELECT DISTINCT department
+                  FROM {bookit_event}
+                 WHERE department IS NOT NULL
+                   AND department <> ''
+              ORDER BY department ASC";
+
+        return $DB->get_fieldset_sql($sql);
+    }
+
 }

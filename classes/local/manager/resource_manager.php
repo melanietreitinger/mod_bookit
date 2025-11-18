@@ -83,4 +83,23 @@ class resource_manager {
         }
         return $resources;
     }
+
+        /**
+     * Get list of rooms as [id => name].
+     *
+     * @return array
+     * @throws \dml_exception
+     */
+    public static function get_rooms(): array {
+        $rooms = [];
+        $resources = self::get_resources();
+
+        if (!empty($resources['Rooms']['resources'])) {
+            foreach ($resources['Rooms']['resources'] as $rid => $r) {
+                $rooms[$rid] = $r['name'];
+            }
+        }
+        return $rooms;
+    }
+
 }

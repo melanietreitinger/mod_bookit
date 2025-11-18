@@ -24,7 +24,7 @@
 
 use mod_bookit\event\course_module_viewed;
 use mod_bookit\local\manager\resource_manager;
-use mod_bookit\local\entity\bookit_event_collection;
+use mod_bookit\local\manager\event_manager;
 
 
 
@@ -62,8 +62,9 @@ $statusmap = [
     4 => $eventstatus[4],
 ];
 
-$rooms = bookit_event_collection::get_rooms();
-$faculties = bookit_event_collection::get_faculties();
+$rooms = resource_manager::get_rooms();
+$faculties = event_manager::get_faculties();
+
 
 // Log view event of calendar.
 $event = course_module_viewed::create([
@@ -72,8 +73,7 @@ $event = course_module_viewed::create([
 ]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
-
-// JavaScript – filter communication + Export‑modal logic (WORK IN PROGRESS).
+// JavaScript – filter communication + Export-modal logic (WORK IN PROGRESS).
 $PAGE->requires->jquery();
 
 /* -------- send filter changes to the AMD calendar -------------------- */
@@ -84,12 +84,17 @@ $PAGE->requires->js_init_code("
             const r = $('#filter-room').val();
             const f = $('#filter-faculty').val();
             const s = $('#filter-status').val();
-            if (r) p.room    = r;
+
+            if (r) p.room = r;
             if (f) p.faculty = f;
-            if (s !== '') p.status  = s;
+            if (s !== '') p.status = s;
+
             window.currentFilterParams = p;
-            if (window.bookitCalendarUpdate) { window.bookitCalendarUpdate(p); }
+            if (window.bookitCalendarUpdate) {
+                window.bookitCalendarUpdate(p);
+            }
         }
+
         $('#filter-room, #filter-faculty, #filter-status').on('change', pushFilters);
     })();
 ");
@@ -98,8 +103,12 @@ $PAGE->requires->js_init_code("
 $PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$cm->id]);
 
 // Calendar feed URL & caps passed to AMD module.
-$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id, 'debug' => 1]))->out(false);
-$capabilities   = [
+$eventsource = (new moodle_url('/mod/bookit/events.php', [
+    'id' => $cm->id,
+    'debug' => 1
+]))->out(false);
+
+$capabilities = [
     'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
 ];
 
@@ -110,12 +119,16 @@ if ($tc !== false && $tc !== null && $tc !== '') {
     $configcalendar['textcolor'] = $tc;
 }
 
-
 // Inject allowed weekdays for JS (NEW FEATURE).
-$PAGE->requires->js_init_code('M.cfg.bookit_allowedweekdays = [' . implode(',', bookit_allowed_weekdays()) . '];');
+$PAGE->requires->js_init_code(
+    'M.cfg.bookit_allowedweekdays = [' . implode(',', bookit_allowed_weekdays()) . '];'
+);
 
 // Log the view event (WORK IN PROGRESS).
-$event = course_module_viewed::create(['objectid' => $moduleinstance->id, 'context' => $modulecontext]);
+$event = course_module_viewed::create([
+    'objectid' => $moduleinstance->id,
+    'context'  => $modulecontext
+]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
 $event->trigger();
@@ -123,11 +136,13 @@ $event->trigger();
 // Set page settings.
 $PAGE->set_url('/mod/bookit/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
+$PAGE->set_heading(format_string($course->fullname));
+$PAGE->set_context($modulecontext);
+
+// Calendar JS/CSS.
 $PAGE->requires->js(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.js'), true);
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.css'));
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/custom-calendar.min.css'));
-$PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_context($modulecontext);
 
 // Page Output.
 echo $OUTPUT->header();

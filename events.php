@@ -163,8 +163,8 @@ foreach ($events as &$ev) {
     } else {
         $ev->bookingstatus = (int)($row->bookingstatus ?? 0);
         $ev->department    = (string)($row->department ?? '');
-        $ev->roomid        = (int)($row->roomid ?? 0);
-        $ev->roomname      = (string)($row->roomname ?? '');
+        $ev->roomid = (int)($row->roomid ?? 0);
+        $ev->roomname = (string)($row->roomname ?? '');
     }
 }
 unset($ev);
