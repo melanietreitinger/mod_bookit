@@ -25,6 +25,7 @@ namespace mod_bookit\local\form;
 
 use mod_bookit\local\formelement\colorpicker;
 use mod_bookit\local\formelement\colorpicker_rule;
+use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -51,11 +52,15 @@ class edit_room_form extends \core\form\persistent {
         $mform->addElement('text', 'name', get_string('name'));
         $mform->addRule('name', get_string('required'), 'required');
 
+        $mform->addElement('text', 'shortname', get_string('shortname', 'mod_bookit'));
+
         $mform->addElement('text', 'seats', get_string('seats', 'mod_bookit'));
         $mform->addRule('seats', get_string('required'), 'required');
         $mform->addRule('seats', get_string('err_numeric', 'form'), 'numeric', null, 'client');
 
         $mform->addElement('textarea', 'description', get_string('description'));
+
+        $mform->addElement('text', 'location', get_string('location', 'mod_bookit'));
 
         colorpicker::register();
         colorpicker_rule::register();
@@ -69,6 +74,55 @@ class edit_room_form extends \core\form\persistent {
             1 => get_string('roommode_slots', 'mod_bookit'),
         ]);
 
+        $mform->addElement('checkbox', 'overwrite_extratimebefore', get_string('overwrite_extratimebefore', 'mod_bookit'));
+        $mform->addElement(
+            'text',
+            'extratimebefore',
+            get_string('settings_extratime_before', 'mod_bookit'),
+            get_string('settings_extratime_before_desc', 'mod_bookit')
+        );
+        $mform->setDefault('extratimebefore', get_config('bookit', 'extratimebefore'));
+        $mform->hideIf('extratimebefore', 'overwrite_extratimebefore');
+
+        $mform->addElement('checkbox', 'overwrite_extratimeafter', get_string('overwrite_extratimeafter', 'mod_bookit'));
+        $mform->addElement(
+            'text',
+            'extratimeafter',
+            get_string('settings_extratime_after', 'mod_bookit'),
+            get_string('settings_extratime_before_desc', 'mod_bookit')
+        );
+        $mform->setDefault('extratimeafter', get_config('bookit', 'extratimeafter'));
+        $mform->hideIf('extratimeafter', 'overwrite_extratimeafter');
+
         $this->add_action_buttons();
+    }
+
+    #[\Override]
+    protected function get_default_data() {
+        $data = parent::get_default_data();
+
+        $record = $this->get_persistent()->to_record();
+        $data->overwrite_extratimebefore = $record->extratimebefore != null;
+        if ($record->extratimebefore == null) {
+            $data->extratimebefore = get_config('mod_bookit', 'extratimebefore');
+        }
+
+        $data->overwrite_extratimeafter = $record->extratimeafter != null;
+        if ($record->extratimeafter == null) {
+            $data->extratimeafter = get_config('mod_bookit', 'extratimeafter');
+        }
+
+        return $data;
+    }
+
+    #[\Override]
+    protected static function convert_fields(stdClass $data) {
+        if (empty($data->overwrite_extratimebefore)) {
+            $data->extratimebefore = null;
+        }
+        if (empty($data->overwrite_extratimeafter)) {
+            $data->extratimeafter = null;
+        }
+        return parent::convert_fields($data);
     }
 }

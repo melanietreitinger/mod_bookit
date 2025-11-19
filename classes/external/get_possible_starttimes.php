@@ -72,6 +72,9 @@ class get_possible_starttimes extends external_api {
     public static function list_possible_starttimes(DateTime $date, int $duration, int $roomid): array {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
 
+        $extratimebefore = $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore');
+        $extratimeafter = $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimebefore');
+
         $timestamp = $date->getTimestamp();
 
         $weekplanid = weekplan_room::get_applicable_weekplanid($timestamp, $roomid);
@@ -107,13 +110,13 @@ class get_possible_starttimes extends external_api {
                     $slot->starttime += $freemodegrid - $offset;
                 }
                 for ($time = $slot->starttime; $time <= $slot->endtime; $time += $freemodegrid) {
-                    if ($timeline->does_complete_range_equal($time, $time + $duration * 60, true)) {
+                    if ($timeline->does_complete_range_equal($time - $extratimebefore * 60, $time + ($duration + $extratimeafter) * 60, true)) {
                         $starttimes[$time] = (new DateTime())->setTimestamp($time)->format("H:i");
                     }
                 }
             } else {
-                if ($timeline->does_complete_range_equal($slot->starttime, $slot->starttime + $duration * 60, true)) {
-                    $starttimes[$slot->starttime] = (new DateTime())->setTimestamp($slot->starttime)->format("H:i");
+                if ($timeline->does_complete_range_equal($slot->starttime, $slot->starttime + ($duration + $extratimebefore + $extratimeafter) * 60, true)) {
+                    $starttimes[$slot->starttime + $extratimebefore * 60] = (new DateTime())->setTimestamp($slot->starttime + $extratimebefore * 60)->format("H:i");
                 }
             }
         }
@@ -123,7 +126,11 @@ class get_possible_starttimes extends external_api {
 
     /**
      * Execution for get_possible_slots external api.
-     * @param int $blockerid
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @param int $duration
+     * @param int $roomid
      * @return array
      */
     public static function execute(int $year, int $month, int $day, int $duration, int $roomid): array {

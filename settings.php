@@ -41,7 +41,7 @@ if ($hassiteconfig) {
      */
     $settings = new admin_externalpage(
         'mod_bookit', // Must match admin_externalpage_setup('mod_bookit') in settings_overview.php.
-        get_string('pluginname', 'mod_bookit'),
+        get_string('pluginname', 'mod_bookit').' ###NEW###',
         new moodle_url('/mod/bookit/admin/settings_overview.php')
     );
 
@@ -51,7 +51,7 @@ if ($hassiteconfig) {
      */
     $ADMIN->add(
         'modsettings',
-        new admin_category('mod_bookit_hidden', get_string('pluginname', 'mod_bookit'), /*hidden*/ true)
+        new admin_category('mod_bookit_hidden', get_string('pluginname', 'mod_bookit'), true)
     );
 
     /* --- Helper: render a heading-like select to jump between sub-pages. -------- */
@@ -122,6 +122,53 @@ if ($hassiteconfig) {
         get_string('settings_eventmaxyears_desc', 'mod_bookit'),
         $thisyear + 1,
         $yearlistmax
+    ));
+    $calendar->add(new admin_setting_configtext(
+            'mod_bookit/eventdefaultduration',
+            get_string('settings_eventdefaultduration', 'mod_bookit'),
+            null,
+            60,
+            PARAM_INT
+    ));
+
+    $calendar->add(new admin_setting_configtext(
+            'mod_bookit/eventmaxduration',
+            get_string('settings_eventmaxduration', 'mod_bookit'),
+            null,
+            480,
+            PARAM_INT
+    ));
+
+    $calendar->add(new admin_setting_configselect(
+            'mod_bookit/eventdurationstepwidth',
+            get_string('settings_eventdurationstepwidth', 'mod_bookit'),
+            null,
+            15,
+            [
+                    5 => '5',
+                    10 => '10',
+                    15 => '15',
+                    30 => '30',
+                    60 => '60',
+            ],
+    ));
+    // Event setting extra time.
+    $calendar->add(new admin_setting_configtext(
+            'mod_bookit/extratimebefore',
+            new lang_string('settings_extratime_before', 'mod_bookit'),
+            new lang_string('settings_extratime_before_desc', 'mod_bookit'),
+            15,
+            PARAM_INT,
+            5
+    ));
+
+    $calendar->add(new admin_setting_configtext(
+            'mod_bookit/extratimeafter',
+            new lang_string('settings_extratime_after', 'mod_bookit'),
+            new lang_string('settings_extratime_after_desc', 'mod_bookit'),
+            15,
+            PARAM_INT,
+            5
     ));
 
     // Weekday visibility.
@@ -288,4 +335,29 @@ if ($hassiteconfig) {
 
     // Register under hidden container.
     $ADMIN->add('mod_bookit_hidden', $checklist);
+
+    // Start: @TODO move external setting pages to tabs.
+    $ADMIN->add('modsettings', new admin_category('mod_bookit_category', new lang_string('pluginname', 'mod_bookit').' ##TEMP###'));
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+            'mod_bookit_institutions',
+            get_string('institutions', 'mod_bookit'),
+            new moodle_url('/mod/bookit/institutions.php'),
+    // TODO specify required capability.
+    ));
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+            'mod_bookit_rooms',
+            get_string('rooms', 'mod_bookit'),
+            new moodle_url('/mod/bookit/rooms.php'),
+    // TODO specify required capability.
+    ));
+
+    $ADMIN->add('mod_bookit_category', new admin_externalpage(
+            'mod_bookit_weekplans',
+            get_string('weekplans', 'mod_bookit'),
+            new moodle_url('/mod/bookit/weekplans.php'),
+    // TODO specify required capability.
+    ));
+    // End: move external setting pages to tabs.
 }

@@ -82,14 +82,14 @@ class event_manager {
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
 
-        $sqlreserved = 'SELECT e.id, NULL as name, e.starttime, e.endtime, r.eventcolor, r.name as roomname ' .
+        $sqlreserved = 'SELECT e.id, NULL as name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname ' .
                 'FROM {bookit_event} e ' .
                 'JOIN {bookit_room} r ON r.id = e.roomid ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
 
         // Service-Team: can view all events in detail.
         if ($viewalldetailsofevent) {
-            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, r.eventcolor, r.name as roomname ' .
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname ' .
                 'FROM {bookit_event} e ' .
                 'JOIN {bookit_room} r ON r.id = e.roomid ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
@@ -98,7 +98,7 @@ class event_manager {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
             // Every user: can view own events in detail.
-            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, r.eventcolor, r.name as roomname
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname
                     FROM {bookit_event} e
                     JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
@@ -124,14 +124,99 @@ class event_manager {
         foreach ($records as $record) {
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved) . ' (' . $roomname . ')',
-                'start' => date('Y-m-d H:i', $record->starttime),
-                'end' => date('Y-m-d H:i', $record->endtime),
+                'title' => [
+                    'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' . date('H:i', $record->endtime) . '</h6>' .
+                        ($record->name ?? $reserved) . ' (' . $record->roomname . ')'
+                ],
+                'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
+                'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
                 'backgroundColor' => $record->eventcolor,
                 'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
                 'extendedProps' => (object)['reserved' => !$record->name],
-
+                'classNames' => 'hide-event-time',
             ];
+        }
+        return $events;
+    }
+
+    /**
+     * Helper function to place a weekly time into a specific week.
+     * It is necessary so that sunday events are the correct time, even in a week with a time change (DST).
+     * @param int $weeklytime Timestamp relative to start of week.
+     * @param int $weektime Timestamp of the start of a week.
+     * @return int
+     */
+    public static function place_weekly_time_into_week(int $weeklytime, int $weektime): int {
+        $week = (new DateTime())->setTimestamp($weektime);
+        $actual = (new DateTime())->setTimestamp($weektime + $weeklytime);
+        return $actual->getTimestamp() + ($week->getOffset() - $actual->getOffset());
+    }
+
+    /**
+     * Returns all slots and blockers in timerange for the specified room.
+     *
+     * @param int $starttime
+     * @param int $endtime
+     * @param int $roomid
+     * @return array
+     */
+    public static function get_slots_in_timerange(int $starttime, int $endtime, int $roomid): array {
+        global $DB;
+
+        $events = [];
+
+        $blockers = $DB->get_records_sql(
+            'SELECT id, name, roomid, starttime, endtime FROM {bookit_blocker} ' .
+            'WHERE starttime < :endtime AND endtime > :starttime AND (roomid = :roomid OR roomid IS NULL)',
+            ['starttime' => $starttime, 'endtime' => $endtime, 'roomid' => $roomid],
+        );
+        foreach ($blockers as $blocker) {
+            $events[] = [
+                'id' => $blocker->id,
+                'title' => $blocker->name ?? '',
+                'start' => date('Y-m-d H:i', $blocker->starttime),
+                'end' => date('Y-m-d H:i', $blocker->endtime),
+                'extendedProps' => (object)['type' => 'blocker'],
+                'backgroundColor' => ($blocker->roomid ?? false) ? '#c78316' : '#a33',
+            ];
+        }
+
+        $records = $DB->get_records_sql(
+            'SELECT ws.id, ws.starttime as slotstart, ws.endtime as slotend,
+                wr.starttime as weekplanstart, wr.endtime as weekplanend
+            FROM {bookit_weekplan_room} wr
+            JOIN {bookit_weekplanslot} ws ON wr.weekplanid = ws.weekplanid
+            WHERE wr.starttime < :endtime AND wr.endtime > :starttime AND wr.roomid = :roomid',
+            [
+                'starttime' => $starttime,
+                'endtime' => $endtime,
+                'roomid' => $roomid,
+            ]
+        );
+
+        foreach ($records as $record) {
+            $weekplanstart = max($starttime, (int) $record->weekplanstart);
+            $weekplanend = min($endtime, (int) $record->weekplanend + weekplan_manager::SECONDS_PER_DAY);
+            [$yearstart, $weekstart] = explode('-', date('Y-W', $weekplanstart));
+
+            $weekstartdt = new DateTime("$yearstart-W$weekstart");
+
+            while ($weekstartdt->getTimestamp() < $weekplanend) {
+                $eventstart = self::place_weekly_time_into_week($record->slotstart, $weekstartdt->getTimestamp());
+                $eventend = self::place_weekly_time_into_week($record->slotend, $weekstartdt->getTimestamp());
+
+                if ($eventstart < $weekplanend && $eventend > $weekplanstart) {
+                    $events[] = [
+                        'id' => 0,
+                        'title' => '',
+                        'start' => date('Y-m-d H:i', $eventstart),
+                        'end' => date('Y-m-d H:i', $eventend),
+                        'extendedProps' => (object)['type' => 'slot'],
+                    ];
+                }
+
+                $weekstartdt->modify('+1 week');
+            }
         }
         return $events;
     }

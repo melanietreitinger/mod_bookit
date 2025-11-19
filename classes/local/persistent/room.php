@@ -42,6 +42,10 @@ class room extends persistent {
     /** @var int Constant for only allowing events to start at starts of slots. */
     const MODE_SLOTS = 1;
 
+    const OVERLAPPING_ALL = 0;
+    const OVERLAPPING_ALLOW_NON_CONFIRMED = 1;
+    const OVERLAPPING_NONE = 2;
+
     /**
      * Return the definition of the properties of this model.
      * @return array
@@ -51,9 +55,15 @@ class room extends persistent {
             'name' => [
                 'type' => PARAM_TEXT,
             ],
+            'shortname' => [
+                'type' => PARAM_TEXT,
+            ],
             'description' => [
                 'type' => PARAM_TEXT,
                 'null' => NULL_ALLOWED,
+            ],
+            'location' => [
+                'type' => PARAM_TEXT,
             ],
             'eventcolor' => [
                 'type' => PARAM_TEXT,
@@ -68,6 +78,24 @@ class room extends persistent {
             ],
             'seats' => [
                 'type' => PARAM_INT,
+            ],
+            'extratimebefore' => [
+                'type' => PARAM_INT,
+                'default' => null,
+                'null' => NULL_ALLOWED,
+            ],
+            'extratimeafter' => [
+                'type' => PARAM_INT,
+                'default' => null,
+                'null' => NULL_ALLOWED,
+            ],
+            'preventoverlap' => [
+                'type' => PARAM_INT,
+                'choices' => [
+                    self::OVERLAPPING_ALL,
+                    self::OVERLAPPING_ALLOW_NON_CONFIRMED,
+                    self::OVERLAPPING_NONE,
+                ],
             ],
         ];
     }

@@ -53,14 +53,20 @@ class weekplan_manager {
      * @param string $weekplan
      * @return array
      */
-    private static function parse_weekplan(string $weekplan) {
+    public static function parse_weekplan(string $weekplan) {
         $lines = explode("\n", strtolower($weekplan));
         $parsedperiods = [];
+        $i = 1;
+        $errors = [];
         foreach ($lines as $line) {
             try {
                 $line = trim($line);
                 $dayofweek = substr($line, 0, 2);
                 if (!array_key_exists($dayofweek, self::INDEXED_WEEKDAYS)) {
+                    if (!empty($line)) {
+                        $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
+                            get_string('did_not_begin_with_weekday', 'mod_bookit');
+                    }
                     continue;
                 }
                 $dayofweekindex = self::INDEXED_WEEKDAYS[$dayofweek];
@@ -70,6 +76,9 @@ class weekplan_manager {
 
                 foreach (explode(",", $timeperiods) as $timeperiod) {
                     try {
+                        if (substr_count($timeperiod, '-') != 1) {
+                            throw new \Exception('invalid time period');
+                        }
                         [$starttime, $endtime] = explode('-', $timeperiod);
                         $starttime = self::parse_time($starttime);
                         $endtime = self::parse_time($endtime);
@@ -78,18 +87,22 @@ class weekplan_manager {
                                 $starttime + self::SECONDS_PER_DAY * $dayofweekindex,
                                 $endtime + self::SECONDS_PER_DAY * $dayofweekindex,
                             ];
+                        } else {
+                            $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
+                                get_string('end_before_start_in_timeperiod_x', 'mod_bookit', $timeperiod);
                         }
-                    } catch (\Exception $e) {
-                        $e;
-                        // That's ok, we'll just skip the period.
+                    } catch (\Exception|\TypeError $e) {
+                        $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
+                            get_string('could_not_parse_time_period_x', 'mod_bookit', $timeperiod);
                     }
                 }
-            } catch (\Exception $e) {
-                $e;
-                // That's ok, we'll just skip the line.
+            } catch (\Exception|\TypeError $e) {
+                $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
+                    get_string('could_not_parse_line', 'mod_bookit');
             }
+            $i++;
         }
-        return $parsedperiods;
+        return [$errors, $parsedperiods];
     }
 
     /**
@@ -172,13 +185,14 @@ class weekplan_manager {
 
     /**
      * Saves the weekplan to the DB based on the given textual representation.
+     * @param string $weekplan
      * @param int $weekplanid
      */
     public static function save_string_weekplan_to_db(string $weekplan, int $weekplanid) {
         global $DB;
         $DB->delete_records('bookit_weekplanslot', ['weekplanid' => $weekplanid]); // Awful.
 
-        $weekplanevents = self::parse_weekplan($weekplan);
+        list($_, $weekplanevents) = self::parse_weekplan($weekplan);
         foreach ($weekplanevents as $weekplanevent) {
             $DB->insert_record('bookit_weekplanslot', [
                 'weekplanid' => $weekplanid,

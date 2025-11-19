@@ -21,9 +21,12 @@
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 namespace mod_bookit\local\entity;
 
+use coding_exception;
 use dml_exception;
+use mod_bookit\local\persistent\room;
 
 /**
  * Database class for bookit_events.
@@ -36,46 +39,49 @@ class bookit_event {
     /**
      * Create a new instance of this class.
      *
-     * @param int $id name
-     * @param string $name name
-     * @param string|null $semester semester
-     * @param string $department department
-     * @param int $starttime starttime
-     * @param int $endtime endtime
-     * @param int|null $duration duration
-     * @param int|null $participantsamount participantsamount
-     * @param int|null $timecompensation timecompensation
-     * @param string|null $compensationfordisadvantages compensationdisadvantages
-     * @param int|null $bookingstatus bokkingstatus
-     * @param int|null $personinchargeid personincharce_ID
-     * @param string|null $otherexaminers otherexaminers
-     * @param int|null $coursetemplate coursetemplate
-     * @param string|null $notes notes
-     * @param string|null $internalnotes internalnotes
-     * @param string|null $supportpersons supportpersons
-     * @param array $resources rescources
-     * @param mixed $refcourseid refcourseid
-     * @param int|null $usermodified usermodified
-     * @param int|null $timecreated timecreated
-     * @param int|null $timemodified timemodified
-     * @param int|null $examinerid (optional) User ID of the examiner responsible
-     *
+     * @param int $id
+     * @param string $name
+     * @param int $semester
+     * @param int $institutionid
+     * @param int $starttime
+     * @param int $endtime
+     * @param int|null $duration
+     * @param int $roomid
+     * @param int|null $participantsamount
+     * @param int|null $timecompensation
+     * @param string|null $compensationfordisadvantages
+     * @param int|null $bookingstatus
+     * @param int|null $personinchargeid
+     * @param string|null $otherexaminers
+     * @param int|null $coursetemplate
+     * @param string|null $notes
+     * @param string|null $internalnotes
+     * @param string|null $supportpersons
+     * @param int $extratimebefore
+     * @param int $extratimeafter
+     * @param mixed $refcourseid
+     * @param int|null $usermodified
+     * @param int|null $timecreated
+     * @param int|null $timemodified
+     * @param array $resources
      */
     public function __construct(
-        /** @var int $id name */
+        /** @var int id */
         public int $id,
-        /** @var string $name name */
+        /** @var string name */
         public string $name,
-        /** @var string $semester */
-        public ?string $semester,
-        /** @var string $department department */
-        public string $department,
-        /** @var int $starttime starttime */
+        /** @var ?int semester */
+        public int $semester,
+        /** @var int institutionid */
+        public int $institutionid,
+        /** @var int starttime */
         public int $starttime,
         /** @var int $endtime endtime */
         public int $endtime,
         /** @var int $duration duration */
         public ?int $duration,
+        /** @var int roomid */
+        public int $roomid,
         /** @var int $participantsamount participantsamount  */
         public ?int $participantsamount,
         /** @var int $timecompensation timecompensation */
@@ -96,18 +102,21 @@ class bookit_event {
         public ?string $internalnotes,
         /** @var string $supportpersons supportpersons  */
         public ?string $supportpersons,
-        /** @var array $resources resources */
-        public array $resources,
+        /** @var int $extratimebefore extratimebefore*/
+        public int $extratimebefore,
+        /** @var int $extratimeafter extratimeafter*/
+        public int $extratimeafter,
         /** @var mixed $refcourseid refcourseid */
         public mixed $refcourseid,
         /** @var int $usermodified usermodified  */
+        /** @var ?int usermodified */
         public ?int $usermodified,
         /** @var int $timecreated timecreated  */
         public ?int $timecreated,
         /** @var int $timemodified timemodified  */
         public ?int $timemodified,
-        /** @var int $examinerid examinerid  */
-        public ?int $examinerid = null
+        /** @var array $resources resources */
+        public array $resources,
     ) {
     }
 
@@ -116,7 +125,7 @@ class bookit_event {
      *
      * @param int $id id of event to fetch.
      * @return self
-     * @throws dml_exception
+     * @throws dml_exception|coding_exception
      */
     public static function from_database(int $id): self {
         global $DB;
@@ -140,17 +149,23 @@ class bookit_event {
      *
      * @param array|object $record
      * @return self
+     * @throws coding_exception
+     * @throws dml_exception
      */
     public static function from_record(array|object $record): self {
-        $record = (object)$record;
+        $record = (object) $record;
+
+        $room = room::get_record(['id' => $record->roomid], MUST_EXIST);
+
         return new self(
             $record->id ?? null,
             $record->name,
             $record->semester,
-            $record->department,
+            $record->institutionid,
             $record->starttime,
             $record->endtime,
             $record->duration,
+            $record->roomid,
             $record->participantsamount ?? null,
             $record->timecompensation ?? null,
             $record->compensationfordisadvantages ?? null,
@@ -161,13 +176,13 @@ class bookit_event {
             $record->notes ?? null,
             $record->internalnotes ?? null,
             $record->supportpersons ?? null,
-            $record->resources ?? [],
+            $record->extratimebefore ?? $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore'),
+            $record->extratimeafter ?? $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter'),
             $record->refcourseid ?? null,
             $record->usermodified ?? null,
             $record->timecreated ?? null,
             $record->timemodified ?? null,
-            /* if examinerid column is present, use it; else fallback */
-            $record->examinerid ?? $record->personinchargeid ?? null
+            $record->resources ?? [],
         );
     }
 
@@ -180,11 +195,6 @@ class bookit_event {
      */
     final public function save(?int $userid = null): void {
         global $DB, $USER;
-
-        /* Ensure examinerid is set for the overview. */
-        if (empty($this->examinerid)) {
-            $this->examinerid = $USER->id;
-        }
 
         $this->usermodified = $userid ?? $USER->id;
         $this->timecreated  ??= time();

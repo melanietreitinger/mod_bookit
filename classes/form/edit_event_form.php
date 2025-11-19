@@ -78,9 +78,6 @@ class edit_event_form extends dynamic_form {
         $course = get_course_and_cm_from_cmid($cmid);
         $contextcourse = context_course::instance($course[0]->id);
 
-        // ...@TODO: remove debug output field.
-        // ...@TODO: $mform->addElement('static', 'dummy', "<pre>".print_r(usertimezone(), true)."</pre>");
-
         // Set hidden field course module id.
         $mform->addElement('hidden', 'cmid');
         $mform->setType('cmid', PARAM_INT);
@@ -131,6 +128,31 @@ class edit_event_form extends dynamic_form {
         $mform->addRule('institutionid', null, 'required', null, 'client');
         $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
 
+        // Add the "roomid" field.
+        $rooms = room::get_records(['active' => true]);
+        $roomoptions = [];
+        foreach ($rooms as $room) {
+            $roomoptions[$room->get('id')] = $room->get('name');
+        }
+
+        $mform->addElement('select', 'roomid', get_string('event_room', 'mod_bookit'), $roomoptions);
+        $mform->disabledIf('roomid', 'editevent', 'neq');
+        $mform->addHelpButton('roomid', 'event_room', 'mod_bookit');
+
+        // Add the "duration" field.
+        $duration = [];
+        // ...@TODO: remove fallback values if these values are admin settings - see issue#3!
+        $eventdefaultduration = ($config->eventdefaultduration ?? 60);
+        $eventdurationstepwidth = ($config->eventdurationstepwidth ?? 15);
+        $eventmaxduration = ($config->eventmaxduration ?? 480);
+        for ($i = $eventdurationstepwidth; $i <= $eventmaxduration; $i += $eventdurationstepwidth) {
+            $duration[$i] = $i;
+        }
+        $select = $mform->addElement('select', 'duration', get_string('event_duration', 'mod_bookit'), $duration);
+        $select->setSelected($eventdefaultduration);
+        $mform->disabledIf('duration', 'editevent', 'neq');
+        $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
+
         // Add the "bookingtimes" fields.
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
         $curdate = new DateTimeImmutable('+ 1 hour');
@@ -155,7 +177,7 @@ class edit_event_form extends dynamic_form {
             }
             return true;
         };
-
+/*
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('starttime', 'editevent', 'neq');
         $mform->addRule('starttime', null, 'required', null, 'client');
@@ -174,7 +196,7 @@ class edit_event_form extends dynamic_form {
             );
         }
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
-
+*/
         // Add the "duration" field.
         $duration = [];
         // ...@TODO: remove fallback values if these values are admin settings - see issue#3!
@@ -198,7 +220,6 @@ class edit_event_form extends dynamic_form {
             $starttimearray['startyear'] = $config->eventminyears;
         } else {
             $starttimearray['startyear'] = date("Y");
-
         }
         $starttimearray['stopyear'] = $config->eventmaxyears;
 
@@ -375,6 +396,17 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('hidden', 'supportpersons');
             $mform->setType('supportpersons', PARAM_TEXT);
         }
+
+        if ($caneditinternal) {
+            $mform->addElement('text', 'extratimebefore', get_string('settings_extratime_before', 'mod_bookit'));
+            $mform->setType('extratimebefore', PARAM_INT);
+            $mform->addElement('text', 'extratimeafter', get_string('settings_extratime_after', 'mod_bookit'));
+            $mform->setType('extratimeafter', PARAM_INT);
+        } else {
+            $mform->addElement('hidden', 'extratimebefore');
+            $mform->addElement('hidden', 'extratimeafter');
+        }
+
         // Add the "bookingstatus" field.
         $mform->addElement(
             'select',
@@ -434,6 +466,36 @@ class edit_event_form extends dynamic_form {
                     false
                 );
             }
+
+            $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
+            if ($timeclicked && $roomoptions) {
+                $timeclicked = new \DateTimeImmutable($timeclicked);
+                $timeclickedstamp = $timeclicked->getTimestamp();
+                $startdate = $timeclicked->setTime(0, 0);
+                $this->_form->setDefault('startdate', $timeclicked->getTimestamp());
+
+                $possiblestarttimes = get_possible_starttimes::list_possible_starttimes(
+                        \DateTime::createFromImmutable($startdate),
+                        $eventdefaultduration,
+                        array_key_first($roomoptions),
+                );
+
+                $smallestdiff = 1e9;
+                $selectedtime = null;
+
+                foreach ($possiblestarttimes as $possiblestarttime => $str) {
+                    if (abs($possiblestarttime - $timeclickedstamp) < $smallestdiff) {
+                        $smallestdiff = abs($possiblestarttime - $timeclickedstamp);
+                        $selectedtime = $possiblestarttime;
+                    }
+                }
+            }
+
+            /** @var \MoodleQuickForm_select $starttimeel */
+            $starttimeel = $mform->getElement('starttime');
+            $starttimeel->removeOptions();
+            $starttimeel->loadArray($possiblestarttimes);
+            $mform->setDefault('starttime', $selectedtime);
         }
     }
 
@@ -445,72 +507,93 @@ class edit_event_form extends dynamic_form {
      * @throws coding_exception
      */
     public function definition_after_data(): void {
-        global $USER, $PAGE;   // The $PAGE is needed for JS injection.
+        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
 
-        // Derive current booking-status & capability flags.
-        $rawstatus   = $mform->getElementValue('bookingstatus');
-        $bookingstat = is_array($rawstatus) ? (int)$rawstatus[0] : self::BOOKINGSTATUS_NEW;
+        $context = $this->get_context_for_dynamic_submission();
+        $id = $this->_form->getElementValue('id');
+        $bookingstatus = $this->_form->getElementValue('bookingstatus');
+        $usermodified = $this->_form->getElementValue('usermodified');
+        $examiner = $this->_form->getElementValue('personinchargeid');
+        $otherexaminers = $this->_form->getElementValue('otherexaminers') ?? [];
+        array_push($otherexaminers, $usermodified, $examiner);
 
-        $id           = $mform->getElementValue('id');
+        // Show the user who created the entry.
+        $user = $DB->get_record('user', ['id' => $usermodified]);
+        $mform->getElement('usermodified')->setValue(
+                fullname($user, has_capability('moodle/site:viewfullnames', $context)) // TODO: ???
+        );
+
+        // Get context and capabilities.
+        $context = $this->get_context_for_dynamic_submission();
+        // Event can be edited if capability is set, a new event is created or event is unprocessed (own events).
+        $caneditevent = (has_capability('mod/bookit:editevent', $context) || !$id ||
+                (self::BOOKINGSTATUS_NEW == (int) $bookingstatus[0] && in_array($USER->id, $otherexaminers))
+        );
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
+        // Derive current booking-status & capability flags.
+        $rawstatus = $mform->getElementValue('bookingstatus');
+        $bookingstat = is_array($rawstatus) ? (int) $rawstatus[0] : self::BOOKINGSTATUS_NEW;
+
+        $id = $mform->getElementValue('id');
         $usermodified = $mform->getElementValue('usermodified');
-        $examiner     = $mform->getElementValue('personinchargeid');
+        $examiner = $mform->getElementValue('personinchargeid');
         $otherexaminers = array_filter(array_merge(
-            $mform->getElementValue('otherexaminers') ?? [],
-            [$usermodified, $examiner]
+                $mform->getElementValue('otherexaminers') ?? [],
+                [$usermodified, $examiner]
         ));
 
-        $context          = $this->get_context_for_dynamic_submission();
-        $caneditevent     = has_capability('mod/bookit:editevent', $context)
-                            || !$id
-                            || (self::BOOKINGSTATUS_NEW == $bookingstat && in_array($USER->id, $otherexaminers, true));
-        $caneditinternal  = has_capability('mod/bookit:editinternal', $context);
+        $context = $this->get_context_for_dynamic_submission();
+        $caneditevent = has_capability('mod/bookit:editevent', $context)
+                || !$id
+                || (self::BOOKINGSTATUS_NEW == $bookingstat && in_array($USER->id, $otherexaminers, true));
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
 
         // Store capability flags as hidden elements.
         $mform->insertElementBefore(
-            $mform->createElement(
-                'hidden',
-                'editevent',
-                $caneditevent
-            ),
-            'name'
+                $mform->createElement(
+                        'hidden',
+                        'editevent',
+                        $caneditevent
+                ),
+                'name'
         )->setType('editevent', PARAM_BOOL);
 
         $mform->insertElementBefore(
-            $mform->createElement(
-                'hidden',
-                'editinternal',
-                $caneditinternal
-            ),
-            'name'
+                $mform->createElement(
+                        'hidden',
+                        'editinternal',
+                        $caneditinternal
+                ),
+                'name'
         )->setType('editinternal', PARAM_BOOL);
 
         // Week-day validation  – server side.
         $mform->addRule(
-            'starttime',
-            get_string('invalidweekday', 'mod_bookit'),
-            'callback',
-            function ($val): bool {
-                // The $val arrives as an array from date_time_selector.
-                if (is_array($val)) {
-                    // Make_timestamp( year, month, day, hour, minute ).
-                    $ts = make_timestamp(
-                        (int)$val['year'],
-                        (int)$val['month'],
-                        (int)$val['day'],
-                        (int)($val['hour'] ?? 0),
-                        (int)($val['minute'] ?? 0)
-                    );
-                } else {
-                    $ts = (int)$val; // Fallback: already a Unix timestamp.
-                }
+                'starttime',
+                get_string('invalidweekday', 'mod_bookit'),
+                'callback',
+                function($val): bool {
+                    // The $val arrives as an array from date_time_selector.
+                    if (is_array($val)) {
+                        // Make_timestamp( year, month, day, hour, minute ).
+                        $ts = make_timestamp(
+                                (int) $val['year'],
+                                (int) $val['month'],
+                                (int) $val['day'],
+                                (int) ($val['hour'] ?? 0),
+                                (int) ($val['minute'] ?? 0)
+                        );
+                    } else {
+                        $ts = (int) $val; // Fallback: already a Unix timestamp.
+                    }
 
-                $allowed = bookit_allowed_weekdays(); // 0 = Sun … 6 = Sat.
-                $weekday = (int) date('w', $ts);
-                return in_array($weekday, $allowed, true);
-            },
-            'server'
+                    $allowed = bookit_allowed_weekdays(); // 0 = Sun … 6 = Sat.
+                    $weekday = (int) date('w', $ts);
+                    return in_array($weekday, $allowed, true);
+                },
+                'server'
         );
 
         // Quick client-side alert (does not block submission).
@@ -531,9 +614,28 @@ class edit_event_form extends dynamic_form {
                     });
                 });
             ");
+            if (!$caneditinternal) {
+                if ($this->event) {
+                    $mform->setConstant('extratimebefore', $this->event->extratimebefore);
+                    $mform->setConstant('extratimeafter', $this->event->extratimeafter);
+                } else {
+                    $mform->setConstant('extratimebefore', null);
+                    $mform->setConstant('extratimeafter', null);
+                }
+            }
+
+            if ($data && $data->roomid) {
+                /** @var \MoodleQuickForm_select $starttimeel */
+                $starttimeel = $mform->getElement('starttime');
+                $starttimeel->removeOptions();
+                $starttimeel->loadArray(get_possible_starttimes::list_possible_starttimes(
+                        (new \DateTime())->setTimestamp($data->startdate),
+                        $data->duration,
+                        $data->roomid
+                ));
+            }
         }
     }
-
 
     /**
      * Load in existing data as form defaults

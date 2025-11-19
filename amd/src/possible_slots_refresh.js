@@ -78,4 +78,5 @@ export function initPossibleStarttimesRefresh() {
     for (let el of [roomEl, durationEl, dateDayEl, dateMonthEl, dateYearEl]) {
         el.addEventListener('change', refreshStarttimes);
     }
+    void refreshStarttimes();
 }

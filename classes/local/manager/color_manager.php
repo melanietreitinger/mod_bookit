@@ -32,8 +32,17 @@ namespace mod_bookit\local\manager;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class color_manager {
+    /**
+     * @var array associative array which caches the foreground color.
+     */
     private static $colorcache = [];
 
+
+    /**
+     * Gets the best foreground color (white or black) for a given background color.
+     * @param string $color
+     * @return string
+     */
     public static function get_textcolor_for_background(string $color): string {
         if (!isset(self::$colorcache[$color])) {
             self::$colorcache[$color] = self::calculate_textcolor_for_background($color);
@@ -41,6 +50,11 @@ class color_manager {
         return self::$colorcache[$color];
     }
 
+    /**
+     * Calculates the best foreground color (white or black) for a given background color.
+     * @param string $color
+     * @return string
+     */
     private static function calculate_textcolor_for_background(string $color): string {
         // Simple luminosity-based approach: if background is dark, use white text; if light, use black text
         $luminosity = self::calculate_luminosity($color);
