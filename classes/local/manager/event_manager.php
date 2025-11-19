@@ -82,23 +82,28 @@ class event_manager {
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
 
-        $sqlreserved = 'SELECT e.id, NULL as name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname ' .
+        $sqlreserved =
+                'SELECT e.id, NULL as name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+                r.name as roomname ' .
                 'FROM {bookit_event} e ' .
                 'JOIN {bookit_room} r ON r.id = e.roomid ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
 
         // Service-Team: can view all events in detail.
         if ($viewalldetailsofevent) {
-            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname ' .
-                'FROM {bookit_event} e ' .
-                'JOIN {bookit_room} r ON r.id = e.roomid ' .
-                'WHERE endtime >= :starttime AND starttime <= :endtime';
+            $sql =
+                    'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+                     r.name as roomname ' .
+                    'FROM {bookit_event} e ' .
+                    'JOIN {bookit_room} r ON r.id = e.roomid ' .
+                    'WHERE endtime >= :starttime AND starttime <= :endtime';
             $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
         } else if ($viewalldetailsofownevent) {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
             // Every user: can view own events in detail.
-            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor, r.name as roomname
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+                    r.name as roomname
                     FROM {bookit_event} e
                     JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
@@ -106,9 +111,9 @@ class event_manager {
                     UNION ' . $sqlreserved . '
                     AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
             $params = ['starttime1' => $starttimestamp, 'endtime1' => $endtimestamp,
-                       'usermodified1' => $USER->id, 'personinchargeid1' => $USER->id, 'otherexaminers1' => $USER->id,
-                       'starttime' => $starttimestamp, 'endtime' => $endtimestamp,
-                       'usermodified' => $USER->id, 'personinchargeid' => $USER->id, 'otherexaminers' => $USER->id];
+                    'usermodified1' => $USER->id, 'personinchargeid1' => $USER->id, 'otherexaminers1' => $USER->id,
+                    'starttime' => $starttimestamp, 'endtime' => $endtimestamp,
+                    'usermodified' => $USER->id, 'personinchargeid' => $USER->id, 'otherexaminers' => $USER->id];
         } else {
             // Every user: can view no details.
             $sql = $sqlreserved;
@@ -123,17 +128,18 @@ class event_manager {
 
         foreach ($records as $record) {
             $events[] = [
-                'id' => $record->id,
-                'title' => [
-                    'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' . date('H:i', $record->endtime) . '</h6>' .
-                        ($record->name ?? $reserved) . ' (' . $record->roomname . ')'
-                ],
-                'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
-                'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
-                'backgroundColor' => $record->eventcolor,
-                'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
-                'extendedProps' => (object)['reserved' => !$record->name],
-                'classNames' => 'hide-event-time',
+                    'id' => $record->id,
+                    'title' => [
+                            'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
+                                    date('H:i', $record->endtime) . '</h6>' .
+                                    ($record->name ?? $reserved) . ' (' . $record->roomname . ')',
+                    ],
+                    'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
+                    'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
+                    'backgroundColor' => $record->eventcolor,
+                    'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
+                    'extendedProps' => (object) ['reserved' => !$record->name],
+                    'classNames' => 'hide-event-time',
             ];
         }
         return $events;
@@ -142,6 +148,7 @@ class event_manager {
     /**
      * Helper function to place a weekly time into a specific week.
      * It is necessary so that sunday events are the correct time, even in a week with a time change (DST).
+     *
      * @param int $weeklytime Timestamp relative to start of week.
      * @param int $weektime Timestamp of the start of a week.
      * @return int
@@ -166,32 +173,32 @@ class event_manager {
         $events = [];
 
         $blockers = $DB->get_records_sql(
-            'SELECT id, name, roomid, starttime, endtime FROM {bookit_blocker} ' .
-            'WHERE starttime < :endtime AND endtime > :starttime AND (roomid = :roomid OR roomid IS NULL)',
-            ['starttime' => $starttime, 'endtime' => $endtime, 'roomid' => $roomid],
+                'SELECT id, name, roomid, starttime, endtime FROM {bookit_blocker} ' .
+                'WHERE starttime < :endtime AND endtime > :starttime AND (roomid = :roomid OR roomid IS NULL)',
+                ['starttime' => $starttime, 'endtime' => $endtime, 'roomid' => $roomid],
         );
         foreach ($blockers as $blocker) {
             $events[] = [
-                'id' => $blocker->id,
-                'title' => $blocker->name ?? '',
-                'start' => date('Y-m-d H:i', $blocker->starttime),
-                'end' => date('Y-m-d H:i', $blocker->endtime),
-                'extendedProps' => (object)['type' => 'blocker'],
-                'backgroundColor' => ($blocker->roomid ?? false) ? '#c78316' : '#a33',
+                    'id' => $blocker->id,
+                    'title' => $blocker->name ?? '',
+                    'start' => date('Y-m-d H:i', $blocker->starttime),
+                    'end' => date('Y-m-d H:i', $blocker->endtime),
+                    'extendedProps' => (object) ['type' => 'blocker'],
+                    'backgroundColor' => ($blocker->roomid ?? false) ? '#c78316' : '#a33',
             ];
         }
 
         $records = $DB->get_records_sql(
-            'SELECT ws.id, ws.starttime as slotstart, ws.endtime as slotend,
+                'SELECT ws.id, ws.starttime as slotstart, ws.endtime as slotend,
                 wr.starttime as weekplanstart, wr.endtime as weekplanend
             FROM {bookit_weekplan_room} wr
             JOIN {bookit_weekplanslot} ws ON wr.weekplanid = ws.weekplanid
             WHERE wr.starttime < :endtime AND wr.endtime > :starttime AND wr.roomid = :roomid',
-            [
-                'starttime' => $starttime,
-                'endtime' => $endtime,
-                'roomid' => $roomid,
-            ]
+                [
+                        'starttime' => $starttime,
+                        'endtime' => $endtime,
+                        'roomid' => $roomid,
+                ]
         );
 
         foreach ($records as $record) {
@@ -207,11 +214,11 @@ class event_manager {
 
                 if ($eventstart < $weekplanend && $eventend > $weekplanstart) {
                     $events[] = [
-                        'id' => 0,
-                        'title' => '',
-                        'start' => date('Y-m-d H:i', $eventstart),
-                        'end' => date('Y-m-d H:i', $eventend),
-                        'extendedProps' => (object)['type' => 'slot'],
+                            'id' => 0,
+                            'title' => '',
+                            'start' => date('Y-m-d H:i', $eventstart),
+                            'end' => date('Y-m-d H:i', $eventend),
+                            'extendedProps' => (object) ['type' => 'slot'],
                     ];
                 }
 

@@ -91,12 +91,12 @@ class weekplan_manager {
                             $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
                                 get_string('end_before_start_in_timeperiod_x', 'mod_bookit', $timeperiod);
                         }
-                    } catch (\Exception|\TypeError $e) {
+                    } catch (\Exception | \TypeError $e) {
                         $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
                             get_string('could_not_parse_time_period_x', 'mod_bookit', $timeperiod);
                     }
                 }
-            } catch (\Exception|\TypeError $e) {
+            } catch (\Exception | \TypeError $e) {
                 $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
                     get_string('could_not_parse_line', 'mod_bookit');
             }
@@ -192,7 +192,7 @@ class weekplan_manager {
         global $DB;
         $DB->delete_records('bookit_weekplanslot', ['weekplanid' => $weekplanid]); // Awful.
 
-        list($_, $weekplanevents) = self::parse_weekplan($weekplan);
+        list($parseerrors, $weekplanevents) = self::parse_weekplan($weekplan);
         foreach ($weekplanevents as $weekplanevent) {
             $DB->insert_record('bookit_weekplanslot', [
                 'weekplanid' => $weekplanid,

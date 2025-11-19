@@ -41,9 +41,11 @@ class room extends persistent {
 
     /** @var int Constant for only allowing events to start at starts of slots. */
     const MODE_SLOTS = 1;
-
+    /** @var int */
     const OVERLAPPING_ALL = 0;
+    /** @var int */
     const OVERLAPPING_ALLOW_NON_CONFIRMED = 1;
+    /** @var int */
     const OVERLAPPING_NONE = 2;
 
     /**

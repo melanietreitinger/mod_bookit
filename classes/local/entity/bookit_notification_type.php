@@ -25,6 +25,7 @@
 
 namespace mod_bookit\local\entity;
 
+// phpcs:ignore moodle.Commenting.InlineComment.DocBlock
 /**
  * Notification type enum for bookit.
  *

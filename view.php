@@ -64,7 +64,7 @@ $statusmap = [
 
 $rooms = bookit_event_collection::get_rooms();
 // ...@TODO: Get institutions from institutions table.
-//$faculties = bookit_event_collection::get_faculties();
+// $faculties = bookit_event_collection::get_faculties();
 $faculties = [];
 
 // Log view event of calendar.

@@ -21,6 +21,7 @@
  * @copyright   2025 Justus Dieckmann
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 namespace mod_bookit\external;
 
 use core_external\external_api;
@@ -50,20 +51,22 @@ require_once($CFG->libdir . "/externallib.php");
 class get_possible_starttimes extends external_api {
     /**
      * Description for get_possible_slots parameters.
+     *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'year' => new external_value(PARAM_INT),
-            'month' => new external_value(PARAM_INT),
-            'day' => new external_value(PARAM_INT),
-            'duration' => new external_value(PARAM_INT),
-            'roomid' => new external_value(PARAM_INT),
+                'year' => new external_value(PARAM_INT),
+                'month' => new external_value(PARAM_INT),
+                'day' => new external_value(PARAM_INT),
+                'duration' => new external_value(PARAM_INT),
+                'roomid' => new external_value(PARAM_INT),
         ]);
     }
 
     /**
      * Lists all possible starttimes for that day, duration and room.
+     *
      * @param DateTime $date
      * @param int $duration
      * @param int $roomid
@@ -110,13 +113,16 @@ class get_possible_starttimes extends external_api {
                     $slot->starttime += $freemodegrid - $offset;
                 }
                 for ($time = $slot->starttime; $time <= $slot->endtime; $time += $freemodegrid) {
-                    if ($timeline->does_complete_range_equal($time - $extratimebefore * 60, $time + ($duration + $extratimeafter) * 60, true)) {
+                    if ($timeline->does_complete_range_equal($time - $extratimebefore * 60,
+                            $time + ($duration + $extratimeafter) * 60, true)) {
                         $starttimes[$time] = (new DateTime())->setTimestamp($time)->format("H:i");
                     }
                 }
             } else {
-                if ($timeline->does_complete_range_equal($slot->starttime, $slot->starttime + ($duration + $extratimebefore + $extratimeafter) * 60, true)) {
-                    $starttimes[$slot->starttime + $extratimebefore * 60] = (new DateTime())->setTimestamp($slot->starttime + $extratimebefore * 60)->format("H:i");
+                if ($timeline->does_complete_range_equal($slot->starttime,
+                        $slot->starttime + ($duration + $extratimebefore + $extratimeafter) * 60, true)) {
+                    $starttimes[$slot->starttime + $extratimebefore * 60] =
+                            (new DateTime())->setTimestamp($slot->starttime + $extratimebefore * 60)->format("H:i");
                 }
             }
         }
@@ -126,6 +132,7 @@ class get_possible_starttimes extends external_api {
 
     /**
      * Execution for get_possible_slots external api.
+     *
      * @param int $year
      * @param int $month
      * @param int $day
@@ -135,17 +142,17 @@ class get_possible_starttimes extends external_api {
      */
     public static function execute(int $year, int $month, int $day, int $duration, int $roomid): array {
         [
-            'year' => $year,
-            'month' => $month,
-            'day' => $day,
-            'duration' => $duration,
-            'roomid' => $roomid,
+                'year' => $year,
+                'month' => $month,
+                'day' => $day,
+                'duration' => $duration,
+                'roomid' => $roomid,
         ] = self::validate_parameters(self::execute_parameters(), [
-            'year' => $year,
-            'month' => $month,
-            'day' => $day,
-            'duration' => $duration,
-            'roomid' => $roomid,
+                'year' => $year,
+                'month' => $month,
+                'day' => $day,
+                'duration' => $duration,
+                'roomid' => $roomid,
         ]);
         $context = \context_system::instance();
         self::validate_context($context);
@@ -160,8 +167,8 @@ class get_possible_starttimes extends external_api {
 
         foreach ($starttimes as $starttime => $starttimestring) {
             $transformed[] = [
-                "timestamp" => $starttime,
-                "string" => $starttimestring,
+                    "timestamp" => $starttime,
+                    "string" => $starttimestring,
             ];
         }
 
@@ -170,14 +177,15 @@ class get_possible_starttimes extends external_api {
 
     /**
      * Description of get_possible_slots return value.
+     *
      * @return external_multiple_structure
      */
     public static function execute_returns(): external_multiple_structure {
         return new external_multiple_structure(
-            new external_single_structure([
-                'timestamp' => new external_value(PARAM_INT),
-                'string' => new external_value(PARAM_TEXT),
-            ]),
+                new external_single_structure([
+                        'timestamp' => new external_value(PARAM_INT),
+                        'string' => new external_value(PARAM_TEXT),
+                ]),
         );
     }
 }

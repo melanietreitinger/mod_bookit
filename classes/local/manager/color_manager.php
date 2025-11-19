@@ -56,12 +56,12 @@ class color_manager {
      * @return string
      */
     private static function calculate_textcolor_for_background(string $color): string {
-        // Simple luminosity-based approach: if background is dark, use white text; if light, use black text
+        // Simple luminosity-based approach: if background is dark, use white text; if light, use black text.
         $luminosity = self::calculate_luminosity($color);
 
         // Luminosity threshold: 0.5 is middle grey
         // Values below 0.5 are considered dark (use white text)
-        // Values above 0.5 are considered light (use black text)
+        // Values above 0.5 are considered light (use black text).
         return $luminosity < 0.5 ? '#fff' : '#000';
     }
 

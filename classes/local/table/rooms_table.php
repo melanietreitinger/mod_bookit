@@ -23,6 +23,8 @@
  */
 namespace mod_bookit\local\table;
 
+use core\exception\moodle_exception;
+
 defined('MOODLE_INTERNAL') || die;
 
 global $CFG;
@@ -74,8 +76,10 @@ class rooms_table extends \table_sql {
 
     /**
      * Render 'activeweekplan' column.
-     * @param $row
+     *
+     * @param object $row
      * @return string
+     * @throws moodle_exception
      */
     public function col_activeweekplan($row) {
         if (isset($row->activeweekplanid)) {
