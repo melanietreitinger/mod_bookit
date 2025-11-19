@@ -173,7 +173,6 @@ unset($ev);
 
 
 // WORK IN PROGRESS by vadym: Apply in-memory filters (only if parameter present). For Filter user story.
-// Apply in-memory filters (enhanced version, merged from older file).
 $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, $search) {
     // Helper to read from array or object.
     $get = function ($src, array $keys) {
@@ -188,7 +187,7 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
         return null;
     };
 
-    // ROOM filter (by resource id; supports multiple roomids).
+    // Room filter (by resource id; supports multiple roomids).
     if ($roomid) {
         $eventroomids = $get($ev, ['roomids']);
         $eventroomid  = $get($ev, ['roomid', 'resourceid', 'rid']);

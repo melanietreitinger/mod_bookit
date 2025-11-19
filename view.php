@@ -105,7 +105,7 @@ $PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$cm->id]);
 // Calendar feed URL & caps passed to AMD module.
 $eventsource = (new moodle_url('/mod/bookit/events.php', [
     'id' => $cm->id,
-    'debug' => 1
+    'debug' => 1,
 ]))->out(false);
 
 $capabilities = [
@@ -127,7 +127,7 @@ $PAGE->requires->js_init_code(
 // Log the view event (WORK IN PROGRESS).
 $event = course_module_viewed::create([
     'objectid' => $moduleinstance->id,
-    'context'  => $modulecontext
+    'context'  => $modulecontext,
 ]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);

@@ -662,8 +662,6 @@ class edit_event_form extends dynamic_form {
         // Calculate endtime.
         $formdata->endtime = $formdata->starttime + $formdata->duration * 60 + $formdata->extratime * 60;
 
-        
-
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));
         }

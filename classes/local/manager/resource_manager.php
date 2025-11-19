@@ -68,16 +68,16 @@ class resource_manager {
                         'category_id' => $record->category_id,
                         'category_desc' => $record->category_desc,
                         'resources' => [$record->resource_id => [
-                                'name' => $record->resource_name,
-                                'desc' => $record->resource_desc,
-                                'amount' => $record->resource_amount,
-                        ]],
+                            'name' => $record->resource_name,
+                            'desc' => $record->resource_desc,
+                            'amount' => $record->resource_amount,
+                    ]],
                 ];
             } else {
                 $resources[$record->category_name]['resources'][$record->resource_id] = [
-                        'name' => $record->resource_name,
-                        'desc' => $record->resource_desc,
-                        'amount' => $record->resource_amount,
+                    'name' => $record->resource_name,
+                    'desc' => $record->resource_desc,
+                    'amount' => $record->resource_amount,
                 ];
             }
         }
@@ -101,5 +101,4 @@ class resource_manager {
         }
         return $rooms;
     }
-
 }

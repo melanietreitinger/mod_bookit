@@ -123,11 +123,7 @@ if (!empty($ids)) {
 
 /* additional UI filters ------------------------------------------------ */
 $events = array_filter($events, static function ($e) use ($room, $faculty, $status): bool {
-
-    if ($room) {
-        // Not here.
-    }
-
+    // Note: Room is not applied here yet, that doesnt work. 
     if ($faculty && $faculty !== ($e->department ?? '')) {
         return false;
     }
@@ -162,11 +158,10 @@ if ($events) {
 
 // Apply room filter after enrichment.
 if ($room) {
-    $events = array_filter($events, function($ev) use ($room) {
+    $events = array_filter($events, function ($ev) use ($room) {
         return (int)$ev->resourceid === (int)$room;
     });
 }
-
 
 /* ------------------------------------------------------------------
    2.  Build VCALENDAR

@@ -197,7 +197,7 @@ if ($viewalldetailsofevent) {
                 'start' => date('Y-m-d H:i', $record->starttime),
                 'end' => date('Y-m-d H:i', $record->endtime),
                 'backgroundColor' => '#333399',  
-                'textColor'       => '#ffffff',
+                'textColor' => '#ffffff',
                 'extendedProps' => (object)['reserved' => !$record->name],
             ];
         }
@@ -228,12 +228,12 @@ if ($viewalldetailsofevent) {
 
         // Room filter SQL.
         if (!empty($roomids)) {
-            list($inSql, $paramsRoom) = $DB->get_in_or_equal($roomids, SQL_PARAMS_NAMED, 'roomid');
-            $roomidssql = "AND er.resourceid $inSql";
+            list($insql, $paramsroom) = $DB->get_in_or_equal($roomids, SQL_PARAMS_NAMED, 'roomid');
+            $roomidssql = "AND er.resourceid $insql";
         } else {
             // If no rooms existn room will be null. 
             $roomidssql = "AND 1 = 0";
-            $paramsRoom = [];
+            $paramsroom = [];
         }
         // 2. Main SQL query.
         $sql = "
@@ -270,8 +270,8 @@ if ($viewalldetailsofevent) {
             'uid1' => $userid,
             'uid2' => $userid,
             'uid3' => $userid,
-            'uid4' => $userid
-        ], $paramsRoom);
+            'uid4' => $userid,
+        ], $paramsroom);
 
         return $DB->get_records_sql($sql, $params);
     }

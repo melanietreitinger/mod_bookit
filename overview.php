@@ -154,7 +154,8 @@ echo html_writer::start_tag('table', [
 // ... Header row ...
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr', ['style' => 'background-color:#cfe2ff;']);
-foreach (['ID',
+foreach ([
+    'ID',
     'Title',
     'Room',
     'Person in charge',
@@ -162,7 +163,8 @@ foreach (['ID',
     'Booking status',
     'Date',
     'Checklist progress',
-    'Checklist'] as $head) {
+    'Checklist'
+    ] as $head) {
     echo html_writer::tag('th', $head);
 }
 echo html_writer::end_tag('tr');
@@ -230,7 +232,6 @@ foreach ($events as $ev) {
         s($statustxt),
         ['style' => "background-color:$statusbg;color:$statusfg;"]
     );
-
     echo html_writer::tag('td', $date, [
         'data-sort' => $ev->starttime, // Unix timestamp to enable sorting. 
     ]);
