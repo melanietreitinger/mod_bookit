@@ -31,6 +31,7 @@ use mod_bookit\local\manager\sharing_manager;
 require_login();
 
 $context = context_system::instance();
+$PAGE->set_context($context);
 require_capability('mod/bookit:managemasterchecklist', $context);
 
 

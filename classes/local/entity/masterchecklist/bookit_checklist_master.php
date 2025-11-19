@@ -215,8 +215,10 @@ class bookit_checklist_master implements named_templatable, \renderable {
         $data->roles = checklist_manager::get_bookit_roles();
         $data->rooms = checklist_manager::get_bookit_rooms();
 
-        foreach ($this->checklistcategories as $category) {
-            $data->checklistcategories[] = $category->export_for_template($output);
+        if (!empty($this->checklistcategories)) {
+            foreach ($this->checklistcategories as $category) {
+                $data->checklistcategories[] = $category->export_for_template($output);
+            }
         }
 
         return $data;
