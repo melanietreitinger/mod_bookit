@@ -128,6 +128,31 @@ class edit_event_form extends dynamic_form {
         $mform->addRule('institutionid', null, 'required', null, 'client');
         $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
 
+        // Add the "roomid" field.
+        $rooms = room::get_records(['active' => true]);
+        $roomoptions = [];
+        foreach ($rooms as $room) {
+            $roomoptions[$room->get('id')] = $room->get('name');
+        }
+
+        $mform->addElement('select', 'roomid', get_string('event_room', 'mod_bookit'), $roomoptions);
+        $mform->disabledIf('roomid', 'editevent', 'neq');
+        $mform->addHelpButton('roomid', 'event_room', 'mod_bookit');
+
+        // Add the "duration" field.
+        $duration = [];
+        // ...@TODO: remove fallback values if these values are admin settings - see issue#3!
+        $eventdefaultduration = ($config->eventdefaultduration ?? 60);
+        $eventdurationstepwidth = ($config->eventdurationstepwidth ?? 15);
+        $eventmaxduration = ($config->eventmaxduration ?? 480);
+        for ($i = $eventdurationstepwidth; $i <= $eventmaxduration; $i += $eventdurationstepwidth) {
+            $duration[$i] = $i;
+        }
+        $select = $mform->addElement('select', 'duration', get_string('event_duration', 'mod_bookit'), $duration);
+        $select->setSelected($eventdefaultduration);
+        $mform->disabledIf('duration', 'editevent', 'neq');
+        $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
+
         // Add the "bookingtimes" fields.
         $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
         $curdate = new DateTimeImmutable('+ 1 hour');
@@ -152,7 +177,7 @@ class edit_event_form extends dynamic_form {
             }
             return true;
         };
-
+/*
         $mform->addElement('date_time_selector', 'starttime', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('starttime', 'editevent', 'neq');
         $mform->addRule('starttime', null, 'required', null, 'client');
@@ -171,7 +196,7 @@ class edit_event_form extends dynamic_form {
             );
         }
         $mform->addHelpButton('starttime', 'event_start', 'mod_bookit');
-
+*/
         // Add the "duration" field.
         $duration = [];
         // ...@TODO: remove fallback values if these values are admin settings - see issue#3!
@@ -442,6 +467,30 @@ class edit_event_form extends dynamic_form {
                 );
             }
 
+            $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
+            if ($timeclicked && $roomoptions) {
+                $timeclicked = new \DateTimeImmutable($timeclicked);
+                $timeclickedstamp = $timeclicked->getTimestamp();
+                $startdate = $timeclicked->setTime(0, 0);
+                $this->_form->setDefault('startdate', $timeclicked->getTimestamp());
+
+                $possiblestarttimes = get_possible_starttimes::list_possible_starttimes(
+                        \DateTime::createFromImmutable($startdate),
+                        $eventdefaultduration,
+                        array_key_first($roomoptions),
+                );
+
+                $smallestdiff = 1e9;
+                $selectedtime = null;
+
+                foreach ($possiblestarttimes as $possiblestarttime => $str) {
+                    if (abs($possiblestarttime - $timeclickedstamp) < $smallestdiff) {
+                        $smallestdiff = abs($possiblestarttime - $timeclickedstamp);
+                        $selectedtime = $possiblestarttime;
+                    }
+                }
+            }
+
             /** @var \MoodleQuickForm_select $starttimeel */
             $starttimeel = $mform->getElement('starttime');
             $starttimeel->removeOptions();
@@ -458,7 +507,7 @@ class edit_event_form extends dynamic_form {
      * @throws coding_exception
      */
     public function definition_after_data(): void {
-        global $USER, $PAGE;   // The $PAGE is needed for JS injection.
+        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
 

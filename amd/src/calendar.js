@@ -168,7 +168,10 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             if (capabilities.addevent && startdate > dateoff.toISOString()) {
                 const modalForm = new ModalForm({
                     formClass: 'mod_bookit\\form\\edit_event_form',
-                    args: {cmid: cmid, startdate: startdate},
+                    args: {
+                        cmid: cmid,
+                        timeclicked: startdate,
+                    },
                     modalConfig: {title: getString('edit_event', 'mod_bookit')},
                 });
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
@@ -188,12 +191,16 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
 
             const modalForm = new ModalForm({
                 formClass: "mod_bookit\\form\\edit_event_form",
-                args: { cmid: cmid, id: id },
+                args: {
+                    cmid: cmid,
+                    id: id
+                },
                 modalConfig: { title: getString('edit_event', 'mod_bookit') },
             });
             modalForm.addEventListener(modalForm.events.FORM_SUBMITTED,() => {
                 calendar.refetchEvents();
             });
+            modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
             modalForm.show();
         },
 
