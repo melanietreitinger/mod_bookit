@@ -123,7 +123,7 @@ if (!empty($ids)) {
 
 /* additional UI filters ------------------------------------------------ */
 $events = array_filter($events, static function ($e) use ($room, $faculty, $status): bool {
-    // Note: Room is not applied here yet, that doesnt work. 
+    // Note: Room is not applied here yet, that doesnt work.
     if ($faculty && $faculty !== ($e->department ?? '')) {
         return false;
     }

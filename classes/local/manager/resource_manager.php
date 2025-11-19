@@ -71,7 +71,7 @@ class resource_manager {
                             'name' => $record->resource_name,
                             'desc' => $record->resource_desc,
                             'amount' => $record->resource_amount,
-                    ]],
+                        ]],
                 ];
             } else {
                 $resources[$record->category_name]['resources'][$record->resource_id] = [
@@ -84,7 +84,7 @@ class resource_manager {
         return $resources;
     }
 
-        /**
+    /**
      * Get list of rooms as [id => name].
      *
      * @return array

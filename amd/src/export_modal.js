@@ -11,12 +11,13 @@ define(['jquery', 'core/str'], function($, str) {
 
             str.get_strings(stringKeys).done(function(strings) {
                 const noEventsStr = strings[0];
+
                 /** 
-                function to filter the export list
+                Function to filter the export list
                 */
                 function filterExportList() {
                     const val = ($('#bookit-modal-search').val() || '').toLowerCase().trim();
-                    $('#bookit-export-list label').each(function (){
+                    $('#bookit-export-list label').each(function() {
                         const $row = $(this);
                         const show = $row.text().toLowerCase().includes(val);
                         $row.toggleClass('d-flex', show)
@@ -24,21 +25,21 @@ define(['jquery', 'core/str'], function($, str) {
                     });
                 }
 
-                $('#bookit-export').on('click', function (){
+                $('#bookit-export').on('click', function() {
                 let qs = {id: cmId};
 
                 // Get current time range from FullCalendar.
                 if (window.bookitCalendar) {
                     const view = window.bookitCalendar.view;
                     const start = view.activeStart.toISOString().slice(0,16);
-                    const end   = view.activeEnd.toISOString().slice(0,16);
+                    const end = view.activeEnd.toISOString().slice(0,16);
 
                     qs.start = start;
-                    qs.end   = end;
+                    qs.end = end;
                 } else {
                     // Fallback (should never be needed).
                     qs.start = '1970-01-01T00:00';
-                    qs.end   = '2100-01-01T00:00';
+                    qs.end = '2100-01-01T00:00';
                 }
 
                 if (window.currentFilterParams) {
@@ -60,7 +61,8 @@ define(['jquery', 'core/str'], function($, str) {
                         list.empty();
 
                         // Remove reserved events entirely (Fix for Issue #102)
-                        data = data.filter(e => !(e.extendedProps && (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)));
+                        data = data.filter(e => !(e.extendedProps 
+                            && (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)));
 
                         if (!data.length) {
                             list.append('<div class="text-muted">' + noEventsStr + '</div>');
@@ -70,7 +72,7 @@ define(['jquery', 'core/str'], function($, str) {
                         const statusMap = {'0': 'New', '1': 'In progress', '2': 'Accepted', 
                             '3': 'Cancelled', '4': 'Rejected'};
 
-                        data.forEach(function (e){
+                        data.forEach(function(e) {
                             const roomTxt = (e.location || e.room || '').trim();
                             const faculty = (e.department || '').trim();
                             const statusTxt = statusMap[e.bookingstatus] || '';
@@ -91,7 +93,6 @@ define(['jquery', 'core/str'], function($, str) {
                             );
                             list.append(row);
                         });
-
                         filterExportList();
                     });
                 });
@@ -107,7 +108,7 @@ define(['jquery', 'core/str'], function($, str) {
 
                 $('#bookit-export-confirm').on('click', function() {
                     const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
-                        .map(function(){
+                        .map(function() {
                             return this.value;
                         }).get();
                     if (!ids.length) {

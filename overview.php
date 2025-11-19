@@ -154,17 +154,8 @@ echo html_writer::start_tag('table', [
 // ... Header row ...
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr', ['style' => 'background-color:#cfe2ff;']);
-foreach ([
-    'ID',
-    'Title',
-    'Room',
-    'Person in charge',
-    'My role',
-    'Booking status',
-    'Date',
-    'Checklist progress',
-    'Checklist'
-    ] as $head) {
+foreach (['ID', 'Title', 'Room', 'Person in charge', 'My role', 'Booking status',
+        'Date', 'Checklist progress', 'Checklist'] as $head) {
     echo html_writer::tag('th', $head);
 }
 echo html_writer::end_tag('tr');

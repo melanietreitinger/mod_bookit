@@ -83,7 +83,7 @@ class event_manager {
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
 
         $sqlbase = "
-            SELECT 
+            SELECT
                 e.id,
                 e.name,
                 e.starttime,
@@ -97,8 +97,7 @@ class event_manager {
             GROUP BY e.id
         ";
 
-
-        //Reserved name rows (no details allowed).
+        // Reserved name rows (no details allowed).
        $sqlreserved = "
             SELECT 
                 e.id,
@@ -106,85 +105,76 @@ class event_manager {
                 e.starttime,
                 e.endtime,
                 MIN(r.name) AS roomname
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-            LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
-            WHERE e.endtime >= :starttime
-            AND e.starttime <= :endtime
-            GROUP BY e.id
+                FROM {bookit_event} e
+                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
+                WHERE e.endtime >= :starttime
+                AND e.starttime <= :endtime
+                GROUP BY e.id
         ";
-
-
 
         $params = [
             'starttime' => $starttimestamp,
             'endtime'   => $endtimestamp
         ];
-
         
         // Capability-based SQL selection.
-       // --- Correct capability versions (Moodle-compliant and duplicate-safe) ---
+        if ($viewalldetailsofevent) {
+            // Service-team: see all details of all events.
+            $sql = $sqlbase;
 
-if ($viewalldetailsofevent) {
+        } else if ($viewalldetailsofownevent) {
 
-    // Service-team: see all details of all events.
-    $sql = $sqlbase;
+            // Normal examiner: see only own events with details, everything else is reserved (no details).
+            $sql = "
+                SELECT DISTINCT e.id,
+                    e.name,
+                    e.starttime,
+                    e.endtime,
+                    r.name AS roomname,
+                    0 AS reserved
+                FROM {bookit_event} e
+            LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+            LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
+                                                AND r.categoryid = 1
+                WHERE e.endtime  >= :starttime
+                AND e.starttime <= :endtime
+                AND (
+                        e.usermodified      = :uid
+                    OR e.personinchargeid  = :uid
+                    OR e.otherexaminers LIKE :likeuid
+                )
 
-} else if ($viewalldetailsofownevent) {
+                UNION
 
-    // Normal examiner: see only own events with details, everything else is reserved (no details).
-    $sql = "
-        SELECT DISTINCT e.id,
-               e.name,
-               e.starttime,
-               e.endtime,
-               r.name AS roomname,
-               0 AS reserved
-          FROM {bookit_event} e
-     LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-     LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-                                          AND r.categoryid = 1
-         WHERE e.endtime  >= :starttime
-           AND e.starttime <= :endtime
-           AND (
-                e.usermodified      = :uid
-             OR e.personinchargeid  = :uid
-             OR e.otherexaminers LIKE :likeuid
-           )
-
-        UNION
-
-        SELECT DISTINCT e.id,
-               NULL AS name,
-               e.starttime,
-               e.endtime,
-               r.name AS roomname,
-               1 AS reserved
-          FROM {bookit_event} e
-        LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-        LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-                                            AND r.categoryid = 1
-            WHERE e.endtime  >= :starttime
-            AND e.starttime <= :endtime
-            AND NOT (
-                    e.usermodified      = :uid
-                OR e.personinchargeid  = :uid
-                OR e.otherexaminers LIKE :likeuid
-            )
-        ";
-
-        $params = [
-            'starttime' => $starttimestamp,
-            'endtime'   => $endtimestamp,
-            'uid'       => $USER->id,
-            'likeuid'   => "%{$USER->id}%"
-        ];
-    } else {
-        // Student, support, etc.: only see reserved (no details).
-        $sql = $sqlreserved;
-}
-
-
+                SELECT DISTINCT e.id,
+                    NULL AS name,
+                    e.starttime,
+                    e.endtime,
+                    r.name AS roomname,
+                    1 AS reserved
+                FROM {bookit_event} e
+                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+                LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
+                                                    AND r.categoryid = 1
+                    WHERE e.endtime  >= :starttime
+                    AND e.starttime <= :endtime
+                    AND NOT (
+                            e.usermodified      = :uid
+                        OR e.personinchargeid  = :uid
+                        OR e.otherexaminers LIKE :likeuid
+                    )
+                ";
+                $params = [
+                    'starttime' => $starttimestamp,
+                    'endtime'   => $endtimestamp,
+                    'uid'       => $USER->id,
+                    'likeuid'   => "%{$USER->id}%"
+                ];
+            } else {
+                // Student, support, etc.: only see reserved (no details).
+                $sql = $sqlreserved;
+            }
         $records = $DB->get_records_sql($sql, $params);
         // Output formatting.
         $events = [];
@@ -204,7 +194,7 @@ if ($viewalldetailsofevent) {
 
         return $events;
     }
-        /**
+    /**
      * Fetch all events where this user participates in any role:
      * - person in charge (main examiner)
      * - other examiner
@@ -276,7 +266,7 @@ if ($viewalldetailsofevent) {
         return $DB->get_records_sql($sql, $params);
     }
 
-        /**
+    /**
      * Get all faculties (departments) that appear in bookit events.
      *
      * @return array List of faculty names (strings).
