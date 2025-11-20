@@ -111,7 +111,7 @@ foreach ($events as &$ev) {
     // Fetch a single enrichment row.
     $row = $DB->get_record_sql("
         SELECT e.bookingstatus,
-               e.department,
+               e.institutionid,
                r.id   AS roomid,
                r.name AS roomname
           FROM {bookit_event} e
@@ -128,12 +128,12 @@ foreach ($events as &$ev) {
     // Assign values safely for array or object.
     if (is_array($ev)) {
         $ev['bookingstatus'] = (int)($row->bookingstatus ?? 0);
-        $ev['department']    = (string)($row->department ?? '');
+        $ev['institutionid']    = (string)($row->institutionid ?? '');
         $ev['roomid']        = (int)($row->roomid ?? 0);
         $ev['roomname']      = (string)($row->roomname ?? '');
     } else {
         $ev->bookingstatus = (int)($row->bookingstatus ?? 0);
-        $ev->department    = (string)($row->department ?? '');
+        $ev->institutionid    = (string)($row->institutionid ?? '');
         $ev->roomid        = (int)($row->roomid ?? 0);
         $ev->roomname      = (string)($row->roomname ?? '');
     }
@@ -178,7 +178,7 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
 
     // FACULTY filter (trim + case-insensitive exact match).
     if ($faculty !== '') {
-        $evdept = (string)($get($ev, ['department', 'faculty', 'dept']) ?? '');
+        $evdept = (string)($get($ev, ['institutionid', 'faculty', 'dept']) ?? '');
         $evdeptnorm = mb_strtolower(trim($evdept));
         $wantnorm   = mb_strtolower(trim((string)$faculty));
 
@@ -195,11 +195,11 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
         }
     }
 
-    // SEARCH filter (substring in title + department, case-insensitive).
+    // SEARCH filter (substring in title + institutionid, case-insensitive).
     if ($search !== '') {
         $needle = mb_strtolower($search);
         $title = (string) ($get($ev, ['title', 'name', 'summary']) ?? '');
-        $dept = (string) ($get($ev, ['department', 'faculty', 'dept']) ?? '');
+        $dept = (string) ($get($ev, ['institutionid', 'faculty', 'dept']) ?? '');
         $haystack = mb_strtolower($title . ' ' . $dept);
         if (mb_strpos($haystack, $needle) === false) {
             return false;
