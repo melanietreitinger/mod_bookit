@@ -32,7 +32,6 @@ use mod_bookit\local\entity\bookit_event;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_bookit_generator extends testing_module_generator {
-
     /**
      * Create a new event.
      * @param array $event
@@ -41,32 +40,32 @@ class mod_bookit_generator extends testing_module_generator {
      */
     final public function create_event(array $event) {
         $e = new bookit_event(
-                0,
-                $event['name'],
-                20241,
-                $event['department'],
-                strtotime($event['startdate']),
-                strtotime($event['enddate']),
-                90,
-                rand(20, 250),
-                1,
-                '',
-                $event['bookingstatus'],
-                2,
-                '',
-                0,
-                'External lorem ipsum',
-                'Internal Lorem Ipsum dolor...',
-                'Susi Support',
-                [
+            0,
+            $event['name'],
+            20241,
+            $event['department'],
+            strtotime($event['startdate']),
+            strtotime($event['enddate']),
+            90,
+            rand(20, 250),
+            1,
+            '',
+            $event['bookingstatus'],
+            2,
+            '',
+            0,
+            'External lorem ipsum',
+            'Internal Lorem Ipsum dolor...',
+            'Susi Support',
+            [
                         (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
                         (object) ['resourceid' => rand(6, 7), 'amount' => rand(2, 85)], // Other resources.
                         (object) ['resourceid' => rand(8, 10), 'amount' => rand(2, 85)], // Other resources.
                 ],
-                null,
-                2,
-                time(),
-                time()
+            null,
+            2,
+            time(),
+            time()
         );
 
         $e->save(2);

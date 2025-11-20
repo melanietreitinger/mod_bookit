@@ -30,7 +30,6 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_mod_bookit_generator extends behat_generator_base {
-
     /**
      * Define the entities that can be created.
      * @return array[]

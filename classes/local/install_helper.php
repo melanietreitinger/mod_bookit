@@ -612,7 +612,7 @@ class install_helper {
         $linenum = 0;
         $systemcontext = \context_system::instance();
 
-        while (($data = fgetcsv($handle, 1000, ';')) !== false) {
+        while (($data = fgetcsv($handle, 1000, ';', "\"", "\\")) !== false) {
             $linenum++;
 
             // Skip header row.

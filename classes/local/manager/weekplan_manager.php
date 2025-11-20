@@ -192,7 +192,7 @@ class weekplan_manager {
         global $DB;
         $DB->delete_records('bookit_weekplanslot', ['weekplanid' => $weekplanid]); // Awful.
 
-        list($parseerrors, $weekplanevents) = self::parse_weekplan($weekplan);
+        [$parseerrors, $weekplanevents] = self::parse_weekplan($weekplan);
         foreach ($weekplanevents as $weekplanevent) {
             $DB->insert_record('bookit_weekplanslot', [
                 'weekplanid' => $weekplanid,

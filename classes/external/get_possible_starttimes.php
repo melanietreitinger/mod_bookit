@@ -113,14 +113,24 @@ class get_possible_starttimes extends external_api {
                     $slot->starttime += $freemodegrid - $offset;
                 }
                 for ($time = $slot->starttime; $time <= $slot->endtime; $time += $freemodegrid) {
-                    if ($timeline->does_complete_range_equal($time - $extratimebefore * 60,
-                            $time + ($duration + $extratimeafter) * 60, true)) {
+                    if (
+                        $timeline->does_complete_range_equal(
+                            $time - $extratimebefore * 60,
+                            $time + ($duration + $extratimeafter) * 60,
+                            true
+                        )
+                    ) {
                         $starttimes[$time] = (new DateTime())->setTimestamp($time)->format("H:i");
                     }
                 }
             } else {
-                if ($timeline->does_complete_range_equal($slot->starttime,
-                        $slot->starttime + ($duration + $extratimebefore + $extratimeafter) * 60, true)) {
+                if (
+                    $timeline->does_complete_range_equal(
+                        $slot->starttime,
+                        $slot->starttime + ($duration + $extratimebefore + $extratimeafter) * 60,
+                        true
+                    )
+                ) {
                     $starttimes[$slot->starttime + $extratimebefore * 60] =
                             (new DateTime())->setTimestamp($slot->starttime + $extratimebefore * 60)->format("H:i");
                 }
@@ -182,7 +192,7 @@ class get_possible_starttimes extends external_api {
      */
     public static function execute_returns(): external_multiple_structure {
         return new external_multiple_structure(
-                new external_single_structure([
+            new external_single_structure([
                         'timestamp' => new external_value(PARAM_INT),
                         'string' => new external_value(PARAM_TEXT),
                 ]),

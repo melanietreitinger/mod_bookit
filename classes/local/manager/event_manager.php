@@ -173,9 +173,9 @@ class event_manager {
         $events = [];
 
         $blockers = $DB->get_records_sql(
-                'SELECT id, name, roomid, starttime, endtime FROM {bookit_blocker} ' .
-                'WHERE starttime < :endtime AND endtime > :starttime AND (roomid = :roomid OR roomid IS NULL)',
-                ['starttime' => $starttime, 'endtime' => $endtime, 'roomid' => $roomid],
+            'SELECT id, name, roomid, starttime, endtime FROM {bookit_blocker} ' .
+            'WHERE starttime < :endtime AND endtime > :starttime AND (roomid = :roomid OR roomid IS NULL)',
+            ['starttime' => $starttime, 'endtime' => $endtime, 'roomid' => $roomid],
         );
         foreach ($blockers as $blocker) {
             $events[] = [
@@ -189,12 +189,12 @@ class event_manager {
         }
 
         $records = $DB->get_records_sql(
-                'SELECT ws.id, ws.starttime as slotstart, ws.endtime as slotend,
+            'SELECT ws.id, ws.starttime as slotstart, ws.endtime as slotend,
                 wr.starttime as weekplanstart, wr.endtime as weekplanend
             FROM {bookit_weekplan_room} wr
             JOIN {bookit_weekplanslot} ws ON wr.weekplanid = ws.weekplanid
             WHERE wr.starttime < :endtime AND wr.endtime > :starttime AND wr.roomid = :roomid',
-                [
+            [
                         'starttime' => $starttime,
                         'endtime' => $endtime,
                         'roomid' => $roomid,

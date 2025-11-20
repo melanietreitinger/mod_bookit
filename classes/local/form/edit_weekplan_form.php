@@ -25,6 +25,8 @@
 namespace mod_bookit\local\form;
 
 use mod_bookit\local\manager\weekplan_manager;
+use moodleform;
+use Override;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -38,11 +40,11 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class edit_weekplan_form extends \moodleform {
+class edit_weekplan_form extends moodleform {
     /**
      * Defines forms elements
      */
-    public function definition() {
+    public function definition(): void {
         $mform = $this->_form;
 
         $mform->addElement('text', 'name', get_string('name'));
@@ -56,10 +58,16 @@ class edit_weekplan_form extends \moodleform {
         $this->add_action_buttons();
     }
 
-    #[\Override]
-    public function validation($data, $files) {
+    /**
+     * Form validation funtion.
+     * @param $data
+     * @param $files
+     * @return array
+     */
+    #[Override]
+    public function validation($data, $files): array {
         $errors = [];
-        list($parseerrors, $parsedweekplan) = weekplan_manager::parse_weekplan($data['weekplan']);
+        [$parseerrors, $parsedweekplan] = weekplan_manager::parse_weekplan($data['weekplan']);
         if ($parseerrors) {
             $errors['weekplan'] = join('<br>', $parseerrors);
         }
