@@ -43,10 +43,11 @@ class mod_bookit_generator extends testing_module_generator {
             0,
             $event['name'],
             20241,
-            $event['department'],
+            $event['institution'],
             strtotime($event['startdate']),
             strtotime($event['enddate']),
             90,
+            1,
             rand(20, 250),
             1,
             '',
@@ -57,15 +58,17 @@ class mod_bookit_generator extends testing_module_generator {
             'External lorem ipsum',
             'Internal Lorem Ipsum dolor...',
             'Susi Support',
-            [
-                        (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
-                        (object) ['resourceid' => rand(6, 7), 'amount' => rand(2, 85)], // Other resources.
-                        (object) ['resourceid' => rand(8, 10), 'amount' => rand(2, 85)], // Other resources.
-                ],
+            15,
+            15,
             null,
             2,
             time(),
-            time()
+            time(),
+            [
+                    (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
+                    (object) ['resourceid' => rand(6, 7), 'amount' => rand(2, 85)], // Other resources.
+                    (object) ['resourceid' => rand(8, 10), 'amount' => rand(2, 85)], // Other resources.
+                ],
         );
 
         $e->save(2);

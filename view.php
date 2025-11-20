@@ -100,7 +100,7 @@ $PAGE->requires->js_init_code("
 $PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$cm->id]);
 
 // Calendar feed URL & caps passed to AMD module.
-$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id, 'debug' => 1]))->out(false);
+$eventsource = (new moodle_url('/mod/bookit/events.php', ['id' => $cm->id]))->out(false);
 $capabilities   = [
     'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
 ];
