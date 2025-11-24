@@ -143,12 +143,15 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 click: function() {
                     const modalForm = new ModalForm({
                         formClass: 'mod_bookit\\form\\edit_event_form',
-                        args: {cmid: cmid},
+                        args: {
+                            cmid: cmid
+                        },
                         modalConfig: {title: getString('edit_event', 'mod_bookit')},
                     });
                     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
                     });
+                    modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
                     modalForm.show();
                 }
             }
