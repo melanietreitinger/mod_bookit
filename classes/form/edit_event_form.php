@@ -30,8 +30,8 @@ use core\context;
 use core\context\module;
 use core\exception\moodle_exception;
 use core_form\dynamic_form;
+use mod_bookit\external\get_possible_starttimes;
 use core_user\fields;
-use DateTimeImmutable;
 use dml_exception;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\manager\event_manager;
@@ -153,45 +153,6 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
 
         // Add the "bookingtimes" fields.
-        $startdate = $this->optional_param('startdate', null, PARAM_TEXT);
-        $curdate = new DateTimeImmutable('+ 1 hour');
-        $starttimearray = [
-                'defaulttime' => ($startdate ? strtotime($startdate) : $curdate->getTimestamp()),
-                'step' => 15, // Step to increment minutes by.
-                'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
-        ];
-        // Set time restrictions based on "editinternal" capability.
-        if ($caneditinternal) {
-            $starttimearray['startyear'] = $config->eventminyears;
-        } else {
-            $starttimearray['startyear'] = date("Y");
-        }
-        $starttimearray['stopyear'] = $config->eventmaxyears;
-
-        // Closure function to check that no date in the past is selected.
-        $checkmindate = function ($val) use ($curdate) {
-            $checkdate = mktime($val['hour'], $val['minute'], '00', $val['month'], $val['day'], $val['year']);
-            if ($checkdate < $curdate->getTimestamp()) {
-                return false;
-            }
-            return true;
-        };
-
-        // Add the "duration" field.
-        $duration = [];
-        // ...@TODO: remove fallback values if these values are admin settings - see issue#3!
-        $eventdefaultduration = ($config->eventdefaultduration ?? 60);
-        $eventdurationstepwidth = ($config->eventdurationstepwidth ?? 15);
-        $eventmaxduration = ($config->eventmaxduration ?? 480);
-        for ($i = $eventdurationstepwidth; $i <= $eventmaxduration; $i += $eventdurationstepwidth) {
-            $duration[$i] = $i;
-        }
-        $select = $mform->addElement('select', 'duration', get_string('event_duration', 'mod_bookit'), $duration);
-        $select->setSelected($eventdefaultduration);
-        $mform->disabledIf('duration', 'editevent', 'neq');
-        $mform->addHelpButton('duration', 'event_duration', 'mod_bookit');
-
-        // Add the "bookingtimes" fields.
         $starttimearray = [
                 'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
         ];
@@ -211,17 +172,10 @@ class edit_event_form extends dynamic_form {
 
         // Add a static field to explain extra time.
         $mform->addElement(
-            'static',
-            'extratime_label',
-            get_string(
-                'event_extratime_label',
-                'mod_bookit'
-            ),
-            get_string(
-                'event_extratime_description',
-                'mod_bookit',
-                $config->extratime
-            )
+                'static',
+                'extratime_label',
+                get_string('event_extratime_label', 'mod_bookit'),
+                get_string('event_extratime_description', 'mod_bookit', $config->extratime)
         );
 
         // Add "amount of students" field.
