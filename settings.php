@@ -42,7 +42,7 @@ if ($hassiteconfig) {
      */
     $settings = new admin_externalpage(
         'mod_bookit', // Must match admin_externalpage_setup('mod_bookit') in settings_overview.php.
-        get_string('pluginname', 'mod_bookit') . ' ###NEW###',
+        get_string('pluginname', 'mod_bookit'),
         new moodle_url('/mod/bookit/admin/settings_overview.php')
     );
 
@@ -339,7 +339,7 @@ if ($hassiteconfig) {
     // Start: @TODO move external setting pages to tabs.
     $ADMIN->add(
         'modsettings',
-        new admin_category('mod_bookit_category', new lang_string('pluginname', 'mod_bookit') . ' ##TEMP###')
+        new admin_category('mod_bookit_category', ' ##TEMP###')
     );
 
     $ADMIN->add('mod_bookit_category', new admin_externalpage(
