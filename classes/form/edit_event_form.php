@@ -172,10 +172,10 @@ class edit_event_form extends dynamic_form {
 
         // Add a static field to explain extra time.
         $mform->addElement(
-                'static',
-                'extratime_label',
-                get_string('event_extratime_label', 'mod_bookit'),
-                get_string('event_extratime_description', 'mod_bookit', $config->extratime)
+            'static',
+            'extratime_label',
+            get_string('event_extratime_label', 'mod_bookit'),
+            get_string('event_extratime_description', 'mod_bookit', $config->extratime)
         );
 
         // Add "amount of students" field.

@@ -154,16 +154,16 @@ if ($hassiteconfig) {
     ));
 
     $calendar->add(new admin_setting_configselect(
-            'mod_bookit/eventstartstepwidth',
-            get_string('settings_eventstartstepwidth', 'mod_bookit'),
-            null,
-            15,
-            [
-                    5 => '5',
-                    10 => '10',
-                    15 => '15',
-                    30 => '30',
-                    60 => '60',
+        'mod_bookit/eventstartstepwidth',
+        get_string('settings_eventstartstepwidth', 'mod_bookit'),
+        null,
+        15,
+        [
+                5 => '5',
+                10 => '10',
+                15 => '15',
+                30 => '30',
+                60 => '60',
             ],
     ));
 
