@@ -68,19 +68,19 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     await prefetchStrings('mod_bookit', ['addbooking', 'edit_event']);
     await prefetchStrings('core', ['today', 'month', 'week']);
     await prefetchStrings('calendar', ['day', 'upcomingevents']);
-    const str_request_booking = await getString('addbooking', 'mod_bookit');
-    const str_today = await getString('today');
-    const str_month = await getString('month');
-    const str_week = await getString('week');
-    const str_day = await getString('day', 'calendar');
-    const str_list = await getString('upcomingevents', 'calendar');
+    const strRequestBooking = await getString('addbooking', 'mod_bookit');
+    const strToday = await getString('today');
+    const strMonth = await getString('month');
+    const strWeek = await getString('week');
+    const strDay = await getString('day', 'calendar');
+    const strList = await getString('upcomingevents', 'calendar');
 
     // Define viewtype
     let viewType = 'timeGridWeek';
     if (window.screen.width <= 1000) {
         viewType = 'listWeek';
     }
-    //Weekday visibility from admin settings (injected by PHP)
+    // Weekday visibility from admin settings (injected by PHP)
     const allowedWeekdays = (window.M && M.cfg && Array.isArray(M.cfg.bookit_allowedweekdays))
         ? M.cfg.bookit_allowedweekdays.map(x => Number(x))
         : [1, 2, 3, 4, 5];
@@ -107,18 +107,18 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         eventStartEditable: false,
         eventDurationEditable: false,
         buttonText: function(text) {
-            text.today = str_today;
-            text.dayGridMonth = str_month;
-            text.timeGridWeek = str_week;
-            text.timeGridDay = str_day;
-            text.listWeek = str_list;
+            text.today = strToday;
+            text.dayGridMonth = strMonth;
+            text.timeGridWeek = strWeek;
+            text.timeGridDay = strDay;
+            text.listWeek = strList;
             return text;
         },
 
         /* Loading + delivery logs */
-        loading: function(isLoading) {
+        /* loading: function(isLoading) {
             console.log('[BookIT] loading =', isLoading);
-        },
+        }, */
         eventsSet: function(events) {
             // Comment console.log('[BookIT] eventsSet: received', events.length, 'events');
             if (events.length) {
@@ -139,7 +139,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         /* Custom toolbar button (“Add booking”) */
         customButtons: {
             addButton: {
-                text: str_request_booking,
+                text: strRequestBooking,
                 click: function() {
                     const modalForm = new ModalForm({
                         formClass: 'mod_bookit\\form\\edit_event_form',
@@ -195,9 +195,9 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     cmid: cmid,
                     id: id
                 },
-                modalConfig: { title: getString('edit_event', 'mod_bookit') },
+                modalConfig: {title: getString('edit_event', 'mod_bookit')},
             });
-            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED,() => {
+            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                 calendar.refetchEvents();
             });
             modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
@@ -217,7 +217,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         eventSources: [{
             url: eventsource,
             extraParams: () => {
-                console.log('[BookIT] extraParams sent →', extraFilterParams);
+                // Console.log('[BookIT] extraParams sent →', extraFilterParams);
                 return extraFilterParams;
             }
         }],

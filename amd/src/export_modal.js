@@ -11,12 +11,12 @@ define(['jquery', 'core/str'], function($, str) {
 
             str.get_strings(stringKeys).done(function(strings) {
                 const noEventsStr = strings[0];
-                /** 
-                function to filter the export list
-                */
+                /**
+                Function to filter the export list
+                 */
                 function filterExportList() {
                     const val = ($('#bookit-modal-search').val() || '').toLowerCase().trim();
-                    $('#bookit-export-list label').each(function (){
+                    $('#bookit-export-list label').each(function() {
                         const $row = $(this);
                         const show = $row.text().toLowerCase().includes(val);
                         $row.toggleClass('d-flex', show)
@@ -24,9 +24,9 @@ define(['jquery', 'core/str'], function($, str) {
                     });
                 }
 
-                $('#bookit-export').on('click', function (){
+                $('#bookit-export').on('click', function() {
                     const qs = {id: cmId, start: '1970-01-01T00:00', end: '2100-01-01T00:00'};
-                    if(window.currentFilterParams) {
+                    if (window.currentFilterParams) {
                         Object.assign(qs, window.currentFilterParams);
                     }
 
@@ -42,22 +42,23 @@ define(['jquery', 'core/str'], function($, str) {
                         list.empty();
 
                         // Remove reserved events entirely (Fix for Issue #102)
-                        data = data.filter(e => !(e.extendedProps && (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)));
+                        data = data.filter(e => !(e.extendedProps && (e.extendedProps.reserved === true
+                            || e.extendedProps.reserved === 1)));
 
                         if (!data.length) {
                             list.append('<div class="text-muted">' + noEventsStr + '</div>');
                             return;
                         }
 
-                        const statusMap = {'0': 'New', '1': 'In progress', '2': 'Accepted', 
+                        const statusMap = {'0': 'New', '1': 'In progress', '2': 'Accepted',
                             '3': 'Cancelled', '4': 'Rejected'};
 
-                        data.forEach(function (e){
+                        data.forEach(function(e) {
                             const roomTxt = (e.location || e.room || '').trim();
                             const faculty = (e.department || '').trim();
                             const statusTxt = statusMap[e.bookingstatus] || '';
                             const startStr = (e.start || '');
-                            const dateTxt = startStr ? startStr.substr(0,16).replace('T', ' ') : '';
+                            const dateTxt = startStr ? startStr.substr(0, 16).replace('T', ' ') : '';
                             const metaLine = roomTxt ? (roomTxt + ' ' + dateTxt) : dateTxt;
 
                             const checkbox = '<input class="form-check-input mt-1" type="checkbox" value="' + e.id + '">';
@@ -89,7 +90,7 @@ define(['jquery', 'core/str'], function($, str) {
 
                 $('#bookit-export-confirm').on('click', function() {
                     const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
-                        .map(function(){
+                        .map(function() {
                             return this.value;
                         }).get();
                     if (!ids.length) {
