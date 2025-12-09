@@ -210,21 +210,18 @@ echo '
             class="form-control w-auto d-inline">
     </div>
 
-            <!-- time range ------------------------------------------------>
+        <!-- date range ------------------------------------------------>
         <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
-          <label for="bookit-export-start" class="mb-0">From:</label>
-          <input type="datetime-local" id="bookit-export-start"
-                 class="form-control w-auto d-inline">
+            <label for="bookit-export-start" class="mb-0">From:</label>
+            <input type="date" id="bookit-export-start" class="form-control w-auto d-inline">
 
-          <label for="bookit-export-end" class="mb-0">To:</label>
-          <input type="datetime-local" id="bookit-export-end"
-                 class="form-control w-auto d-inline">
+            <label for="bookit-export-end" class="mb-0">To:</label>
+            <input type="date" id="bookit-export-end" class="form-control w-auto d-inline">
 
-          <button type="button" class="btn btn-sm btn-light" id="bookit-export-reset-range">
-            Reset
-          </button>
+            <button type="button" class="btn btn-sm btn-light" id="bookit-export-reset-range">
+                Reset
+            </button>
         </div>
-
 
 
         <!-- check/uncheck buttons --------------------------------------->

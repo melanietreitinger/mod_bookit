@@ -1,5 +1,4 @@
 define(['jquery', 'core/str'], function($, str) {
-
     return {
         init: function(cmId) {
 
@@ -11,23 +10,26 @@ define(['jquery', 'core/str'], function($, str) {
             str.get_strings(stringKeys).done(function(strings) {
                 const noEventsStr = strings[0];
 
-                function toLocalInputValue(dateObj) {
-                    // Convert Date -> 'YYYY-MM-DDTHH:MM' in *local* time (for datetime-local input).
+                function toLocalDateValue(dateObj) {
+                    // Date -> 'YYYY-MM-DD' in local time.
                     const d = new Date(dateObj);
                     const offMin = d.getTimezoneOffset();
                     const local = new Date(d.getTime() - offMin * 60000);
-                    return local.toISOString().slice(0, 16);
+                    return local.toISOString().slice(0, 10);
                 }
 
-                function getCalendarRangeOrFallback() {
+                function getCalendarDateRangeOrFallback() {
                     if (window.bookitCalendar && window.bookitCalendar.view) {
                         const view = window.bookitCalendar.view;
-                        return {
-                            start: toLocalInputValue(view.activeStart),
-                            end: toLocalInputValue(view.activeEnd),
-                        };
+
+                        const startDate = toLocalDateValue(view.activeStart);
+
+                        const endInclusive = new Date(view.activeEnd.getTime() - 1);
+                        const endDate = toLocalDateValue(endInclusive);
+
+                        return {startDate, endDate};
                     }
-                    return {start: '1970-01-01T00:00', end: '2100-01-01T00:00'};
+                    return {startDate: '1970-01-01', endDate: '2100-01-01'};
                 }
 
                 function filterExportList() {
@@ -42,13 +44,16 @@ define(['jquery', 'core/str'], function($, str) {
                 function fetchExportList() {
                     const qs = {id: cmId};
 
-                    // Read from modal inputs (user-editable).
-                    const start = ($('#bookit-export-start').val() || '').trim();
-                    const end = ($('#bookit-export-end').val() || '').trim();
-                    qs.start = start || getCalendarRangeOrFallback().start;
-                    qs.end = end || getCalendarRangeOrFallback().end;
+                    const startDate = ($('#bookit-export-start').val() || '').trim();
+                    const endDate   = ($('#bookit-export-end').val() || '').trim();
+                    const fallback  = getCalendarDateRangeOrFallback();
 
-                    // Apply current calendar filters (room/faculty/status/search).
+                    const s = startDate || fallback.startDate;
+                    const e = endDate   || fallback.endDate;
+
+                    qs.start = s + 'T00:00';
+                    qs.end   = e + 'T23:59';
+
                     if (window.currentFilterParams) {
                         Object.assign(qs, window.currentFilterParams);
                     }
@@ -59,7 +64,6 @@ define(['jquery', 'core/str'], function($, str) {
                     $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function(data) {
                         list.empty();
 
-                        // Remove reserved events from the export list.
                         data = (data || []).filter(e => !(e.extendedProps &&
                             (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)));
 
@@ -100,43 +104,39 @@ define(['jquery', 'core/str'], function($, str) {
                     });
                 }
 
-                // Set defaults from calendar view every time, then load.
                 $(document).on('click', '#bookit-export', function() {
-                    const range = getCalendarRangeOrFallback();
-                    $('#bookit-export-start').val(range.start);
-                    $('#bookit-export-end').val(range.end);
+                    const r = getCalendarDateRangeOrFallback();
+                    $('#bookit-export-start').val(r.startDate);
+                    $('#bookit-export-end').val(r.endDate);
 
                     $('#bookit-export-modal').modal('show');
                     fetchExportList();
                 });
 
-                $(document).on('input change', '#bookit-export-start, #bookit-export-end', function() {
+                $(document).on('change input', '#bookit-export-start, #bookit-export-end', function() {
                     if ($('#bookit-export-modal').hasClass('show')) {
                         fetchExportList();
                     }
                 });
 
-                $(document).on('click', '#bookit-export-reset-range', function(e) {
-                    e.preventDefault();
-                    const range = getCalendarRangeOrFallback();
-                    $('#bookit-export-start').val(range.start);
-                    $('#bookit-export-end').val(range.end);
+                $(document).on('click', '#bookit-export-reset-range', function() {
+                    const r = getCalendarDateRangeOrFallback();
+                    $('#bookit-export-start').val(r.startDate);
+                    $('#bookit-export-end').val(r.endDate);
                     fetchExportList();
                 });
 
+                $(document).on('input', '#bookit-modal-search', filterExportList);
 
-                // Search filter inside modal (client-side).
-                $('#bookit-modal-search').on('input', filterExportList);
-
-                $('#bookit-check-all').on('click', function() {
+                $(document).on('click', '#bookit-check-all', function() {
                     $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', true);
                 });
-                $('#bookit-uncheck-all').on('click', function() {
+
+                $(document).on('click', '#bookit-uncheck-all', function() {
                     $('#bookit-export-list label:visible input[type=checkbox]:enabled').prop('checked', false);
                 });
 
-                // Confirm export (exports selected IDs).
-                $('#bookit-export-confirm').on('click', function() {
+                $(document).on('click', '#bookit-export-confirm', function() {
                     const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
                         .map(function() { return this.value; }).get();
 
