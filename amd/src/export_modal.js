@@ -101,7 +101,7 @@ define(['jquery', 'core/str'], function($, str) {
                 }
 
                 // Set defaults from calendar view every time, then load.
-                $('#bookit-export').on('click', function() {
+                $(document).on('click', '#bookit-export', function() {
                     const range = getCalendarRangeOrFallback();
                     $('#bookit-export-start').val(range.start);
                     $('#bookit-export-end').val(range.end);
@@ -110,20 +110,20 @@ define(['jquery', 'core/str'], function($, str) {
                     fetchExportList();
                 });
 
-                // Instant refresh when user changes dates.
-                $('#bookit-export-start, #bookit-export-end').on('input change', function() {
+                $(document).on('input change', '#bookit-export-start, #bookit-export-end', function() {
                     if ($('#bookit-export-modal').hasClass('show')) {
                         fetchExportList();
                     }
                 });
 
-                // Reset button.
-                $('#bookit-export-reset-range').on('click', function() {
+                $(document).on('click', '#bookit-export-reset-range', function(e) {
+                    e.preventDefault();
                     const range = getCalendarRangeOrFallback();
                     $('#bookit-export-start').val(range.start);
                     $('#bookit-export-end').val(range.end);
                     fetchExportList();
                 });
+
 
                 // Search filter inside modal (client-side).
                 $('#bookit-modal-search').on('input', filterExportList);
