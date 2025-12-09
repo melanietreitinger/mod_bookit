@@ -206,65 +206,84 @@ class event_manager {
      * @throws dml_exception
      */
     public static function get_events_for_examiner(int $userid): array {
-        global $DB;
+    global $DB;
 
-        // 1. Collect room resource IDs.
-        $resources = resource_manager::get_resources();
+    // 1. Collect room resource IDs.
+    $resources = resource_manager::get_resources();
 
-        $roomids = [];
-        if (!empty($resources['Rooms']['resources'])) {
-            $roomids = array_keys($resources['Rooms']['resources']);
-        }
+    $roomids = [];
+    if (!empty($resources['Rooms']['resources'])) {
+        $roomids = array_keys($resources['Rooms']['resources']);
+    }
 
-        // Room filter SQL.
-        if (!empty($roomids)) {
-            list($insql, $paramsroom) = $DB->get_in_or_equal($roomids, SQL_PARAMS_NAMED, 'roomid');
-            $roomidssql = "AND er.resourceid $insql";
-        } else {
-            // If no rooms existn room will be null. 
-            $roomidssql = "AND 1 = 0";
-            $paramsroom = [];
-        }
-        // 2. Main SQL query.
-        $sql = "
-            SELECT
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified,
-                r.name AS room
+    // Room filter SQL.
+    if (!empty($roomids)) {
+        list($insql, $paramsroom) = $DB->get_in_or_equal($roomids, SQL_PARAMS_NAMED, 'roomid');
+        $roomidssql = "AND er.resourceid $insql";
+    } else {
+        // If no rooms exist, room will be null.
+        $roomidssql = "AND 1 = 0";
+        $paramsroom = [];
+    }
 
-            FROM {bookit_event} e
+    // 2) DB-specific CSV membership checks (Postgres has no FIND_IN_SET).
+    $dbfamily = $DB->get_dbfamily();
 
-            LEFT JOIN {bookit_event_resources} er
-                   ON er.eventid = e.id
-            LEFT JOIN {bookit_resource} r
-                   ON r.id = er.resourceid
-                  $roomidssql
-
-            WHERE
-                   e.personinchargeid = :uid1
-                OR e.usermodified    = :uid2
-                OR (e.otherexaminers <> '' AND FIND_IN_SET(:uid3, e.otherexaminers) > 0)
-                OR (e.supportpersons <> '' AND FIND_IN_SET(:uid4, e.supportpersons) > 0)
-
-            GROUP BY e.id
-            ORDER BY e.starttime ASC
-        ";
-
-        $params = array_merge([
+    if ($dbfamily === 'mysql') {
+        $otherexamcond = "(e.otherexaminers <> '' AND FIND_IN_SET(:uid3, e.otherexaminers) > 0)";
+        $supportcond   = "(e.supportpersons <> '' AND FIND_IN_SET(:uid4, e.supportpersons) > 0)";
+        $params = [
             'uid1' => $userid,
             'uid2' => $userid,
             'uid3' => $userid,
             'uid4' => $userid,
-        ], $paramsroom);
+        ];
+    } else {
+        $otherwrapped  = $DB->sql_concat(["','", "COALESCE(e.otherexaminers,'')", "','"]);
+        $supportwrapped = $DB->sql_concat(["','", "COALESCE(e.supportpersons,'')", "','"]);
 
-        return $DB->get_records_sql($sql, $params);
+        $otherexamcond = "(COALESCE(e.otherexaminers,'') <> '' AND " . $DB->sql_like($otherwrapped, ':likeuid3', false, false) . ")";
+        $supportcond   = "(COALESCE(e.supportpersons,'') <> '' AND " . $DB->sql_like($supportwrapped, ':likeuid4', false, false) . ")";
+
+        $params = [
+            'uid1'     => $userid,
+            'uid2'     => $userid,
+            'likeuid3' => "%,{$userid},%",
+            'likeuid4' => "%,{$userid},%",
+        ];
     }
+
+    // 3. Main SQL query.
+    $sql = "
+        SELECT
+            e.id,
+            e.name,
+            e.bookingstatus,
+            e.starttime,
+            e.personinchargeid,
+            e.otherexaminers,
+            e.supportpersons,
+            e.usermodified,
+            r.name AS room
+        FROM {bookit_event} e
+        LEFT JOIN {bookit_event_resources} er
+               ON er.eventid = e.id
+        LEFT JOIN {bookit_resource} r
+               ON r.id = er.resourceid
+              $roomidssql
+        WHERE
+               e.personinchargeid = :uid1
+            OR e.usermodified    = :uid2
+            OR $otherexamcond
+            OR $supportcond
+        GROUP BY e.id, e.name, e.bookingstatus, e.starttime, e.personinchargeid, e.otherexaminers, e.supportpersons, e.usermodified, r.name
+        ORDER BY e.starttime ASC
+    ";
+
+    $params = array_merge($params, $paramsroom);
+
+    return $DB->get_records_sql($sql, $params);
+}
 
     /**
      * Get all faculties (departments) that appear in bookit events.
