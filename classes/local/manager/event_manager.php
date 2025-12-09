@@ -124,30 +124,30 @@ class event_manager {
             $sql = $sqlbase;
 
         } else if ($viewalldetailsofownevent) {
-
             // Normal examiner: see only own events with details, everything else is reserved (no details).
             $sql = "
-                SELECT DISTINCT e.id,
+                SELECT DISTINCT
+                    e.id,
                     e.name,
                     e.starttime,
                     e.endtime,
                     r.name AS roomname,
                     0 AS reserved
                 FROM {bookit_event} e
-            LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-            LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-                                                AND r.categoryid = 1
-                WHERE e.endtime  >= :starttime
-                AND e.starttime <= :endtime
+                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
+                WHERE e.endtime  >= :starttime1
+                AND e.starttime <= :endtime1
                 AND (
-                        e.usermodified      = :uid
-                    OR e.personinchargeid  = :uid
-                    OR e.otherexaminers LIKE :likeuid
+                        e.usermodified     = :uid1
+                    OR e.personinchargeid = :uid2
+                    OR e.otherexaminers LIKE :likeuid1
                 )
 
                 UNION
 
-                SELECT DISTINCT e.id,
+                SELECT DISTINCT
+                    e.id,
                     NULL AS name,
                     e.starttime,
                     e.endtime,
@@ -155,22 +155,29 @@ class event_manager {
                     1 AS reserved
                 FROM {bookit_event} e
                 LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-                LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-                                                    AND r.categoryid = 1
-                    WHERE e.endtime  >= :starttime
-                    AND e.starttime <= :endtime
-                    AND NOT (
-                            e.usermodified      = :uid
-                        OR e.personinchargeid  = :uid
-                        OR e.otherexaminers LIKE :likeuid
-                    )
-                ";
-                $params = [
-                    'starttime' => $starttimestamp,
-                    'endtime'   => $endtimestamp,
-                    'uid'       => $USER->id,
-                    'likeuid'   => "%{$USER->id}%"
-                ];
+                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
+                WHERE e.endtime  >= :starttime2
+                AND e.starttime <= :endtime2
+                AND NOT (
+                        e.usermodified     = :uid3
+                    OR e.personinchargeid = :uid4
+                    OR e.otherexaminers LIKE :likeuid2
+                )
+            ";
+
+            $params = [
+                'starttime1' => $starttimestamp,
+                'endtime1'   => $endtimestamp,
+                'uid1'       => $USER->id,
+                'uid2'       => $USER->id,
+                'likeuid1'   => "%{$USER->id}%",
+                'starttime2' => $starttimestamp,
+                'endtime2'   => $endtimestamp,
+                'uid3'       => $USER->id,
+                'uid4'       => $USER->id,
+                'likeuid2'   => "%{$USER->id}%",
+            ];
+
             } else {
                 // Student, support, etc.: only see reserved (no details).
                 $sql = $sqlreserved;

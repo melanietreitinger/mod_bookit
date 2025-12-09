@@ -168,6 +168,7 @@ foreach ($events as $ev) {
     $statusbg  = $colormap[$ev->bookingstatus];
     $statusfg  = $textmap[$ev->bookingstatus] ?? '#000000';
     $statustxt = $statusmap[$ev->bookingstatus];
+    // My role.
     $myrole = '-';
 
     // 1. Person in charge.
@@ -186,11 +187,14 @@ foreach ($events as $ev) {
         $myrole = 'Booking person';
     }
 
-    // 4. Support person.
+    // 4. Support person. 
     $support = array_filter(array_map('intval', explode(',', $ev->supportpersons ?? '')));
     if ($myrole === '-' && in_array($USER->id, $support, true)) {
         $myrole = 'Support person';
     }
+
+    $date = userdate($ev->starttime, '%d.%m.%Y');
+
 
     $date = userdate($ev->starttime, '%d.%m.%Y');
 
