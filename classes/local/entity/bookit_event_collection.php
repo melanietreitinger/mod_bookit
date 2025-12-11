@@ -28,16 +28,16 @@ namespace mod_bookit\local\entity;
  */
 class bookit_event_collection {
     /**
-     * Returns distinct departments (faculties) from bookit_event.
+     * Returns distinct institutionid (faculties) from bookit_event.
      * @return array
      */
     public static function get_faculties(): array {
         global $DB;
         return $DB->get_fieldset_sql("
-            SELECT DISTINCT department
+            SELECT DISTINCT institutionid
               FROM {bookit_event}
-             WHERE department <> ''
-          ORDER BY department
+             WHERE institutionid <> ''
+          ORDER BY institutionid
         ");
     }
 

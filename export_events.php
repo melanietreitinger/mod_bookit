@@ -126,7 +126,7 @@ $events = array_filter($events, static function ($e) use ($room, $faculty, $stat
     if ($room     && (int)$room !== (int)($e->roomid ?? 0)) {
         return false;
     }
-    if ($faculty  && $faculty !== ($e->department ?? '')) {
+    if ($faculty  && $faculty !== ($e->institutionid ?? '')) {
         return false;
     }
     if ($status >= 0 && $status !== (int) ($e->bookingstatus ?? -1)) {
@@ -175,8 +175,8 @@ if ($events) {
 
         /* ------- human‑readable description ---------------------------- */
         $descrrows = [];
-        if (!empty($ev->department)) {
-            $descrrows[] = 'Faculty: ' . $ev->department;
+        if (!empty($ev->institutionid)) {
+            $descrrows[] = 'Faculty: ' . $ev->institutionid;
         }
         if (!empty($ev->technicalneeds)) {
             $descrrows[] = '| Requirements: ' . $ev->technicalneeds;
