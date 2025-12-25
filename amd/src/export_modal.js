@@ -55,8 +55,14 @@ define(['jquery', 'core/str'], function($, str) {
                     qs.end   = e + 'T23:59';
 
                     if (window.currentFilterParams) {
-                        Object.assign(qs, window.currentFilterParams);
+                        Object.keys(window.currentFilterParams).forEach(function(k) {
+                            if (k === 'start' || k === 'end') {
+                                return; // never allow filters to override modal range
+                            }
+                            qs[k] = window.currentFilterParams[k];
+                        });
                     }
+
 
                     const list = $('#bookit-export-list');
                     list.html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin"></i></div>');
