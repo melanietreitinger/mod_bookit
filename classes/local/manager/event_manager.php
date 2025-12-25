@@ -125,45 +125,48 @@ class event_manager {
 
         } else if ($viewalldetailsofownevent) {
             // Normal examiner: see only own events with details, everything else is reserved (no details).
-            $sql = "
-                SELECT DISTINCT
-                    e.id,
-                    e.name,
-                    e.starttime,
-                    e.endtime,
-                    r.name AS roomname,
-                    0 AS reserved
-                FROM {bookit_event} e
-                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
-                WHERE e.endtime  >= :starttime1
-                AND e.starttime <= :endtime1
-                AND (
-                        e.usermodified     = :uid1
-                    OR e.personinchargeid = :uid2
-                    OR e.otherexaminers LIKE :likeuid1
-                )
+          $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.starttime,
+                e.endtime,
+                MIN(r.name) AS roomname,
+                0 AS reserved
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+            LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
+            WHERE e.endtime  >= :starttime1
+            AND e.starttime <= :endtime1
+            AND (
+                    e.usermodified     = :uid1
+                OR e.personinchargeid = :uid2
+                OR e.otherexaminers LIKE :likeuid1
+            )
+            GROUP BY e.id, e.name, e.starttime, e.endtime
 
-                UNION
+            UNION ALL
 
-                SELECT DISTINCT
-                    e.id,
-                    NULL AS name,
-                    e.starttime,
-                    e.endtime,
-                    r.name AS roomname,
-                    1 AS reserved
-                FROM {bookit_event} e
-                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
-                WHERE e.endtime  >= :starttime2
-                AND e.starttime <= :endtime2
-                AND NOT (
-                        e.usermodified     = :uid3
-                    OR e.personinchargeid = :uid4
-                    OR e.otherexaminers LIKE :likeuid2
-                )
-            ";
+            SELECT
+                e.id,
+                NULL AS name,
+                e.starttime,
+                e.endtime,
+                MIN(r.name) AS roomname,
+                1 AS reserved
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+            LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
+            WHERE e.endtime  >= :starttime2
+            AND e.starttime <= :endtime2
+            AND NOT (
+                    e.usermodified     = :uid3
+                OR e.personinchargeid = :uid4
+                OR e.otherexaminers LIKE :likeuid2
+            )
+            GROUP BY e.id, e.starttime, e.endtime
+        ";
+
 
             $params = [
                 'starttime1' => $starttimestamp,
