@@ -108,7 +108,6 @@ function bookit_delete_instance(int $id): bool {
  * @return float
  */
 function calculateluminosity(string $color): float {
-
     $r = hexdec(substr($color, 0, 2)) / 255; // Red value.
     $g = hexdec(substr($color, 2, 2)) / 255; // Green value.
     $b = hexdec(substr($color, 4, 2)) / 255; // Blue value.
@@ -186,6 +185,7 @@ function evaluatecolorcontrast(string $color1, string $color2): array {
 
 /**
  * Print color evaluation for normal text.
+ *
  * @param string $color
  * @param string $color2
  * @return string
@@ -208,19 +208,21 @@ function printcolorevaluation(string $color, string $color2): string {
             WCAG 2.2 <a href="https://www.w3.org/TR/WCAG22/#contrast-minimum">AA</a> /
             <a href="https://www.w3.org/TR/WCAG22/#contrast-enhanced">AAA</a>.<br><br>';
 }
+
 /**
- * This function adds settings navigation (has to be nullable, sorry!)
+ * Add overview page to module menu.
+ *
  * @param settings_navigation $settingsnav
  * @param navigation_node|null $modnode
  */
 function bookit_extend_settings_navigation(
-    settings_navigation $settingsnav,
-    ?navigation_node $modnode = null
+        settings_navigation $settingsnav,
+        ?navigation_node $modnode = null
 ) {
     global $PAGE;
 
     if (!$modnode) {
-        return;                 // Safety: we are not inside an activity page.
+        return; // Safety: we are not inside an activity page.
     }
 
     $context = $PAGE->cm->context;
@@ -229,21 +231,57 @@ function bookit_extend_settings_navigation(
 
         // THIS is the line that puts the entry under the current Bookit node.
         $modnode->add(
-            get_string('overview', 'bookit'),
-            $url,
-            navigation_node::TYPE_SETTING,
-            null,
-            'bookitoverview',
-            new pix_icon('i/calendar', '')
+                get_string('overview', 'bookit'),
+                $url,
+                navigation_node::TYPE_SETTING,
+                null,
+                'bookitoverview',
+                new pix_icon('i/calendar', '')
         );
     }
 }
 
+/**
+ * Helper functions for settings page: render a heading-like select to jump between sub-pages.
+ *
+ * @param string $active
+ * @return string
+ * @throws \core\exception\moodle_exception
+ * @throws coding_exception
+ */
+$buildbookitheadingselect = function(string $active): string {
+    $defs = [
+            'calendar' => ['id' => 'mod_bookit_calendar', 'label' => get_string('calendar', 'mod_bookit')],
+            'resources' => ['id' => 'mod_bookit_resources', 'label' => get_string('resources', 'mod_bookit')],
+            'checklist' => ['id' => 'mod_bookit_checklist', 'label' => get_string('checklist', 'mod_bookit')],
+    ];
+
+    // Make a big, bold select that looks like the page heading.
+    $select = html_writer::start_tag('select', [
+            'class' => 'form-select form-select-lg fw-bold border-0 p-0',
+            'style' => 'font-size:1.75rem;width:auto;display:inline-block;background-color:transparent;',
+            'aria-label' => 'BookIT settings section',
+            'onchange' => 'if(this.value){window.location=this.value;}',
+    ]);
+
+    foreach ($defs as $key => $info) {
+        $url = (new moodle_url('/admin/settings.php', ['section' => $info['id']]))->out(false);
+        $attr = ['value' => $url];
+        if ($key === $active) {
+            $attr['selected'] = 'selected';
+        }
+        $select .= html_writer::tag('option', format_string($info['label']), $attr);
+    }
+    $select .= html_writer::end_tag('select');
+
+    // Container so it sits nicely under the default page title.
+    return html_writer::div($select, 'mb-3');
+};
 
 /**
  * Return array of allowed weekday numbers (0 = Sunday … 6 = Saturday).
- *
- * @return int[]
+ * @return array|int[]
+ * @throws dml_exception
  */
 function bookit_allowed_weekdays(): array {
     $raw = get_config('mod_bookit', 'weekdaysvisible');
@@ -252,13 +290,4 @@ function bookit_allowed_weekdays(): array {
         return [1, 2, 3, 4, 5];
     }
     return array_map('intval', array_filter(explode(',', $raw), 'strlen'));
-}
-
-/**
- * Return array of allowed weekday numbers (0=Sun … 6=Sat).
- *
- * @return int[]
- */
-function bookit_get_allowed_weekdays(): array {
-    return bookit_allowed_weekdays();
 }

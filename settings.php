@@ -55,39 +55,10 @@ if ($hassiteconfig) {
         new admin_category('mod_bookit_hidden', get_string('pluginname', 'mod_bookit'), true)
     );
 
-    /* --- Helper: render a heading-like select to jump between sub-pages. -------- */
-    $buildbookitheadingselect = function (string $active): string {
-        $defs = [
-            'calendar' => ['id' => 'mod_bookit_calendar', 'label' => get_string('calendar', 'mod_bookit')],
-            'resources' => ['id' => 'mod_bookit_resources', 'label' => get_string('resources', 'mod_bookit')],
-            'checklist' => ['id' => 'mod_bookit_checklist', 'label' => get_string('checklist', 'mod_bookit')],
-        ];
 
-        // Make a big, bold select that looks like the page heading.
-        $select = html_writer::start_tag('select', [
-                'class' => 'form-select form-select-lg fw-bold border-0 p-0',
-                'style' => 'font-size:1.75rem;width:auto;display:inline-block;background-color:transparent;',
-                'aria-label' => 'BookIT settings section',
-                'onchange' => 'if(this.value){window.location=this.value;}',
-        ]);
+/* --- Helper: render a heading-like select to jump between sub-pages. -------- */
 
-        foreach ($defs as $key => $info) {
-            $url = (new moodle_url('/admin/settings.php', ['section' => $info['id']]))->out(false);
-            $attr = ['value' => $url];
-            if ($key === $active) {
-                $attr['selected'] = 'selected';
-            }
-            $select .= html_writer::tag('option', format_string($info['label']), $attr);
-        }
-        $select .= html_writer::end_tag('select');
-
-        // Container so it sits nicely under the default page title.
-        return html_writer::div($select, 'mb-3');
-    };
-
-    /*
-    * CALENDAR – event / calendar-behaviour settings
-    */
+    // Tab 1: CALENDAR – event / calendar-behaviour settings.
     $calendar = new admin_settingpage('mod_bookit_calendar', get_string('calendar', 'mod_bookit'));
 
     // Top switcher (Calendar active).
@@ -204,10 +175,10 @@ if ($hassiteconfig) {
         $weekdaychoices
     ));
 
-    // Register under hidden container.
+    // Tab 1: Register calendar settings under hidden container.
     $ADMIN->add('mod_bookit_hidden', $calendar);
 
-    // RESOURCES – colours & room related settings.
+    // Tab 2: RESOURCES – colours & room related settings.
     $resources = new admin_settingpage('mod_bookit_resources', get_string('resources', 'mod_bookit'));
 
     // Top switcher (Resources active).
@@ -257,10 +228,10 @@ if ($hassiteconfig) {
         }
     }
 
-    // Register under hidden container.
+    // Tab 2: Register resource settings under hidden container.
     $ADMIN->add('mod_bookit_hidden', $resources);
 
-    // CHECKLIST – checklist management.
+    // Tab 3: CHECKLIST – checklist management.
     $checklist = new admin_settingpage('mod_bookit_checklist', get_string('checklist', 'mod_bookit'));
 
     // Top switcher (Checklist active).
@@ -348,34 +319,7 @@ if ($hassiteconfig) {
         $checklist->add($runinstallhelper);
     }
 
-    // Register under hidden container.
+    // Tab 3: Register checklist settings under hidden container.
     $ADMIN->add('mod_bookit_hidden', $checklist);
 
-    // Start: @TODO move external setting pages to tabs.
-    $ADMIN->add(
-        'modsettings',
-        new admin_category('mod_bookit_category', ' ##TEMP###')
-    );
-
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-        'mod_bookit_institutions',
-        get_string('institutions', 'mod_bookit'),
-        new moodle_url('/mod/bookit/institutions.php'),
-        // ...TODO specify required capability.
-    ));
-
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-        'mod_bookit_rooms',
-        get_string('rooms', 'mod_bookit'),
-        new moodle_url('/mod/bookit/rooms.php'),
-        // ...TODO specify required capability.
-    ));
-
-    $ADMIN->add('mod_bookit_category', new admin_externalpage(
-        'mod_bookit_weekplans',
-        get_string('weekplans', 'mod_bookit'),
-        new moodle_url('/mod/bookit/weekplans.php'),
-        // ...TODO specify required capability.
-    ));
-    // End: move external setting pages to tabs.
 }
