@@ -28,14 +28,15 @@ defined('MOODLE_INTERNAL') || die();
 $string['active_weekplan'] = 'Active weekplan';
 $string['add_blocker'] = 'Add blocker';
 $string['addbooking'] = 'Request booking';
-$string['afterexam'] = 'After exam';
+$string['afterexam'] = 'After event';
 $string['allfaculties'] = 'All faculties';
 $string['allrooms']     = 'All rooms';
 $string['allstatuses']  = 'All statuses';
 $string['backtooverview'] = 'Back to overview';
+$string['basic'] = 'Basic';
 $string['before_due'] = 'Before due';
 $string['before_due_date'] = 'Before due date';
-$string['beforeexam'] = 'Before exam';
+$string['beforeexam'] = 'Before event';
 $string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'Add BookIt instance';
 $string['bookit:addresource'] = 'Add a resource';
@@ -53,7 +54,7 @@ $string['calendar_desc']     = 'General calendar & booking behaviour';
 $string['category_name'] = 'Category name';
 $string['checklist'] = 'Checklist';
 $string['checklist_desc'] = 'Optional checklist / roles extension';
-$string['checklist_placeholder'] = 'This section is reserved for the optional BookIT-Checklist add-on.';
+$string['checklist_placeholder'] = 'This section is reserved for the optional BookIt-Checklist add-on.';
 $string['checklistcategory'] = 'Checklist category';
 $string['checklistcategory_help'] = 'The checklist category which the checklist item belongs to. New items will be appended to the category and can be moved afterwards.';
 $string['checklistcategorydeleted'] = 'Checklist category deleted successfully.';
@@ -275,6 +276,8 @@ $string['select_coursetemplate_help'] = 'Select a course template for the course
 $string['select_semester'] = 'Term';
 $string['select_semester_help'] = 'Select term of event.';
 $string['selectevents'] = 'Please tick the events to export:';
+$string['settings_basic'] = 'Basic Settings';
+$string['settings_checklist'] = 'Checklist settings';
 $string['settings_eventdefaultduration'] = 'Default duration of an event (min)';
 $string['settings_eventdurationstepwidth'] = 'The step width for the duration of an event (min)';
 $string['settings_eventmaxduration'] = 'Maximum duration of an event (min)';
@@ -289,8 +292,10 @@ $string['settings_extratime_after_desc'] = 'Extra time in minutes which will be 
 $string['settings_extratime_before'] = 'Extra time before event (min)';
 $string['settings_extratime_before_desc'] = 'Extra time in minutes which will be added automatically before each event to allow preparation and wrap-up works to be done.';
 $string['settings_extratime_desc'] = 'Extra time which will be added automatically to each event to allow preparation and wrap-up works to be done.';
-$string['settings_overview']          = 'Settings overview';
-$string['settings_pdf_checklist_heading'] = 'PDF Checklist Settings';
+$string['settings_master_checklist'] = 'Configure Master checklist';
+$string['settings_master_checklist_desc'] = 'The Master checklist can be used to map workflows for an event. You can configure worklflow categories, workflow items, applicable rooms and the roles responsible for the item.
+You can select a due date (optional) before or after the event and send notifications <i>Before due</i>, <i>When due</i>, <i>Reminder when overdue</i> and <i>When done</i>.';
+$string['settings_overview'] = 'Settings overview';
 $string['settings_pdf_logo_custom'] = 'Custom PDF logo';
 $string['settings_pdf_logo_custom_desc'] = 'Upload a custom logo to be used in PDF checklists when "Custom logo" is selected above. Supported formats: PNG, JPG, JPEG. Optimal width: 200-400px.';
 $string['settings_pdf_logo_enable'] = 'Enable logo in PDF checklist';
@@ -300,16 +305,16 @@ $string['settings_pdf_logo_source_custom'] = 'Custom logo';
 $string['settings_pdf_logo_source_desc'] = 'Choose the source for the logo displayed in PDF checklists.';
 $string['settings_pdf_logo_source_site'] = 'Site logo (core_admin | logo)';
 $string['settings_pdf_logo_source_theme'] = 'Theme logo (theme_boost_union | logo)';
+$string['settings_resourcdes'] = 'Resource settings';
 $string['settings_roomcolor'] = 'Color for room {$a}';
 $string['settings_roomcolor_desc'] = 'Select a color to be used for the calendar view.';
 $string['settings_roomcolor_wcagcheck'] = 'Color contrast check for room {$a}';
 $string['settings_roomcolor_wcagcheck_desc'] = 'Contrast check for color <i>#{$a->bcolor}</i> and text <i>#{$a->fcolor}</i>: ';
-$string['settings_roomcolorheading'] = 'Room colors';
 $string['settings_textcolor'] = 'Event text color';
 $string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
 $string['settings_weekdaysvisible'] = 'Weekdays shown in calendar';
 $string['settings_weekdaysvisible_desc'] =
-        'Choose which weekdays appear in the BookIT calendar and may be selected for events.
+        'Choose which weekdays appear in the BookIt calendar and may be selected for events.
      <br><em>Default: Monday, Tuesday, Wednesday, Thursday, Friday</em><br>
      <span style="color:#b50000;">
          Please note that by hiding weekdays, events that have already been booked

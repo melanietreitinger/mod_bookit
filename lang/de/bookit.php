@@ -53,7 +53,7 @@ $string['calendar_desc'] = 'Allgemeines Kalender- und Buchungsverhalten';
 $string['category_name'] = 'Kategoriename';
 $string['checklist'] = 'Checkliste';
 $string['checklist_desc'] = 'Optionale Checkliste / Rollenerweiterung';
-$string['checklist_placeholder'] = 'Dieser Abschnitt ist für das optionale BookIT-Checklist-Add-on reserviert.';
+$string['checklist_placeholder'] = 'Dieser Abschnitt ist für das optionale BookIt-Checklist-Add-on reserviert.';
 $string['checklistcategory'] = 'Checklisten-Kategorie';
 $string['checklistcategory_help'] = 'Die Checklisten-Kategorie, zu der das Checklisten-Element gehört. Neue Elemente werden an die Kategorie angehängt und können anschließend verschoben werden.';
 $string['checklistcategorydeleted'] = 'Checklisten-Kategorie erfolgreich gelöscht.';
@@ -301,7 +301,7 @@ $string['settings_roomcolorheading'] = 'Room colors';
 $string['settings_textcolor'] = 'Event text color';
 $string['settings_textcolor_desc'] = 'Set the text color of the event in the calendar view.';
 $string['settings_weekdaysvisible'] = 'Im Kalender angezeigte Wochentage';
-$string['settings_weekdaysvisible_desc'] = 'Wählen Sie aus, welche Wochentage im BookIT-Kalender erscheinen und für Ereignisse ausgewählt werden können.
+$string['settings_weekdaysvisible_desc'] = 'Wählen Sie aus, welche Wochentage im BookIt-Kalender erscheinen und für Ereignisse ausgewählt werden können.
      <br><em>Standard: Montag, Dienstag, Mittwoch, Donnerstag, Freitag</em><br>
      <span style="color:#b50000;">
          Bitte beachten Sie, dass durch das Ausblenden von Wochentagen bereits gebuchte Ereignisse

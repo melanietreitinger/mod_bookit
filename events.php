@@ -24,7 +24,7 @@
 
 /**
  * WORK IN PROGRESS by vadym (user story event filters)
- * Event feed for the BookIT calendar -- now with optional filters
+ * Event feed for the BookIt calendar -- now with optional filters
  *
  * When no filter parameter is passed the behaviour is identical to the
  * original file: all* events in the requested time-range are returned.
@@ -238,7 +238,7 @@ if ($debug) {
         'event_count' => count($events),
     ];
     // Send headers for developer (browser console).
-    header('X-BookIT-Debug: ' . json_encode($debuginfo));
+    header('X-BookIt-Debug: ' . json_encode($debuginfo));
 }
 
 // Always return only the event array itself.

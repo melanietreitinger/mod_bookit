@@ -23,10 +23,12 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-global $CFG, $OUTPUT;
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('mod_bookit_rooms');
+admin_externalpage_setup('bookit_rooms');
+
+$context = context_system::instance();
+$PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/rooms.php'));
 $PAGE->set_heading(get_string('rooms', 'mod_bookit'));
 

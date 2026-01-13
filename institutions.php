@@ -15,20 +15,29 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * List nstitutions for mod_bookit.
+ * List institutions for mod_bookit.
  *
  * @package    mod_bookit
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_bookit\local\tabs;
+
 require_once(__DIR__ . '/../../config.php');
-global $CFG, $OUTPUT, $PAGE;
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('mod_bookit_institutions');
+admin_externalpage_setup('bookit_institutions');
+
+$context = context_system::instance();
+$PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/institutions.php'));
 $PAGE->set_heading(get_string('institutions', 'mod_bookit'));
+
+$renderer = $PAGE->get_renderer('mod_bookit');
+$tabrow = tabs::get_tabrow();
+$id = optional_param('id', 'settings', PARAM_TEXT);
+$renderer->tabs($tabrow, $id);
 
 $table = new \mod_bookit\local\table\institutions_table();
 

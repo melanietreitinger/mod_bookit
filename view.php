@@ -223,14 +223,14 @@ echo '
 
 $PAGE->requires->js_init_code("
     (function() {
-        console.log('[BookIT DEBUG] Event feed URL →', " . json_encode($eventsource) . ");
+        console.log('[BookIt DEBUG] Event feed URL →', " . json_encode($eventsource) . ");
         fetch(" . json_encode($eventsource) . ")
             .then(r => r.json())
             .then(d => {
-                console.log('[BookIT DEBUG] events.php returned', d.length, 'events');
-                if (d.length) console.log('[BookIT DEBUG] sample', d[0]);
+                console.log('[BookIt DEBUG] events.php returned', d.length, 'events');
+                if (d.length) console.log('[BookIt DEBUG] sample', d[0]);
             })
-            .catch(e => console.error('[BookIT DEBUG] error fetching events.php:', e));
+            .catch(e => console.error('[BookIt DEBUG] error fetching events.php:', e));
     })();
 ");
 
