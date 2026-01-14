@@ -131,116 +131,90 @@ $colormap = [
 $textmap  = [3 => '#ffffff'];
 
 /* =======================================================================
-   4.  Live-search box
+   4+5.  Render via Mustache template (no HTML in PHP)
    ======================================================================= */
-echo html_writer::div(
-    html_writer::label(get_string('search') . ': ', 'bookit-filter', false, ['class' => 'mr-2']) .
-    html_writer::empty_tag('input', [
-        'type'  => 'text',
-        'id'    => 'bookit-filter',
-        'class' => 'form-control w-auto d-inline',
-    ]),
-    'mb-3'
-);
 
-/* =======================================================================
-   5.  Render table
-   ======================================================================= */
-echo html_writer::start_tag('table', [
-    'id'    => $tableid,
-    'class' => 'generaltable table-striped table-hover w-100',
-]);
+// Build display maps.
+$statusmap = [
+    0 => 'New',
+    1 => 'In progress',
+    2 => 'Accepted',
+    3 => 'Cancelled',
+    4 => 'Rejected',
+];
+$colormap = [
+    0 => '#d3d3d3',
+    1 => '#fff3cd',
+    2 => '#d4edda',
+    3 => '#343a40',
+    4 => '#f8d7da',
+];
+$textmap  = [3 => '#ffffff'];
 
-// ... Header row ...
-echo html_writer::start_tag('thead');
-echo html_writer::start_tag('tr', ['style' => 'background-color:#cfe2ff;']);
-foreach (['ID', 'Title', 'Room', 'Person in charge', 'My role', 'Booking status',
-        'Date', 'Checklist progress', 'Checklist'] as $head) {
-    echo html_writer::tag('th', $head);
-}
-echo html_writer::end_tag('tr');
-echo html_writer::end_tag('thead');
+// Prepare template context.
+$templatecontext = [
+    'tableid' => (string)$tableid,
+    'events'  => [],
+];
 
-// ... Body ...
-echo html_writer::start_tag('tbody');
 foreach ($events as $ev) {
-    $room      = $ev->room ?: '-';
-    $statusbg  = $colormap[$ev->bookingstatus];
+    $room = $ev->room ?: '-';
+
+    $statusbg  = $colormap[$ev->bookingstatus] ?? '#ffffff';
     $statusfg  = $textmap[$ev->bookingstatus] ?? '#000000';
-    $statustxt = $statusmap[$ev->bookingstatus];
+    $statustxt = $statusmap[$ev->bookingstatus] ?? '-';
+
     // My role.
     $myrole = '-';
 
     // 1. Person in charge.
-    if ($USER->id == $ev->personinchargeid) {
+    if ((int)$USER->id === (int)$ev->personinchargeid) {
         $myrole = 'Person in charge';
     }
 
     // 2. Other examiner.
     $others = array_filter(array_map('intval', explode(',', $ev->otherexaminers ?? '')));
-    if ($myrole === '-' && in_array($USER->id, $others, true)) {
+    if ($myrole === '-' && in_array((int)$USER->id, $others, true)) {
         $myrole = 'Other examiner';
     }
 
     // 3. Booking person.
-    if ($myrole === '-' && $USER->id == $ev->usermodified) {
+    if ($myrole === '-' && (int)$USER->id === (int)$ev->usermodified) {
         $myrole = 'Booking person';
     }
 
-    // 4. Support person. 
+    // 4. Support person.
     $support = array_filter(array_map('intval', explode(',', $ev->supportpersons ?? '')));
-    if ($myrole === '-' && in_array($USER->id, $support, true)) {
+    if ($myrole === '-' && in_array((int)$USER->id, $support, true)) {
         $myrole = 'Support person';
     }
 
-    $date = userdate($ev->starttime, '%d.%m.%Y');
+    $datestr = userdate($ev->starttime, '%d.%m.%Y');
 
+    $pic = '-';
+    if (!empty($ev->personinchargeid)) {
+        $u = core_user::get_user((int)$ev->personinchargeid);
+        $pic = $u ? fullname($u) : '-';
+    }
 
-    $date = userdate($ev->starttime, '%d.%m.%Y');
-
-    // Title -> ModalForm trigger.
-    $titlelink = html_writer::link(
-        '#',
-        format_string($ev->name),
-        [
-            'class'        => 'bookit-event-link',
-            'data-eventid' => $ev->id,
-            'data-cmid'    => $cm->id,
-        ]
-    );
-
-    echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', $ev->id);
-    echo html_writer::tag('td', $titlelink);
-    echo html_writer::tag('td', s($room));
-
-    // Person in charge.
-    $pic = $ev->personinchargeid ? fullname(core_user::get_user($ev->personinchargeid)) : '-';
-    echo html_writer::tag('td', s($pic));
-
-    // My role.
-    echo html_writer::tag('td', s($myrole));
-
-    // Continue with existing status column.
-    echo html_writer::tag(
-        'td',
-        s($statustxt),
-        ['style' => "background-color:$statusbg;color:$statusfg;"]
-    );
-    echo html_writer::tag('td', $date, [
-        'data-sort' => $ev->starttime, // Unix timestamp to enable sorting. 
-    ]);
-    echo html_writer::tag(
-        'td',
-        html_writer::tag('span', '--', ['class' => 'badge bg-secondary'])
-    );
-    echo html_writer::tag(
-        'td',
-        html_writer::link('#', 'Checklist', ['class' => 'btn btn-sm btn-primary'])
-    );
-    echo html_writer::end_tag('tr');
+    $templatecontext['events'][] = [
+        'id' => (string)$ev->id,
+        'name' => format_string($ev->name),
+        'room' => s($room),
+        'personincharge' => s($pic),
+        'myrole' => s($myrole),
+        'statustext' => s($statustxt),
+        'statusstyle' => "background-color:$statusbg;color:$statusfg;",
+        'datestr' => $datestr,
+        'starttime' => (int)$ev->starttime,
+        'cmid' => (int)$cm->id,
+        'checklistprogress' => '--',
+        'checklistlabel' => 'Checklist',
+    ];
 }
-echo html_writer::end_tag('tbody');
-echo html_writer::end_tag('table');
+
+// Render Mustache.
+echo $OUTPUT->render_from_template('mod_bookit/overview/examiner_overview', $templatecontext);
+
 
 echo $OUTPUT->footer();

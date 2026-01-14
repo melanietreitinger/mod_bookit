@@ -147,104 +147,39 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/c
 // Page Output.
 echo $OUTPUT->header();
 
-// NEW FEATURE: Filter bar + Export button.
-echo html_writer::start_div('bookit-filters d-flex gap-2 mb-3');
+// Build mustache context (simple types only).
+$templatecontext = [
+    'rooms' => [],
+    'faculties' => [],
+    'statuses' => [],
+];
 
-/* room select */
-echo html_writer::start_tag('select', ['id' => 'filter-room', 'class' => 'form-select w-auto']);
-echo html_writer::tag('option', get_string('allrooms', 'mod_bookit'), ['value' => '']);
 foreach ($rooms as $rid => $rname) {
-    echo html_writer::tag('option', format_string($rname), ['value' => $rid]);
+    $templatecontext['rooms'][] = [
+        'value' => (string)$rid,
+        'label' => format_string($rname),
+    ];
 }
-echo html_writer::end_tag('select');
 
-/* faculty select */
-echo html_writer::start_tag('select', ['id' => 'filter-faculty', 'class' => 'form-select w-auto']);
-echo html_writer::tag('option', get_string('allfaculties', 'mod_bookit'), ['value' => '']);
 foreach ($faculties as $fac) {
-    echo html_writer::tag('option', format_string($fac), ['value' => $fac]);
+    $templatecontext['faculties'][] = [
+        'value' => (string)$fac,
+        'label' => format_string($fac),
+    ];
 }
-echo html_writer::end_tag('select');
 
-/* status select */
-echo html_writer::start_tag('select', ['id' => 'filter-status', 'class' => 'form-select w-auto']);
-echo html_writer::tag('option', get_string('allstatuses', 'mod_bookit'), ['value' => '']);
 foreach ($statusmap as $scode => $label) {
-    echo html_writer::tag('option', $label, ['value' => $scode]);
+    $templatecontext['statuses'][] = [
+        'value' => (string)$scode,
+        'label' => (string)$label,
+    ];
 }
-echo html_writer::end_tag('select');
 
-echo html_writer::end_div(); // Bookit-filters.
-
-/* export button */
-echo html_writer::tag(
-    'button',
-    get_string('exportevents', 'mod_bookit'),
-    ['id' => 'bookit-export', 'class' => 'btn btn-secondary mb-3']
-);
-
-/* calendar */
-echo html_writer::div('', '', ['id' => 'ec']);
-
-// Export‑selection modal (NEW FEATURE).
-echo '
-<div class="modal fade" id="bookit-export-modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">' . get_string('exportevents', 'mod_bookit') . '</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-
-      <div class="modal-body">
-
-        <!-- searchbar ------------------------------------------------>
-    <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
-        <label for="bookit-modal-search" class="mb-0">
-        ' . get_string('search') . ':
-        </label>
-
-        <input type="text" id="bookit-modal-search"
-            class="form-control w-auto d-inline">
-    </div>
-
-        <!-- date range ------------------------------------------------>
-        <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
-            <label for="bookit-export-start" class="mb-0">From:</label>
-            <input type="date" id="bookit-export-start" class="form-control w-auto d-inline">
-
-            <label for="bookit-export-end" class="mb-0">To:</label>
-            <input type="date" id="bookit-export-end" class="form-control w-auto d-inline">
-
-            <button type="button" class="btn btn-sm btn-light" id="bookit-export-reset-range">
-                Reset
-            </button>
-        </div>
+// Render HTML via mustache templates.
+echo $OUTPUT->render_from_template('mod_bookit/view/calendar_view', $templatecontext);
 
 
-        <!-- check/uncheck buttons --------------------------------------->
-        <div class="mb-2">
-          <button type="button" class="btn btn-sm btn-light mr-1" id="bookit-check-all">'
-            . get_string('selectall') . '</button>
-          <button type="button" class="btn btn-sm btn-light"       id="bookit-uncheck-all">'
-            . get_string('deselectall') . '</button>
-        </div>
 
-        <!-- list of events --------------------------------------------->
-        <div id="bookit-export-list" class="list-group small"></div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">'
-            . get_string('cancel') . '</button>
-        <button type="button" class="btn btn-primary" id="bookit-export-confirm">'
-            . get_string('export', 'mod_bookit') . '</button>
-      </div>
-    </div>
-  </div>
-</div>';
 
 $PAGE->requires->js_init_code("
     (function() {
