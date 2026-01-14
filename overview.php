@@ -215,6 +215,4 @@ foreach ($events as $ev) {
 
 // Render Mustache.
 echo $OUTPUT->render_from_template('mod_bookit/overview/examiner_overview', $templatecontext);
-
-
 echo $OUTPUT->footer();
