@@ -44,18 +44,46 @@ if ($hassiteconfig) {
 
     $settings = new admin_settingpage('bookit', get_string('pluginname', 'mod_bookit'));
 
-    $tabrow = tabs::get_tabrow();
+    $context = context_system::instance();
+    $tabrow = tabs::get_tabrow($context);
     $id = optional_param('id', 'settings', PARAM_TEXT);
     $tabs = [$tabrow];
     $tabsoutput = print_tabs($tabs, $id, null, null, true);
 
 
-    // Top switcher (Calendar active).
+    // Tab row.
     $settings->add(new admin_setting_heading(
         'mod_bookit_nav_calendar',
         '',
         $tabsoutput,
     ));
+
+    // Install helper.
+    // TODO: remove next line.
+    set_config('installhelperfinished', 0, 'mod_bookit');
+    $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
+
+    if (empty($installhelperfinished)) {
+        $installurl = new moodle_url('/mod/bookit/install_helper_run.php', ['sesskey' => sesskey()]);
+        $description = new lang_string('runinstallhelperinfo', 'mod_bookit');
+        $description .= \core\output\html_writer::empty_tag('br');
+        $description .= \core\output\html_writer::link(
+                $installurl,
+                new lang_string('runinstallhelper', 'mod_bookit'),
+                ['class' => 'btn btn-secondary mt-3', 'role' => 'button']
+        );
+
+        $runinstallhelper = new admin_setting_heading(
+                'mod_bookit/runinstallhelper',
+                new lang_string('runinstallhelper', 'mod_bookit'),
+                $description
+        );
+
+        $settings->add($runinstallhelper);
+    }
+
+    // Calendar heading.
+    $settings->add(new admin_setting_heading('mod_bookit_calendar', get_string('calendar', 'mod_bookit'), ''));
 
     // Weekday visibility.
     $weekdaychoices = [
@@ -159,9 +187,5 @@ if ($hassiteconfig) {
         PARAM_INT,
         5
     ));
-
-    // Register all tabs as admin_externalpage.
-    $ADMIN->add('bookit_settings', new admin_externalpage('bookit_rooms', '', $CFG->wwwroot . '/mod/bookit/rooms.php'));
-    $ADMIN->add('bookit_settings', new admin_externalpage('bookit_institutions', '', $CFG->wwwroot . '/mod/bookit/institutions.php'));
 
 }

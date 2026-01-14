@@ -83,4 +83,14 @@ class renderer extends \plugin_renderer_base {
         $data = $notificationslot->export_for_template($this->output);
         return $this->output->render_from_template('mod_bookit/bookit_notification_slot', $data);
     }
+
+    /**
+     * Write the tab row in page
+     *
+     * @param array $tabs the tabs
+     * @param string $id  ID of current page (can be empty)
+     */
+    public function tabs($tabs, $id) {
+        return $this->output->tabtree($tabs, $id);
+    }
 }

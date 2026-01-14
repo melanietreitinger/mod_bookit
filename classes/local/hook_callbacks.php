@@ -45,15 +45,18 @@ class hook_callbacks {
 
         // Check if user has the required capability.
         if (!\has_capability('mod/bookit:managemasterchecklist', $context) || is_siteadmin()) {
-            return;
+            //return;
         }
 
         // Get the primary navigation.
         $primarynav = $hook->get_primaryview();
 
+        global $OUTPUT;
+        $icon = $OUTPUT->pix_icon('i/settings', get_string('settings_overview', 'mod_bookit'));
+
         // Add BookIt settings node to the primary navigation.
         $node = $primarynav->add(
-            get_string('pluginname', 'mod_bookit'),
+                $icon . get_string('pluginname', 'mod_bookit'),
             new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'),
             navigation_node::TYPE_CUSTOM,
             null,

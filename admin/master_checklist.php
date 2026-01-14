@@ -24,28 +24,30 @@
  */
 
 use mod_bookit\local\manager\checklist_manager;
-
-
-require_once(__DIR__ . '/../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
-global $OUTPUT;
-
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
+use mod_bookit\local\tabs;
+
+require_once(__DIR__ . '/../../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
 
 require_login();
+
 $context = context_system::instance();
-is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
-
 $PAGE->set_context($context);
-
-
-$PAGE->set_url(new moodle_url('/mod/bookit/master_checklist.php'));
-$PAGE->set_heading(get_string('master_checklist', 'mod_bookit'));
+$PAGE->set_url(new moodle_url('/mod/bookit/admin/master_checklist.php'));
+$PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('master_checklist', 'mod_bookit'));
 
-$PAGE->set_pagelayout('admin');
+is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading(get_string('pluginname', 'mod_bookit'));
+
+// Show tabs.
+$renderer = $PAGE->get_renderer('mod_bookit');
+$tabrow = tabs::get_tabrow($context);
+$id = optional_param('id', 'settings', PARAM_TEXT);
+echo $renderer->tabs($tabrow, $id);
 
 $defaultchecklistmaster = checklist_manager::get_default_master();
 
@@ -60,9 +62,6 @@ if (!$defaultchecklistmaster) {
     $defaultchecklistmaster->save();
 }
 
-$output = $PAGE->get_renderer('mod_bookit');
-
-echo $output->render($defaultchecklistmaster);
-
+echo $renderer->render($defaultchecklistmaster);
 
 echo $OUTPUT->footer();
