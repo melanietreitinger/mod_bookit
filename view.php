@@ -73,8 +73,10 @@ $event = course_module_viewed::create([
 ]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('bookit', $moduleinstance);
-// JavaScript – filter communication + Export-modal logic (WORK IN PROGRESS).
+// JavaScript – filter communication + Export-modal logic. 
 $PAGE->requires->jquery();
+// Filter Dropdown. 
+$PAGE->requires->js_call_amd('mod_bookit/filter_dropdown', 'init');
 
 /* -------- send filter changes to the AMD calendar -------------------- */
 $PAGE->requires->js_init_code("

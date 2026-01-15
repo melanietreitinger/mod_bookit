@@ -17,13 +17,41 @@
 {{!
     @template mod_bookit/view/calendar_view
 
-    Calendar view page for Bookit, including filter bar, export button, calendar container, and export modal.
+    Calendar view page for Bookit, including filter dropdown, export button, calendar container, and export modal.
+
+    IMPORTANT:
+    - This is a pure frontend UI change.
+    - The existing <select> elements MUST remain in the DOM with the same IDs:
+        * filter-room
+        * filter-faculty
+        * filter-status
+      because the existing inline JS in view.php listens to their change events and pushes
+      filters into window.bookitCalendarUpdate().
+
+    UI behaviour (frontend only):
+    - One "Filter categories" dropdown.
+    - Inside: categories (Room/Faculty/Status) -> opens adjacent options menu.
+    - Clicking an option sets the corresponding hidden <select> value and triggers "change".
+    - Active filters are shown as chips WITHOUT the category label (e.g. "Exam Room 1").
+    - Each chip has an "×" button to clear that filter (sets hidden <select> to empty, triggers "change").
 
     Classes required for JS:
-    * none
+    - bookit-filterdropdown
+    - bookit-filterdropdown-toggle
+    - bookit-filterdropdown-panel
+    - bookit-filterdropdown-categories
+    - bookit-filterdropdown-options
+    - bookit-filterdropdown-chips
+    - bookit-filterdropdown-activechips
+    - bookit-filterchip
+    - bookit-filterchip-remove
+    - bookit-filtercat
+    - bookit-filteropt
 
     Data attributes required for JS:
-    * none
+    - data-room-select="filter-room"
+    - data-faculty-select="filter-faculty"
+    - data-status-select="filter-status"
 
     IDs required for JS (used by existing AMD/inline JS on this page):
     * filter-room
@@ -48,32 +76,182 @@
     {
       "rooms": [{"value":"1","label":"Room A"}],
       "faculties": [{"value":"Engineering","label":"Engineering"}],
-      "statuses": [{"value":"0","label":"New"},{"value":"1","label":"In progress"}]
+      "statuses": [{"value":"0","label's":"New"},{"value":"1","label":"In progress"}]
     }
 }}
 
+<style>
+/* BookIT filter dropdown (frontend-only UI). Keep scope tight to this template. */
+.mod_bookit-view-calendar_view .bookit-filters {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+
+.mod_bookit-view-calendar_view .bookit-filterdropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.mod_bookit-view-calendar_view .bookit-filterdropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    max-width: 100%;
+}
+
+/* Chips inside the button stay compact; wrap if needed. */
+.mod_bookit-view-calendar_view .bookit-filterdropdown-chips {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+/* Simple caret. */
+.mod_bookit-view-calendar_view .bookit-filterdropdown-caret::after {
+    content: "▾";
+    display: inline-block;
+    margin-left: .25rem;
+}
+
+/* Dropdown panel */
+.mod_bookit-view-calendar_view .bookit-filterdropdown-panel {
+    position: absolute;
+    z-index: 1000;
+    margin-top: .5rem;
+    min-width: 460px;
+    max-width: min(80vw, 720px);
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: .5rem;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    padding: .75rem;
+}
+
+/* Active chips area inside panel */
+.mod_bookit-view-calendar_view .bookit-filterdropdown-activechips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: .75rem;
+}
+
+/* Two-column body: categories left, options right */
+.mod_bookit-view-calendar_view .bookit-filterdropdown-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+}
+
+/* Buttons */
+.mod_bookit-view-calendar_view .bookit-filtercat,
+.mod_bookit-view-calendar_view .bookit-filteropt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(0,0,0,.10);
+    background: #fff;
+    border-radius: .375rem;
+    padding: .5rem .6rem;
+    margin-bottom: .5rem;
+}
+
+/* Active highlight */
+.mod_bookit-view-calendar_view .bookit-filtercat.active,
+.mod_bookit-view-calendar_view .bookit-filteropt.active {
+    border-color: rgba(0,0,0,.35);
+    font-weight: 600;
+}
+
+/* Chips */
+.mod_bookit-view-calendar_view .bookit-filterchip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 999px;
+    padding: .15rem .45rem;
+    background: #f7f7f7;
+}
+
+.mod_bookit-view-calendar_view .bookit-filterchip-label {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mod_bookit-view-calendar_view .bookit-filterchip-remove {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 .15rem;
+}
+
+/* Small screens: stack the dropdown panel into one column */
+@media (max-width: 520px) {
+    .mod_bookit-view-calendar_view .bookit-filterdropdown-panel {
+        min-width: 92vw;
+    }
+    .mod_bookit-view-calendar_view .bookit-filterdropdown-body {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
 <div class="mod_bookit-view-calendar_view">
-    <div class="bookit-filters d-flex gap-2 mb-3">
-        <select id="filter-room" class="form-select w-auto">
-            <option value="">{{#str}}allrooms, mod_bookit{{/str}}</option>
-            {{#rooms}}
-                <option value="{{value}}">{{label}}</option>
-            {{/rooms}}
-        </select>
 
-        <select id="filter-faculty" class="form-select w-auto">
-            <option value="">{{#str}}allfaculties, mod_bookit{{/str}}</option>
-            {{#faculties}}
-                <option value="{{value}}">{{label}}</option>
-            {{/faculties}}
-        </select>
+    {{! Filter UI + hidden selects (existing logic listens to selects) }}
+    <div class="bookit-filters">
+        <div class="bookit-filterdropdown"
+             data-room-select="filter-room"
+             data-faculty-select="filter-faculty"
+             data-status-select="filter-status">
 
-        <select id="filter-status" class="form-select w-auto">
-            <option value="">{{#str}}allstatuses, mod_bookit{{/str}}</option>
-            {{#statuses}}
-                <option value="{{value}}">{{label}}</option>
-            {{/statuses}}
-        </select>
+            <button type="button"
+                    class="btn btn-outline-secondary bookit-filterdropdown-toggle"
+                    aria-haspopup="true"
+                    aria-expanded="false">
+                {{#str}}filtercategories, mod_bookit{{/str}}
+                <span class="bookit-filterdropdown-chips" aria-hidden="true"></span>
+                <span class="bookit-filterdropdown-caret" aria-hidden="true"></span>
+            </button>
+
+            <div class="bookit-filterdropdown-panel" hidden>
+                <div class="bookit-filterdropdown-activechips"></div>
+
+                <div class="bookit-filterdropdown-body">
+                    <div class="bookit-filterdropdown-categories" role="menu"></div>
+                    <div class="bookit-filterdropdown-options" role="menu"></div>
+                </div>
+            </div>
+        </div>
+
+        {{! Hidden original selects (DO NOT remove / rename) }}
+        <div class="d-none">
+            <select id="filter-room" class="form-select w-auto">
+                <option value="">{{#str}}allrooms, mod_bookit{{/str}}</option>
+                {{#rooms}}
+                    <option value="{{value}}">{{label}}</option>
+                {{/rooms}}
+            </select>
+
+            <select id="filter-faculty" class="form-select w-auto">
+                <option value="">{{#str}}allfaculties, mod_bookit{{/str}}</option>
+                {{#faculties}}
+                    <option value="{{value}}">{{label}}</option>
+                {{/faculties}}
+            </select>
+
+            <select id="filter-status" class="form-select w-auto">
+                <option value="">{{#str}}allstatuses, mod_bookit{{/str}}</option>
+                {{#statuses}}
+                    <option value="{{value}}">{{label}}</option>
+                {{/statuses}}
+            </select>
+        </div>
     </div>
 
     <button id="bookit-export" class="btn btn-secondary mb-3">
