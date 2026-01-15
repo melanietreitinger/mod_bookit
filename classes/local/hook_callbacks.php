@@ -39,37 +39,38 @@ class hook_callbacks {
      * @param \core\hook\navigation\primary_extend $hook
      */
     public static function primary_navigation_extend(\core\hook\navigation\primary_extend $hook): void {
-        global $PAGE;
+        global $PAGE, $OUTPUT;
 
         $context = \context_system::instance();
 
         // Check if user has the required capability.
+        // TODO: use other capability.
         if (!\has_capability('mod/bookit:managemasterchecklist', $context) || is_siteadmin()) {
-            //return;
+            return;
         }
 
         // Get the primary navigation.
         $primarynav = $hook->get_primaryview();
 
-        global $OUTPUT;
         $icon = $OUTPUT->pix_icon('i/settings', get_string('settings_overview', 'mod_bookit'));
 
         // Add BookIt settings node to the primary navigation.
         $node = $primarynav->add(
                 $icon . get_string('pluginname', 'mod_bookit'),
-            new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'),
+            new \moodle_url('/mod/bookit/admin/calendar.php?id=calendar'),
             navigation_node::TYPE_CUSTOM,
             null,
             'bookit_settings',
             new \pix_icon('i/settings', '')
         );
 
+        $tabslist = tabs::get_tabrow($context);
+
         // Set it as active if we're on any bookit admin page.
-        if (
-            $PAGE->url->compare(new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'), URL_MATCH_BASE) ||
-            $PAGE->url->compare(new \moodle_url('/mod/bookit/master_checklist.php'), URL_MATCH_BASE)
-        ) {
-            $node->make_active();
+        foreach ($tabslist as $tab) {
+            if ($PAGE->url->compare(new \moodle_url('/mod/bookit/admin/'.$tab->id.'.php'), URL_MATCH_BASE)) {
+                $node->make_active();
+            }
         }
     }
 }

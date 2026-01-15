@@ -2,8 +2,8 @@
 <role>
 	<shortname>bookit_serviceteam</shortname>
 	<name>BookIt_Service-Team</name>
-	<description>A person who works in the e-assessment service and manage exam bookings.</description>
-	<archetype>manager</archetype>
+	<description>A person who works in the e-assessment service and manages exam bookings.</description>
+	<archetype>none</archetype>
 	<contextlevels>
 		<level>course</level>
 		<level>module</level>

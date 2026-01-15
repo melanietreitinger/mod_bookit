@@ -158,11 +158,11 @@ class edit_event_form extends dynamic_form {
         ];
         // Set time restrictions based on "editinternal" capability.
         if ($caneditinternal) {
-            $starttimearray['startyear'] = $config->eventminyears;
+            $starttimearray['startyear'] = $config->eventminyear;
         } else {
             $starttimearray['startyear'] = date("Y");
         }
-        $starttimearray['stopyear'] = $config->eventmaxyears;
+        $starttimearray['stopyear'] = $config->eventmaxyear;
 
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->addRule('startdate', null, 'required', null, 'client');
