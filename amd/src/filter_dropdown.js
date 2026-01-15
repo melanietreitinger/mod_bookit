@@ -74,11 +74,13 @@ export const init = () => {
         return (opt && opt.value !== '') ? (opt.textContent || '') : '';
     };
 
-    const setValueAndTrigger = (sel, value) => {
-        sel.value = value;
-        // Existing view.php listens on change() for these selects.
-        $(sel).trigger('change');
-    };
+const setValueAndTrigger = (sel, value) => {
+    sel.value = value;
+    // Native event (works regardless of jQuery instances).
+    sel.dispatchEvent(new Event('change', {bubbles: true}));
+    // Also trigger via the AMD jQuery instance (keeps old behavior if listeners are jQuery-based).
+    $(sel).trigger('change');
+};
 
     const renderChips = () => {
         const chips = [];
@@ -116,11 +118,12 @@ export const init = () => {
         });
     };
 
-    const buildOptionsFor = (key) => {
+   const buildOptionsFor = (key) => {
         const item = model.find(x => x.key === key);
         if (!item) {
             return;
         }
+
         const sel = item.select;
         $opts.empty();
 
@@ -133,7 +136,10 @@ export const init = () => {
         options.forEach((o) => {
             const active = (sel.value === o.value) ? ' active' : '';
             $opts.append(`
-                <button type="button" class="bookit-filteropt${active}" data-value="${escapeAttr(o.value)}">
+                <button type="button"
+                        class="bookit-filteropt${active}"
+                        data-key="${key}"
+                        data-value="${escapeAttr(o.value)}">
                     ${escapeHtml(o.textContent || '')}
                 </button>
             `);
@@ -172,11 +178,14 @@ export const init = () => {
     // Option click -> apply filter via underlying select, then close.
     $opts.on('click', '.bookit-filteropt', function(e) {
         e.preventDefault();
-        const value = String($(this).data('value') ?? '');
 
-        const activeCat = $cats.find('.bookit-filtercat.active').data('key');
-        const item = model.find(x => x.key === activeCat);
+        const key = String(this.getAttribute('data-key') || '');
+        const value = String(this.getAttribute('data-value') || '');
+
+        const item = model.find(x => x.key === key);
         if (!item) {
+            // eslint-disable-next-line no-console
+            console.warn('[BookIT] filter_dropdown: unknown key for option click', key);
             return;
         }
 
@@ -184,6 +193,7 @@ export const init = () => {
         renderChips();
         close();
     });
+
 
     // Chip remove (both in button and in panel).
     $(root).on('click', '.bookit-filterchip-remove', function(e) {

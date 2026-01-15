@@ -80,26 +80,28 @@ $PAGE->requires->js_call_amd('mod_bookit/filter_dropdown', 'init');
 
 /* -------- send filter changes to the AMD calendar -------------------- */
 $PAGE->requires->js_init_code("
-    (function() {
-        function pushFilters() {
-            const p = {};
-            const r = $('#filter-room').val();
-            const f = $('#filter-faculty').val();
-            const s = $('#filter-status').val();
+require(['jquery'], function($) {
+    function pushFilters() {
+        const p = {};
+        const r = $('#filter-room').val();
+        const f = $('#filter-faculty').val();
+        const s = $('#filter-status').val();
 
-            if (r) p.room = r;
-            if (f) p.faculty = f;
-            if (s !== '') p.status = s;
+        if (r) p.room = r;
+        if (f) p.faculty = f;
+        if (s !== '') p.status = s;
 
-            window.currentFilterParams = p;
-            if (window.bookitCalendarUpdate) {
-                window.bookitCalendarUpdate(p);
-            }
+        window.currentFilterParams = p;
+        if (window.bookitCalendarUpdate) {
+            window.bookitCalendarUpdate(p);
         }
+    }
 
-        $('#filter-room, #filter-faculty, #filter-status').on('change', pushFilters);
-    })();
+    // Delegated: works even if the selects are rendered later.
+    $(document).on('change', '#filter-room, #filter-faculty, #filter-status', pushFilters);
+});
 ");
+
 
 /* -------- Export modal ------------------------------------------------ */
 $PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$cm->id]);

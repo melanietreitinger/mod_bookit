@@ -175,6 +175,7 @@ $string['export_success'] = 'Export completed successfully';
 $string['exportedon'] = 'Exported on: {$a}';
 $string['exportevents'] = 'Export events';
 $string['exportfailed'] = 'Export failed: {$a}';
+$string['filtercategories'] = 'Filtercategories';
 $string['filters'] = 'Filters: ';
 $string['globally'] = 'Globally';
 $string['go'] = 'Apply';
