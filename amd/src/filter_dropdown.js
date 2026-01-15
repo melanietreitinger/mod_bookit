@@ -47,11 +47,15 @@ export const init = () => {
     const $chipsInButton = $(root).find('.bookit-filterdropdown-chips');
     const $chipsInPanel = $(root).find('.bookit-filterdropdown-activechips');
 
-    const model = [
+   const canStatus = root.getAttribute('data-can-status') === '1';
+   const model = [
         {key: 'room', select: selectRoom},
         {key: 'faculty', select: selectFaculty},
-        {key: 'status', select: selectStatus},
     ];
+    if (canStatus) {
+        model.push({key: 'status', select: selectStatus});
+    }
+
 
     const isOpen = () => !$panel.prop('hidden');
     const open = () => {

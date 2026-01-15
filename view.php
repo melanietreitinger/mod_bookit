@@ -156,6 +156,7 @@ $templatecontext = [
     'rooms' => [],
     'faculties' => [],
     'statuses' => [],
+    'canfilterstatus' => has_capability('mod/bookit:filterstatus', $modulecontext),
 ];
 
 foreach ($rooms as $rid => $rname) {

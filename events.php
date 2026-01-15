@@ -23,7 +23,6 @@
  */
 
 /**
- * WORK IN PROGRESS by vadym (user story event filters)
  * Event feed for the BookIT calendar -- now with optional filters
  *
  * When no filter parameter is passed the behaviour is identical to the
@@ -54,6 +53,8 @@ $export = optional_param('export', 0, PARAM_INT);
 $cm      = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
 $context = context_module::instance($cm->id);
 
+$canfilterstatus = has_capability('mod/bookit:filterstatus', $context);
+
 // Validate and convert start and end times.
 try {
     $start = new DateTime($start);
@@ -78,6 +79,9 @@ if ($statusraw === null) {
 }
 $status = ($statusraw === null || $statusraw === '') ? -1 : clean_param($statusraw, PARAM_INT);
 
+if (!$canfilterstatus) {
+    $status = -1; // Ignore status filter if not allowed.
+}
 
 // Fetch events using the helper.
 $events = event_manager::get_events_in_timerange($start, $end, $id);

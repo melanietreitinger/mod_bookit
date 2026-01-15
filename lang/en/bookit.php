@@ -41,6 +41,7 @@ $string['bookit:addresource'] = 'Add a resource';
 $string['bookit:editevent'] = 'Edit an event';
 $string['bookit:editinternal'] = 'Edit an internal field';
 $string['bookit:editresource'] = 'Edit a resource';
+$string['bookit:filterstatus'] = 'Filter by Status';
 $string['bookit:managemasterchecklist'] = 'View and edit the master checklist.';
 $string['bookit:view'] = 'View BookIt instance';
 $string['bookit:viewalldetailsofevent'] = 'View all details of event';

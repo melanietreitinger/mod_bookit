@@ -211,7 +211,9 @@
         <div class="bookit-filterdropdown"
              data-room-select="filter-room"
              data-faculty-select="filter-faculty"
-             data-status-select="filter-status">
+             data-status-select="filter-status"
+             data-can-status="{{#canfilterstatus}}1{{/canfilterstatus}}{{^canfilterstatus}}0{{/canfilterstatus}}"
+             >
 
             <button type="button"
                     class="btn btn-outline-secondary bookit-filterdropdown-toggle"

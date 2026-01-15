@@ -106,4 +106,12 @@ $capabilities = [
                 'manager' => CAP_ALLOW,
                 ],
         ],
+        // Filter by booking status in the calendar feed / UI.
+        'mod/bookit:filterstatus' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+                'manager' => CAP_ALLOW,
+                ],
+        ],
 ];
