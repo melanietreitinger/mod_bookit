@@ -202,6 +202,20 @@
         grid-template-columns: 1fr;
     }
 }
+
+.mod_bookit-view-calendar_view .bookit-filters {
+    flex-wrap: wrap; /* avoid forcing one-line layout that can constrain calendar width/height */
+}
+
+.mod_bookit-view-calendar_view #ec {
+    width: 100%; /* make calendar take full available width */
+}
+
+/* keep the dropdown panel anchored; avoid layout/scrollbar side-effects in tight containers */
+.mod_bookit-view-calendar_view .bookit-filterdropdown-panel {
+    left: 0;
+}
+
 </style>
 
 <div class="mod_bookit-view-calendar_view">
