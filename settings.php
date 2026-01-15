@@ -29,8 +29,6 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use mod_bookit\local\manager\resource_manager;
-use mod_bookit\local\install_helper;
 use mod_bookit\local\tabs;
 
 defined('MOODLE_INTERNAL') || die();
@@ -40,7 +38,7 @@ require_once($CFG->dirroot . '/mod/bookit/lib.php');
 if ($hassiteconfig) {
 
     // Add hidden bookit category to general section.
-    $ADMIN->add('root', new admin_category('bookit_settings_category', '', true)); // TODO: hide later.
+    $ADMIN->add('root', new admin_category('bookit_settings_category', '', true));
 
     $calendarsettings = new admin_externalpage(
             'bookit_calendar_settings',
@@ -57,6 +55,7 @@ if ($hassiteconfig) {
     $tabs = [$tabrow];
     $tabsoutput = print_tabs($tabs, $id, null, null, true);
 
+    $settings = new admin_settingpage('modsettingbookit', get_string('pluginname', 'mod_bookit'));
     // Tab row.
     $settings->add(new admin_setting_heading(
             'mod_bookit_tab_nav',
@@ -72,7 +71,7 @@ if ($hassiteconfig) {
     $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
 
     if (empty($installhelperfinished)) {
-        $installurl = new moodle_url('/mod/bookit/install_helper_run.php', ['sesskey' => sesskey()]);
+        $installurl = new moodle_url('/mod/bookit/admin/install_helper_run.php', ['sesskey' => sesskey()]);
         $description = new lang_string('runinstallhelperinfo', 'mod_bookit');
         $description .= \core\output\html_writer::empty_tag('br');
         $description .= \core\output\html_writer::link(

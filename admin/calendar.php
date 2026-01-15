@@ -22,6 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_bookit\form\settings_calendar_form;
 use mod_bookit\local\tabs;
 
 require_once(__DIR__ . '/../../../config.php');
@@ -48,7 +49,7 @@ echo $renderer->tabs($tabrow, $id);
 
 echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'), 3);
 
-$mform = new \mod_bookit\form\settings_calendar_form();
+$mform = new settings_calendar_form();
 
 $mform->display();
 

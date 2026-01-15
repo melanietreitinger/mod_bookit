@@ -25,7 +25,15 @@
 
 namespace mod_bookit\local;
 
+use coding_exception;
+use context_system;
+use core\exception\moodle_exception;
+use core\hook\navigation\primary_extend;
+use dml_exception;
+use moodle_url;
 use navigation_node;
+use pix_icon;
+use function has_capability;
 
 /**
  * Hook callbacks for BookIt plugin.
@@ -36,16 +44,19 @@ class hook_callbacks {
      *
      * This adds a BookIt settings link to the primary navigation for users with the capability.
      *
-     * @param \core\hook\navigation\primary_extend $hook
+     * @param primary_extend $hook
+     * @throws coding_exception
+     * @throws moodle_exception
+     * @throws dml_exception
      */
-    public static function primary_navigation_extend(\core\hook\navigation\primary_extend $hook): void {
+    public static function primary_navigation_extend(primary_extend $hook): void {
         global $PAGE, $OUTPUT;
 
-        $context = \context_system::instance();
+        $context = context_system::instance();
 
         // Check if user has the required capability.
         // TODO: use other capability.
-        if (!\has_capability('mod/bookit:managemasterchecklist', $context) || is_siteadmin()) {
+        if (!has_capability('mod/bookit:managemasterchecklist', $context)) {
             return;
         }
 
@@ -57,18 +68,18 @@ class hook_callbacks {
         // Add BookIt settings node to the primary navigation.
         $node = $primarynav->add(
                 $icon . get_string('pluginname', 'mod_bookit'),
-            new \moodle_url('/mod/bookit/admin/calendar.php?id=calendar'),
+            new moodle_url('/mod/bookit/admin/calendar.php?id=calendar'),
             navigation_node::TYPE_CUSTOM,
             null,
             'bookit_settings',
-            new \pix_icon('i/settings', '')
+            new pix_icon('i/settings', '')
         );
 
         $tabslist = tabs::get_tabrow($context);
 
         // Set it as active if we're on any bookit admin page.
         foreach ($tabslist as $tab) {
-            if ($PAGE->url->compare(new \moodle_url('/mod/bookit/admin/'.$tab->id.'.php'), URL_MATCH_BASE)) {
+            if ($PAGE->url->compare(new moodle_url('/mod/bookit/admin/'.$tab->id.'.php'), URL_MATCH_BASE)) {
                 $node->make_active();
             }
         }
