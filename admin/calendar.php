@@ -38,6 +38,42 @@ $PAGE->set_title(get_string('calendar', 'mod_bookit'));
 
 is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
 
+$config = get_config('mod_bookit');
+//var_dump($config);
+$mform = new settings_calendar_form();
+$mform->set_data($config);
+$returnurl = new moodle_url('/mod/bookit/admin/calendar.php');
+$config = null;
+
+// Standard form processing if statement.
+if ($mform->is_cancelled()) {
+    redirect($returnurl);
+} else if ($data = $mform->get_data()) {
+    if ($data->id) {
+       // Do update.
+    } else {
+        foreach ($data as $key => $value) {
+            unset($data->submitbutton);
+            // Create data object for each entry.
+            // Fields: id, plugin, name, value.
+            $c = new stdClass();
+            $c->plugin = 'mod_bookit';
+            $c->name = $key;
+            $c->value = (is_array($value) ? implode(',', $value) : $value);
+            $record = $DB->get_record('config_plugins', ['plugin' => 'mod_bookit', 'name' => $key], 'id');
+            if ($record) {
+                $c->id = $record->id;
+                $DB->update_record('config_plugins', $c);
+            }
+            else {
+                $DB->insert_record('config_plugins', $c);
+            }
+
+        }
+    }
+    redirect($returnurl);
+}
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'mod_bookit'));
 
@@ -48,8 +84,6 @@ $id = optional_param('id', 'settings', PARAM_TEXT);
 echo $renderer->tabs($tabrow, $id);
 
 echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'), 3);
-
-$mform = new settings_calendar_form();
 
 $mform->display();
 

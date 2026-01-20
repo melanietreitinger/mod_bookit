@@ -19,30 +19,16 @@
  * Form for creating and editing an event.
  *
  * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @copyright   2025 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_bookit\form;
 
-use coding_exception;
-use context_course;
-use core\context;
-use core\context\module;
-use core\exception\moodle_exception;
-use core_form\dynamic_form;
-use mod_bookit\external\get_possible_starttimes;
-use core_user\fields;
-use dml_exception;
-use mod_bookit\local\entity\bookit_event;
-use mod_bookit\local\manager\event_manager;
-use mod_bookit\local\manager\resource_manager;
-use mod_bookit\local\persistent\institution;
-use mod_bookit\local\persistent\room;
-use moodle_url;
+// moodleform is defined in formslib.php
+require_once("$CFG->libdir/formslib.php");
+
 use moodleform;
-use stdClass;
-use function bookit_allowed_weekdays;
 
 /**
  * Form for creating and editing an event.
@@ -177,5 +163,7 @@ class settings_calendar_form extends moodleform {
         );
         $mform->setType('extratimeafter', PARAM_INT);
         $mform->getElement('extratimeafter')->setValue(15);
+
+        $this->add_action_buttons();
     }
 }
