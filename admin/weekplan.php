@@ -45,7 +45,7 @@ $PAGE->navbar->add($weekplan->name, new moodle_url($PAGE->url));
 echo $OUTPUT->header();
 
 echo $OUTPUT->render(new \core\output\single_button(
-    new moodle_url('/mod/bookit/edit_weekplan.php', ['id' => $id]),
+    new moodle_url('/mod/bookit/admin/edit_weekplan.php', ['id' => $id]),
     get_string('edit'),
     'post',
     single_button::BUTTON_PRIMARY

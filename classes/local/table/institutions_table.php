@@ -65,7 +65,7 @@ class institutions_table extends \table_sql {
 
         $alt = get_string('edit');
         $icon = 't/edit';
-        $url = new \moodle_url('/mod/bookit/edit_institution.php', ['id' => $row->id]);
+        $url = new \moodle_url('/mod/bookit/admin/edit_institution.php', ['id' => $row->id]);
         $output .= $OUTPUT->action_icon(
             $url,
             new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),

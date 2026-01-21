@@ -28,15 +28,15 @@ use mod_bookit\local\tabs;
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-require_login();
-
 $context = context_system::instance();
+
+require_login();
+is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
+
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/rooms.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('rooms', 'mod_bookit'));
-
-is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'mod_bookit'));
@@ -48,7 +48,7 @@ $id = optional_param('id', 'settings', PARAM_TEXT);
 echo $renderer->tabs($tabrow, $id);
 
 echo $OUTPUT->render(new \core\output\single_button(
-    new moodle_url('/mod/bookit/edit_room.php'),
+    new moodle_url('/mod/bookit/admin/edit_room.php'),
     get_string('new_room', 'mod_bookit'),
     'post',
     single_button::BUTTON_PRIMARY

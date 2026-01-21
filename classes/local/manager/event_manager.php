@@ -193,7 +193,7 @@ class event_manager {
                 wr.starttime as weekplanstart, wr.endtime as weekplanend
             FROM {bookit_weekplan_room} wr
             JOIN {bookit_weekplanslot} ws ON wr.weekplanid = ws.weekplanid
-            WHERE wr.starttime < :endtime AND wr.endtime > :starttime AND wr.roomid = :roomid',
+            WHERE wr.starttime < :endtime AND (wr.endtime > :starttime OR wr.endtime IS NULL) AND wr.roomid = :roomid',
             [
                         'starttime' => $starttime,
                         'endtime' => $endtime,
@@ -203,7 +203,11 @@ class event_manager {
 
         foreach ($records as $record) {
             $weekplanstart = max($starttime, (int) $record->weekplanstart);
-            $weekplanend = min($endtime, (int) $record->weekplanend + weekplan_manager::SECONDS_PER_DAY);
+            if (null == $record->weekplanend) {
+                $weekplanend = $endtime;
+            } else {
+                $weekplanend = min($endtime, (int) $record->weekplanend + weekplan_manager::SECONDS_PER_DAY);
+            }
             [$yearstart, $weekstart] = explode('-', date('Y-W', $weekplanstart));
 
             $weekstartdt = new DateTime("$yearstart-W$weekstart");

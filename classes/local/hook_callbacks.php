@@ -77,9 +77,9 @@ class hook_callbacks {
 
         $tabslist = tabs::get_tabrow($context);
 
-        // Set it as active if we're on any bookit admin page.
         foreach ($tabslist as $tab) {
-            if ($PAGE->url->compare(new moodle_url('/mod/bookit/admin/'.$tab->id.'.php'), URL_MATCH_BASE)) {
+            // Set it as active if we're on any bookit admin page.
+            if (preg_match('#mod/bookit/admin#', new moodle_url('/mod/bookit/admin/' . $tab->id . '.php'))) {
                 $node->make_active();
             }
         }
