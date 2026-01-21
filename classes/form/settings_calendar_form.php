@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Form for creating and editing an event.
+ * Form for the calendar admin settings.
  *
  * @package     mod_bookit
  * @copyright   2025 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
@@ -44,8 +44,6 @@ class settings_calendar_form extends moodleform {
     public function definition(): void {
         $mform =& $this->_form;
 
-        // Get the plugin config.
-        $config = get_config('mod_bookit');
 
         // Weekday visibility in calendar.
         $weekdaychoices = [

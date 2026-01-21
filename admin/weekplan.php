@@ -22,13 +22,15 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../config.php');
-global $CFG, $DB, $OUTPUT, $PAGE;
+use mod_bookit\local\tabs;
+
+require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-// Override active url for admin tree / breadcrumbs.
-navigation_node::override_active_url(new moodle_url('/mod/bookit/weekplans.php'));
-admin_externalpage_setup('mod_bookit_weekplans');
+$context = context_system::instance();
+
+require_login();
+is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
 
 $id = required_param('id', PARAM_INT);
 $weekplan = $DB->get_record('bookit_weekplan', ['id' => $id], '*', MUST_EXIST);
@@ -36,13 +38,19 @@ $weekplan = $DB->get_record('bookit_weekplan', ['id' => $id], '*', MUST_EXIST);
 $records = $DB->get_records('bookit_weekplanslot', ['weekplanid' => $id]);
 $eventsbyday = \mod_bookit\local\manager\weekplan_manager::group_events_by_day($records);
 
-$PAGE->set_url(new moodle_url('/mod/bookit/weekplan.php', ['id' => $id]));
-$PAGE->set_heading($weekplan->name);
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/mod/bookit/admin/weekplan.php', ['id' => $id]));
+$PAGE->set_pagelayout('admin');
 $PAGE->set_title($weekplan->name);
 
-$PAGE->navbar->add($weekplan->name, new moodle_url($PAGE->url));
-
 echo $OUTPUT->header();
+echo $OUTPUT->heading($weekplan->name, 2);
+
+// Show tabs.
+$renderer = $PAGE->get_renderer('mod_bookit');
+$tabrow = tabs::get_tabrow($context);
+$id = optional_param('id', 'settings', PARAM_TEXT);
+echo $renderer->tabs($tabrow, $id);
 
 echo $OUTPUT->render(new \core\output\single_button(
     new moodle_url('/mod/bookit/admin/edit_weekplan.php', ['id' => $id]),

@@ -57,6 +57,11 @@ class tabs {
         $tabrow[] = new tabobject('rooms', $targeturl,
                 get_string('rooms', 'mod_bookit'));
 
+        // Tab to the weekplan page.
+        $targeturl = new moodle_url('/mod/bookit/admin/weekplans.php', ['id' => 'weekplans']);
+        $tabrow[] = new tabobject('weekplans', $targeturl,
+                get_string('weekplans', 'mod_bookit'));
+
         // Tab to the institutions page.
         $targeturl = new moodle_url('/mod/bookit/admin/institutions.php', ['id' => 'institutions']);
         $tabrow[] = new tabobject('institutions', $targeturl,

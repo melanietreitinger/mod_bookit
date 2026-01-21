@@ -22,15 +22,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_bookit\local\tabs;
 use mod_bookit\local\manager\weekplan_manager;
 
-require_once(__DIR__ . '/../../config.php');
-global $CFG, $DB, $OUTPUT, $PAGE;
+require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-// Override active url for admin tree / breadcrumbs.
-navigation_node::override_active_url(new moodle_url('/mod/bookit/weekplans.php'));
-admin_externalpage_setup('mod_bookit_weekplans');
+$context = context_system::instance();
+
+require_login();
+is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
 
 $id = optional_param('id', null, PARAM_INT);
 
@@ -40,21 +41,17 @@ if ($id) {
     $params['id'] = $id;
     $weekplan = $DB->get_record('bookit_weekplan', ['id' => $id], '*', MUST_EXIST);
     $weekplan->weekplan = weekplan_manager::create_string_weekplan_from_db($id);
-}
-
-$PAGE->set_url(new moodle_url('/mod/bookit/edit_weekplan.php', $params));
-
-if ($id) {
     $title = get_string('edit_weekplan', 'mod_bookit');
-    $PAGE->navbar->add($weekplan->name, new moodle_url('/mod/bookit/weekplan.php', ['id' => $id]));
 } else {
     $title = get_string('new_weekplan', 'mod_bookit');
 }
 
-$PAGE->set_heading($title);
+$returnurl = new moodle_url('/mod/bookit/admin/weekplans.php');
+
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_weekplan.php', $params));
+$PAGE->set_pagelayout('admin');
 $PAGE->set_title($title);
-$returnurl = new moodle_url('/mod/bookit/weekplans.php');
-$PAGE->navbar->add($title, new moodle_url($PAGE->url));
 
 $mform = new \mod_bookit\local\form\edit_weekplan_form($PAGE->url);
 if ($id) {

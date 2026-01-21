@@ -57,7 +57,7 @@ class weekplans_table extends \table_sql {
      * @return string.
      */
     public function col_name($row) {
-        $url = new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]);
+        $url = new \moodle_url('/mod/bookit/admin/weekplan.php', ['id' => $row->id]);
         return \html_writer::link($url, $row->name);
     }
 
@@ -72,7 +72,7 @@ class weekplans_table extends \table_sql {
 
         $alt = get_string('edit');
         $icon = 't/edit';
-        $url = new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->id]);
+        $url = new \moodle_url('/mod/bookit/admin/weekplan.php', ['id' => $row->id]);
         $output .= $OUTPUT->action_icon(
             $url,
             new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),

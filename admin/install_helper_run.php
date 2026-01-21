@@ -27,9 +27,7 @@ use mod_bookit\local\install_helper;
 require_once('../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-require_login();
-require_capability('moodle/site:config', context_system::instance());
-require_sesskey();
+require_admin();
 
 // Mark installation helper as finished first to avoid session mutation issues.
 set_config('installhelperfinished', 1, 'mod_bookit');

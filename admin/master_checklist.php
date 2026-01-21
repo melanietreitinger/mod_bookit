@@ -30,15 +30,15 @@ use mod_bookit\local\tabs;
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-require_login();
-
 $context = context_system::instance();
+
+require_login();
+is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
+
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/master_checklist.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('master_checklist', 'mod_bookit'));
-
-is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'mod_bookit'));
@@ -48,6 +48,8 @@ $renderer = $PAGE->get_renderer('mod_bookit');
 $tabrow = tabs::get_tabrow($context);
 $id = optional_param('id', 'settings', PARAM_TEXT);
 echo $renderer->tabs($tabrow, $id);
+
+echo html_writer::div(get_string('settings_master_checklist_desc', 'mod_bookit'));
 
 $defaultchecklistmaster = checklist_manager::get_default_master();
 
