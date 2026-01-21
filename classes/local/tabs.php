@@ -72,6 +72,11 @@ class tabs {
         $tabrow[] = new tabobject('master_checklist', $targeturl,
                 get_string('master_checklist', 'mod_bookit'));
 
+        // Tab to the checklist settings page.
+        $targeturl = new moodle_url('/mod/bookit/admin/checklist.php', ['id' => 'checklist']);
+        $tabrow[] = new tabobject('checklist', $targeturl,
+                get_string('checklist', 'mod_bookit'));
+
         // Real admin settings.
         if (has_capability('moodle/site:config', $context)) {
             $targeturl = new moodle_url('/admin/settings.php', ['section' => 'modsettingbookit']);
