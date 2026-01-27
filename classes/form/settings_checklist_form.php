@@ -34,7 +34,7 @@ use moodleform;
  * Form for creating and editing an event.
  *
  * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @copyright   2025 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class settings_checklist_form extends moodleform {

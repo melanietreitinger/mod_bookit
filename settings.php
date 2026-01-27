@@ -17,13 +17,6 @@
 /**
  * Plugin administration pages are defined here.
  *
- * Implementation of new BookIt admin settings overview - Structure:
- *   - Root entry shown under Plugins → Activity modules → BookIt
- *       => external page: /mod/bookit/admin/settings_overview.php (cards only)
- *   - Actual settings pages (Calendar, Resources, Checklist)
- *       => placed into a hidden admin category so they don't appear in the tree
- *       => will be shown after first click in the settings_overview.php
- *
  * @package     mod_bookit
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -63,10 +56,9 @@ if ($hassiteconfig) {
             $tabsoutput,
     ));
     // TODO: write some text as introduction to bookit.
-    // TODO: link to other booking settings pages.
 
     // Install helper.
-    // TODO: remove next line.
+    // TODO: remove next line!!
     set_config('installhelperfinished', 0, 'mod_bookit');
     $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
 
