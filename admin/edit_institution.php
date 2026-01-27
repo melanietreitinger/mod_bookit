@@ -28,7 +28,7 @@ require_once($CFG->libdir . '/adminlib.php');
 $context = context_system::instance();
 
 require_login();
-is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
 
 $id = optional_param('id', null, PARAM_INT);
 $params = [];

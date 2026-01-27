@@ -85,10 +85,6 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        // Set hidden field extra time.
-        $mform->addElement('hidden', 'extratime', $config->extratime);
-        $mform->setType('extratime', PARAM_INT);
-
         // Show the user who created the entry.
         $mform->addElement('text', 'usermodified', get_string('event_usermodified', 'mod_bookit'));
         $mform->setType('usermodified', PARAM_TEXT);

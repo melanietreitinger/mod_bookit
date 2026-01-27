@@ -31,7 +31,7 @@ require_once($CFG->libdir . '/adminlib.php');
 $context = context_system::instance();
 
 require_login();
-is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context);
+require_capability('mod/bookit:managemasterchecklist', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/rooms.php'));

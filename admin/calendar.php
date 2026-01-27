@@ -37,7 +37,7 @@ $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('calendar', 'mod_bookit'));
 $returnurl = new moodle_url('/mod/bookit/admin/calendar.php');
 
-is_siteadmin() || require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
 
 $mform = new settings_calendar_form();
 
