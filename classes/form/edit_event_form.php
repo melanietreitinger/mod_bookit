@@ -123,6 +123,13 @@ class edit_event_form extends dynamic_form {
         foreach ($institutions as $institution) {
             $institutionoptions[$institution->get('id')] = $institution->get('name');
         }
+
+        // Merge 28.01: Added Fallback.
+        if (empty($institutionoptions)) {
+            $institutionoptions = [0 => get_string('none')];
+            $mform->addElement('static', 'institutionid_empty_notice', '', get_string('none') . ' (No active institutions found in bookit_institution)');
+        }
+
         $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
         $mform->addRule('institutionid', null, 'required', null, 'client');
         $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
@@ -134,6 +141,11 @@ class edit_event_form extends dynamic_form {
             $roomoptions[$room->get('id')] = $room->get('name');
         }
 
+        // Merge 28.01: Added Fallback.
+        if (empty($roomoptions)) {
+            $roomoptions = [0 => get_string('none')];
+            $mform->addElement('static', 'roomid_empty_notice', '', get_string('none') . ' (No active rooms found in bookit_room)');
+        }
         $mform->addElement('select', 'roomid', get_string('event_room', 'mod_bookit'), $roomoptions);
         $mform->disabledIf('roomid', 'editevent', 'neq');
         $mform->addHelpButton('roomid', 'event_room', 'mod_bookit');
@@ -402,6 +414,17 @@ class edit_event_form extends dynamic_form {
             }
 
             $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
+            // Merge 28.01: Added fallback
+            if (!$timeclicked) {
+               $timeclicked = $this->optional_param('startdate', null, PARAM_TEXT); 
+            }
+            //Merge 28.01: Added default 
+            $possiblestarttimes = []; 
+            $selectedtime = null;
+            $timeclickedstamp = null;
+            $startdate = null; 
+
+
             if ($timeclicked && $roomoptions) {
                 $timeclicked = new \DateTimeImmutable($timeclicked);
                 $timeclickedstamp = $timeclicked->getTimestamp();
@@ -424,10 +447,48 @@ class edit_event_form extends dynamic_form {
                     }
                 }
             }
+            // Merge 28.01: fallback to "old behaviour" (15-min grid) if new possible_starttimes failed. 
+            if (empty($possiblestarttimes) || !is_array($possiblestarttimes)) {
+
+                if ($startdate instanceof \DateTimeImmutable) {
+                    $baseday = $startdate;
+                } else if ($timeclicked) {
+                    try {
+                        $baseday = (new \DateTimeImmutable($timeclicked))->setTime(0, 0);
+                    } catch (\Exception $e) {
+                        $baseday = (new \DateTimeImmutable('now'))->setTime(0, 0);
+                    }
+                } else {
+                    $baseday = (new \DateTimeImmutable('now'))->setTime(0, 0);
+                }
+
+                // Build "old style" 15-min slots for that day.
+                $startts = $baseday->getTimestamp();
+                for ($m = 0; $m < 24 * 60; $m += 15) {
+                    $ts = $startts + ($m * 60);
+                    $possiblestarttimes[$ts] = userdate($ts, get_string('strftimetime', 'langconfig'));
+                }
+
+                // Pick default: closest to click if we have it, else first slot.
+                if ($timeclickedstamp !== null) {
+                    $selectedtime = $timeclickedstamp; 
+                } else {
+                    $selectedtime = array_key_first($possiblestarttimes);
+                }
+}
 
             /** @var \MoodleQuickForm_select $starttimeel */
             $starttimeel = $mform->getElement('starttime');
             $starttimeel->removeOptions();
+
+            // Merge 28.01: Quick Fix Attempt. Needs deeper investigation. 
+            if (!empty($possiblestarttimes)) {
+                $starttimeel->loadArray($possiblestarttimes);
+            }
+            if ($selectedtime !== null) {
+                $mform->setDefault('starttime', $selectedtime);
+            }
+
             $starttimeel->loadArray($possiblestarttimes);
             $mform->setDefault('starttime', $selectedtime);
         }
