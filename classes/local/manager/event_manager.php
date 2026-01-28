@@ -298,17 +298,18 @@ class event_manager {
      * @return array List of faculty names (strings).
      * @throws \dml_exception
      */
-    public static function get_faculties(): array {
-        global $DB;
+  public static function get_faculties(): array {
+    global $DB;
 
-        $sql = "SELECT DISTINCT department
-                  FROM {bookit_event}
-                 WHERE department IS NOT NULL
-                   AND department <> ''
-              ORDER BY department ASC";
+    $sql = "SELECT DISTINCT institutionid
+              FROM {bookit_event}
+             WHERE institutionid IS NOT NULL
+               AND institutionid <> ''
+          ORDER BY institutionid ASC";
 
-        return $DB->get_fieldset_sql($sql);
-    }
+    return $DB->get_fieldset_sql($sql);
+}
+
 
 
 
