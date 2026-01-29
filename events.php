@@ -49,6 +49,12 @@ require_login();           // User must be logged-in.
 $id     = required_param('id', PARAM_INT);      // Course-module id (required).
 $start  = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end    = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
+$export = optional_param('export', 0, PARAM_INT);
+
+$cm      = get_coursemodule_from_id('bookit', $id, 0, false, MUST_EXIST);
+$context = context_module::instance($cm->id);
+
+$canfilterstatus = has_capability('mod/bookit:filterstatus', $context);
 
 // Validate and convert start and end times.
 try {
@@ -62,7 +68,7 @@ try {
     exit(1);
 }
 
-// Work in progress by Vadym - new optional filter parameters (for filter user story).
+// New optional filter parameters (for filter user story).
 $roomid  = optional_param('room', 0, PARAM_INT);
 $faculty = optional_param('faculty', '', PARAM_TEXT);
 $search  = optional_param('search', '', PARAM_TEXT);
@@ -74,9 +80,37 @@ if ($statusraw === null) {
 }
 $status = ($statusraw === null || $statusraw === '') ? -1 : clean_param($statusraw, PARAM_INT);
 
+if (!$canfilterstatus) {
+    $status = -1; // Ignore status filter if not allowed.
+}
+
 
 // Fetch events using the helper.
 $events = event_manager::get_events_in_timerange($start, $end, $id);
+
+// If this is an export request and the user is NOT service team,
+// remove reserved events completely from the response.
+if ($export && !has_capability('mod/bookit:viewalldetailsofevent', $context)) {
+    $events = array_filter($events, static function ($ev) {
+        // Works for both array and object events.
+        $extended = null;
+        if (is_array($ev) && isset($ev['extendedProps'])) {
+            $extended = $ev['extendedProps'];
+        } else if (is_object($ev) && isset($ev->extendedProps)) {
+            $extended = $ev->extendedProps;
+        }
+
+        $reserved = false;
+        if (is_object($extended) && property_exists($extended, 'reserved')) {
+            $reserved = (bool)$extended->reserved;
+        }
+
+        // Keep only non-reserved events.
+        return !$reserved;
+    });
+    // Reindex after filtering.
+    $events = array_values($events);
+}
 
 // Access helpers that work for arrays and objects.
 $aget = static function ($src, array $keys) {
@@ -143,8 +177,7 @@ unset($ev);
 
 
 
-// WORK IN PROGRESS by vadym: Apply in-memory filters (only if parameter present). For Filter user story.
-// Apply in-memory filters (enhanced version, merged from older file).
+// Apply in-memory filters (only if parameter present). For Filter user story.
 $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, $search) {
     // Helper to read from array or object.
     $get = function ($src, array $keys) {
@@ -158,7 +191,6 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
         }
         return null;
     };
-
     // ROOM filter (by resource id; supports multiple roomids).
     if ($roomid) {
         $eventroomids = $get($ev, ['roomids']);
