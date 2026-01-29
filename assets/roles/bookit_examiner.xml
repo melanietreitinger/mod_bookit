@@ -13,14 +13,15 @@
 	<allowswitch/>
 	<allowview>
 		<shortname>bookit_serviceteam</shortname>
-        <shortname>bookit_bookingperson</shortname>
 		<shortname>bookit_supportonsite</shortname>
 	</allowview>
 	<permissions>
 		<allow>mod/bookit:addevent</allow>
 		<allow>mod/bookit:view</allow>
 		<allow>mod/bookit:viewalldetailsofownevent</allow>
-		<allow>moodle/course:enrolreview</allow>
+        <allow>mod/bookit:viewownoverview</allow>
+        <allow>moodle/course:enrolreview</allow>
 		<allow>moodle/user:viewdetails</allow>
+        <allow>moodle/role:assign</allow>
 	</permissions>
 </role>

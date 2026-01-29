@@ -17,5 +17,6 @@
 	</allowview>
 	<permissions>
 		<allow>mod/bookit:view</allow>
+		<allow>moodle/role:assign</allow>
 	</permissions>
 </role>

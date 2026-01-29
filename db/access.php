@@ -30,87 +30,74 @@ $capabilities = [
         'mod/bookit:addevent' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
+                'archetypes' => [],
         ],
         // Add course module (mandatory capability).
         'mod/bookit:addinstance' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
+                'archetypes' => [],
                 'clonepermissionsfrom' => 'moodle/course:manageactivities',
         ],
         // Add a new resource.
         'mod/bookit:addresource' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
+                'archetypes' => [],
         ],
         // Edit an existing event.
         'mod/bookit:editevent' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
+                'archetypes' => [],
         ],
         // Edit an internal field.
         'mod/bookit:editinternal' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
+                'archetypes' => [],
 
         ],
         // Edit an existing resource.
         'mod/bookit:editresource' => [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
+                'archetypes' => [],
         ],
-        // View course module.
-        'mod/bookit:view' => [
-                'captype' => 'view',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
-        ],
-        // View all details of event.
-        'mod/bookit:viewalldetailsofevent' => [
-                'captype' => 'view',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
-        ],
-        // View all details of own event.
-        'mod/bookit:viewalldetailsofownevent' => [
-                'captype' => 'view',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [
-                ],
-        ],
-        // New: Implements the selected view.
-        'mod/bookit:viewownoverview' => [
-                'captype'      => 'read',
+        // Filter by booking status in the calendar feed / UI.
+        'mod/bookit:filterstatus' => [
+                'captype' => 'read',
                 'contextlevel' => CONTEXT_MODULE,
-                'archetypes'   => [
-                ],
+                'archetypes' => [],
         ],
         'mod/bookit:managemasterchecklist' => [
                 'riskbitmask' => RISK_CONFIG,
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_SYSTEM,
-                'archetypes' => [
-                ],
+                'archetypes' => [],
         ],
-        // Filter by booking status in the calendar feed / UI.
-        'mod/bookit:filterstatus' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => [
-                'manager' => CAP_ALLOW,
-                ],
+        // View course module.
+        'mod/bookit:view' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [],
+        ],
+        // View all details of event.
+        'mod/bookit:viewalldetailsofevent' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [],
+        ],
+        // View all details of own event.
+        'mod/bookit:viewalldetailsofownevent' => [
+                'captype' => 'view',
+                'contextlevel' => CONTEXT_COURSE,
+                'archetypes' => [],
+        ],
+        // New: Implements the selected view.
+        'mod/bookit:viewownoverview' => [
+                'captype'      => 'read',
+                'contextlevel' => CONTEXT_MODULE,
+                'archetypes'   => [],
         ],
 ];

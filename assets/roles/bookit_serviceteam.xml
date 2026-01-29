@@ -42,13 +42,14 @@
 		<allow>mod/bookit:editevent</allow>
 		<allow>mod/bookit:editinternal</allow>
 		<allow>mod/bookit:editresource</allow>
+		<allow>mod/bookit:filterstatus</allow>
 		<allow>mod/bookit:managemasterchecklist</allow>
 		<allow>mod/bookit:view</allow>
 		<allow>mod/bookit:viewalldetailsofevent</allow>
 		<allow>mod/bookit:viewalldetailsofownevent</allow>
+		<allow>mod/bookit:viewownoverview</allow>
 		<allow>moodle/course:enrolreview</allow>
 		<allow>moodle/role:assign</allow>
 		<allow>moodle/user:viewdetails</allow>
-		<allow>moodle/site:configview</allow>
 	</permissions>
 </role>
