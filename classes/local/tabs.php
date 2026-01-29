@@ -25,8 +25,8 @@
 namespace mod_bookit\local;
 
 use coding_exception;
+use context;
 use core\exception\moodle_exception;
-use dml_exception;
 use moodle_url;
 use tabobject;
 
@@ -41,12 +41,12 @@ class tabs {
     /**
      * Generates a Moodle tabrow i.e. an array of tabs
      *
-     * @param $context
+     * @param context $context
      * @return array
      * @throws coding_exception
      * @throws moodle_exception
      */
-    public static function get_tabrow($context): array {
+    public static function get_tabrow(context $context): array {
         // Calendar Settings.
         $targeturl = new moodle_url('/mod/bookit/admin/calendar.php', ['id' => 'calendar']);
         $tabrow[] = new tabobject(
