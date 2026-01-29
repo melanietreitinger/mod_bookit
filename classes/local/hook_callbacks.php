@@ -55,7 +55,7 @@ class hook_callbacks {
         $context = context_system::instance();
 
         // Check if user has the required capability.
-        // TODO: use other capability.
+        // XXX TODO: use other capability.
         if (!has_capability('mod/bookit:managemasterchecklist', $context)) {
             return;
         }
@@ -67,7 +67,7 @@ class hook_callbacks {
 
         // Add BookIt settings node to the primary navigation.
         $node = $primarynav->add(
-                $icon . get_string('pluginname', 'mod_bookit'),
+            $icon . get_string('pluginname', 'mod_bookit'),
             new moodle_url('/mod/bookit/admin/calendar.php?id=calendar'),
             navigation_node::TYPE_CUSTOM,
             null,

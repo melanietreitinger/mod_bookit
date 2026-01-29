@@ -37,7 +37,7 @@ $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('calendar', 'mod_bookit'));
 $returnurl = new moodle_url('/mod/bookit/admin/calendar.php');
 
-require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
 
 $mform = new settings_calendar_form();
 
@@ -57,8 +57,7 @@ if ($mform->is_cancelled()) {
         if ($record) {
             $c->id = $record->id;
             $DB->update_record('config_plugins', $c);
-        }
-        else {
+        } else {
             $DB->insert_record('config_plugins', $c);
         }
     }

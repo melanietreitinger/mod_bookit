@@ -65,7 +65,7 @@ class delete_blocker extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
 
-        require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+        require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
 
         $blocker = blocker::get_record(['id' => $blockerid], MUST_EXIST);
         $blocker->delete();

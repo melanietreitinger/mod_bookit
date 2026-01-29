@@ -75,7 +75,7 @@ $event->add_record_snapshot('bookit', $moduleinstance);
 
 // JavaScript – filter communication + Export‑modal logic (WORK IN PROGRESS).
 $PAGE->requires->jquery();
-// Filter Dropdown. 
+// Filter Dropdown.
 $PAGE->requires->js_call_amd('mod_bookit/filter_dropdown', 'init');
 
 
@@ -152,7 +152,7 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/c
 // Page Output.
 echo $OUTPUT->header();
 
-// Mustache for Filter Bar + Export Button. 
+// Mustache for Filter Bar + Export Button.
 $templatecontext = [
     'rooms' => [],
     'faculties' => [],

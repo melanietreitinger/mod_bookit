@@ -29,7 +29,7 @@ use mod_bookit\local\manager\event_manager;
 require_login();
 
 $context = context_system::instance();
-require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
 
 $roomid = optional_param('roomid', 0, PARAM_INT);
 $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);

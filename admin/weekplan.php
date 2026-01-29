@@ -30,7 +30,7 @@ require_once($CFG->libdir . '/adminlib.php');
 $context = context_system::instance();
 
 require_login();
-require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
 
 $id = required_param('id', PARAM_INT);
 $weekplan = $DB->get_record('bookit_weekplan', ['id' => $id], '*', MUST_EXIST);

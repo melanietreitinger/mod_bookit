@@ -103,8 +103,8 @@ function bookit_delete_instance(int $id): bool {
  * @param navigation_node|null $modnode
  */
 function bookit_extend_settings_navigation(
-        settings_navigation $settingsnav,
-        ?navigation_node $modnode = null
+    settings_navigation $settingsnav,
+    ?navigation_node $modnode = null
 ) {
     global $PAGE;
 
@@ -118,12 +118,12 @@ function bookit_extend_settings_navigation(
 
         // THIS is the line that puts the entry under the current Bookit node.
         $modnode->add(
-                get_string('overview', 'bookit'),
-                $url,
-                navigation_node::TYPE_SETTING,
-                null,
-                'bookitoverview',
-                new pix_icon('i/calendar', '')
+            get_string('overview', 'bookit'),
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'bookitoverview',
+            new pix_icon('i/calendar', '')
         );
     }
 }

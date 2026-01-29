@@ -117,7 +117,7 @@ class event_manager {
             'starttime' => $starttimestamp,
             'endtime'   => $endtimestamp,
         ];
-        
+
         // Capability-based SQL selection.
         if ($viewalldetailsofevent) {
             // Service-team: see all details of all events.
@@ -201,7 +201,7 @@ class event_manager {
 
         return $events;
     }
-    
+
     /**
      * Fetch all events where this user participates in any role:
      * - person in charge (main examiner)
@@ -298,17 +298,17 @@ class event_manager {
      * @return array List of faculty names (strings).
      * @throws \dml_exception
      */
-  public static function get_faculties(): array {
-    global $DB;
+    public static function get_faculties(): array {
+        global $DB;
 
-    $sql = "SELECT DISTINCT institutionid
+        $sql = "SELECT DISTINCT institutionid
               FROM {bookit_event}
              WHERE institutionid IS NOT NULL
                AND institutionid <> ''
           ORDER BY institutionid ASC";
 
-    return $DB->get_fieldset_sql($sql);
-}
+        return $DB->get_fieldset_sql($sql);
+    }
 
 
 

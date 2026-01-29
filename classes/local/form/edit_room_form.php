@@ -94,7 +94,7 @@ class edit_room_form extends \core\form\persistent {
         $mform->setDefault('extratimeafter', get_config('bookit', 'extratimeafter'));
         $mform->hideIf('extratimeafter', 'overwrite_extratimeafter');
 
-        // TODO: add preventoverlap setting.
+        // XXX TODO: add preventoverlap setting.
 
         $this->add_action_buttons();
     }

@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -25,7 +24,8 @@
 
 namespace mod_bookit\form;
 
-// moodleform is defined in formslib.php
+defined('MOODLE_INTERNAL') || die();
+
 require_once("$CFG->libdir/formslib.php");
 
 use moodleform;
@@ -45,8 +45,8 @@ class settings_checklist_form extends moodleform {
         global $CFG;
         $mform =& $this->_form;
 
-        $mform->addElement('selectyesno', 'pdf_logo_enable', get_string('settings_pdf_logo_enable', 'bookit').'<br>'.
-                '<code class="text-muted small">mod_bookit/pdf_logo_enable</code>'. '<br><br>'.
+        $mform->addElement('selectyesno', 'pdf_logo_enable', get_string('settings_pdf_logo_enable', 'bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/pdf_logo_enable</code>' . '<br><br>' .
                 get_string('settings_pdf_logo_enable_desc', 'mod_bookit'));
 
         $logosourceoptions = [
@@ -59,12 +59,12 @@ class settings_checklist_form extends moodleform {
             $logosourceoptions['theme'] = get_string('settings_pdf_logo_source_theme', 'mod_bookit');
         }
 
-        $mform->addElement('select', 'pdf_logo_source', get_string('settings_pdf_logo_source', 'bookit').'<br>'.
-                '<code class="text-muted small">mod_bookit/pdf_logo_source</code>'. '<br><br>'.
+        $mform->addElement('select', 'pdf_logo_source', get_string('settings_pdf_logo_source', 'bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/pdf_logo_source</code>' . '<br><br>' .
                 get_string('settings_pdf_logo_source_desc', 'mod_bookit'), $logosourceoptions);
 
-        $mform->addElement('filepicker', 'pdf_logo_custom', get_string('settings_pdf_logo_custom', 'bookit').'<br>'.
-                '<code class="text-muted small">mod_bookit/pdf_logo_custom</code>'. '<br><br>'.
+        $mform->addElement('filepicker', 'pdf_logo_custom', get_string('settings_pdf_logo_custom', 'bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/pdf_logo_custom</code>' . '<br><br>' .
                 get_string('settings_pdf_logo_custom_desc', 'mod_bookit'), null, [
                 'maxfiles' => 1,
                 'accepted_types' => ['.png', '.jpg', '.jpeg'],

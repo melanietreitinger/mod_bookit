@@ -123,7 +123,12 @@ class edit_event_form extends dynamic_form {
         // Merge 28.01: Added Fallback.
         if (empty($institutionoptions)) {
             $institutionoptions = [0 => get_string('none')];
-            $mform->addElement('static', 'institutionid_empty_notice', '', get_string('none') . ' (No active institutions found in bookit_institution)');
+            $mform->addElement(
+                'static',
+                'institutionid_empty_notice',
+                '',
+                get_string('none') . ' (No active institutions found in bookit_institution)'
+            );
         }
 
         $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
@@ -410,16 +415,15 @@ class edit_event_form extends dynamic_form {
             }
 
             $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
-            // Merge 28.01: Added fallback
+            // Merge 28.01: Added fallback.
             if (!$timeclicked) {
-               $timeclicked = $this->optional_param('startdate', null, PARAM_TEXT); 
+                $timeclicked = $this->optional_param('startdate', null, PARAM_TEXT);
             }
-            //Merge 28.01: Added default 
-            $possiblestarttimes = []; 
+            // Merge 28.01: Added default.
+            $possiblestarttimes = [];
             $selectedtime = null;
             $timeclickedstamp = null;
-            $startdate = null; 
-
+            $startdate = null;
 
             if ($timeclicked && $roomoptions) {
                 $timeclicked = new \DateTimeImmutable($timeclicked);
@@ -443,9 +447,8 @@ class edit_event_form extends dynamic_form {
                     }
                 }
             }
-            // Merge 28.01: fallback to "old behaviour" (15-min grid) if new possible_starttimes failed. 
+            // Merge 28.01: fallback to "old behaviour" (15-min grid) if new possible_starttimes failed.
             if (empty($possiblestarttimes) || !is_array($possiblestarttimes)) {
-
                 if ($startdate instanceof \DateTimeImmutable) {
                     $baseday = $startdate;
                 } else if ($timeclicked) {
@@ -467,17 +470,17 @@ class edit_event_form extends dynamic_form {
 
                 // Pick default: closest to click if we have it, else first slot.
                 if ($timeclickedstamp !== null) {
-                    $selectedtime = $timeclickedstamp; 
+                    $selectedtime = $timeclickedstamp;
                 } else {
                     $selectedtime = array_key_first($possiblestarttimes);
                 }
-}
+            }
 
             /** @var \MoodleQuickForm_select $starttimeel */
             $starttimeel = $mform->getElement('starttime');
             $starttimeel->removeOptions();
 
-            // Merge 28.01: Quick Fix Attempt. Needs deeper investigation. 
+            // Merge 28.01: Quick Fix Attempt. Needs deeper investigation.
             if (!empty($possiblestarttimes)) {
                 $starttimeel->loadArray($possiblestarttimes);
             }

@@ -117,7 +117,7 @@ class edit_blocker_form extends dynamic_form {
      */
     protected function check_access_for_dynamic_submission(): void {
         $context = $this->get_context_for_dynamic_submission();
-        require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+        require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
     }
 
     /**
