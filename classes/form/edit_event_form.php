@@ -85,10 +85,6 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        // Set hidden field extra time.
-        $mform->addElement('hidden', 'extratime', $config->extratime);
-        $mform->setType('extratime', PARAM_INT);
-
         // Show the user who created the entry.
         $mform->addElement('text', 'usermodified', get_string('event_usermodified', 'mod_bookit'));
         $mform->setType('usermodified', PARAM_TEXT);
@@ -170,11 +166,11 @@ class edit_event_form extends dynamic_form {
         ];
         // Set time restrictions based on "editinternal" capability.
         if ($caneditinternal) {
-            $starttimearray['startyear'] = $config->eventminyears;
+            $starttimearray['startyear'] = $config->eventminyear;
         } else {
             $starttimearray['startyear'] = date("Y");
         }
-        $starttimearray['stopyear'] = $config->eventmaxyears;
+        $starttimearray['stopyear'] = $config->eventmaxyear;
 
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->addRule('startdate', null, 'required', null, 'client');

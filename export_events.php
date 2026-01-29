@@ -169,7 +169,7 @@ if ($room) {
     $lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//BookIT//Export//EN',
+    'PRODID:-//BookIt//Export//EN',
      ];
 
     foreach ($events as $ev) {

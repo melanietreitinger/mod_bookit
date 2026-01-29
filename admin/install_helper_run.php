@@ -27,9 +27,7 @@ use mod_bookit\local\install_helper;
 require_once('../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-require_login();
-require_capability('moodle/site:config', context_system::instance());
-require_sesskey();
+require_admin();
 
 // Mark installation helper as finished first to avoid session mutation issues.
 set_config('installhelperfinished', 1, 'mod_bookit');
@@ -37,7 +35,7 @@ set_config('installhelperfinished', 1, 'mod_bookit');
 // Run the installation helper.
 $rolesimported = install_helper::import_default_roles(false, false);
 $usersimported = install_helper::import_default_users(false, false);
-$result = install_helper::create_default_checklists(false, false);
+$result = install_helper::create_default_checklists(false, false); // Creates rooms as well.
 
 // Redirect back to settings.
 $returnurl = new moodle_url('/admin/settings.php', ['section' => 'mod_bookit_checklist']);

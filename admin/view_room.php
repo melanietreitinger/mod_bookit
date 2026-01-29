@@ -22,20 +22,23 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../config.php');
-global $CFG, $OUTPUT, $PAGE;
+use mod_bookit\local\tabs;
+
+require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-// Override active url for admin tree / breadcrumbs.
-navigation_node::override_active_url(new moodle_url('/mod/bookit/rooms.php'));
-admin_externalpage_setup('mod_bookit_rooms');
+$context = context_system::instance();
 
-$id = required_param('id', PARAM_INT);
+require_login();
+require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
+
+$id     = required_param('id', PARAM_INT);
+$action = optional_param('action', null, PARAM_ALPHANUMEXT);
+
+$url = new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $id]);
+
 $room = \mod_bookit\local\persistent\room::get_record(['id' => $id], MUST_EXIST);
 
-$url = new moodle_url('/mod/bookit/view_room.php', ['id' => $id]);
-
-$action = optional_param('action', null, PARAM_ALPHANUMEXT);
 if ($action === 'delete') {
     $weekplanroomid = required_param('weekplanroomid', PARAM_INT);
     $record = \mod_bookit\local\persistent\weekplan_room::get_record(['id' => $weekplanroomid], MUST_EXIST);
@@ -43,11 +46,11 @@ if ($action === 'delete') {
     redirect($url);
 }
 
+$PAGE->set_context($context);
 $PAGE->set_url($url);
+$PAGE->set_pagelayout('admin');
 $title = $room->get('name');
-$PAGE->set_heading($title);
 $PAGE->set_title($title);
-$PAGE->navbar->add($title, new moodle_url($PAGE->url));
 
 $PAGE->requires->js(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.js'), true);
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.css'));
@@ -58,32 +61,39 @@ $PAGE->requires->js_call_amd(
     'init',
     [
         $eventsource,
-        current_language(),
         [],
+        current_language(),
     ]
 );
 
 $table = new \mod_bookit\local\table\weekplan_room_table($id);
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading($title, 2);
+
+// Show tabs.
+$renderer = $PAGE->get_renderer('mod_bookit');
+$tabrow = tabs::get_tabrow($context);
+$id = optional_param('id', 'settings', PARAM_TEXT);
+echo $renderer->tabs($tabrow, $id);
 
 echo \core\output\html_writer::link(
-    new moodle_url('/mod/bookit/edit_room.php', ['id' => $id]),
+    new moodle_url('/mod/bookit/admin/edit_room.php', ['id' => $id]),
     get_string('edit_room_data', 'mod_bookit'),
     ['class' => 'btn btn-primary mb-3']
 );
 
-echo $OUTPUT->heading(get_string('weekplan_assignments', 'mod_bookit'), 2, 'mt-4');
+echo $OUTPUT->heading(get_string('weekplan_assignments', 'mod_bookit'), 3, 'mt-4');
 
 echo \core\output\html_writer::link(
-    new moodle_url('/mod/bookit/edit_weekplan_room.php', ['roomid' => $room->get('id')]),
+    new moodle_url('/mod/bookit/admin/edit_weekplan_room.php', ['roomid' => $room->get('id')]),
     get_string('new_weekplan_assignment', 'mod_bookit'),
     ['class' => 'btn btn-primary mb-2']
 );
 
 $table->out(48, false);
 
-echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'), 2, 'mt-4');
+echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'), 3, 'mt-4');
 
 echo '<div id="ec" class="mt-2 mb-2"></div>';
 

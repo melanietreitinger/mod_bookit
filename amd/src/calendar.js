@@ -32,7 +32,7 @@ import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
  * @param {String} globalPropertyName
  * @returns {Promise<void>}
  */
-const theGlobalProperty = (globalPropertyName) =>
+export const theGlobalProperty = (globalPropertyName) =>
     new Promise(resolve => (function loop() {
         if (!window[globalPropertyName]) {
             setTimeout(loop, 20);

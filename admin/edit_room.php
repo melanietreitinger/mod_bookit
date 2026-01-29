@@ -22,34 +22,31 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../config.php');
-global $CFG, $DB, $OUTPUT, $PAGE;
+require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-// Override active url for admin tree / breadcrumbs.
-navigation_node::override_active_url(new moodle_url('/mod/bookit/rooms.php'));
-admin_externalpage_setup('mod_bookit_rooms');
+$context = context_system::instance();
+
+require_login();
+require_capability('mod/bookit:managemasterchecklist', $context); // TODO: use other capability.
 
 $id = optional_param('id', null, PARAM_INT);
-
 $params = [];
 $room = null;
 if ($id) {
     $params['id'] = $id;
     $room = \mod_bookit\local\persistent\room::get_record(['id' => $id], MUST_EXIST);
-}
-
-$PAGE->set_url(new moodle_url('/mod/bookit/edit_room.php', $params));
-if ($id) {
     $title = get_string('edit_room', 'mod_bookit');
 } else {
     $title = get_string('new_room', 'mod_bookit');
 }
-$PAGE->set_heading($title);
-$PAGE->set_title($title);
-$PAGE->navbar->add($title, new moodle_url($PAGE->url));
 
-$returnurl = new moodle_url('/mod/bookit/view_room.php', ['id' => $id]);
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_room.php', $params));
+$PAGE->set_pagelayout('admin');
+$PAGE->set_title($title);
+
+$returnurl = new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $id]);
 
 $mform = new \mod_bookit\local\form\edit_room_form($PAGE->url, [
     'persistent' => $room,
@@ -57,9 +54,9 @@ $mform = new \mod_bookit\local\form\edit_room_form($PAGE->url, [
 
 if ($mform->is_cancelled()) {
     if ($id) {
-        redirect(new moodle_url('/mod/bookit/view_room.php', ['id' => $id]));
+        redirect(new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $id]));
     } else {
-        redirect(new moodle_url('/mod/bookit/rooms.php'));
+        redirect(new moodle_url('/mod/bookit/admin/rooms.php'));
     }
 } else if ($data = $mform->get_data()) {
     if ($data->id) {
@@ -70,9 +67,10 @@ if ($mform->is_cancelled()) {
         $room->create();
         $id = $room->get('id');
     }
-    redirect(new moodle_url('/mod/bookit/view_room.php', ['id' => $id]));
+    redirect(new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $id]));
 } // Else display form.
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading($title);
 $mform->display();
 echo $OUTPUT->footer();

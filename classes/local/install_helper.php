@@ -269,54 +269,6 @@ class install_helper {
     }
 
     /**
-     * Run complete installation setup including roles, users, rooms, and checklists.
-     *
-     * @param bool $force Force creation even if data exists
-     * @param bool $verbose Print verbose output
-     * @return bool True if installation was successful, false otherwise
-     */
-    public static function install_all_defaults(bool $force = false, bool $verbose = false): bool {
-        if ($verbose) {
-            mtrace('Starting complete BookIt installation...');
-        }
-
-        $success = true;
-
-        // Import roles first.
-        if ($verbose) {
-            mtrace('Step 1: Importing default roles...');
-        }
-        $rolesimported = self::import_default_roles($force, $verbose);
-        if (!$rolesimported && $verbose) {
-            mtrace('No roles were imported or roles already exist.');
-        }
-
-        // Import users (depends on roles).
-        if ($verbose) {
-            mtrace('Step 2: Importing default users...');
-        }
-        $usersimported = self::import_default_users($force, $verbose);
-        if (!$usersimported && $verbose) {
-            mtrace('No users were imported or users already exist.');
-        }
-
-        // Create default checklists (includes rooms creation).
-        if ($verbose) {
-            mtrace('Step 3: Creating default checklists and rooms...');
-        }
-        $checklistscreated = self::create_default_checklists($force, $verbose);
-        if (!$checklistscreated && $verbose) {
-            mtrace('No checklists were created or checklists already exist.');
-        }
-
-        if ($verbose) {
-            mtrace('BookIt installation completed.');
-        }
-
-        return $success;
-    }
-
-    /**
      * Import default roles from XML files in assets/roles/ directory.
      *
      * @param bool $force Force import even if role already exists
