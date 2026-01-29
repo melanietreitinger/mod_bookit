@@ -51,6 +51,7 @@ $PAGE->set_url($url);
 $PAGE->set_pagelayout('admin');
 $title = $room->get('name');
 $PAGE->set_title($title);
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 $PAGE->requires->js(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.js'), true);
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.css'));

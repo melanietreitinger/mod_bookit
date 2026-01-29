@@ -36,11 +36,12 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/weekplans.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('weekplans', 'bookit'));
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 $table = new \mod_bookit\local\table\weekplans_table();
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('pluginname', 'bookit'));
+echo $OUTPUT->heading(get_string('weekplans', 'bookit'));
 
 // Show tabs.
 $renderer = $PAGE->get_renderer('mod_bookit');

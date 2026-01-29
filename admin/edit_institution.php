@@ -45,6 +45,7 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_institution.php', $params));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($title);
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 $returnurl = new moodle_url('/mod/bookit/admin/institutions.php');
 

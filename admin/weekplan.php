@@ -42,6 +42,7 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/weekplan.php', ['id' => $id]));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($weekplan->name);
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($weekplan->name, 2);

@@ -11,7 +11,7 @@ Feature: Create master checklist category
       | serviceteam1 | Service   | Team     | serviceteam@example.com |
     And I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
-    And I click on "Checklist" "link"
+    #And I click on "Checklist" "link"
     And I click on "Run install helper" "link"
     And the following "role assigns" exist:
       | user         | role               | contextlevel | reference |
@@ -22,9 +22,9 @@ Feature: Create master checklist category
     Given I log in as "admin"
     And I change window size to "large"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
-    And I click on "Checklist" "link"
+    #And I click on "Checklist" "link"
     And I click on "Master checklist" "link"
-    And I should see "Master checklist" in the "#page-header" "css_element"
+    And I should see "Master checklist" in the "#page-content" "css_element"
     When I click on "add-checklist-category-button" "button"
     And I should see "Category name"
     And I should see "Required"
@@ -38,7 +38,7 @@ Feature: Create master checklist category
     And I change window size to "large"
     And I click on "BookIt" "link" in the ".primary-navigation" "css_element"
     And I click on "Master checklist" "link"
-    And I should see "Master checklist" in the "#page-header" "css_element"
+    And I should see "Master checklist" in the "#page-content" "css_element"
     When I click on "add-checklist-category-button" "button"
     And I should see "Category name"
     And I should see "Required"

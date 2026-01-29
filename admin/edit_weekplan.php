@@ -52,6 +52,7 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_weekplan.php', $params));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($title);
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 $mform = new \mod_bookit\local\form\edit_weekplan_form($PAGE->url);
 if ($id) {
@@ -72,5 +73,6 @@ if ($mform->is_cancelled()) {
 } // Else display form.
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading($title);
 $mform->display();
 echo $OUTPUT->footer();

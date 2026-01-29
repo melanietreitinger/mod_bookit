@@ -35,6 +35,8 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/calendar.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('calendar', 'mod_bookit'));
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
+
 $returnurl = new moodle_url('/mod/bookit/admin/calendar.php');
 
 require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
@@ -67,15 +69,13 @@ $config = get_config('mod_bookit');
 $mform->set_data($config);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('pluginname', 'mod_bookit'));
+echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'));
 
 // Show tabs.
 $renderer = $PAGE->get_renderer('mod_bookit');
 $tabrow = tabs::get_tabrow($context);
 $id = optional_param('id', 'settings', PARAM_TEXT);
 echo $renderer->tabs($tabrow, $id);
-
-echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'), 3);
 
 $mform->display();
 

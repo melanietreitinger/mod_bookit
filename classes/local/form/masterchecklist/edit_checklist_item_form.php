@@ -120,7 +120,7 @@ class edit_checklist_item_form extends dynamic_form {
 
         $duedateradio = [
             $mform->createElement('radio', 'duedate', '', get_string('noduedate', 'mod_bookit'), 'none'),
-            $mform->createElement('radio', 'duedate', '', get_string('beforeexam', 'mod_bookit'), 'before'),
+            $mform->createElement('radio', 'duedate', '', get_string('before_event', 'mod_bookit'), 'before'),
             $mform->createElement('radio', 'duedate', '', get_string('afterexam', 'mod_bookit'), 'after'),
         ];
 

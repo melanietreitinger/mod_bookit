@@ -49,6 +49,7 @@ $PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_weekplan_room.php', $param
 $returnurl = new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $roomid]);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($title);
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 $mform = new \mod_bookit\local\form\edit_weekplan_room_form($PAGE->url, [
     'persistent' => $weekplanroom,

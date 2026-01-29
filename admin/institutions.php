@@ -37,9 +37,10 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/institutions.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('institutions', 'mod_bookit'));
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('pluginname', 'mod_bookit'));
+echo $OUTPUT->heading(get_string('institutions', 'mod_bookit'));
 
 // Show tabs.
 $renderer = $PAGE->get_renderer('mod_bookit');

@@ -11,7 +11,6 @@ Feature: Edit master checklist category
       | serviceteam1 | Service   | Team     | serviceteam@example.com |
     And I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
-    And I click on "Checklist" "link"
     And I click on "Run install helper" "link"
     And the following "role assigns" exist:
       | user         | role               | contextlevel | reference |
@@ -22,7 +21,6 @@ Feature: Edit master checklist category
     Given I log in as "admin"
     And I change window size to "large"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
-    And I click on "Checklist" "link"
     And I click on "Master checklist" "link"
     And I should see "Exam Preparation"
     And I click on "button[id^='edit-checklistcategory-']" "css_element" in the "Exam Preparation" "table_row"

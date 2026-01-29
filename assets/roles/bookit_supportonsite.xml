@@ -3,7 +3,7 @@
 	<shortname>bookit_supportonsite</shortname>
 	<name>BookIt_Support on site</name>
 	<description>A person who supports an exam on site.</description>
-	<archetype>student</archetype>
+	<archetype>none</archetype>
 	<contextlevels>
 		<level>course</level>
 		<level>module</level>
