@@ -41,9 +41,9 @@ class tabs {
     /**
      * Generates a Moodle tabrow i.e. an array of tabs
      *
-     * @return array of tabobjects
+     * @param $context
+     * @return array
      * @throws coding_exception
-     * @throws dml_exception
      * @throws moodle_exception
      */
     public static function get_tabrow($context): array {
