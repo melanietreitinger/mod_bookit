@@ -153,7 +153,11 @@ const setValueAndTrigger = (sel, value) => {
     // Toggle dropdown.
     $toggle.on('click', (e) => {
         e.preventDefault();
-        isOpen() ? close() : open();
+        if (isOpen()) {
+            close();
+        } else {
+            open();
+        }
     });
 
     // Close on outside click.

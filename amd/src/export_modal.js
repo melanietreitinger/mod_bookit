@@ -96,7 +96,7 @@ define(['jquery', 'core/str'], function($, str) {
                     const e = endDate || fallback.endDate;
 
                     qs.start = s + 'T00:00';
-                    qs.end   = e + 'T23:59';
+                    qs.end = e + 'T23:59';
 
                     if (window.currentFilterParams) {
                         Object.keys(window.currentFilterParams).forEach(function(k) {
@@ -204,8 +204,8 @@ define(['jquery', 'core/str'], function($, str) {
                  */
                 $(document).on('click', '#bookit-export-confirm', function() {
                     const ids = $('#bookit-export-list input[type=checkbox]:enabled:checked')
-                        .map(function() { 
-                            return this.value; 
+                        .map(function() {
+                            return this.value;
                         }).get();
 
                     if (!ids.length) {
