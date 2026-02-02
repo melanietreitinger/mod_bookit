@@ -191,8 +191,9 @@ class event_manager {
             $events[] = [
                 'id' => $record->id,
                 'title' => ($record->name ?? $reserved) . ' (' . $roomname . ')',
-                'start' => date('Y-m-d H:i', $record->starttime),
-                'end' => date('Y-m-d H:i', $record->endtime),
+                //Fix attempt 02.02.2026 for broken view. Old code: 'start' => date('Y-m-d H:i', $record->starttime),
+                'start' => date('Y-m-d\TH:i:s', $record->starttime),
+                'end'   => date('Y-m-d\TH:i:s', $record->endtime),
                 'backgroundColor' => '#333399',
                 'textColor' => '#ffffff',
                 'extendedProps' => (object)['reserved' => !$record->name],
@@ -301,13 +302,26 @@ class event_manager {
     public static function get_faculties(): array {
         global $DB;
 
-        $sql = "SELECT DISTINCT institutionid
-              FROM {bookit_event}
-             WHERE institutionid IS NOT NULL
-               AND institutionid <> ''
-          ORDER BY institutionid ASC";
+        // Get institutions that already appear in events.
+        $fromevents = $DB->get_fieldset_sql("
+            SELECT DISTINCT institutionid
+            FROM {bookit_event}
+            WHERE institutionid IS NOT NULL
+            AND institutionid <> ''
+        ");
 
-        return $DB->get_fieldset_sql($sql);
+        // Also include active institutions from settings.
+        $fromsettings = $DB->get_fieldset_sql("
+            SELECT name
+            FROM {bookit_institution}
+            WHERE active = 1
+        ");
+
+        // Merge + normalize + sort.
+        $faculties = array_unique(array_filter(array_merge($fromevents, $fromsettings)));
+        sort($faculties, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $faculties;
     }
 
 
