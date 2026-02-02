@@ -31,6 +31,8 @@ use mod_bookit\local\manager\event_manager;
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+$PAGE->requires->css(new moodle_url('/mod/bookit/style.css'));
+
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
 
