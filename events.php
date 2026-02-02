@@ -31,7 +31,7 @@
  *
  * Optional GET parameters (all of them can be omitted):
  * room     (int)    → resource id of the room
- * faculty  (string) → department / faculty  (exact match)
+ * faculty  (string) →institutionID (exact match)
  * status   (int)    → bookingstatus 0-4
  * search   (string) → free-text search in event name OR faculty
  */

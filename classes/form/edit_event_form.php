@@ -414,10 +414,12 @@ class edit_event_form extends dynamic_form {
                 );
             }
 
-            $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
-            // Merge 28.01: Added fallback.
-            if (!$timeclicked) {
-                $timeclicked = $this->optional_param('startdate', null, PARAM_TEXT);
+            if (isset($_REQUEST['timeclicked']) && is_array($_REQUEST['timeclicked'])) {
+                // Fallback, when API not reachable. 
+                $timeclicked = optional_param_array('timeclicked', null, PARAM_RAW);
+                $timeclicked = is_array($timeclicked) ? ($timeclicked[0] ?? null) : $timeclicked;
+            } else {
+                $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
             }
             // Merge 28.01: Added default.
             $possiblestarttimes = [];
