@@ -191,7 +191,7 @@ class event_manager {
             $events[] = [
                 'id' => $record->id,
                 'title' => ($record->name ?? $reserved) . ' (' . $roomname . ')',
-                //Fix attempt 02.02.2026 for broken view. Old code: 'start' => date('Y-m-d H:i', $record->starttime),
+                // Fix attempt 02.02.2026 for broken view. Old code: 'start' => date('Y-m-d H:i', $record->starttime).
                 'start' => date('Y-m-d\TH:i:s', $record->starttime),
                 'end'   => date('Y-m-d\TH:i:s', $record->endtime),
                 'backgroundColor' => '#333399',
@@ -307,7 +307,6 @@ class event_manager {
             SELECT DISTINCT institutionid
             FROM {bookit_event}
             WHERE institutionid IS NOT NULL
-            AND institutionid <> ''
         ");
 
         // Also include active institutions from settings.
