@@ -89,7 +89,7 @@ class resource_manager {
          * @return array
          * @throws \dml_exception
          */
-   public static function get_rooms(): array {
+    public static function get_rooms(): array {
         global $DB;
 
         // Source (new, 02.02.2026): bookit_room table (persistent room).
