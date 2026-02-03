@@ -46,7 +46,8 @@ class rooms_table extends \table_sql {
         parent::__construct('mod_bookit-rooms_table');
         $this->define_baseurl($PAGE->url);
         $this->set_sql(
-            'r.id, r.name, r.active, r.description, r.eventcolor, w.name as activeweekplan, w.id as activeweekplanid',
+            'r.id, r.name, r.active, r.description, r.eventcolor, w.name as activeweekplan, w.id as activeweekplanid, ' .
+            'r.shortname, r.location, r.seats ',
             '{bookit_room} r ' .
             'LEFT JOIN {bookit_weekplan_room} wr ON r.id = wr.roomid AND wr.starttime <= :time1 AND ' .
                 '(wr.endtime IS NULL OR wr.endtime >= :time2) ' .
@@ -55,9 +56,20 @@ class rooms_table extends \table_sql {
             ['time1' => time(), 'time2' => time()]
         );
         $this->column_nosort = ['internalnotes', 'tools'];
-        $this->define_columns(['name', 'description', 'activeweekplan', 'tools']);
+        $this->define_columns([
+            'name',
+            'shortname',
+            'seats',
+            'location',
+            'description',
+            'activeweekplan',
+            'tools',
+        ]);
         $this->define_headers([
             get_string('name'),
+            get_string('shortname', 'mod_bookit'),
+            get_string('seats', 'mod_bookit'),
+            get_string('location', 'mod_bookit'),
             get_string('description'),
             get_string('active_weekplan', 'mod_bookit'),
             get_string('tools', 'mod_bookit'),

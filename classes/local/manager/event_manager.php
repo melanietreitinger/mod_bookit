@@ -84,7 +84,7 @@ class event_manager {
 
         $sqlreserved =
             'SELECT e.id, NULL as name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
-                r.name as roomname ' .
+                r.name as roomname, r.shortname, r.location ' .
             'FROM {bookit_event} e ' .
             'JOIN {bookit_room} r ON r.id = e.roomid ' .
             'WHERE endtime >= :starttime AND starttime <= :endtime';
@@ -93,7 +93,7 @@ class event_manager {
         if ($viewalldetailsofevent) {
             $sql =
                 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
-                     r.name as roomname ' .
+                     r.name as roomname, r.shortname, r.location ' .
                 'FROM {bookit_event} e ' .
                 'JOIN {bookit_room} r ON r.id = e.roomid ' .
                 'WHERE endtime >= :starttime AND starttime <= :endtime';
@@ -103,7 +103,7 @@ class event_manager {
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
             // Every user: can view own events in detail.
             $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
-                    r.name as roomname
+                    r.name as roomname, r.shortname, r.location
                     FROM {bookit_event} e
                     JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
@@ -139,7 +139,7 @@ class event_manager {
                 'title' => [
                     'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
                         date('H:i', $record->endtime) . '</h6>' .
-                        ($record->name ?? $reserved) . ' (' . $record->roomname . ')',
+                        ($record->name ?? $reserved) . " ($record->roomname: $record->shortname, $record->location)",
                 ],
                 'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
                 'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
