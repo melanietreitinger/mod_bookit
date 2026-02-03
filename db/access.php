@@ -70,6 +70,12 @@ $capabilities = [
                 'contextlevel' => CONTEXT_MODULE,
                 'archetypes' => [],
         ],
+        'mod/bookit:managebasics' => [
+            'riskbitmask' => RISK_CONFIG,
+            'captype' => 'write',
+            'contextlevel' => CONTEXT_SYSTEM,
+            'archetypes' => [],
+        ],
         'mod/bookit:managemasterchecklist' => [
                 'riskbitmask' => RISK_CONFIG,
                 'captype' => 'write',
