@@ -415,7 +415,7 @@ class edit_event_form extends dynamic_form {
             }
 
             if (isset($_REQUEST['timeclicked']) && is_array($_REQUEST['timeclicked'])) {
-                // Fallback, when API not reachable. 
+                // Fallback, when API not reachable.
                 $timeclicked = optional_param_array('timeclicked', null, PARAM_RAW);
                 $timeclicked = is_array($timeclicked) ? ($timeclicked[0] ?? null) : $timeclicked;
             } else {
