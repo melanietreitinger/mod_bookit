@@ -47,53 +47,60 @@ class tabs {
      * @throws moodle_exception
      */
     public static function get_tabrow(context $context): array {
-        // Calendar Settings.
-        $targeturl = new moodle_url('/mod/bookit/admin/calendar.php', ['id' => 'calendar']);
-        $tabrow[] = new tabobject(
-            'calendar',
-            $targeturl,
-            get_string('calendar', 'mod_bookit')
-        );
+        $canmanagebasics = has_capability('mod/bookit:managebasics', $context);
+        $canmanagechecklists = has_capability('mod/bookit:managemasterchecklist', $context);
 
-        // Tab to the rooms page.
-        $targeturl = new moodle_url('/mod/bookit/admin/rooms.php', ['id' => 'rooms']);
-        $tabrow[] = new tabobject(
-            'rooms',
-            $targeturl,
-            get_string('rooms', 'mod_bookit')
-        );
+        if ($canmanagebasics) {
+            // Calendar Settings.
+            $targeturl = new moodle_url('/mod/bookit/admin/calendar.php', ['id' => 'calendar']);
+            $tabrow[] = new tabobject(
+                'calendar',
+                $targeturl,
+                get_string('calendar', 'mod_bookit')
+            );
 
-        // Tab to the weekplan page.
-        $targeturl = new moodle_url('/mod/bookit/admin/weekplans.php', ['id' => 'weekplans']);
-        $tabrow[] = new tabobject(
-            'weekplans',
-            $targeturl,
-            get_string('weekplans', 'mod_bookit')
-        );
+            // Tab to the rooms page.
+            $targeturl = new moodle_url('/mod/bookit/admin/rooms.php', ['id' => 'rooms']);
+            $tabrow[] = new tabobject(
+                'rooms',
+                $targeturl,
+                get_string('rooms', 'mod_bookit')
+            );
 
-        // Tab to the institutions page.
-        $targeturl = new moodle_url('/mod/bookit/admin/institutions.php', ['id' => 'institutions']);
-        $tabrow[] = new tabobject(
-            'institutions',
-            $targeturl,
-            get_string('institutions', 'mod_bookit')
-        );
+            // Tab to the weekplan page.
+            $targeturl = new moodle_url('/mod/bookit/admin/weekplans.php', ['id' => 'weekplans']);
+            $tabrow[] = new tabobject(
+                'weekplans',
+                $targeturl,
+                get_string('weekplans', 'mod_bookit')
+            );
 
-        // Tab to the master checklist page.
-        $targeturl = new moodle_url('/mod/bookit/admin/master_checklist.php', ['id' => 'master_checklist']);
-        $tabrow[] = new tabobject(
-            'master_checklist',
-            $targeturl,
-            get_string('master_checklist', 'mod_bookit')
-        );
+            // Tab to the institutions page.
+            $targeturl = new moodle_url('/mod/bookit/admin/institutions.php', ['id' => 'institutions']);
+            $tabrow[] = new tabobject(
+                'institutions',
+                $targeturl,
+                get_string('institutions', 'mod_bookit')
+            );
+        }
 
-        // Tab to the checklist settings page.
-        $targeturl = new moodle_url('/mod/bookit/admin/checklist.php', ['id' => 'checklist']);
-        $tabrow[] = new tabobject(
-            'checklist',
-            $targeturl,
-            get_string('checklist', 'mod_bookit')
-        );
+        if ($canmanagechecklists) {
+            // Tab to the master checklist page.
+            $targeturl = new moodle_url('/mod/bookit/admin/master_checklist.php', ['id' => 'master_checklist']);
+            $tabrow[] = new tabobject(
+                'master_checklist',
+                $targeturl,
+                get_string('master_checklist', 'mod_bookit')
+            );
+
+            // Tab to the checklist settings page.
+            $targeturl = new moodle_url('/mod/bookit/admin/checklist.php', ['id' => 'checklist']);
+            $tabrow[] = new tabobject(
+                'checklist',
+                $targeturl,
+                get_string('checklist', 'mod_bookit')
+            );
+        }
 
         // Real admin settings.
         if (has_capability('moodle/site:config', $context)) {
