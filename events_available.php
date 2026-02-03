@@ -26,7 +26,11 @@ require_once(__DIR__ . '/../../config.php');
 
 use mod_bookit\local\manager\event_manager;
 
-require_admin();
+require_login();
+
+$context = context_system::instance();
+require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
+
 $roomid = optional_param('roomid', 0, PARAM_INT);
 $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);

@@ -22,24 +22,40 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../config.php');
-global $CFG, $OUTPUT, $PAGE;
+use mod_bookit\local\table\rooms_table;
+use mod_bookit\local\tabs;
+
+require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('mod_bookit_weekplans');
-$PAGE->set_url(new moodle_url('/mod/bookit/weekplans.php'));
-$PAGE->set_heading(get_string('weekplans', 'mod_bookit'));
+$context = context_system::instance();
 
-$table = new \mod_bookit\local\table\weekplans_table();
+require_login();
+require_capability('mod/bookit:managemasterchecklist', $context);
+
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/mod/bookit/admin/rooms.php'));
+$PAGE->set_pagelayout('admin');
+$PAGE->set_title(get_string('rooms', 'mod_bookit'));
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading(get_string('rooms', 'mod_bookit'));
+
+// Show tabs.
+$renderer = $PAGE->get_renderer('mod_bookit');
+$tabrow = tabs::get_tabrow($context);
+$id = optional_param('id', 'settings', PARAM_TEXT);
+echo $renderer->tabs($tabrow, $id);
 
 echo $OUTPUT->render(new \core\output\single_button(
-    new moodle_url('/mod/bookit/edit_weekplan.php'),
-    get_string('new_weekplan', 'mod_bookit'),
+    new moodle_url('/mod/bookit/admin/edit_room.php'),
+    get_string('new_room', 'mod_bookit'),
     'post',
     single_button::BUTTON_PRIMARY
 )) . '<br><br>';
+
+$table = new rooms_table();
 
 $table->out(48, false);
 

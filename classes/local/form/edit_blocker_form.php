@@ -116,7 +116,8 @@ class edit_blocker_form extends dynamic_form {
      * Checks if current user has access to this form, otherwise throws exception
      */
     protected function check_access_for_dynamic_submission(): void {
-        require_admin();
+        $context = $this->get_context_for_dynamic_submission();
+        require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
     }
 
     /**

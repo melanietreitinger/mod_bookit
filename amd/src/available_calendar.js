@@ -45,12 +45,12 @@ export async function init(eventsource, capabilities, lang) {
     prefetchStrings('mod_bookit', ['add_blocker']);
     prefetchStrings('core', ['today', 'month', 'week']);
     prefetchStrings('calendar', ['day', 'upcomingevents']);
-    const strRequestBooking = await getString('add_blocker', 'mod_bookit');
-    const strToday = await getString('today');
-    const strMonth = await getString('month');
-    const strWeek = await getString('week');
-    const strDay = await getString('day', 'calendar');
-    const strList = await getString('upcomingevents', 'calendar');
+    const strrequestbooking = await getString('add_blocker', 'mod_bookit');
+    const strtoday = await getString('today');
+    const strmonth = await getString('month');
+    const strweek = await getString('week');
+    const strday = await getString('day', 'calendar');
+    const strlist = await getString('upcomingevents', 'calendar');
 
     // Define viewtype.
     let viewType = 'timeGridWeek';
@@ -73,16 +73,16 @@ export async function init(eventsource, capabilities, lang) {
         eventStartEditable: false,
         eventDurationEditable: false,
         buttonText: function(text) {
-            text.today = strToday;
-            text.dayGridMonth = strMonth;
-            text.timeGridWeek = strWeek;
-            text.timeGridDay = strDay;
-            text.listWeek = strList;
+            text.today = strtoday;
+            text.dayGridMonth = strmonth;
+            text.timeGridWeek = strweek;
+            text.timeGridDay = strday;
+            text.listWeek = strlist;
             return text;
         },
         customButtons: {
             addButton: {
-                text: strRequestBooking,
+                text: strrequestbooking,
                 click: function() {
                     const modalForm = new ModalForm({
                         formClass: "mod_bookit\\local\\form\\edit_blocker_form",

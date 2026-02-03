@@ -70,7 +70,7 @@ class rooms_table extends \table_sql {
      * @return string.
      */
     public function col_name($row) {
-        $url = new \moodle_url('/mod/bookit/view_room.php', ['id' => $row->id]);
+        $url = new \moodle_url('/mod/bookit/admin/view_room.php', ['id' => $row->id]);
         return \html_writer::link($url, $row->name);
     }
 
@@ -84,7 +84,7 @@ class rooms_table extends \table_sql {
     public function col_activeweekplan($row) {
         if (isset($row->activeweekplanid)) {
             return \html_writer::link(
-                new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->activeweekplanid]),
+                new \moodle_url('/mod/bookit/admin/weekplan.php', ['id' => $row->activeweekplanid]),
                 $row->activeweekplan,
             );
         }
@@ -104,7 +104,7 @@ class rooms_table extends \table_sql {
 
         $alt = get_string('edit');
         $icon = 't/edit';
-        $url = new \moodle_url('/mod/bookit/view_room.php', ['id' => $row->id]);
+        $url = new \moodle_url('/mod/bookit/admin/view_room.php', ['id' => $row->id]);
         $output .= $OUTPUT->action_icon(
             $url,
             new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),

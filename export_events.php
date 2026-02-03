@@ -123,15 +123,15 @@ if (!empty($ids)) {
 
 /* additional UI filters ------------------------------------------------ */
 $events = array_filter($events, static function ($e) use ($room, $faculty, $status): bool {
-    if ($room     && (int)$room !== (int)($e->roomid ?? 0)) {
+    // Note: Room is not applied here yet, that doesnt work.
+    if ($faculty && $faculty !== ($e->institutionid ?? '')) {
         return false;
     }
-    if ($faculty  && $faculty !== ($e->institutionid ?? '')) {
-        return false;
-    }
+
     if ($status >= 0 && $status !== (int) ($e->bookingstatus ?? -1)) {
         return false;
     }
+
     return true;
 });
 
@@ -156,13 +156,20 @@ if ($events) {
     }
 }
 
+// Apply room filter after enrichment.
+if ($room) {
+    $events = array_filter($events, function ($ev) use ($room) {
+        return (int)$ev->resourceid === (int)$room;
+    });
+}
+
 /* ------------------------------------------------------------------
    2.  Build VCALENDAR
    ------------------------------------------------------------------ */
     $lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//BookIT//Export//EN',
+    'PRODID:-//BookIT//Exportg//EN',
      ];
 
     foreach ($events as $ev) {

@@ -32,7 +32,7 @@ import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
  * @param {String} globalPropertyName
  * @returns {Promise<void>}
  */
-const theGlobalProperty = (globalPropertyName) =>
+export const theGlobalProperty = (globalPropertyName) =>
     new Promise(resolve => (function loop() {
         if (!window[globalPropertyName]) {
             setTimeout(loop, 20);
@@ -115,10 +115,6 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             return text;
         },
 
-        /* Loading + delivery logs */
-        /* loading: function(isLoading) {
-            console.log('[BookIT] loading =', isLoading);
-        }, */
         eventsSet: function(events) {
             // Comment console.log('[BookIT] eventsSet: received', events.length, 'events');
             if (events.length) {
@@ -151,6 +147,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
                     });
+                    // XXX TODO: Merge 28.01 Was not part of vadyms_branch, caused issues. Was commented out.
                     modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
                     modalForm.show();
                 }
@@ -173,7 +170,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     formClass: 'mod_bookit\\form\\edit_event_form',
                     args: {
                         cmid: cmid,
-                        timeclicked: startdate,
+                        startdate: startdate,
                     },
                     modalConfig: {title: getString('edit_event', 'mod_bookit')},
                 });
@@ -203,6 +200,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                 calendar.refetchEvents();
             });
+            // XXX TODO: Merge 28.01: This was not part of my branch, might cause issues. Commented out for debugging.
             modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
             modalForm.show();
         },

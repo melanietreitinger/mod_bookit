@@ -25,7 +25,15 @@
 
 namespace mod_bookit\local;
 
+use coding_exception;
+use context_system;
+use core\exception\moodle_exception;
+use core\hook\navigation\primary_extend;
+use dml_exception;
+use moodle_url;
 use navigation_node;
+use pix_icon;
+use function has_capability;
 
 /**
  * Hook callbacks for BookIt plugin.
@@ -36,37 +44,44 @@ class hook_callbacks {
      *
      * This adds a BookIt settings link to the primary navigation for users with the capability.
      *
-     * @param \core\hook\navigation\primary_extend $hook
+     * @param primary_extend $hook
+     * @throws coding_exception
+     * @throws moodle_exception
+     * @throws dml_exception
      */
-    public static function primary_navigation_extend(\core\hook\navigation\primary_extend $hook): void {
-        global $PAGE;
+    public static function primary_navigation_extend(primary_extend $hook): void {
+        global $PAGE, $OUTPUT;
 
-        $context = \context_system::instance();
+        $context = context_system::instance();
 
         // Check if user has the required capability.
-        if (!\has_capability('mod/bookit:managemasterchecklist', $context) || is_siteadmin()) {
+        // XXX TODO: use other capability.
+        if (!has_capability('mod/bookit:managemasterchecklist', $context)) {
             return;
         }
 
         // Get the primary navigation.
         $primarynav = $hook->get_primaryview();
 
+        $icon = $OUTPUT->pix_icon('i/settings', get_string('settings_overview', 'mod_bookit'));
+
         // Add BookIt settings node to the primary navigation.
         $node = $primarynav->add(
-            get_string('pluginname', 'mod_bookit'),
-            new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'),
+            $icon . get_string('pluginname', 'mod_bookit'),
+            new moodle_url('/mod/bookit/admin/calendar.php?id=calendar'),
             navigation_node::TYPE_CUSTOM,
             null,
             'bookit_settings',
-            new \pix_icon('i/settings', '')
+            new pix_icon('i/settings', '')
         );
 
-        // Set it as active if we're on any bookit admin page.
-        if (
-            $PAGE->url->compare(new \moodle_url('/mod/bookit/settings_overview_nonadmin.php'), URL_MATCH_BASE) ||
-            $PAGE->url->compare(new \moodle_url('/mod/bookit/master_checklist.php'), URL_MATCH_BASE)
-        ) {
-            $node->make_active();
+        $tabslist = tabs::get_tabrow($context);
+
+        foreach ($tabslist as $tab) {
+            // Set it as active if we're on any bookit admin page.
+            if (preg_match('#mod/bookit/admin#', new moodle_url('/mod/bookit/admin/' . $tab->id . '.php'))) {
+                $node->make_active();
+            }
         }
     }
 }

@@ -22,35 +22,32 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../config.php');
-global $CFG, $DB, $OUTPUT, $PAGE;
+require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-// Override active url for admin tree / breadcrumbs.
-navigation_node::override_active_url(new moodle_url('/mod/bookit/institutions.php'));
-admin_externalpage_setup('mod_bookit_institutions');
+$context = context_system::instance();
+
+require_login();
+require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
 
 $id = optional_param('id', null, PARAM_INT);
-
 $params = [];
 $institution = null;
 if ($id) {
     $params['id'] = $id;
     $institution = \mod_bookit\local\persistent\institution::get_record(['id' => $id], MUST_EXIST);
-}
-
-$PAGE->set_url(new moodle_url('/mod/bookit/edit_institution.php', $params));
-if ($id) {
     $title = get_string('edit_institution', 'mod_bookit');
 } else {
     $title = get_string('new_institution', 'mod_bookit');
 }
 
-$PAGE->set_heading($title);
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_institution.php', $params));
+$PAGE->set_pagelayout('admin');
 $PAGE->set_title($title);
-$PAGE->navbar->add($title, new moodle_url($PAGE->url));
+$PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
-$returnurl = new moodle_url('/mod/bookit/institutions.php');
+$returnurl = new moodle_url('/mod/bookit/admin/institutions.php');
 
 $mform = new \mod_bookit\local\form\edit_institution_form($PAGE->url, [
     'persistent' => $institution,
@@ -70,5 +67,6 @@ if ($mform->is_cancelled()) {
 } // Else display form.
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading($title);
 $mform->display();
 echo $OUTPUT->footer();

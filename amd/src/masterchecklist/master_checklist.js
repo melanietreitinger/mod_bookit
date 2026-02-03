@@ -64,7 +64,7 @@ export default class extends BaseComponent {
         });
         this.addEventListener(this.getElement(this.selectors.ROOM_SELECT), 'change', (e) => {
 
-            // TODO we need to dispatch all selected values
+            // XXX TODO we need to dispatch all selected values
 
             this.reactive.dispatch('roomChanged', {options: e.target.selectedOptions});
         });
@@ -220,7 +220,7 @@ export default class extends BaseComponent {
                 id: event.element.id,
                 name: event.element.name,
                 order: event.element.order,
-                masterid: 1, // TODO get from state
+                masterid: 1, // XXX TODO get from state
                 type: 'category',
             })
             .then(({html, js}) => {
@@ -431,7 +431,7 @@ export default class extends BaseComponent {
 
             items.forEach(itemId => {
 
-                // TODO fix rooms
+                // XXX TODO fix rooms
 
                 const itemElement = document.querySelector(`tr[data-bookit-checklistitem-id="${itemId}"]`);
 

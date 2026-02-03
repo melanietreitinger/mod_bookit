@@ -93,6 +93,7 @@ class room extends persistent {
             ],
             'preventoverlap' => [
                 'type' => PARAM_INT,
+                'default' => self::OVERLAPPING_NONE,
                 'choices' => [
                     self::OVERLAPPING_ALL,
                     self::OVERLAPPING_ALLOW_NON_CONFIRMED,

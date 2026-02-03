@@ -83,4 +83,32 @@ class resource_manager {
         }
         return $resources;
     }
+        /**
+         * Get list of rooms as [id => name].
+         *
+         * @return array
+         * @throws \dml_exception
+         */
+   public static function get_rooms(): array {
+        global $DB;
+
+        // Source (new, 02.02.2026): bookit_room table (persistent room).
+        $rooms = [];
+        $records = $DB->get_records('bookit_room', null, 'name ASC', 'id, name');
+        foreach ($records as $r) {
+            $rooms[(int)$r->id] = $r->name;
+        }
+        if (!empty($rooms)) {
+            return $rooms;
+        }
+
+        // Fallback: legacy rooms stored as resources.
+        $resources = self::get_resources();
+        if (!empty($resources['Rooms']['resources'])) {
+            foreach ($resources['Rooms']['resources'] as $rid => $r) {
+                $rooms[$rid] = $r['name'];
+            }
+        }
+        return $rooms;
+    }
 }

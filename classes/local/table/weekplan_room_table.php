@@ -84,7 +84,7 @@ class weekplan_room_table extends \table_sql {
      */
     public function col_weekplanname(object $row) {
         return html_writer::link(
-            new \moodle_url('/mod/bookit/weekplan.php', ['id' => $row->weekplanid]),
+            new \moodle_url('/mod/bookit/admin/weekplan.php', ['id' => $row->weekplanid]),
             htmlentities($row->weekplanname)
         );
     }
@@ -100,7 +100,7 @@ class weekplan_room_table extends \table_sql {
 
         $alt = get_string('edit');
         $icon = 't/edit';
-        $url = new \moodle_url('/mod/bookit/edit_weekplan_room.php', ['id' => $row->id, 'roomid' => $this->roomid]);
+        $url = new \moodle_url('/mod/bookit/admin/edit_weekplan_room.php', ['id' => $row->id, 'roomid' => $this->roomid]);
         $output .= $OUTPUT->action_icon(
             $url,
             new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
@@ -109,7 +109,7 @@ class weekplan_room_table extends \table_sql {
         );
 
         $alt = get_string('delete');
-        $output .= $OUTPUT->action_icon(new \moodle_url('/mod/bookit/view_room.php', [
+        $output .= $OUTPUT->action_icon(new \moodle_url('/mod/bookit/admin/view_room.php', [
             'id' => $this->roomid, 'action' => 'delete', 'weekplanroomid' => $row->id,
         ]), new \pix_icon('t/delete', $alt));
 

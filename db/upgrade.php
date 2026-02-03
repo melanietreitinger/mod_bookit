@@ -32,5 +32,23 @@
  * @throws ddl_table_missing_exception
  */
 function xmldb_bookit_upgrade(int $oldversion): bool {
+    global $DB;
+    $dbman = $DB->get_manager();
+
+    // Set this to the SAME value you set in mod/bookit/version.php ($plugin->version).
+    $newversion = 2025411305;
+
+    if ($oldversion < $newversion) {
+        $table = new xmldb_table('bookit_event');
+
+        $old = new xmldb_field('department', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semester');
+
+        $new = new xmldb_field('institutionid', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semester');
+
+        if ($dbman->field_exists($table, $old) && !$dbman->field_exists($table, $new)) {
+            $dbman->rename_field($table, $old, 'institutionid');
+        }
+        upgrade_mod_savepoint(true, $newversion, 'bookit');
+    }
     return true;
 }
