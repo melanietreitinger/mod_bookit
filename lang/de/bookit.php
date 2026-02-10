@@ -222,6 +222,8 @@ $string['new_room'] = 'Neuer Raum';
 $string['new_weekplan'] = 'Neuer Wochenplan';
 $string['new_weekplan_assignment'] = 'Neue Wochenplan-Zuweisung';
 $string['no_selection'] = 'Keine Auswahl';
+$string['no_slot_available'] = '<span class="text-danger">Kein Slot für diesen Tag und Raum mehr verfügbar.</span>';
+$string['no_weekplan_defined'] = '<span class="text-danger">Kein Wochenplan für diesen Tag und Raum definiert.</span>';
 $string['nocontent'] = 'Keine Haupt-Checklisten-Kategorien gefunden. Erstellen Sie die erste Kategorie!';
 $string['noduedate'] = 'Kein Fälligkeitsdatum';
 $string['noevents'] = 'Keine Ereignisse in der aktuellen Ansicht.';

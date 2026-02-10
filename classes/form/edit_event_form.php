@@ -182,6 +182,9 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
 
         $mform->addElement('select', 'starttime');
+        $mform->addRule('starttime', null, 'required', null, 'client');
+
+        $mform->addElement('static', 'starttime_explanation', '', '');
 
         // Add a static field to explain extra time.
         $mform->addElement(
@@ -433,7 +436,7 @@ class edit_event_form extends dynamic_form {
                 $startdate = $timeclicked->setTime(0, 0);
                 $this->_form->setDefault('startdate', $timeclicked->getTimestamp());
 
-                $possiblestarttimes = get_possible_starttimes::list_possible_starttimes(
+                [$possiblestarttimes, ] = get_possible_starttimes::list_possible_starttimes(
                     \DateTime::createFromImmutable($startdate),
                     $eventdefaultduration,
                     array_key_first($roomoptions),
@@ -624,11 +627,12 @@ class edit_event_form extends dynamic_form {
                 /** @var \MoodleQuickForm_select $starttimeel */
                 $starttimeel = $mform->getElement('starttime');
                 $starttimeel->removeOptions();
-                $starttimeel->loadArray(get_possible_starttimes::list_possible_starttimes(
+                [$possiblestarttimes, ] = get_possible_starttimes::list_possible_starttimes(
                     (new \DateTime())->setTimestamp($data->startdate),
                     $data->duration,
                     $data->roomid
-                ));
+                );
+                $starttimeel->loadArray($possiblestarttimes);
             }
         }
     }

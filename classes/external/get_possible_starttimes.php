@@ -70,7 +70,8 @@ class get_possible_starttimes extends external_api {
      * @param DateTime $date
      * @param int $duration
      * @param int $roomid
-     * @return array Associative array of [Timestamp => Time string].
+     * @return array Pair of (associative array of [Timestamp => Time string])
+     * and optional integer in case of no starttimes. 1 Means there is no weekplan assigned to that day.
      */
     public static function list_possible_starttimes(DateTime $date, int $duration, int $roomid): array {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
@@ -82,7 +83,7 @@ class get_possible_starttimes extends external_api {
 
         $weekplanid = weekplan_room::get_applicable_weekplanid($timestamp, $roomid);
         if (!$weekplanid || !$room->get('active')) {
-            return [];
+            return [[], 1];
         }
 
         // String 'N' gets 1 for Monday through 7 for Sunday.
@@ -137,7 +138,11 @@ class get_possible_starttimes extends external_api {
             }
         }
 
-        return $starttimes;
+        if (empty($starttimes)) {
+            return [[], 0];
+        }
+
+        return [$starttimes, null];
     }
 
     /**
@@ -172,8 +177,13 @@ class get_possible_starttimes extends external_api {
         $date->setTime(0, 0);
         $date->setDate($year, $month, $day);
 
-        $starttimes = self::list_possible_starttimes($date, $duration, $roomid);
+        [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid);
         $transformed = [];
+
+        if ($status !== null && !has_capability('mod/bookit:managebasics', $context)) {
+            // Only show users with managebasics cap detailed error.
+            $status = 0;
+        }
 
         foreach ($starttimes as $starttime => $starttimestring) {
             $transformed[] = [
@@ -182,20 +192,31 @@ class get_possible_starttimes extends external_api {
             ];
         }
 
-        return $transformed;
+        return [
+            'slots' => $transformed,
+            'status' => $status,
+        ];
     }
 
     /**
      * Description of get_possible_slots return value.
      *
-     * @return external_multiple_structure
+     * @return external_single_structure
      */
-    public static function execute_returns(): external_multiple_structure {
-        return new external_multiple_structure(
+    public static function execute_returns(): external_single_structure {
+        return
             new external_single_structure([
+                'slots' => new external_multiple_structure(
+                    new external_single_structure([
                         'timestamp' => new external_value(PARAM_INT),
                         'string' => new external_value(PARAM_TEXT),
-                ]),
-        );
+                    ])
+                ),
+                'status' => new external_value(
+                    PARAM_INT,
+                    'Constant describing why there are no slots',
+                    VALUE_OPTIONAL,
+                ),
+            ]);
     }
 }
