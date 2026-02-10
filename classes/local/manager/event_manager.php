@@ -82,124 +82,73 @@ class event_manager {
         $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
 
-        $sqlbase = "
-            SELECT
-                e.id,
-                e.name,
-                e.starttime,
-                e.endtime,
-                MIN(r.name) AS roomname
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-            LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
-            WHERE e.endtime >= :starttime
-            AND e.starttime <= :endtime
-            GROUP BY e.id
-        ";
+        $sqlreserved =
+            'SELECT e.id, NULL as name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+                r.name as roomname, r.shortname, r.location ' .
+            'FROM {bookit_event} e ' .
+            'JOIN {bookit_room} r ON r.id = e.roomid ' .
+            'WHERE endtime >= :starttime AND starttime <= :endtime';
 
-        // Reserved name rows (no details allowed).
-        $sqlreserved = "
-            SELECT
-                e.id,
-                NULL AS name,
-                e.starttime,
-                e.endtime,
-                MIN(r.name) AS roomname
-                FROM {bookit_event} e
-                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
-                WHERE e.endtime >= :starttime
-                AND e.starttime <= :endtime
-                GROUP BY e.id
-        ";
-
-        $params = [
-            'starttime' => $starttimestamp,
-            'endtime'   => $endtimestamp,
-        ];
-
-        // Capability-based SQL selection.
+        // Service-Team: can view all events in detail.
         if ($viewalldetailsofevent) {
-            // Service-team: see all details of all events.
-            $sql = $sqlbase;
+            $sql =
+                'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+                     r.name as roomname, r.shortname, r.location ' .
+                'FROM {bookit_event} e ' .
+                'JOIN {bookit_room} r ON r.id = e.roomid ' .
+                'WHERE endtime >= :starttime AND starttime <= :endtime';
+            $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
         } else if ($viewalldetailsofownevent) {
-            // Normal examiner: see only own events with details, everything else is reserved (no details).
-            $sql = "
-                SELECT
-                    e.id,
-                    e.name,
-                    e.starttime,
-                    e.endtime,
-                    MIN(r.name) AS roomname,
-                    0 AS reserved
-                FROM {bookit_event} e
-                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
-                WHERE e.endtime  >= :starttime1
-                AND e.starttime <= :endtime1
-                AND (
-                        e.usermodified     = :uid1
-                    OR e.personinchargeid = :uid2
-                    OR e.otherexaminers LIKE :likeuid1
-                )
-                GROUP BY e.id, e.name, e.starttime, e.endtime
-
-                UNION ALL
-
-                SELECT
-                    e.id,
-                    NULL AS name,
-                    e.starttime,
-                    e.endtime,
-                    MIN(r.name) AS roomname,
-                    1 AS reserved
-                FROM {bookit_event} e
-                LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-                LEFT JOIN {bookit_resource} r ON r.id = er.resourceid AND r.categoryid = 1
-                WHERE e.endtime  >= :starttime2
-                AND e.starttime <= :endtime2
-                AND NOT (
-                        e.usermodified     = :uid3
-                    OR e.personinchargeid = :uid4
-                    OR e.otherexaminers LIKE :likeuid2
-                )
-                GROUP BY e.id, e.starttime, e.endtime
-            ";
-
+            $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
+            $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
+            // Every user: can view own events in detail.
+            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+                    r.name as roomname, r.shortname, r.location
+                    FROM {bookit_event} e
+                    JOIN {bookit_room} r ON r.id = e.roomid
+                    WHERE endtime >= :starttime1 AND starttime <= :endtime1
+                    AND (usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
+                    UNION ' . $sqlreserved . '
+                    AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
             $params = [
                 'starttime1' => $starttimestamp,
-                'endtime1'   => $endtimestamp,
-                'uid1'       => $USER->id,
-                'uid2'       => $USER->id,
-                'likeuid1'   => "%{$USER->id}%",
-                'starttime2' => $starttimestamp,
-                'endtime2'   => $endtimestamp,
-                'uid3'       => $USER->id,
-                'uid4'       => $USER->id,
-                'likeuid2'   => "%{$USER->id}%",
-            ];
+                'endtime1' => $endtimestamp,
+                'usermodified1' => $USER->id,
+                'personinchargeid1' => $USER->id,
+                'otherexaminers1' => $USER->id,
+                'starttime' => $starttimestamp,
+                'endtime' => $endtimestamp,
+                'usermodified' => $USER->id,
+                'personinchargeid' => $USER->id,
+                'otherexaminers' => $USER->id];
         } else {
-            // Student, support, etc.: only see reserved (no details).
+            // Every user: can view no details.
             $sql = $sqlreserved;
+            $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
         }
-        $records = $DB->get_records_sql($sql, $params);
-        // Output formatting.
-        $events = [];
-        foreach ($records as $record) {
-            $roomname = $record->roomname ?? '-';
 
+        // Order events by starttime.
+        $sql .= ' ORDER BY starttime';
+
+        $records = $DB->get_records_sql($sql, $params);
+        $events = [];
+
+        foreach ($records as $record) {
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved) . ' (' . $roomname . ')',
-                // Fix attempt 02.02.2026 for broken view. Old code: 'start' => date('Y-m-d H:i', $record->starttime).
-                'start' => date('Y-m-d\TH:i:s', $record->starttime),
-                'end'   => date('Y-m-d\TH:i:s', $record->endtime),
-                'backgroundColor' => '#333399',
-                'textColor' => '#ffffff',
-                'extendedProps' => (object)['reserved' => !$record->name],
+                'title' => [
+                    'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
+                        date('H:i', $record->endtime) . '</h6>' .
+                        ($record->name ?? $reserved) . " ($record->roomname: $record->shortname, $record->location)",
+                ],
+                'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
+                'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
+                'backgroundColor' => $record->eventcolor,
+                'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
+                'extendedProps' => (object) ['reserved' => !$record->name],
+                'classNames' => 'hide-event-time',
             ];
         }
-
         return $events;
     }
 

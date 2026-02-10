@@ -215,6 +215,7 @@ $string['missingdata'] = 'Fehlende erforderliche Daten für Import';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt ist ein PlugIn für die Buchung von Services, Prüfungsterminen, Räumen oder anderer Resscourcen.';
 $string['modulenameplural'] = 'BookIt Instanzen';
+$string['n_seats'] = '{$a} Plätze';
 $string['new_checklistcategory'] = 'Neue Checklisten-Kategorie';
 $string['new_checklistitem'] = 'Neues Checklisten-Element';
 $string['new_institution'] = 'Neue Institution';

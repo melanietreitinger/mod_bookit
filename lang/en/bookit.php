@@ -223,6 +223,7 @@ $string['missingdata'] = 'Missing required data for import';
 $string['modulename'] = 'BookIt';
 $string['modulename_help'] = 'BookIt is a tool to book services or items, e.g. exam dates, rooms and ressources.';
 $string['modulenameplural'] = 'BookIt instances';
+$string['n_seats'] = '{$a} seats';
 $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
 $string['new_institution'] = 'New institution';
