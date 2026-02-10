@@ -22,6 +22,8 @@
  */
 
 import * as Ajax from 'core/ajax';
+import {getString} from 'core/str';
+import {prefetchStrings} from 'core/prefetch';
 
 /**
  * Initializes the calendar.
@@ -33,6 +35,8 @@ export function initPossibleStarttimesRefresh() {
         return;
     }
 
+    void prefetchStrings('mod_bookit', ['no_slot_available', 'no_weekplan_defined']);
+
     const roomEl = formEl.querySelector('select[name="roomid"]');
     const durationEl = formEl.querySelector('select[name="duration"]');
     const dateDayEl = formEl.querySelector('select[name="startdate[day]"]');
@@ -41,12 +45,18 @@ export function initPossibleStarttimesRefresh() {
 
     const timeEl = formEl.querySelector('select[name="starttime"]');
 
+    const starttimeEl = document.querySelector('.fitem:has(select[name="starttime"])');
+    const starttimeExplanationEl = document.querySelector('.fitem:has(.form-control-static[data-name="starttime_explanation"])');
+    const starttimeExplanationTextEl = starttimeExplanationEl.querySelector(
+        '.form-control-static[data-name="starttime_explanation"]'
+    );
+
     const refreshStarttimes = async() => {
         const year = parseInt(dateYearEl.value);
         const month = parseInt(dateMonthEl.value);
         const day = parseInt(dateDayEl.value);
 
-        const starttimes = await Ajax.call([{
+        const {slots: starttimes, status} = await Ajax.call([{
             methodname: 'mod_bookit_get_possible_starttimes',
             args: {
                 year: year,
@@ -61,6 +71,15 @@ export function initPossibleStarttimesRefresh() {
 
         while (timeEl.options.length) {
             timeEl.options.remove(0);
+        }
+
+        starttimeEl.hidden = status !== null;
+        starttimeExplanationEl.hidden = status === null;
+
+        if (status !== null) {
+            starttimeExplanationTextEl.innerHTML =
+                await getString(status === 1 ? 'no_weekplan_defined' : 'no_slot_available',
+                    'mod_bookit');
         }
 
         for (let slot of starttimes) {

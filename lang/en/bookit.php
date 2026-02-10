@@ -231,6 +231,8 @@ $string['new_room'] = 'New room';
 $string['new_weekplan'] = 'New week plan';
 $string['new_weekplan_assignment'] = 'New weekplan assignment';
 $string['no_selection'] = 'No selection';
+$string['no_slot_available'] = '<span class="text-danger">No slot available for that day and room.</span>';
+$string['no_weekplan_defined'] = '<span class="text-danger">No weekplan defined for that day and room.</span>';
 $string['nocontent'] = 'No master checklist categories found. Create the first category!';
 $string['noduedate'] = 'No due date';
 $string['noevents']     = 'No events in current view.';
