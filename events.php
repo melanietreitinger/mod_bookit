@@ -146,13 +146,11 @@ foreach ($events as &$ev) {
     $row = $DB->get_record_sql("
         SELECT e.bookingstatus,
                e.institutionid,
-               r.id   AS roomid,
+               e.roomid,
                r.name AS roomname
           FROM {bookit_event} e
-     LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
-     LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
-         WHERE e.id = ?
-      LIMIT 1", [$evid]);
+     LEFT JOIN {bookit_room} r ON r.id = e.roomid
+         WHERE e.id = ?", [$evid]);
 
     // Skip if nothing found.
     if (!$row) {

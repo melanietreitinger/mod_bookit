@@ -242,34 +242,56 @@ class event_manager {
         return $DB->get_records_sql($sql, $params);
     }
 
+
     /**
-     * Get all faculties (departments) that appear in bookit events.
+     * Get all institutions that should appear in the filter dropdown.
      *
-     * @return array List of faculty names (strings).
+     * Returns an associative array  id => name  so the caller can use
+     * the id as the <option> value and the name as its label.
+     *
+     * Includes every active institution plus any institution that is
+     * already referenced by an event (even if meanwhile deactivated).
+     *
+     * @return array  [int institutionid => string name]
      * @throws \dml_exception
      */
     public static function get_faculties(): array {
         global $DB;
 
-        // Get institutions that already appear in events.
+        // Active institutions from settings.
+        $active = $DB->get_records('bookit_institution', ['active' => 1], 'name ASC', 'id, name');
+
+        $result = [];
+        foreach ($active as $inst) {
+            $result[(int) $inst->id] = $inst->name;
+        }
+
+        // Institution IDs that are referenced by existing events.
         $fromevents = $DB->get_fieldset_sql("
             SELECT DISTINCT institutionid
-            FROM {bookit_event}
-            WHERE institutionid IS NOT NULL
+              FROM {bookit_event}
+             WHERE institutionid IS NOT NULL
         ");
 
-        // Also include active institutions from settings.
-        $fromsettings = $DB->get_fieldset_sql("
-            SELECT name
-            FROM {bookit_institution}
-            WHERE active = 1
-        ");
-
-        // Merge + normalize + sort.
-        $faculties = array_unique(array_filter(array_merge($fromevents, $fromsettings)));
-        sort($faculties, SORT_NATURAL | SORT_FLAG_CASE);
-
-        return $faculties;
+        // Include referenced-but-inactive institutions. 
+        if (!empty($fromevents)) {
+            [$insql, $params] = $DB->get_in_or_equal($fromevents, SQL_PARAMS_NAMED);
+            $extra = $DB->get_records_select(
+                'bookit_institution',
+                "id $insql",
+                $params,
+                'name ASC',
+                'id, name'
+            );
+            foreach ($extra as $inst) {
+                if (!isset($result[(int) $inst->id])) {
+                    $result[(int) $inst->id] = $inst->name;
+                }
+            }
+        }
+        // Sort by name, preserving id keys.
+        asort($result, SORT_NATURAL | SORT_FLAG_CASE);
+        return $result;
     }
 
 

@@ -169,10 +169,10 @@ foreach ($rooms as $rid => $rname) {
     ];
 }
 
-foreach ($faculties as $fac) {
+foreach ($faculties as $fid => $fname) {
     $templatecontext['faculties'][] = [
-        'value' => (string)$fac,
-        'label' => format_string($fac),
+        'value' => (string) $fid,
+        'label' => format_string($fname),
     ];
 }
 
