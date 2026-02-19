@@ -107,9 +107,9 @@ class event_manager {
                     FROM {bookit_event} e
                     JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
-                    AND (usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
+                    AND (e.usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
                     UNION ' . $sqlreserved . '
-                    AND usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
+                    AND e.usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
             $params = [
                 'starttime1' => $starttimestamp,
                 'endtime1' => $endtimestamp,
