@@ -169,7 +169,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     formClass: 'mod_bookit\\form\\edit_event_form',
                     args: {
                         cmid: cmid,
-                        startdate: startdate,
+                        timeclicked: startdate,
                     },
                     modalConfig: {title: getString('edit_event', 'mod_bookit')},
                 });

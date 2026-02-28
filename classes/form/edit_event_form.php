@@ -417,86 +417,40 @@ class edit_event_form extends dynamic_form {
                     false
                 );
             }
-
-            if (isset($_REQUEST['timeclicked']) && is_array($_REQUEST['timeclicked'])) {
-                // Fallback, when API not reachable.
-                $timeclicked = optional_param_array('timeclicked', null, PARAM_RAW);
-                $timeclicked = is_array($timeclicked) ? ($timeclicked[0] ?? null) : $timeclicked;
-            } else {
-                $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
-            }
-            // Merge 28.01: Added default.
-            $possiblestarttimes = [];
-            $selectedtime = null;
-            $timeclickedstamp = null;
-            $startdate = null;
-
-            if ($timeclicked && $roomoptions) {
-                $timeclicked = new \DateTimeImmutable($timeclicked);
-                $timeclickedstamp = $timeclicked->getTimestamp();
-                $startdate = $timeclicked->setTime(0, 0);
-                $this->_form->setDefault('startdate', $timeclicked->getTimestamp());
-
-                [$possiblestarttimes, ] = get_possible_starttimes::list_possible_starttimes(
-                    \DateTime::createFromImmutable($startdate),
-                    $eventdefaultduration,
-                    array_key_first($roomoptions),
-                );
-
-                $smallestdiff = 1e9;
-                $selectedtime = null;
-
-                foreach ($possiblestarttimes as $possiblestarttime => $str) {
-                    if (abs($possiblestarttime - $timeclickedstamp) < $smallestdiff) {
-                        $smallestdiff = abs($possiblestarttime - $timeclickedstamp);
-                        $selectedtime = $possiblestarttime;
-                    }
-                }
-            }
-            // Merge 28.01: fallback to "old behaviour" (15-min grid) if new possible_starttimes failed.
-            if (empty($possiblestarttimes) || !is_array($possiblestarttimes)) {
-                if ($startdate instanceof \DateTimeImmutable) {
-                    $baseday = $startdate;
-                } else if ($timeclicked) {
-                    try {
-                        $baseday = (new \DateTimeImmutable($timeclicked))->setTime(0, 0);
-                    } catch (\Exception $e) {
-                        $baseday = (new \DateTimeImmutable('now'))->setTime(0, 0);
-                    }
-                } else {
-                    $baseday = (new \DateTimeImmutable('now'))->setTime(0, 0);
-                }
-
-                // Build "old style" 15-min slots for that day.
-                $startts = $baseday->getTimestamp();
-                for ($m = 0; $m < 24 * 60; $m += 15) {
-                    $ts = $startts + ($m * 60);
-                    $possiblestarttimes[$ts] = userdate($ts, get_string('strftimetime', 'langconfig'));
-                }
-
-                // Pick default: closest to click if we have it, else first slot.
-                if ($timeclickedstamp !== null) {
-                    $selectedtime = $timeclickedstamp;
-                } else {
-                    $selectedtime = array_key_first($possiblestarttimes);
-                }
-            }
-
-            /** @var \MoodleQuickForm_select $starttimeel */
-            $starttimeel = $mform->getElement('starttime');
-            $starttimeel->removeOptions();
-
-            // Merge 28.01: Quick Fix Attempt. Needs deeper investigation.
-            if (!empty($possiblestarttimes)) {
-                $starttimeel->loadArray($possiblestarttimes);
-            }
-            if ($selectedtime !== null) {
-                $mform->setDefault('starttime', $selectedtime);
-            }
-
-            $starttimeel->loadArray($possiblestarttimes);
-            $mform->setDefault('starttime', $selectedtime);
         }
+
+        $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
+        $possiblestarttimes = [];
+        $selectedtime = null;
+
+        if ($timeclicked && $roomoptions) {
+            $timeclicked = new \DateTimeImmutable($timeclicked);
+            $timeclickedstamp = $timeclicked->getTimestamp();
+            $startdate = $timeclicked->setTime(0, 0);
+            $this->_form->setDefault('startdate', $timeclicked->getTimestamp());
+
+            [$possiblestarttimes, ] = get_possible_starttimes::list_possible_starttimes(
+                \DateTime::createFromImmutable($startdate),
+                $eventdefaultduration,
+                array_key_first($roomoptions),
+            );
+
+            $smallestdiff = 1e9;
+            $selectedtime = null;
+
+            foreach ($possiblestarttimes as $possiblestarttime => $str) {
+                if (abs($possiblestarttime - $timeclickedstamp) < $smallestdiff) {
+                    $smallestdiff = abs($possiblestarttime - $timeclickedstamp);
+                    $selectedtime = $possiblestarttime;
+                }
+            }
+        }
+
+        /** @var \MoodleQuickForm_select $starttimeel */
+        $starttimeel = $mform->getElement('starttime');
+        $starttimeel->removeOptions();
+        $starttimeel->loadArray($possiblestarttimes);
+        $mform->setDefault('starttime', $selectedtime);
     }
 
     /**
