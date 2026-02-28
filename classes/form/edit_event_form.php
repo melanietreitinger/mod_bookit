@@ -349,10 +349,14 @@ class edit_event_form extends dynamic_form {
         }
 
         if ($caneditinternal) {
+            // Don't use PARAM_INT, because it converts an empty text field to 0.
+            // In our case, an empty field should mean be the inherited default.
             $mform->addElement('text', 'extratimebefore', get_string('settings_extratime_before', 'mod_bookit'));
-            $mform->setType('extratimebefore', PARAM_INT);
+            $mform->setType('extratimebefore', PARAM_ALPHANUM);
+            $mform->addRule('extratimebefore', null, 'numeric', null, 'client');
             $mform->addElement('text', 'extratimeafter', get_string('settings_extratime_after', 'mod_bookit'));
-            $mform->setType('extratimeafter', PARAM_INT);
+            $mform->setType('extratimeafter', PARAM_ALPHANUM);
+            $mform->addRule('extratimeafter', null, 'numeric', null, 'client');
         } else {
             $mform->addElement('hidden', 'extratimebefore');
             $mform->addElement('hidden', 'extratimeafter');
@@ -675,6 +679,14 @@ class edit_event_form extends dynamic_form {
 
         if (!is_int($formdata->usermodified)) {
             unset($formdata->usermodified);
+        }
+
+        if (!is_int($formdata->extratimebefore)) {
+            $formdata->extratimebefore = null;
+        }
+
+        if (!is_int($formdata->extratimeafter)) {
+            $formdata->extratimeafter = null;
         }
 
         $event = bookit_event::from_record($formdata);
