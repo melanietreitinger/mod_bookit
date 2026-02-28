@@ -268,6 +268,7 @@ $string['role_help'] = 'These roles will be assigned to the checklist item and w
 $string['room'] = 'Room';
 $string['room_active'] = 'Active';
 $string['room_active_help'] = 'If this room will be available to select in new events.';
+$string['room_doesnt_have_enough_seats'] = 'The selected room doesn\'t have enough seats for your requested number of participants.';
 $string['roommode'] = 'Room mode';
 $string['roommode_free'] = 'Free selection inside slots';
 $string['roommode_slots'] = 'Bookings can only start at beginnings of slots';

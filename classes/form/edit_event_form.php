@@ -741,4 +741,14 @@ class edit_event_form extends dynamic_form {
         ];
         return new moodle_url('/mod/bookit/view.php', $params);
     }
+
+    #[\Override]
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        $room = room::get_record(['id' => $data['roomid']]);
+        if ($room->get('seats') != 0 && $room->get('seats') < $data['participantsamount']) {
+            $errors['roomid'] = get_string('room_doesnt_have_enough_seats', 'mod_bookit');
+        }
+        return $errors;
+    }
 }

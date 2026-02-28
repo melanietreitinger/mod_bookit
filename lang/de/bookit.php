@@ -259,6 +259,7 @@ $string['role_help'] = 'Diese Rollen werden dem Checklisten-Element zugewiesen u
 $string['room'] = 'Raum';
 $string['room_active'] = 'Aktiv';
 $string['room_active_help'] = 'Wenn ja, können buchende Personen diesen Raum auswählen..';
+$string['room_doesnt_have_enough_seats'] = 'Der gewählte Raum hat nicht genügend Plätze für die angegebene Anzahl an Teilnehmenden.';
 $string['roommode'] = 'Raummodus';
 $string['roommode_free'] = 'Freie Auswahl innerhalb der Slots';
 $string['roommode_slots'] = 'Buchungen können nur an Anfängen von Slots starten';
