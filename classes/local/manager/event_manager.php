@@ -134,12 +134,24 @@ class event_manager {
         $events = [];
 
         foreach ($records as $record) {
+            $roominfo = $record->roomname;
+            $addinfos = [];
+            if ($record->shortname) {
+                $addinfos[] = $record->shortname;
+            }
+            if ($record->location) {
+                $addinfos[] = $record->location;
+            }
+            if ($addinfos) {
+                $roominfo .= ': ' . implode(', ', $addinfos);
+            }
+
             $events[] = [
                 'id' => $record->id,
                 'title' => [
                     'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
                         date('H:i', $record->endtime) . '</h6>' .
-                        ($record->name ?? $reserved) . " ($record->roomname: $record->shortname, $record->location)",
+                        ($record->name ?? $reserved) . " ($roominfo)",
                 ],
                 'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
                 'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
