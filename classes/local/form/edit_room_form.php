@@ -25,6 +25,7 @@ namespace mod_bookit\local\form;
 
 use mod_bookit\local\formelement\colorpicker;
 use mod_bookit\local\formelement\colorpicker_rule;
+use mod_bookit\local\persistent\room;
 use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
@@ -70,8 +71,15 @@ class edit_room_form extends \core\form\persistent {
         $mform->addElement('checkbox', 'active', get_string('room_active', 'mod_bookit'));
 
         $mform->addElement('select', 'roommode', get_string('roommode', 'mod_bookit'), [
-            0 => get_string('roommode_free', 'mod_bookit'),
-            1 => get_string('roommode_slots', 'mod_bookit'),
+            room::MODE_FREE => get_string('roommode_free', 'mod_bookit'),
+            room::MODE_SLOTS => get_string('roommode_slots', 'mod_bookit'),
+            room::MODE_TOP_TO_BOTTOM => get_string('roommode_top_to_bottom', 'mod_bookit'),
+        ]);
+
+        $mform->addElement('select', 'preventoverlap', get_string('overlapping_mode', 'mod_bookit'), [
+            room::OVERLAPPING_ALLOW_ALL => get_string('overlapping_allow_all', 'mod_bookit'),
+            room::OVERLAPPING_ALLOW_NON_CONFIRMED => get_string('overlapping_non_confirmed', 'mod_bookit'),
+            room::OVERLAPPING_ALLOW_NONE => get_string('overlapping_allow_none', 'mod_bookit'),
         ]);
 
         $mform->addElement('checkbox', 'overwrite_extratimebefore', get_string('overwrite_extratimebefore', 'mod_bookit'));
@@ -93,8 +101,6 @@ class edit_room_form extends \core\form\persistent {
         );
         $mform->setDefault('extratimeafter', get_config('bookit', 'extratimeafter'));
         $mform->hideIf('extratimeafter', 'overwrite_extratimeafter');
-
-        // XXX TODO: add preventoverlap setting.
 
         $this->add_action_buttons();
     }

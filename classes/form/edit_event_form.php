@@ -631,7 +631,8 @@ class edit_event_form extends dynamic_form {
                 [$possiblestarttimes, ] = get_possible_starttimes::list_possible_starttimes(
                     (new \DateTime())->setTimestamp($data->startdate),
                     $data->duration,
-                    $data->roomid
+                    $data->roomid,
+                    $id
                 );
                 $starttimeel->loadArray($possiblestarttimes);
             }

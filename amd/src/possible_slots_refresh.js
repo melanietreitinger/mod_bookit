@@ -27,11 +27,13 @@ import {prefetchStrings} from 'core/prefetch';
 
 /**
  * Initializes the calendar.
+ * @param {int} cmId
+ * @param {?int} exceptEventId
  */
-export function initPossibleStarttimesRefresh() {
+export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
     const formEl = document.querySelector('.modal-body form');
     if (!formEl) {
-        setTimeout(initPossibleStarttimesRefresh, 50);
+        setTimeout(initPossibleStarttimesRefresh, 50, cmId, exceptEventId);
         return;
     }
 
@@ -59,11 +61,13 @@ export function initPossibleStarttimesRefresh() {
         const {slots: starttimes, status} = await Ajax.call([{
             methodname: 'mod_bookit_get_possible_starttimes',
             args: {
+                cmid: cmId,
                 year: year,
                 month: month,
                 day: day,
                 duration: durationEl.value,
                 roomid: roomEl.value,
+                excepteventid: exceptEventId,
             }
         }])[0];
 

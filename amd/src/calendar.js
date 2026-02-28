@@ -147,8 +147,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
                     });
-                    // XXX TODO: Merge 28.01 Was not part of vadyms_branch, caused issues. Was commented out.
-                    modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
+                    modalForm.addEventListener(modalForm.events.LOADED, () => initPossibleStarttimesRefresh(cmid));
                     modalForm.show();
                 }
             }
@@ -177,7 +176,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
                 });
-                modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
+                modalForm.addEventListener(modalForm.events.LOADED, () => initPossibleStarttimesRefresh(cmid));
                 modalForm.show();
             }
         },
@@ -200,8 +199,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                 calendar.refetchEvents();
             });
-            // XXX TODO: Merge 28.01: This was not part of my branch, might cause issues. Commented out for debugging.
-            modalForm.addEventListener(modalForm.events.LOADED, initPossibleStarttimesRefresh);
+            modalForm.addEventListener(modalForm.events.LOADED, () => initPossibleStarttimesRefresh(cmid, id));
             modalForm.show();
         },
 
