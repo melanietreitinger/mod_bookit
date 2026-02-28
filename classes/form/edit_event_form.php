@@ -192,7 +192,7 @@ class edit_event_form extends dynamic_form {
             'static',
             'extratime_label',
             get_string('event_extratime_label', 'mod_bookit'),
-            get_string('event_extratime_description', 'mod_bookit', $config->extratime)
+            get_string('event_extratime_description', 'mod_bookit')
         );
 
         // Add "amount of students" field.
@@ -663,7 +663,7 @@ class edit_event_form extends dynamic_form {
         $formdata->resources = $mappings;
 
         // Calculate endtime.
-        $formdata->endtime = $formdata->starttime + $formdata->duration * 60 + $formdata->extratime * 60;
+        $formdata->endtime = $formdata->starttime + $formdata->duration * 60;
 
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));
