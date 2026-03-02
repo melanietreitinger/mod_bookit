@@ -54,11 +54,6 @@ class hook_callbacks {
 
         $context = context_system::instance();
 
-        // Admins can go through admin settings.
-        if (has_capability('moodle/site:config', $context)) {
-            return;
-        }
-
         // Check if user has the required capability.
         // XXX TODO: use other capability.
         if (!has_capability('mod/bookit:managemasterchecklist', $context)) {
