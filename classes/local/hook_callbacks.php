@@ -79,7 +79,7 @@ class hook_callbacks {
 
         foreach ($tabslist as $tab) {
             // Set it as active if we're on any bookit admin page.
-            if (preg_match('#mod/bookit/admin#', new moodle_url('/mod/bookit/admin/' . $tab->id . '.php'))) {
+            if (preg_match('#mod/bookit/admin#', $PAGE->url)) {
                 $node->make_active();
             }
         }

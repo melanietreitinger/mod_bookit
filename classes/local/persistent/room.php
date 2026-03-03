@@ -38,15 +38,17 @@ class room extends persistent {
 
     /** @var int Constant for allowing free placement inside slots. */
     const MODE_FREE = 0;
-
     /** @var int Constant for only allowing events to start at starts of slots. */
     const MODE_SLOTS = 1;
+    /** @var int Constant for only begin at the top and going down */
+    const MODE_TOP_TO_BOTTOM = 2;
+
     /** @var int */
-    const OVERLAPPING_ALL = 0;
+    const OVERLAPPING_ALLOW_ALL = 0;
     /** @var int */
     const OVERLAPPING_ALLOW_NON_CONFIRMED = 1;
     /** @var int */
-    const OVERLAPPING_NONE = 2;
+    const OVERLAPPING_ALLOW_NONE = 2;
 
     /**
      * Return the definition of the properties of this model.
@@ -76,7 +78,11 @@ class room extends persistent {
             ],
             'roommode' => [
                 'type' => PARAM_INT,
-                'choices' => [0, 1],
+                'choices' => [
+                    self::MODE_FREE,
+                    self::MODE_SLOTS,
+                    self::MODE_TOP_TO_BOTTOM,
+                ],
             ],
             'seats' => [
                 'type' => PARAM_INT,
@@ -93,11 +99,11 @@ class room extends persistent {
             ],
             'preventoverlap' => [
                 'type' => PARAM_INT,
-                'default' => self::OVERLAPPING_NONE,
+                'default' => self::OVERLAPPING_ALLOW_NONE,
                 'choices' => [
-                    self::OVERLAPPING_ALL,
+                    self::OVERLAPPING_ALLOW_ALL,
                     self::OVERLAPPING_ALLOW_NON_CONFIRMED,
-                    self::OVERLAPPING_NONE,
+                    self::OVERLAPPING_ALLOW_NONE,
                 ],
             ],
         ];

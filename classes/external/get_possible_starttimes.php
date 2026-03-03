@@ -56,12 +56,59 @@ class get_possible_starttimes extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
+                'cmid' => new external_value(PARAM_INT),
                 'year' => new external_value(PARAM_INT),
                 'month' => new external_value(PARAM_INT),
                 'day' => new external_value(PARAM_INT),
                 'duration' => new external_value(PARAM_INT),
                 'roomid' => new external_value(PARAM_INT),
+                'excepteventid' => new external_value(
+                    PARAM_INT,
+                    'Optionally, an eventid to exclude from blocking events',
+                    VALUE_OPTIONAL
+                ),
         ]);
+    }
+
+    /**
+     * Returns the timeproperties of all events that lay in the specified time frame in the specified room.
+     * @param int $starttime
+     * @param int $endtime
+     * @param room $room
+     * @param int|null $excepteventid Optionally, an eventid to exclude from the blocking events.
+     * @return object[]
+     */
+    private static function get_blocking_events_in_range(int $starttime, int $endtime, room $room, ?int $excepteventid = null) {
+        global $DB;
+
+        if ($room->get('preventoverlap') === room::OVERLAPPING_ALLOW_ALL) {
+            return [];
+        }
+
+        $sqlconditions = ['TRUE'];
+        $params = [];
+
+        if ($room->get('preventoverlap') === room::OVERLAPPING_ALLOW_NON_CONFIRMED) {
+            $blockingstatuses = [2];
+            [$sqlpart, $params] = $DB->get_in_or_equal($blockingstatuses, SQL_PARAMS_NAMED);
+            $sqlconditions[] = "e.bookingstatus $sqlpart";
+        } // Else the room is in room::OVERLAPPING_ALLOW_NONE mode.
+
+        if ($excepteventid) {
+            $sqlconditions[] = 'e.id != :excepteventid';
+            $params['excepteventid'] = $excepteventid;
+        }
+
+        $params['starttime'] = $starttime;
+        $params['endtime'] = $endtime;
+        $params['roomid'] = $room->get('id');
+
+        $sql = join(' AND ', $sqlconditions);
+        return $DB->get_records_sql("SELECT e.id, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter
+        FROM {bookit_event} e
+        WHERE e.starttime <= :endtime AND e.endtime >= :starttime AND e.roomid = :roomid
+            AND $sql
+        ", $params);
     }
 
     /**
@@ -70,10 +117,11 @@ class get_possible_starttimes extends external_api {
      * @param DateTime $date
      * @param int $duration
      * @param int $roomid
+     * @param ?int $excepteventid Optionally, an eventid to exclude from blocking events.
      * @return array Pair of (associative array of [Timestamp => Time string])
      * and optional integer in case of no starttimes. 1 Means there is no weekplan assigned to that day.
      */
-    public static function list_possible_starttimes(DateTime $date, int $duration, int $roomid): array {
+    public static function list_possible_starttimes(DateTime $date, int $duration, int $roomid, ?int $excepteventid = null): array {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
 
         $extratimebefore = $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore');
@@ -89,9 +137,10 @@ class get_possible_starttimes extends external_api {
         // String 'N' gets 1 for Monday through 7 for Sunday.
         $weekday = (int) $date->format('N') - 1;
         $weekstarttime = $timestamp - weekplan_manager::SECONDS_PER_DAY * $weekday;
+        $dayendtime = $timestamp + weekplan_manager::SECONDS_PER_DAY;
         $slots = weekplan_manager::get_weekplanslots_for_weekday($weekplanid, $weekday);
-        $blockers = blocker::get_blockers_for_room($roomid, $timestamp, $timestamp + weekplan_manager::SECONDS_PER_DAY);
-
+        $blockers = blocker::get_blockers_for_room($roomid, $timestamp, $dayendtime);
+        $blockingevents = self::get_blocking_events_in_range($timestamp, $dayendtime, $room, $excepteventid);
         $timeline = new bool_timeline(false);
 
         foreach ($slots as $slot) {
@@ -104,11 +153,19 @@ class get_possible_starttimes extends external_api {
             $timeline->set_range($blocker->get('starttime'), $blocker->get('endtime'), false);
         }
 
+        foreach ($blockingevents as $blockingevent) {
+            $timeline->set_range(
+                $blockingevent->starttime - ($blockingevent->extratimebefore ?? $extratimebefore) * 60,
+                $blockingevent->endtime + ($blockingevent->extratimeafter ?? $extratimeafter) * 60,
+                false
+            );
+        }
+
         $starttimes = [];
         $freemodegrid = get_config('mod_bookit', 'eventstartstepwidth') * 60;
 
         foreach ($slots as $slot) {
-            if ($room->get('roommode') == room::MODE_FREE) {
+            if ($room->get('roommode') == room::MODE_FREE || $room->get('roommode') == room::MODE_TOP_TO_BOTTOM) {
                 $offset = $slot->starttime % $freemodegrid;
                 if ($offset != 0) {
                     $slot->starttime += $freemodegrid - $offset;
@@ -122,9 +179,12 @@ class get_possible_starttimes extends external_api {
                         )
                     ) {
                         $starttimes[$time] = (new DateTime())->setTimestamp($time)->format("H:i");
+                        if ($room->get('roommode') == room::MODE_TOP_TO_BOTTOM) {
+                            break;
+                        }
                     }
                 }
-            } else {
+            } else if ($room->get('roommode') == room::MODE_SLOTS) {
                 if (
                     $timeline->does_complete_range_equal(
                         $slot->starttime,
@@ -148,28 +208,42 @@ class get_possible_starttimes extends external_api {
     /**
      * Execution for get_possible_slots external api.
      *
+     * @param int $cmid
      * @param int $year
      * @param int $month
      * @param int $day
      * @param int $duration
      * @param int $roomid
+     * @param ?int $excepteventid Optionally, an eventid to exclude from the blocking events.
      * @return array
      */
-    public static function execute(int $year, int $month, int $day, int $duration, int $roomid): array {
+    public static function execute(
+        int $cmid,
+        int $year,
+        int $month,
+        int $day,
+        int $duration,
+        int $roomid,
+        ?int $excepteventid
+    ): array {
         [
-                'year' => $year,
-                'month' => $month,
-                'day' => $day,
-                'duration' => $duration,
-                'roomid' => $roomid,
+            'cmid' => $cmid,
+            'year' => $year,
+            'month' => $month,
+            'day' => $day,
+            'duration' => $duration,
+            'roomid' => $roomid,
+            'excepteventid' => $excepteventid,
         ] = self::validate_parameters(self::execute_parameters(), [
-                'year' => $year,
-                'month' => $month,
-                'day' => $day,
-                'duration' => $duration,
-                'roomid' => $roomid,
+            'cmid' => $cmid,
+            'year' => $year,
+            'month' => $month,
+            'day' => $day,
+            'duration' => $duration,
+            'roomid' => $roomid,
+            'excepteventid' => $excepteventid,
         ]);
-        $context = \context_system::instance();
+        $context = \context_module::instance($cmid);
         self::validate_context($context);
         require_capability('mod/bookit:addevent', $context);
 
@@ -177,7 +251,7 @@ class get_possible_starttimes extends external_api {
         $date->setTime(0, 0);
         $date->setDate($year, $month, $day);
 
-        [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid);
+        [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid, $excepteventid);
         $transformed = [];
 
         if ($status !== null && !has_capability('mod/bookit:managebasics', $context)) {
