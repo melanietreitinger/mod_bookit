@@ -67,13 +67,14 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     // String variables
     await prefetchStrings('mod_bookit', ['addbooking', 'edit_event']);
     await prefetchStrings('core', ['today', 'month', 'week']);
-    await prefetchStrings('calendar', ['day', 'upcomingevents']);
+    await prefetchStrings('calendar', ['day']);
+    await prefetchStrings('mod_bookit', ['list']);
     const strRequestBooking = await getString('addbooking', 'mod_bookit');
     const strToday = await getString('today');
     const strMonth = await getString('month');
     const strWeek = await getString('week');
     const strDay = await getString('day', 'calendar');
-    const strList = await getString('upcomingevents', 'calendar');
+    const strList = await getString('list', 'calendar');
 
     // Define viewtype
     let viewType = 'timeGridWeek';
