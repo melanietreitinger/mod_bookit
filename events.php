@@ -30,9 +30,9 @@
  * original file: all* events in the requested time-range are returned.
  *
  * Optional GET parameters (all of them can be omitted):
- * room     (int)    → resource id of the room
- * faculty  (string) →institutionID (exact match)
- * status   (int)    → bookingstatus 0-4
+ * room     (string) → comma-separated resource ids of rooms
+ * faculty  (string) → comma-separated institutionIDs (exact match each)
+ * status   (string) → comma-separated bookingstatus values 0-4
  * search   (string) → free-text search in event name OR faculty
  */
 
@@ -69,19 +69,24 @@ try {
 }
 
 // New optional filter parameters (for filter user story).
-$roomid  = optional_param('room', 0, PARAM_INT);
-$faculty = optional_param('faculty', '', PARAM_TEXT);
+// Room and faculty now accept comma-separated values for multi-select.
+$roomraw  = optional_param('room', '', PARAM_TEXT);
+$roomids  = array_filter(array_map('intval', explode(',', $roomraw)));
+
+$facultyraw = optional_param('faculty', '', PARAM_TEXT);
+$faculties  = array_filter(array_map('trim', explode(',', $facultyraw)));
+
 $search  = optional_param('search', '', PARAM_TEXT);
 
-// Status: accept ?status= or ?bookingstatus=. Empty → -1 (no filter).
-$statusraw = optional_param('status', null, PARAM_RAW_TRIMMED);
-if ($statusraw === null) {
-    $statusraw = optional_param('bookingstatus', null, PARAM_RAW_TRIMMED);
+// Status: accept ?status= or ?bookingstatus=. Now supports comma-separated values.
+$statusraw = optional_param('status', '', PARAM_RAW_TRIMMED);
+if ($statusraw === '') {
+    $statusraw = optional_param('bookingstatus', '', PARAM_RAW_TRIMMED);
 }
-$status = ($statusraw === null || $statusraw === '') ? -1 : clean_param($statusraw, PARAM_INT);
 
-if (!$canfilterstatus) {
-    $status = -1; // Ignore status filter if not allowed.
+$statuses = [];
+if ($statusraw !== '' && $canfilterstatus) {
+    $statuses = array_map('intval', explode(',', $statusraw));
 }
 
 
@@ -176,7 +181,7 @@ unset($ev);
 
 
 // Apply in-memory filters (only if parameter present). For Filter user story.
-$events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, $search) {
+$events = array_filter($events, function ($ev) use ($roomids, $faculties, $statuses, $search) {
     // Helper to read from array or object.
     $get = function ($src, array $keys) {
         foreach ($keys as $k) {
@@ -189,38 +194,28 @@ $events = array_filter($events, function ($ev) use ($roomid, $faculty, $status, 
         }
         return null;
     };
-    // ROOM filter (by resource id; supports multiple roomids).
-    if ($roomid) {
-        $eventroomids = $get($ev, ['roomids']);
-        $eventroomid  = $get($ev, ['roomid', 'resourceid', 'rid']);
 
-        $hasmatch = false;
-        if (is_array($eventroomids) && !empty($eventroomids)) {
-            $hasmatch = in_array((int)$roomid, array_map('intval', $eventroomids), true);
-        } else if ($eventroomid !== null && $eventroomid !== '') {
-            $hasmatch = ((int)$eventroomid === (int)$roomid);
-        }
-
-        if (!$hasmatch) {
+    // ROOM filter — match any of the selected room ids.
+    if (!empty($roomids)) {
+        $eventroomid = (int) $get($ev, ['roomid', 'resourceid', 'rid']);
+        if (!in_array($eventroomid, $roomids, true)) {
             return false;
         }
     }
 
-    // FACULTY filter (trim + case-insensitive exact match).
-    if ($faculty !== '') {
-        $evdept = (string)($get($ev, ['institutionid', 'faculty', 'dept']) ?? '');
-        $evdeptnorm = mb_strtolower(trim($evdept));
-        $wantnorm   = mb_strtolower(trim((string)$faculty));
-
-        if ($evdeptnorm === '' || $evdeptnorm !== $wantnorm) {
+    // FACULTY filter — match any of the selected faculties (case-insensitive).
+    if (!empty($faculties)) {
+        $evdept = mb_strtolower(trim((string) ($get($ev, ['institutionid', 'faculty', 'dept']) ?? '')));
+        $wanted = array_map('mb_strtolower', $faculties);
+        if ($evdept === '' || !in_array($evdept, $wanted, true)) {
             return false;
         }
     }
 
-    // STATUS filter (strict equality).
-    if ($status > -1) {
+    // STATUS filter — match any of the selected statuses.
+    if (!empty($statuses)) {
         $evstatus = $get($ev, ['bookingstatus']);
-        if ($evstatus === null || (int)$evstatus !== (int)$status) {
+        if ($evstatus === null || !in_array((int) $evstatus, $statuses, true)) {
             return false;
         }
     }
@@ -258,12 +253,12 @@ if ($debug) {
     // Debug info is added, but still output plain events array for compatibility.
     $debuginfo = [
         'input' => [
-            'roomid'  => $roomid,
-            'faculty' => $faculty,
-            'status'  => $status,
-            'search'  => $search,
-            'start'   => $start,
-            'end'     => $end,
+            'roomids'    => $roomids,
+            'faculties'  => $faculties,
+            'statuses'   => $statuses,
+            'search'     => $search,
+            'start'      => $start,
+            'end'        => $end,
         ],
         'event_count' => count($events),
     ];

@@ -56,6 +56,8 @@ export const init = () => {
         model.push({key: 'status', select: selectStatus});
     }
 
+    // Track multiple selected values per category.
+    const selected = {room: [], faculty: [], status: []};
 
     const isOpen = () => !$panel.prop('hidden');
     const open = () => {
@@ -69,35 +71,37 @@ export const init = () => {
         $cats.find('.active').removeClass('active');
     };
 
-    const getSelectedLabel = (sel) => {
-        const idx = sel.selectedIndex;
-        if (idx < 0) {
-            return '';
+    const getLabelForValue = (sel, value) => {
+        for (const opt of sel.options) {
+            if (opt.value === value) {
+                return opt.textContent || '';
+            }
         }
-        const opt = sel.options[idx];
-        return (opt && opt.value !== '') ? (opt.textContent || '') : '';
+        return '';
     };
 
-const setValueAndTrigger = (sel, value) => {
-    sel.value = value;
-    // Native event (works regardless of jQuery instances).
-    sel.dispatchEvent(new Event('change', {bubbles: true}));
-    // Also trigger via the AMD jQuery instance (keeps old behavior if listeners are jQuery-based).
-    $(sel).trigger('change');
-};
+    const syncSelect = (sel, key) => {
+        // Write comma-joined values into the hidden select so pushFilters() picks them up.
+        sel.value = selected[key].join(',');
+        // Native event (works regardless of jQuery instances).
+        sel.dispatchEvent(new Event('change', {bubbles: true}));
+        // Also trigger via the AMD jQuery instance (keeps old behavior if listeners are jQuery-based).
+        $(sel).trigger('change');
+    };
 
     const renderChips = () => {
         const chips = [];
         model.forEach(({key, select}) => {
-            const label = getSelectedLabel(select);
-            if (!label) {
-                return;
-            }
-            chips.push({key, label});
+            selected[key].forEach((value) => {
+                const label = getLabelForValue(select, value);
+                if (label) {
+                    chips.push({key, value, label});
+                }
+            });
         });
 
         const chipHtml = (chip) => `
-            <span class="bookit-filterchip" data-key="${chip.key}">
+            <span class="bookit-filterchip" data-key="${chip.key}" data-value="${escapeAttr(chip.value)}">
                 <span class="bookit-filterchip-label">${escapeHtml(chip.label)}</span>
                 <button type="button" class="bookit-filterchip-remove" aria-label="Remove filter">×</button>
             </span>
@@ -138,7 +142,7 @@ const setValueAndTrigger = (sel, value) => {
         }
 
         options.forEach((o) => {
-            const active = (sel.value === o.value) ? ' active' : '';
+            const active = selected[key].includes(o.value) ? ' active' : '';
             $opts.append(`
                 <button type="button"
                         class="bookit-filteropt${active}"
@@ -183,7 +187,7 @@ const setValueAndTrigger = (sel, value) => {
         buildOptionsFor(key);
     });
 
-    // Option click -> apply filter via underlying select, then close.
+    // Option click -> toggle filter value, keep panel open for further selections.
     $opts.on('click', '.bookit-filteropt', function(e) {
         e.preventDefault();
 
@@ -197,9 +201,16 @@ const setValueAndTrigger = (sel, value) => {
             return;
         }
 
-        setValueAndTrigger(item.select, value);
+        const idx = selected[key].indexOf(value);
+        if (idx === -1) {
+            selected[key].push(value);
+        } else {
+            selected[key].splice(idx, 1);
+        }
+
+        syncSelect(item.select, key);
         renderChips();
-        close();
+        buildOptionsFor(key);
     });
 
 
@@ -208,13 +219,20 @@ const setValueAndTrigger = (sel, value) => {
         e.preventDefault();
         e.stopPropagation();
 
-        const key = $(this).closest('.bookit-filterchip').data('key');
+        const $chip = $(this).closest('.bookit-filterchip');
+        const key = $chip.data('key');
+        const value = String($chip.data('value') || '');
         const item = model.find(x => x.key === key);
         if (!item) {
             return;
         }
 
-        setValueAndTrigger(item.select, '');
+        const idx = selected[key].indexOf(value);
+        if (idx !== -1) {
+            selected[key].splice(idx, 1);
+        }
+
+        syncSelect(item.select, key);
         renderChips();
     });
 

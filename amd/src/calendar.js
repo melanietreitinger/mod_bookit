@@ -95,10 +95,12 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         locale: lang,
         view: viewType,
         firstDay: 1,
+        //Debug attempt.
+        //height: 'calc(100vh - 325px)',        
         weekends: allowedWeekdays.includes(0) || allowedWeekdays.includes(6),
         scrollTime: '09:00:00',
         slotMinTime: '07:00:00',
-        dayMaxEvents: true,
+        dayMaxEvents: false,
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,

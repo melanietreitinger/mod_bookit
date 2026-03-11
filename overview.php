@@ -167,6 +167,28 @@ foreach ($events as $ev) {
     // My role.
     $myrole = '-';
 
+    $roles = [];
+
+    if ($USER->id == $ev->personinchargeid) {
+        $roles[] = 'Person in charge';
+    }
+
+    if ($USER->id == $ev->usermodified) {
+        $roles[] = 'Booking person';
+    }
+
+    $otherids = array_filter(explode(',', $ev->otherexaminers ?? ''));
+    if (in_array($USER->id, $otherids)) {
+        $roles[] = 'Other examiner';
+    }
+
+    $supportids = array_filter(explode(',', $ev->supportpersons ?? ''));
+    if (in_array($USER->id, $supportids)) {
+        $roles[] = 'Support person';
+    }
+
+    $myrole = $roles ? implode(', ', $roles) : '-';
+    /*
     // 1. Person in charge.
     if ((int)$USER->id === (int)$ev->personinchargeid) {
         $myrole = 'Person in charge';
@@ -188,6 +210,9 @@ foreach ($events as $ev) {
     if ($myrole === '-' && in_array((int)$USER->id, $support, true)) {
         $myrole = 'Support person';
     }
+    */
+
+
 
     $datestr = userdate($ev->starttime, '%d.%m.%Y');
 
