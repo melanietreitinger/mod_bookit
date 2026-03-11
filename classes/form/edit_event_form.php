@@ -139,8 +139,18 @@ class edit_event_form extends dynamic_form {
         $rooms = room::get_records(['active' => true]);
         $roomoptions = [];
         foreach ($rooms as $room) {
-            $roomoptions[$room->get('id')] = $room->get('name') .
-                ' (' . get_string('n_seats', 'mod_bookit', $room->get('seats')) . ', ' . $room->get('location') . ')';
+            $str = $room->get('name');
+            $addinfos = [];
+            if ($room->get('seats')) {
+                $addinfos[] = get_string('n_seats', 'mod_bookit', $room->get('seats'));
+            }
+            if ($room->get('location')) {
+                $addinfos[] = $room->get('location');
+            }
+            if ($addinfos) {
+                $str .= ' (' . implode(', ', $addinfos) . ')';
+            }
+            $roomoptions[$room->get('id')] = $str;
         }
 
         // Merge 28.01: Added Fallback.
