@@ -58,6 +58,7 @@ export const init = () => {
 
     // Track multiple selected values per category.
     const selected = {room: [], faculty: [], status: []};
+    window.bookitFilterSelected = selected;
 
     const isOpen = () => !$panel.prop('hidden');
     const open = () => {
@@ -191,8 +192,8 @@ export const init = () => {
     $opts.on('click', '.bookit-filteropt', function(e) {
         e.preventDefault();
 
-        const key = String(this.getAttribute('data-key') || '');
-        const value = String(this.getAttribute('data-value') || '');
+        const key = String(this.getAttribute('data-key') ?? '');
+        const value = String(this.getAttribute('data-value') ?? '');
 
         const item = model.find(x => x.key === key);
         if (!item) {
@@ -221,7 +222,7 @@ export const init = () => {
 
         const $chip = $(this).closest('.bookit-filterchip');
         const key = $chip.data('key');
-        const value = String($chip.data('value') || '');
+        const value = String($chip.attr('data-value') ?? ''); 
         const item = model.find(x => x.key === key);
         if (!item) {
             return;
