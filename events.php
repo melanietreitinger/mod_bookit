@@ -149,7 +149,7 @@ foreach ($events as &$ev) {
                r.id   AS roomid,
                r.name AS roomname
           FROM {bookit_event} e
-     LEFT JOIN {bookit_event_resources} er ON er.eventid = e.id
+     LEFT JOIN {bookit_event_resource} er ON er.eventid = e.id
      LEFT JOIN {bookit_resource}        r  ON r.id       = er.resourceid
          WHERE e.id = ?
       LIMIT 1", [$evid]);

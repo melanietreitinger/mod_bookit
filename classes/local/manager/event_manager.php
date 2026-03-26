@@ -50,12 +50,13 @@ class event_manager {
         $event = $DB->get_record('bookit_event', ['id' => $id]);
         $eventresources = resource_manager::get_resources_of_event($id);
         foreach ($eventresources as $rid => $res) {
-            if (1 == $res->categoryid) {
+            $resource = resource_manager::get_resource_by_id($rid);
+            if ($resource && 1 == $resource->get_categoryid()) {
                 $event->room = $rid;
             } else {
                 $r = 'resource_' . $rid;
                 $c = 'checkbox_' . $rid;
-                $event->$r = $res->amount;
+                $event->$r = $res->get_amount();
                 $event->$c = 1;
             }
         }
@@ -167,26 +168,8 @@ class event_manager {
     public static function get_events_for_examiner(int $userid): array {
         global $DB;
 
-        // 1. Collect room resource IDs.
-        $resources = resource_manager::get_resources();
-
-        $roomids = [];
-        if (!empty($resources['Rooms']['resources'])) {
-            $roomids = array_keys($resources['Rooms']['resources']);
-        }
-
-        // Room filter SQL.
-        if (!empty($roomids)) {
-            [$insql, $paramsroom] = $DB->get_in_or_equal($roomids, SQL_PARAMS_NAMED, 'roomid');
-            $roomidssql = "AND er.resourceid $insql";
-        } else {
-            // If no rooms exist, room will be null (this should normally not happen).
-            $roomidssql = "AND 1 = 0";
-            $paramsroom = [];
-        }
-
-        // 2. CSV membership checks, cross-DB using sql_concat + sql_like.
-        // Wrap CSV fields with commas so we can safely search for ",<id>,"
+        // CSV membership checks, cross-DB using sql_concat + sql_like.
+        // Wrap CSV fields with commas so we can safely search for ",<id>,".
         $otherwrapped   = $DB->sql_concat("','", "COALESCE(e.otherexaminers, '')", "','");
         $supportwrapped = $DB->sql_concat("','", "COALESCE(e.supportpersons, '')", "','");
 
@@ -196,7 +179,6 @@ class event_manager {
         $supportcond   = "(COALESCE(e.supportpersons, '') <> '' AND " .
             $DB->sql_like($supportwrapped, ':likeuid4', false, false) . ")";
 
-        // 3. Main SQL query (works on all supported DBs).
         $sql = "
             SELECT
                 e.id,
@@ -207,37 +189,23 @@ class event_manager {
                 e.otherexaminers,
                 e.supportpersons,
                 e.usermodified,
-                MIN(r.name) AS room
+                rm.name AS room
             FROM {bookit_event} e
-            LEFT JOIN {bookit_event_resources} er
-                   ON er.eventid = e.id
-            LEFT JOIN {bookit_resource} r
-                   ON r.id = er.resourceid
-                  AND r.categoryid = 1
-                  $roomidssql
+            LEFT JOIN {bookit_room} rm ON rm.id = e.roomid
             WHERE
                    e.personinchargeid = :uid1
                 OR e.usermodified    = :uid2
                 OR $otherexamcond
                 OR $supportcond
-            GROUP BY
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified
             ORDER BY e.starttime ASC
         ";
 
-        $params = array_merge([
+        $params = [
             'uid1'     => $userid,
             'uid2'     => $userid,
             'likeuid3' => '%,' . $userid . ',%',
             'likeuid4' => '%,' . $userid . ',%',
-        ], $paramsroom);
+        ];
 
         return $DB->get_records_sql($sql, $params);
     }
@@ -360,5 +328,44 @@ class event_manager {
             }
         }
         return $events;
+    }
+
+    /**
+     * Return background and foreground colour for each booking status.
+     *
+     * @return array Keys are status int values, values are ['bg' => string, 'fg' => string].
+     */
+    public static function get_booking_status_colors(): array {
+        return [
+            0 => ['bg' => '#d3d3d3', 'fg' => '#000000'],
+            1 => ['bg' => '#fff3cd', 'fg' => '#000000'],
+            2 => ['bg' => '#d4edda', 'fg' => '#000000'],
+            3 => ['bg' => '#343a40', 'fg' => '#ffffff'],
+            4 => ['bg' => '#f8d7da', 'fg' => '#000000'],
+        ];
+    }
+
+    /**
+     * Return booking status options array suitable for a Mustache template dropdown.
+     *
+     * Each element contains 'value' (int), 'label' (string), 'selected' (bool),
+     * 'bg' (string) and 'fg' (string) for colour styling.
+     *
+     * @param int $current Currently selected status value.
+     * @return array
+     */
+    public static function get_booking_status_options(int $current): array {
+        $colors = self::get_booking_status_colors();
+        $options = [];
+        foreach ($colors as $value => $color) {
+            $options[] = [
+                'value'    => $value,
+                'label'    => get_string('event_bookingstatus_' . $value, 'mod_bookit'),
+                'selected' => ($value === $current),
+                'bg'       => $color['bg'],
+                'fg'       => $color['fg'],
+            ];
+        }
+        return $options;
     }
 }

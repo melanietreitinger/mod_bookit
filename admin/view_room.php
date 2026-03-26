@@ -48,6 +48,7 @@ if ($action === 'delete') {
 
 $PAGE->set_context($context);
 $PAGE->set_url($url);
+$PAGE->set_primary_active_tab('bookit_settings');
 $PAGE->set_pagelayout('admin');
 $title = $room->get('name');
 $PAGE->set_title($title);

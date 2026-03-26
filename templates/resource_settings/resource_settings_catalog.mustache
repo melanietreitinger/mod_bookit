@@ -1,0 +1,184 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/resource_settings/resource_settings_catalog
+    Resource checklist catalog template
+
+    Context variables:
+    * contextid - Context ID
+    * categories - Array of categories with items
+
+    Example context (json):
+    {
+        "contextid": 1,
+        "categories": [
+            {
+                "id": 1,
+                "name": "Presentation Equipment",
+                "description": "Equipment for presentations",
+                "sortorder": 0,
+                "items": [
+                    {
+                        "id": 1,
+                        "resourceid": 1,
+                        "name": "Projector setup",
+                        "description": "",
+                        "categoryid": 1,
+                        "sortorder": 0,
+                        "active": true,
+                        "duedate": null,
+                        "duedatetype": null,
+                        "amount": 1,
+                        "amountirrelevant": false,
+                        "roomnames": [],
+                        "moreroomscount": 0,
+                        "allroomnames": "",
+                        "isallrooms": false,
+                        "hasrooms": false
+                    }
+                ]
+            }
+        ]
+    }
+}}
+<div class="d-flex justify-content-center">
+    <div id="mod-bookit-resource-settings-spinner" class="my-5">
+        <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+            <span class="sr-only">{{#str}}loading, core{{/str}}</span>
+        </div>
+    </div>
+    <div id="mod-bookit-resource-settings-content" class="justify-content-center d-flex d-none">
+        <div class="mod-bookit-resource-settings-container mt-4 pr-5 mr-5" style="min-width: 784px;"
+             id="mod-bookit-resource-settings-container"
+             data-contextid="{{contextid}}">
+
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <a href="{{config.wwwroot}}/mod/bookit/admin/resources.php"
+           class="btn btn-secondary">
+            {{#str}}resources:back_to_resources, mod_bookit{{/str}}
+        </a>
+    </div>
+
+    <table class="table table-borderless table-hover bg-white rounded w-100" id="resource-checklist-table-view">
+        <thead class="bg-primary text-light border-bottom" style="opacity: 0.5;">
+            <tr>
+                <th scope="col" class="py-3 font-weight-bold">{{#str}}name, core{{/str}}</th>
+                <th scope="col" class="py-3 font-weight-bold text-center" style="width: 90px;">{{#str}}resources:amount, mod_bookit{{/str}}</th>
+                <th scope="col" class="py-3 font-weight-bold" style="width: 180px;">{{#str}}resources:rooms, mod_bookit{{/str}}</th>
+                <th scope="col" class="py-3 font-weight-bold" style="width: 150px;">{{#str}}resources:duedate, mod_bookit{{/str}}</th>
+                <th scope="col" class="py-3 font-weight-bold text-center" style="min-width: 110px; white-space: nowrap;">{{#str}}status, core{{/str}}</th>
+                <th scope="col" class="py-3 font-weight-bold text-center" style="width: 100px;">{{#str}}actions, core{{/str}}</th>
+            </tr>
+        </thead>
+        {{#categories}}
+        <tbody data-region="resource-checklist-category"
+               data-categoryid="{{id}}"
+               data-category-name="{{name}}"
+               data-category-description="{{description}}"
+               data-category-sortorder="{{sortorder}}">
+            <tr class="table-active bg-light border-bottom" data-region="resource-checklist-category-row"
+                draggable="true">
+                <td colspan="6" class="font-weight-bold text-dark py-3">
+                    <span data-field="category-name">{{name}}</span>
+                </td>
+            </tr>
+            {{#items}}
+            <tr class="resource-checklist-item-row {{^active}}opacity-50{{/active}}"
+                data-region="resource-checklist-item-row"
+                draggable="true"
+                data-itemid="{{id}}"
+                data-item-resourceid="{{resourceid}}"
+                data-item-name="{{name}}"
+                data-item-description="{{description}}"
+                data-item-categoryid="{{categoryid}}"
+                data-item-sortorder="{{sortorder}}"
+                data-item-active="{{active}}"
+                data-item-duedate="{{duedate}}"
+                data-item-duedatetype="{{duedatetype}}"
+                data-item-rooms="{{rooms}}">
+                <td class="align-middle py-3 pl-4">
+                    <span class="font-weight-medium" data-field="item-name">{{name}}</span>
+                    {{#description}}
+                    <br><small class="text-muted" data-field="item-description">{{{description}}}</small>
+                    {{/description}}
+                </td>
+                <td class="align-middle py-3" data-field="item-amount">
+                    {{#amountirrelevant}}
+                        <span class="badge badge-secondary">{{#str}}resources:amount_unlimited, mod_bookit{{/str}}</span>
+                    {{/amountirrelevant}}
+                    {{^amountirrelevant}}
+                        <span class="badge badge-info">{{amount}}x</span>
+                    {{/amountirrelevant}}
+                </td>
+                <td class="align-middle py-3" data-field="item-rooms">
+                    <div class="d-flex flex-wrap align-items-center">
+                        {{#isallrooms}}
+                            <span class="badge badge-secondary">{{#str}}allrooms, mod_bookit{{/str}}</span>
+                        {{/isallrooms}}
+                        {{^isallrooms}}
+                        {{#roomnames}}
+                            <span class="badge {{textclass}} mr-1 mb-1"
+                                  style="opacity: 0.8; background-color: {{eventcolor}};"
+                                  title="{{roomname}}">{{shortname}}</span>
+                        {{/roomnames}}
+                        {{#moreroomscount}}
+                            <span class="badge badge-light text-muted mr-1 mb-1"
+                                  data-toggle="tooltip"
+                                  title="{{allroomnames}}">+{{moreroomscount}}</span>
+                        {{/moreroomscount}}
+                        {{^hasrooms}}<small class="text-muted">-</small>{{/hasrooms}}
+                        {{/isallrooms}}
+                    </div>
+                </td>
+                <td class="align-middle py-3" data-field="item-duedate">
+                    {{#duedate}}{{duedate}}{{/duedate}}
+                    {{^duedate}}<small class="text-muted">-</small>{{/duedate}}
+                </td>
+                <td class="align-middle py-3 text-center">
+                    {{#active}}
+                        <span class="badge badge-success">{{#str}}active, core{{/str}}</span>
+                    {{/active}}
+                    {{^active}}
+                        <span class="badge badge-secondary">{{#str}}inactive, core{{/str}}</span>
+                    {{/active}}
+                </td>
+                <td class="align-middle py-3 text-center">
+                    <button type="button"
+                            id="edit-item-{{id}}"
+                            class="btn btn-sm btn-light rounded-pill pl-3 text-dark"
+                            value="{{id}}"
+                            data-action="edit-item">
+                        {{#pix}}i/edit, core{{/pix}}
+                    </button>
+                </td>
+            </tr>
+            {{/items}}
+        </tbody>
+        {{/categories}}
+        {{^categories}}
+        <tbody>
+            <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                    {{#str}}resources:no_categories, mod_bookit{{/str}}
+                </td>
+            </tr>
+        </tbody>
+        {{/categories}}
+    </table>
+        </div>
+    </div>
+</div>

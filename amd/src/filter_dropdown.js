@@ -225,9 +225,6 @@ const setValueAndTrigger = (sel, value) => {
 
     buildCategories();
     renderChips();
-
-    // eslint-disable-next-line no-console
-    console.log('[BookIT] filter_dropdown initialized (frontend-only)');
 };
 
 const escapeHtml = (s) => String(s)

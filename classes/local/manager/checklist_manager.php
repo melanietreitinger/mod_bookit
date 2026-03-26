@@ -122,7 +122,7 @@ class checklist_manager {
             'bookit_examiner',
             'bookit_observer',
             'bookit_serviceteam',
-            'bookit_supportonside',
+            'bookit_supportonsite',
         ];
         $roles = get_all_roles();
 
@@ -133,6 +133,33 @@ class checklist_manager {
             }
         }
         return $bookitroles;
+    }
+
+    /**
+     * Get all BookIt role IDs assigned to a user.
+     *
+     * @param int $userid
+     * @return int[]
+     */
+    public static function get_user_bookit_role_ids(int $userid): array {
+        global $DB;
+
+        $roles = self::get_bookit_roles();
+        if (empty($roles)) {
+            return [];
+        }
+
+        $roleids = array_map(fn($role) => (int)$role->id, $roles);
+        [$insql, $params] = $DB->get_in_or_equal($roleids, SQL_PARAMS_NAMED, 'roleid');
+        $params['userid'] = $userid;
+
+        $sql = "SELECT DISTINCT ra.roleid
+                  FROM {role_assignments} ra
+                 WHERE ra.userid = :userid
+                   AND ra.roleid $insql";
+
+        $records = $DB->get_fieldset_sql($sql, $params);
+        return array_map('intval', $records);
     }
 
     /**

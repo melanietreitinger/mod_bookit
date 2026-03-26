@@ -50,7 +50,7 @@ class hook_callbacks {
      * @throws dml_exception
      */
     public static function primary_navigation_extend(primary_extend $hook): void {
-        global $PAGE, $OUTPUT;
+        global $OUTPUT;
 
         $context = context_system::instance();
 
@@ -66,22 +66,13 @@ class hook_callbacks {
         $icon = $OUTPUT->pix_icon('i/settings', get_string('settings_overview', 'mod_bookit'));
 
         // Add BookIt settings node to the primary navigation.
-        $node = $primarynav->add(
+        $primarynav->add(
             $icon . get_string('pluginname', 'mod_bookit'),
-            new moodle_url('/mod/bookit/admin/calendar.php?id=calendar'),
+            new moodle_url('/mod/bookit/admin/calendar.php'),
             navigation_node::TYPE_CUSTOM,
             null,
             'bookit_settings',
             new pix_icon('i/settings', '')
         );
-
-        $tabslist = tabs::get_tabrow($context);
-
-        foreach ($tabslist as $tab) {
-            // Set it as active if we're on any bookit admin page.
-            if (preg_match('#mod/bookit/admin#', $PAGE->url)) {
-                $node->make_active();
-            }
-        }
     }
 }

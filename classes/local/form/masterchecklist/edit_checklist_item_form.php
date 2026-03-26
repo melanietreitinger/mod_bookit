@@ -31,6 +31,7 @@ use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
 use mod_bookit\local\manager\checklist_manager;
 use mod_bookit\local\entity\bookit_notification_slot;
 use mod_bookit\local\entity\bookit_notification_type;
+use mod_bookit\local\form\notification_slots_form_trait;
 
 /**
  * Form class for editing checklist items.
@@ -44,25 +45,7 @@ use mod_bookit\local\entity\bookit_notification_type;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_checklist_item_form extends dynamic_form {
-    /**
-     * Convert form field name to object property name.
-     *
-     * Converts snake_case form field names (e.g., 'before_due') to camelCase property names (e.g., 'beforedue').
-     *
-     * @param string $fieldname The form field name
-     * @param string $suffix Optional suffix to append (e.g., 'time', 'messagetext', 'recipient', 'id')
-     * @return string The object property name
-     */
-    private function get_property_name(string $fieldname, string $suffix = ''): string {
-        // Remove underscores to convert to camelCase.
-        $propertyname = str_replace('_', '', $fieldname);
-
-        if ($suffix) {
-            $propertyname .= $suffix;
-        }
-
-        return $propertyname;
-    }
+    use notification_slots_form_trait;
 
     /**
      * Form definition.
@@ -137,59 +120,7 @@ class edit_checklist_item_form extends dynamic_form {
         $mform->hideIf('duedaysoffset', 'duedate', 'eq', 'none');
         $mform->addHelpButton('duedaysoffset', 'time', 'mod_bookit');
 
-        $mform->addElement('header', 'notifications', get_string('notifications', 'mod_bookit'));
-        $mform->setExpanded('notifications', false);
-
-        foreach (bookit_notification_type::cases() as $case) {
-            $mform->addElement('html', '<hr/>');
-
-            $mform->addElement('checkbox', $case->value, get_string($case->value, 'mod_bookit'));
-            $select = $mform->addElement(
-                'select',
-                $case->value . '_recipient',
-                get_string('recipient', 'mod_bookit'),
-                $allroles,
-                ['style' => 'width:50%;']
-            );
-            $select->setMultiple(true);
-            $mform->addHelpButton($case->value . '_recipient', 'recipient', 'mod_bookit');
-            $mform->hideIf($case->value . '_recipient', $case->value);
-
-            if (array_search($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
-                $mform->addElement(
-                    'duration',
-                    $case->value . '_time',
-                    get_string('notification_time', 'mod_bookit'),
-                    ['units' => [DAYSECS]]
-                );
-                $mform->setDefault($case->value . '_time', [
-                    'number' => 1,
-                    'timeunit' => DAYSECS,
-                ]);
-                $mform->hideIf($case->value . '_time', $case->value);
-                $mform->addHelpButton($case->value . '_time', 'notification_time', 'mod_bookit');
-            }
-
-            $mform->addElement('editor', $case->value . '_messagetext', get_string('customtemplate', 'mod_bookit'));
-            $mform->setType($case->value . '_messagetext', PARAM_RAW);
-
-            $defaultmessagekey = 'customtemplatedefaultmessage_' . $case->value;
-            $defaultmessage = get_string($defaultmessagekey, 'mod_bookit');
-
-            $mform->setDefault($case->value . '_messagetext', [
-                'text'   => $defaultmessage,
-                'format' => FORMAT_HTML,
-                'itemid' => 0,
-            ]);
-            $mform->hideIf($case->value . '_messagetext', $case->value);
-            $mform->addHelpButton($case->value . '_messagetext', 'customtemplate', 'mod_bookit');
-
-            $mform->addElement('button', $case->value . '_reset', get_string('reset', 'mod_bookit'));
-            $mform->hideIf($case->value . '_reset', $case->value);
-
-            $mform->addElement('hidden', $case->value . '_id');
-            $mform->setType($case->value . '_id', PARAM_INT);
-        }
+        $this->definition_notification_section($allroles);
     }
 
     /**
@@ -264,72 +195,16 @@ class edit_checklist_item_form extends dynamic_form {
         $options = array_column($checklistcategories, 'name', 'id');
         $this->_form->getElement('categoryid')->loadArray($options);
 
-        $hasactiveslots = false;
-
-        // Create a temporary object to hold notification slot data.
-        $slotdata = new \StdClass();
-
-        if (!empty($itemslots)) {
-            foreach ($itemslots as $slot) {
-                if ($slot->isactive == 1 && $hasactiveslots == false) {
-                    $hasactiveslots = true;
-                }
-                $slottype = bookit_notification_type::tryFrom($slot->type);
-
-                if (array_search($slottype, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE]) !== false) {
-                    $timeprop = $this->get_property_name($slottype->value, 'time');
-                    $slotdata->{$timeprop}['number'] = $slot->duedaysoffset;
-                    $slotdata->{$timeprop}['timeunit'] = DAYSECS;
-                }
-                $idprop = $this->get_property_name($slottype->value, 'id');
-                $slotdata->{$idprop} = $slot->id;
-
-                $mainprop = $this->get_property_name($slottype->value);
-                $slotdata->{$mainprop} = $slot->isactive;
-
-                $recipientprop = $this->get_property_name($slottype->value, 'recipient');
-                $slotdata->{$recipientprop} = json_decode($slot->roleids, true);
-
-                $messageprop = $this->get_property_name($slottype->value, 'messagetext');
-                $slotdata->{$messageprop}['text'] = $slot->messagetext;
-            }
-
-            if ($hasactiveslots) {
-                $this->_form->setExpanded('notifications', true);
-            }
-        }
+        $slotdata = $this->get_notification_slot_form_data($itemslots);
 
         // Transform object property names to form field names.
-        // Use StdClass to avoid creating dynamic properties on entity object.
-        $formdata = new \StdClass();
+        $formdata = new \stdClass();
         foreach (get_object_vars($item) as $key => $value) {
             $formdata->$key = $value;
         }
         $formdata->duedate = $item->duedaysrelation ?? 'none';
 
-        foreach (bookit_notification_type::cases() as $case) {
-            $fieldname = $case->value; // E.g., 'before_due'.
-            $propname = $this->get_property_name($fieldname); // E.g., 'beforedue'.
-
-            // Map camelCase properties to underscore form fields.
-            if (property_exists($item, $propname) && isset($item->{$propname})) {
-                $formdata->{$fieldname} = $item->{$propname};
-            } else if (isset($slotdata->{$propname})) {
-                $formdata->{$fieldname} = $slotdata->{$propname};
-            }
-
-            $suffixes = ['time', 'messagetext', 'recipient', 'id'];
-            foreach ($suffixes as $suffix) {
-                $fieldnamewithsuffix = $fieldname . '_' . $suffix;
-                $propnamewithsuffix = $this->get_property_name($fieldname, $suffix);
-
-                if (property_exists($item, $propnamewithsuffix) && isset($item->{$propnamewithsuffix})) {
-                    $formdata->{$fieldnamewithsuffix} = $item->{$propnamewithsuffix};
-                } else if (isset($slotdata->{$propnamewithsuffix})) {
-                    $formdata->{$fieldnamewithsuffix} = $slotdata->{$propnamewithsuffix};
-                }
-            }
-        }
+        $this->populate_notification_form_data($formdata, $slotdata);
 
         $this->set_data($formdata);
     }
@@ -416,66 +291,7 @@ class edit_checklist_item_form extends dynamic_form {
             }
         }
 
-        foreach (bookit_notification_type::cases() as $case) {
-            $casename = strtolower($case->name);
-
-            if (!empty($data[$casename])) {
-                $daysoffset = 0;
-                if ($case === bookit_notification_type::BEFORE_DUE || $case === bookit_notification_type::OVERDUE) {
-                    $daysoffset = $data[$casename . '_time']['number'] ?? 0;
-                }
-
-                if (!empty($data[$casename . '_id'])) {
-                    $slot = bookit_notification_slot::from_database($data[$casename . '_id']);
-
-                    $slot->roleids = json_encode($data[$casename . '_recipient'] ?? []);
-                    $slot->messagetext = format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML);
-                    $slot->duedaysoffset = $daysoffset;
-
-                    $slot->save();
-                } else {
-                    // Check if there already is an existing record (active or inactive) before creating a new one.
-                    $existingslot = bookit_notification_slot::get_slot_by_item_and_type($id, $case->value);
-
-                    if ($existingslot) {
-                        // Reactivate and update existing slot.
-                        $existingslot->roleids = json_encode($data[$casename . '_recipient'] ?? []);
-                        $existingslot->messagetext = format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML);
-                        $existingslot->duedaysoffset = $daysoffset;
-                        $existingslot->isactive = 1;
-                        $existingslot->save();
-                    } else {
-                        // Create new slot.
-                        $duedaysrelation = null;
-                        if ($case === bookit_notification_type::BEFORE_DUE) {
-                            $duedaysrelation = 'before';
-                        } else if ($case === bookit_notification_type::OVERDUE) {
-                            $duedaysrelation = 'after';
-                        }
-
-                        $slot = new bookit_notification_slot(
-                            0,
-                            $id,
-                            $case->value,
-                            json_encode($data[$casename . '_recipient'] ?? []),
-                            $daysoffset,
-                            $duedaysrelation,
-                            format_text($data[$casename . '_messagetext']['text'] ?? '', FORMAT_HTML),
-                            1,
-                            $USER->id,
-                            time(),
-                            time()
-                        );
-
-                        $slot->save();
-                    }
-                }
-            } else if (!empty($data[$casename . '_id'])) {
-                $slot = bookit_notification_slot::from_database($data[$casename . '_id']);
-                $slot->isactive = 0;
-                $slot->save();
-            }
-        }
+        $this->save_notification_slots((array) $data, $id);
 
         if (!isset($fields)) {
             $duedaysoffset = 0;
@@ -504,10 +320,13 @@ class edit_checklist_item_form extends dynamic_form {
             array_push($fields['roomnames'], [
                 'roomid' => (int) $roomid,
                 'roomname' => $room->name,
+                'shortname' => $room->shortname ?? '',
                 'eventcolor' => $room->eventcolor,
                 'textclass' => $room->textclass,
             ]);
         }
+        $totalrooms = count(checklist_manager::get_bookit_rooms());
+        $fields['isallrooms'] = $totalrooms > 0 && count($data['roomids']) === $totalrooms;
 
         $fields['rolenames'] = [];
         foreach ($data['roleids'] as $roleid) {
@@ -587,24 +406,7 @@ class edit_checklist_item_form extends dynamic_form {
             }
         }
 
-        foreach (bookit_notification_type::cases() as $case) {
-            if (!empty($data[$case->value])) {
-                // Checkbox enabled → validate its fields.
-                if (empty($data[$case->value . '_recipient'])) {
-                    $errors[$case->value . '_recipient'] = get_string('required');
-                }
-
-                if (in_array($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE])) {
-                    if (empty($data[$case->value . '_time'])) {
-                        $errors[$case->value . '_time'] = get_string('required');
-                    }
-                }
-
-                if (empty($data[$case->value . '_messagetext']['text'])) {
-                    $errors[$case->value . '_messagetext'] = get_string('required');
-                }
-            }
-        }
+        $errors = array_merge($errors, $this->validate_notification_fields($data));
 
         return $errors;
     }

@@ -1,0 +1,90 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/event_resources_checklist_item_row
+    Event resources checklist item row template
+
+    Context variables:
+    * id           - bookit_event_resource record ID
+    * resourceid   - Resource ID
+    * resourcename - Resource name
+    * categoryid   - Category ID
+    * amount       - Booked amount
+    * status       - Current status string
+    * duedate      - Formatted due date or empty
+    * canmanage    - 1 if status dropdown should be shown
+    * isrequested  - Boolean for selected state
+    * isconfirmed  - Boolean for selected state
+    * isinprogress - Boolean for selected state
+    * isrejected   - Boolean for selected state
+
+    Example context (json):
+    {
+        "id": 1,
+        "resourceid": 1,
+        "resourcename": "Beamer",
+        "categoryid": 1,
+        "amount": 2,
+        "status": "confirmed",
+        "duedate": "20 Feb 2026",
+        "canmanage": 0,
+        "isrequested": false,
+        "isconfirmed": true,
+        "isinprogress": false,
+        "isrejected": false
+    }
+}}
+<tr class="event-resources-checklist-item-row"
+    data-region="event-resources-checklist-item-row"
+    data-itemid="{{id}}"
+    data-item-resourceid="{{resourceid}}"
+    data-item-status="{{status}}">
+    <td class="align-middle py-3 pl-4">
+        <span class="font-weight-medium" data-field="item-name">{{{resourcename}}}</span>
+    </td>
+    <td class="align-middle py-3 text-center" data-field="item-available-amount">
+        {{#amountirrelevant}}
+            <span class="badge badge-secondary">{{#str}}resources:amount_unlimited, mod_bookit{{/str}}</span>
+        {{/amountirrelevant}}
+        {{^amountirrelevant}}
+            <span class="badge badge-info">{{availableamount}}x</span>
+        {{/amountirrelevant}}
+    </td>
+    <td class="align-middle py-3 text-center" data-field="item-amount">
+        <span class="badge badge-dark">{{amount}}x</span>
+    </td>
+    <td class="align-middle py-3" data-field="item-duedate">
+        {{#duedate}}{{duedate}}{{/duedate}}
+        {{^duedate}}<small class="text-muted">-</small>{{/duedate}}
+    </td>
+    <td class="align-middle py-3" data-field="item-status">
+        {{#canmanage}}
+        <select class="custom-select custom-select-sm" data-action="update-status">
+            <option value="requested"  {{#isrequested}}selected{{/isrequested}}>{{#str}}resources:status_requested, mod_bookit{{/str}}</option>
+            <option value="confirmed"  {{#isconfirmed}}selected{{/isconfirmed}}>{{#str}}resources:status_confirmed, mod_bookit{{/str}}</option>
+            <option value="inprogress" {{#isinprogress}}selected{{/isinprogress}}>{{#str}}resources:status_inprogress, mod_bookit{{/str}}</option>
+            <option value="rejected"   {{#isrejected}}selected{{/isrejected}}>{{#str}}resources:status_rejected, mod_bookit{{/str}}</option>
+        </select>
+        {{/canmanage}}
+        {{^canmanage}}
+        {{#isrequested}}<span class="badge badge-secondary" data-field="status-badge">{{#str}}resources:status_requested, mod_bookit{{/str}}</span>{{/isrequested}}
+        {{#isconfirmed}}<span class="badge badge-success"   data-field="status-badge">{{#str}}resources:status_confirmed, mod_bookit{{/str}}</span>{{/isconfirmed}}
+        {{#isinprogress}}<span class="badge badge-warning"  data-field="status-badge">{{#str}}resources:status_inprogress, mod_bookit{{/str}}</span>{{/isinprogress}}
+        {{#isrejected}}<span class="badge badge-danger"     data-field="status-badge">{{#str}}resources:status_rejected, mod_bookit{{/str}}</span>{{/isrejected}}
+        {{/canmanage}}
+    </td>
+</tr>

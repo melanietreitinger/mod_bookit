@@ -35,7 +35,7 @@ export default class {
 
         const formDataObj = {
             itemid: itemObject.id,
-            masterid: 1,
+            masterid: state.activechecklist.id,
             title: itemObject.title,
             categoryid: itemObject.categoryid,
             roomid: itemObject.roomid,
@@ -146,7 +146,7 @@ export default class {
             const category = stateManager.state.checklistcategories.get(categoryId);
             const formDataObj = {
                 id: category.id,
-                masterid: 1,
+                masterid: stateManager.state.activechecklist.id,
                 name: category.name,
                 checklistitems: category.items,
                 action: 'put',
@@ -164,7 +164,10 @@ export default class {
     reOrderCategories(stateManager, data) {
         const state = stateManager.state;
 
-        const masterChecklist = state.masterchecklists.get(1);
+        // Get master checklist ID from DOM instead of hardcoding
+        const tableElement = document.querySelector('#mod-bookit-master-checklist-table');
+        const masterId = parseInt(tableElement.dataset.masterChecklistId);
+        const masterChecklist = state.masterchecklists.get(masterId);
         if (!masterChecklist) {
             window.console.error('Master checklist not found');
             stateManager.setReadOnly(true);

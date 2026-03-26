@@ -37,6 +37,7 @@ require_capability('mod/bookit:managemasterchecklist', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/master_checklist.php'));
+$PAGE->set_primary_active_tab('bookit_settings');
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('master_checklist', 'mod_bookit'));
 $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
@@ -44,11 +45,10 @@ $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('master_checklist', 'mod_bookit'));
 
-// Show tabs.
 $renderer = $PAGE->get_renderer('mod_bookit');
+
 $tabrow = tabs::get_tabrow($context);
-$id = optional_param('id', 'settings', PARAM_TEXT);
-echo $renderer->tabs($tabrow, $id);
+echo $renderer->tabs($tabrow, 'master_checklist');
 
 echo html_writer::div(get_string('settings_master_checklist_desc', 'mod_bookit'));
 

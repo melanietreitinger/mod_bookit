@@ -23,6 +23,9 @@
  */
 
 use mod_bookit\local\entity\bookit_event;
+use mod_bookit\local\entity\resource\bookit_resource;
+use mod_bookit\local\entity\resource\bookit_resource_category;
+use mod_bookit\local\manager\resource_manager;
 
 /**
  * Data generator for mod_bookit
@@ -39,6 +42,14 @@ class mod_bookit_generator extends testing_module_generator {
      * @throws dml_exception
      */
     final public function create_event(array $event) {
+        global $DB;
+
+        $userid = 2; // Default to admin.
+        if (!empty($event['username'])) {
+            $user = $DB->get_record('user', ['username' => $event['username']], 'id', MUST_EXIST);
+            $userid = $user->id;
+        }
+
         $e = new bookit_event(
             0,
             $event['name'],
@@ -61,16 +72,111 @@ class mod_bookit_generator extends testing_module_generator {
             15,
             15,
             null,
-            2,
+            $userid,
             time(),
             time(),
             [
-                    (object) ['resourceid' => rand(1, 5), 'amount' => 1], // Rooms.
-                    (object) ['resourceid' => rand(6, 7), 'amount' => rand(2, 85)], // Other resources.
-                    (object) ['resourceid' => rand(8, 10), 'amount' => rand(2, 85)], // Other resources.
-                ],
+            ],
         );
 
-        $e->save(2);
+        $e->save($userid);
+    }
+
+    /**
+     * Create a room for testing.
+     *
+     * @param array $room Room data (name, shortname, eventcolor, active)
+     * @return int Inserted room ID
+     */
+    final public function create_room(array $room): int {
+        global $DB;
+
+        $record = new \stdClass();
+        $record->name = $room['name'];
+        $record->shortname = $room['shortname'] ?? substr($room['name'], 0, 10);
+        $record->description = $room['description'] ?? '';
+        $record->location = $room['location'] ?? '';
+        $record->eventcolor = $room['eventcolor'] ?? '#3a87ad';
+        $record->active = isset($room['active']) ? (int)(bool)$room['active'] : 1;
+        $record->roommode = $room['roommode'] ?? 0;
+        $record->seats = $room['seats'] ?? 10;
+        $record->extratimebefore = 0;
+        $record->extratimeafter = 0;
+        $record->overlapping = 0;
+        $record->usermodified = 2;
+        $record->timecreated = time();
+        $record->timemodified = time();
+
+        return $DB->insert_record('bookit_room', $record);
+    }
+
+    /**
+     * Create a resource category for testing.
+     *
+     * @param array $category Category data (name)
+     * @return int Inserted category ID
+     */
+    final public function create_resource_category(array $category): int {
+        $cat = new bookit_resource_category(null, $category['name'], $category['description'] ?? null, 0, true, 0, 0, 2);
+        return resource_manager::save_category($cat, 2);
+    }
+
+    /**
+     * Create a resource for testing.
+     *
+     * Accepts a "rooms" column with comma-separated room names (resolved to IDs).
+     * Leave "rooms" empty or omit to create an "all rooms" resource (null roomids).
+     *
+     * @param array $resource Resource data (name, category_name, rooms, amount, active)
+     * @return int Inserted resource ID
+     */
+    final public function create_resource(array $resource): int {
+        global $DB;
+
+        // Resolve category by name.
+        $catname = $resource['category_name'] ?? ($resource['category'] ?? null);
+        if ($catname) {
+            $catrec = $DB->get_record_sql(
+                "SELECT id FROM {bookit_resource_category} WHERE "
+                . $DB->sql_compare_text('name') . " = " . $DB->sql_compare_text(':name'),
+                ['name' => $catname],
+                MUST_EXIST
+            );
+            $categoryid = $catrec->id;
+        } else {
+            throw new \coding_exception('Generator: resource requires category_name');
+        }
+
+        // Resolve rooms (comma-separated names) to IDs.
+        $roomids = null;
+        if (!empty($resource['rooms'])) {
+            $names = array_filter(array_map('trim', explode(',', $resource['rooms'])));
+            $roomids = [];
+            foreach ($names as $rname) {
+                $room = $DB->get_record_sql(
+                    "SELECT id FROM {bookit_room} WHERE "
+                    . $DB->sql_compare_text('name') . " = " . $DB->sql_compare_text(':name'),
+                    ['name' => $rname],
+                    MUST_EXIST
+                );
+                $roomids[] = (int)$room->id;
+            }
+        }
+
+        $res = new bookit_resource(
+            null,
+            $resource['name'],
+            $resource['description'] ?? null,
+            $categoryid,
+            (int)($resource['amount'] ?? 1),
+            isset($resource['amountirrelevant']) ? (bool)$resource['amountirrelevant'] : false,
+            0,
+            isset($resource['active']) ? (bool)$resource['active'] : true,
+            $roomids,
+            0,
+            0,
+            2
+        );
+        return resource_manager::save_resource($res, 2);
     }
 }

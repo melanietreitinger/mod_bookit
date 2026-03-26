@@ -1,0 +1,123 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/resource_settings/resource_settings_item_row
+    Resource checklist item row template
+
+    Context variables:
+    * id - Item ID
+    * resourceid - Resource ID
+    * name - Item name
+    * description - Item description
+    * categoryid - Category ID
+    * sortorder - Sort order
+    * duedate - Due date (timestamp or null)
+    * duedatetype - Due date type
+    * roomnames - Array of {roomid, roomname, shortname, eventcolor, textclass}
+    * moreroomscount - Number of additional rooms beyond the displayed ones
+    * allroomnames - Comma-separated list of all room names (for tooltip)
+    * amount - Amount value
+    * amountirrelevant - Whether amount is unlimited
+
+    Example context (json):
+    {
+        "id": 1,
+        "resourceid": 1,
+        "name": "Projector setup",
+        "description": "Set up the projector before the event",
+        "categoryid": 1,
+        "sortorder": 0,
+        "active": true,
+        "duedate": "01.01.2026",
+        "duedatetype": "absolute",
+        "roomnames": [{"roomid": 1, "roomname": "Room A", "shortname": "A", "eventcolor": "#3498db", "textclass": "text-white"}],
+        "moreroomscount": 0,
+        "allroomnames": "Room A",
+        "amount": 1,
+        "amountirrelevant": false,
+        "isallrooms": false,
+        "hasrooms": true
+    }
+}}
+<tr class="resource-checklist-item-row {{^active}}opacity-50{{/active}}"
+    data-region="checklist-item-row"
+    data-itemid="{{id}}"
+    data-item-resourceid="{{resourceid}}"
+    data-item-name="{{name}}"
+    data-item-description="{{description}}"
+    data-item-categoryid="{{categoryid}}"
+    data-item-sortorder="{{sortorder}}"
+    data-item-active="{{active}}"
+    data-item-duedate="{{duedate}}"
+    data-item-duedatetype="{{duedatetype}}"
+    data-item-rooms="{{rooms}}">
+    <td class="align-middle py-2 pl-4">
+        <span data-field="item-name">{{name}}</span>
+        {{#description}}
+        <small class="text-muted d-block" data-field="item-description">{{{description}}}</small>
+        {{/description}}
+    </td>
+    <td class="align-middle py-2" data-field="item-amount">
+        {{#amountirrelevant}}
+            <span class="badge badge-secondary">{{#str}}resources:amount_unlimited, mod_bookit{{/str}}</span>
+        {{/amountirrelevant}}
+        {{^amountirrelevant}}
+            <span class="badge badge-info">{{amount}}x</span>
+        {{/amountirrelevant}}
+    </td>
+    <td class="align-middle py-2" data-field="item-rooms">
+        <div class="d-flex flex-wrap align-items-center">
+            {{#isallrooms}}
+                <span class="badge badge-secondary">{{#str}}allrooms, mod_bookit{{/str}}</span>
+            {{/isallrooms}}
+            {{^isallrooms}}
+            {{#roomnames}}
+                <span class="badge {{textclass}} mr-1 mb-1"
+                      style="opacity: 0.8; background-color: {{eventcolor}};"
+                      title="{{roomname}}">{{shortname}}</span>
+            {{/roomnames}}
+            {{#moreroomscount}}
+                <span class="badge badge-light text-muted mr-1 mb-1"
+                      data-toggle="tooltip"
+                      title="{{allroomnames}}">+{{moreroomscount}}</span>
+            {{/moreroomscount}}
+            {{^hasrooms}}<small class="text-muted">-</small>{{/hasrooms}}
+            {{/isallrooms}}
+        </div>
+    </td>
+    <td class="py-2" data-field="item-duedate">
+        {{#duedate}}{{duedate}}{{/duedate}}
+        {{^duedate}}-{{/duedate}}
+    </td>
+    <td class="text-center py-2">
+        {{#active}}
+            <span class="badge badge-success">{{#str}}active, core{{/str}}</span>
+        {{/active}}
+        {{^active}}
+            <span class="badge badge-secondary">{{#str}}inactive, core{{/str}}</span>
+        {{/active}}
+    </td>
+    <td class="text-center py-2">
+        <button type="button"
+                id="edit-item-{{id}}"
+                class="btn btn-sm btn-light rounded-pill"
+                value="{{id}}"
+                data-action="edit-item">
+            {{#pix}}i/edit, core{{/pix}}
+        </button>
+    </td>
+</tr>

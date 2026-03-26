@@ -46,6 +46,7 @@ if ($id) {
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_weekplan_room.php', $params));
+$PAGE->set_primary_active_tab('bookit_settings');
 $returnurl = new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $roomid]);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($title);

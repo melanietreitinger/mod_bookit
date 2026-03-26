@@ -40,6 +40,7 @@ $eventsbyday = \mod_bookit\local\manager\weekplan_manager::group_events_by_day($
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/weekplan.php', ['id' => $id]));
+$PAGE->set_primary_active_tab('bookit_settings');
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($weekplan->name);
 $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));

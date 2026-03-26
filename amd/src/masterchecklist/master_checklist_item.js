@@ -167,7 +167,7 @@ export default class extends BaseComponent {
             formClass: "mod_bookit\\local\\form\\masterchecklist\\edit_checklist_item_form",
             moduleName: 'mod_bookit/modal_delete_save_cancel',
             args: {
-                masterid: 1,
+                masterid: this.reactive.state.activechecklist.id,
                 itemid: event.currentTarget.value,
                 categories: Array.from(this.reactive.state.checklistcategories.values()),
             },

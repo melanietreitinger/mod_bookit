@@ -93,6 +93,7 @@ $PAGE->requires->js_init_code("
 
 /* ----- inline ModalForm handler -------------------------------------- */
 $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
+$PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
 
 
 /* =======================================================================
@@ -108,61 +109,50 @@ echo $OUTPUT->header();
    3.  Fetch examiner’s events
    ======================================================================= */
 use mod_bookit\local\manager\event_manager;
+use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\event_checklist_state_manager;
+use mod_bookit\local\manager\event_resource_manager;
 
-global $USER;
+global $USER, $DB;
 $events = event_manager::get_events_for_examiner($USER->id);
 
+// Fetch master checklist ID directly (no entity = no JS side effects).
+$masterrecord = $DB->get_record('bookit_checklist_master', ['isdefault' => 1], 'id', IGNORE_MULTIPLE);
+$masterid = $masterrecord ? (int)$masterrecord->id : 0;
 
-/* ----- status → label / colours -------------------------------------- */
-$statusmap = [
-    0 => 'New',
-    1 => 'In progress',
-    2 => 'Accepted',
-    3 => 'Cancelled',
-    4 => 'Rejected',
-];
-$colormap = [
-    0 => '#d3d3d3',
-    1 => '#fff3cd',
-    2 => '#d4edda',
-    3 => '#343a40',
-    4 => '#f8d7da',
-];
-$textmap  = [3 => '#ffffff'];
+
+/* ----- status → label / colours (via event_manager) ------------------- */
+$statuscolors = event_manager::get_booking_status_colors();
 
 /* =======================================================================
    4+5.  Render via Mustache template (no HTML in PHP)
    ======================================================================= */
 
-// Build display maps.
-$statusmap = [
-    0 => 'New',
-    1 => 'In progress',
-    2 => 'Accepted',
-    3 => 'Cancelled',
-    4 => 'Rejected',
-];
-$colormap = [
-    0 => '#d3d3d3',
-    1 => '#fff3cd',
-    2 => '#d4edda',
-    3 => '#343a40',
-    4 => '#f8d7da',
-];
-$textmap  = [3 => '#ffffff'];
-
 // Prepare template context.
+$canmanage = has_capability('mod/bookit:managebasics', $context);
 $templatecontext = [
-    'tableid' => (string)$tableid,
-    'events'  => [],
+    'tableid'    => (string)$tableid,
+    'canmanage'  => $canmanage,
+    'events'     => [],
 ];
+
+// Precompute checklist progress for all events in a single query.
+$progressmap = [];
+$resourceprogressmap = [];
+if (!empty($events)) {
+    $eventids = array_map(fn($ev) => (int)$ev->id, $events);
+    if ($masterid > 0) {
+        $progressmap = event_checklist_state_manager::get_progress_percent_for_events($eventids, $masterid);
+    }
+    $resourceprogressmap = event_resource_manager::get_resource_progress_for_events($eventids);
+}
 
 foreach ($events as $ev) {
     $room = $ev->room ?: '-';
 
-    $statusbg  = $colormap[$ev->bookingstatus] ?? '#ffffff';
-    $statusfg  = $textmap[$ev->bookingstatus] ?? '#000000';
-    $statustxt = $statusmap[$ev->bookingstatus] ?? '-';
+    $statusbg  = $statuscolors[$ev->bookingstatus]['bg'] ?? '#ffffff';
+    $statusfg  = $statuscolors[$ev->bookingstatus]['fg'] ?? '#000000';
+    $statustxt = get_string('event_bookingstatus_' . (int)($ev->bookingstatus ?? 0), 'mod_bookit');
 
     // My role.
     $myrole = '-';
@@ -190,6 +180,8 @@ foreach ($events as $ev) {
     }
 
     $datestr = userdate($ev->starttime, '%d.%m.%Y');
+    $canviewchecklist = event_access_manager::can_view_event_checklist($ev, $context, (int)$USER->id);
+    $canviewresources = event_access_manager::can_view_event_resources($ev, $context, (int)$USER->id);
 
     $pic = '-';
     if (!empty($ev->personinchargeid)) {
@@ -203,16 +195,35 @@ foreach ($events as $ev) {
         'room' => s($room),
         'personincharge' => s($pic),
         'myrole' => s($myrole),
-        'statustext' => s($statustxt),
-        'statusstyle' => "background-color:$statusbg;color:$statusfg;",
+        'statustext'    => s($statustxt),
+        'statusstyle'   => "background-color:$statusbg;color:$statusfg;",
+        'bookingstatus' => (int)($ev->bookingstatus ?? 0),
+        'canmanage'     => $canmanage,
+        'statusoptions' => $canmanage
+            ? event_manager::get_booking_status_options((int)($ev->bookingstatus ?? 0))
+            : [],
         'datestr' => $datestr,
         'starttime' => (int)$ev->starttime,
         'cmid' => (int)$cm->id,
-        'checklistprogress' => '--',
-        'checklistlabel' => 'Checklist',
+        'checklistprogress' => $progressmap[(int)$ev->id] ?? 0,
+        'checklistprogress_available' => $masterid > 0,
+        'haschecklistaction' => $canviewchecklist,
+        'checklistlabel' => get_string('checklist', 'mod_bookit'),
+        'checklisturl' => (new moodle_url('/mod/bookit/view/event_checklist_view.php', [
+            'id' => $cm->id,
+            'eventid' => (int)$ev->id,
+        ]))->out(false),
+        'hasresourcesaction' => $canviewresources,
+        'resourceschecklistlabel' => get_string('resources', 'mod_bookit'),
+        'resourceschecklisturl' => (new moodle_url('/mod/bookit/view/event_resources.php', [
+            'id' => $cm->id,
+            'eventid' => (int)$ev->id,
+        ]))->out(false),
+        'resourcesprogress' => $resourceprogressmap[(int)$ev->id]['percent'] ?? 0,
+        'resourcesprogress_available' => ($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0,
     ];
 }
 
 // Render Mustache.
-echo $OUTPUT->render_from_template('mod_bookit/overview/examiner_overview', $templatecontext);
+echo $OUTPUT->render_from_template('mod_bookit/view/examiner_overview', $templatecontext);
 echo $OUTPUT->footer();

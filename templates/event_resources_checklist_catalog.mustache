@@ -1,0 +1,158 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/event_resources_checklist_catalog
+    Event resources checklist catalog template
+
+    Context variables:
+    * eventid   - Event ID
+    * cmid      - Course module ID
+    * canmanage - 1 if user can manage status, 0 otherwise
+    * contextid - Context ID
+    * eventname - Event title
+    * starttime - Formatted start time string
+    * endtime   - Formatted end time string
+    * categories - Array of category objects, each with items array
+    * hasresources - Boolean: any resources assigned?
+
+    Example context (json):
+    {
+        "eventid": 1,
+        "cmid": 4,
+        "canmanage": 1,
+        "contextid": 1,
+        "progresspercent": 50,
+        "progresstotal": 2,
+        "progressconfirmed": 1,
+        "progresscomplete": false,
+        "eventname": "Test Event",
+        "starttime": "24 Feb 2026, 10:00",
+        "endtime": "24 Feb 2026, 12:00",
+        "hasresources": true,
+        "categories": [
+            {
+                "id": 1,
+                "name": "Technik",
+                "items": [
+                    {
+                        "id": 1,
+                        "resourceid": 1,
+                        "resourcename": "Beamer",
+                        "categoryid": 1,
+                        "amount": 2,
+                        "status": "requested",
+                        "duedate": "20 Feb 2026",
+                        "canmanage": 1,
+                        "isrequested": true,
+                        "isconfirmed": false,
+                        "isinprogress": false,
+                        "isrejected": false
+                    }
+                ]
+            }
+        ]
+    }
+}}
+<div class="d-flex justify-content-center">
+    <div id="mod-bookit-event-resources-checklist-spinner" class="my-5">
+        <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+            <span class="sr-only">{{#str}}loading, core{{/str}}</span>
+        </div>
+    </div>
+<div id="mod-bookit-event-resources-checklist-container"
+     class="mod-bookit-event-resources-checklist-container mt-4 pr-5 mr-5 d-none"
+     data-region="event-resources-checklist-container"
+     data-eventid="{{eventid}}"
+     data-cmid="{{cmid}}"
+     data-canmanage="{{canmanage}}"
+     data-contextid="{{contextid}}"
+     style="min-width: 784px;">
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{#str}}event_details, mod_bookit{{/str}}</h5>
+            <dl class="row mb-0">
+                <dt class="col-sm-3">{{#str}}event_name, mod_bookit{{/str}}</dt>
+                <dd class="col-sm-9">{{{eventname}}}</dd>
+                {{#starttime}}
+                <dt class="col-sm-3">{{#str}}starttime, mod_bookit{{/str}}</dt>
+                <dd class="col-sm-9">{{starttime}}</dd>
+                {{/starttime}}
+                {{#roomname}}
+                <dt class="col-sm-3">{{#str}}event_room, mod_bookit{{/str}}</dt>
+                <dd class="col-sm-9">{{{roomname}}}</dd>
+                {{/roomname}}
+                {{#bookingstatus}}
+                <dt class="col-sm-3">{{#str}}event_bookingstatus, mod_bookit{{/str}}</dt>
+                <dd class="col-sm-9">{{bookingstatus}}</dd>
+                {{/bookingstatus}}
+            </dl>
+        </div>
+    </div>
+
+    {{#canmanage}}
+    <div class="card mb-4" data-region="event-resources-checklist-progress-container">
+        <div class="card-body">
+            <h6 class="card-title mb-2">{{#str}}event_resources_checklist:progress, mod_bookit{{/str}}</h6>
+            <div class="progress" style="height: 22px;">
+                <div class="progress-bar {{#progresscomplete}}bg-success{{/progresscomplete}}"
+                     role="progressbar"
+                     data-region="event-resources-checklist-progressbar"
+                     style="width: {{progresspercent}}%; min-width: 2em;"
+                     aria-valuenow="{{progresspercent}}"
+                     aria-valuemin="0"
+                     aria-valuemax="100">{{progresspercent}}%</div>
+            </div>
+            <small class="text-muted mt-1 d-block">
+                <span data-region="event-resources-checklist-progress-text">{{progressconfirmed}}</span> / {{progresstotal}} {{#str}}event_resources_checklist:confirmed, mod_bookit{{/str}}
+            </small>
+        </div>
+    </div>
+    {{/canmanage}}
+
+    {{#hasresources}}
+    <table class="table table-borderless table-hover bg-white rounded w-100" id="event-resources-checklist-table">
+                <thead class="bg-primary text-light border-bottom opacity-50">
+                    <tr>
+                        <th scope="col" class="py-3 font-weight-bold">{{#str}}resource, mod_bookit{{/str}}</th>
+                        <th scope="col" class="py-3 font-weight-bold text-center" style="width: 90px;">{{#str}}resources:amount, mod_bookit{{/str}}</th>
+                        <th scope="col" class="py-3 font-weight-bold text-center" style="width: 90px;">{{#str}}event_resources_checklist:booked_amount, mod_bookit{{/str}}</th>
+                        <th scope="col" class="py-3 font-weight-bold" style="width: 150px;">{{#str}}duedate, mod_bookit{{/str}}</th>
+                        <th scope="col" class="py-3 font-weight-bold" style="width: 180px;">{{#str}}resources:status, mod_bookit{{/str}}</th>
+                    </tr>
+                </thead>
+                {{#categories}}
+                <tbody data-region="event-resources-checklist-category"
+                       data-categoryid="{{id}}">
+                    <tr class="table-active bg-light border-bottom" data-region="event-resources-checklist-category-row">
+                        <td colspan="5" class="font-weight-bold text-dark py-3">{{{name}}}</td>
+                    </tr>
+                    {{#items}}
+                    {{> mod_bookit/event_resources_checklist_item_row }}
+                    {{/items}}
+                </tbody>
+                {{/categories}}
+            </table>
+    {{/hasresources}}
+    {{^hasresources}}
+    <div class="alert alert-info">
+        {{#str}}event_resources_checklist_no_resources, mod_bookit{{/str}}
+    </div>
+    {{/hasresources}}
+
+</div>
+</div>
