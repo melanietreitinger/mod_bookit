@@ -317,6 +317,9 @@ class edit_checklist_item_form extends dynamic_form {
         $fields['roomnames'] = [];
         foreach ($data['roomids'] as $roomid) {
             $room = checklist_manager::get_room_by_id((int) $roomid);
+            if (!$room) {
+                continue; // Skip rooms that no longer exist.
+            }
             array_push($fields['roomnames'], [
                 'roomid' => (int) $roomid,
                 'roomname' => $room->name,

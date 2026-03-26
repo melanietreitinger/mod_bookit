@@ -23,6 +23,7 @@ Feature: Delete resource category
     When I click on "button[data-action='edit-category']" "css_element" in the "Category to Delete" "table_row"
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
     And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
     Then I should not see "Category to Delete"

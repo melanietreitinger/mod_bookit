@@ -51,8 +51,9 @@ class install_helper {
         $existingmaster = $DB->count_records('bookit_checklist_master');
         $existingcategories = $DB->count_records('bookit_checklist_category');
         $existingitems = $DB->count_records('bookit_checklist_item');
+        $existingrooms = $DB->count_records('bookit_room');
 
-        if ($existingmaster > 0 && $existingcategories > 0 && $existingitems > 0 && !$force) {
+        if ($existingmaster > 0 && $existingcategories > 0 && $existingitems > 0 && $existingrooms > 0 && !$force) {
             if ($verbose) {
                 mtrace('Checklist data already exists. Skipping creation.');
             }

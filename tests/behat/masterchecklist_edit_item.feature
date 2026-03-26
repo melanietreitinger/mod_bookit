@@ -40,6 +40,7 @@ Feature: Edit master checklist item
     And I set the field "Recipient" to "BookIt_Observer, BookIt_Service-Team"
     And I click on "button[data-action='save']" "css_element"
     Then I should see "Reserve room EDITED"
+    And I wait "1" seconds
     And I should see "LH-A" in the "Reserve room EDITED" "table_row"
     And I should see "SR-B" in the "Reserve room EDITED" "table_row"
     And I should see "BookIt_Observer" in the "Reserve room EDITED" "table_row"
@@ -78,6 +79,7 @@ Feature: Edit master checklist item
     And I set the field "Recipient" to "BookIt_Observer, BookIt_Service-Team"
     And I click on "button[data-action='save']" "css_element"
     Then I should see "Reserve room EDITED ServiceTeam"
+    And I wait "1" seconds
     And I should see "LH-A" in the "Reserve room EDITED ServiceTeam" "table_row"
     And I should see "SR-B" in the "Reserve room EDITED ServiceTeam" "table_row"
     And I should see "BookIt_Observer" in the "Reserve room EDITED ServiceTeam" "table_row"

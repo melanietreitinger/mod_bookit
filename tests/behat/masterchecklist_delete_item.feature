@@ -26,6 +26,7 @@ Feature: Delete master checklist item
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
     And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
     Then I should not see "Reserve room"
@@ -39,6 +40,7 @@ Feature: Delete master checklist item
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
     And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
     Then I should not see "Reserve room"
