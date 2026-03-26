@@ -19,6 +19,7 @@ Feature: Delete resource item
     When I click on "button[id^='edit-item-']" "css_element" in the "Microphone" "table_row"
     And I should see "Delete"
     And I click on "button[data-action='delete']" "css_element"
+    And I wait "1" seconds
     And I should see "Confirm"
     And I click on "button[data-action='delete']" "css_element"
     Then I should not see "Microphone"
