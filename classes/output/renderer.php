@@ -96,17 +96,6 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
-     * Renders the resource settings catalog.
-     *
-     * @param resource_settings_catalog $catalog
-     * @return string HTML output
-     */
-    protected function render_resource_settings_catalog(resource_settings_catalog $catalog) {
-        $data = $catalog->export_for_template($this->output);
-        return $this->output->render_from_template('mod_bookit/resource_settings/resource_settings_catalog', $data);
-    }
-
-    /**
      * Write the tab row in page
      *
      * @param array $tabs the tabs

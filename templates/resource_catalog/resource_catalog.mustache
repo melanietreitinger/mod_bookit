@@ -67,12 +67,6 @@
                     {{#str}}resources:add_resource, mod_bookit{{/str}}
                 </button>
             </div>
-            <div>
-                <a href="{{config.wwwroot}}/mod/bookit/admin/resource_settings.php"
-                   class="btn btn-secondary">
-                    {{#str}}resources:view_settings, mod_bookit{{/str}}
-                </a>
-            </div>
         </div>
 
         {{! Room filter - rendered by roomfilter form element }}
@@ -101,7 +95,8 @@
                         <th scope="col" class="py-3 font-weight-bold" style="width: 80px;">{{#str}}resources:amount, mod_bookit{{/str}}</th>
                         <th scope="col" class="py-3 font-weight-bold" style="width: 200px;">{{#str}}resources:rooms, mod_bookit{{/str}}</th>
                         <th scope="col" class="py-3 font-weight-bold" style="min-width: 130px; white-space: nowrap;">{{#str}}status, core{{/str}}</th>
-                        <th scope="col" class="py-3 font-weight-bold text-center" style="width: 80px;">{{#str}}actions, core{{/str}}</th>
+                        <th scope="col" class="py-3 font-weight-bold text-center" style="width: 80px;">{{#str}}edit, core{{/str}}</th>
+                        <th scope="col" class="py-3 font-weight-bold text-center" style="width: 70px;">{{#str}}resources:settings_column, mod_bookit{{/str}}</th>
                         <th scope="col" class="py-3 font-weight-bold text-center" style="width: 70px;">{{#str}}move, core{{/str}}</th>
                     </tr>
                 </thead>
@@ -120,7 +115,7 @@
                 {{^categories}}
                     <tbody id="resource-no-categories-msg">
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-5">
+                            <td colspan="7" class="text-center text-muted py-5">
                                 {{#str}}resources:no_categories, mod_bookit{{/str}}
                             </td>
                         </tr>

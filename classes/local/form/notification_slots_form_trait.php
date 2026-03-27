@@ -285,7 +285,14 @@ trait notification_slots_form_trait {
             if (!empty($data[$casename])) {
                 $daysoffset = 0;
                 if (in_array($case, [bookit_notification_type::BEFORE_DUE, bookit_notification_type::OVERDUE])) {
-                    $daysoffset = $data[$casename . '_time']['number'] ?? 0;
+                    // Duration exportValue() returns total seconds as integer (not an array).
+                    // Convert seconds → days to match the DB column unit.
+                    $timeraw = $data[$casename . '_time'] ?? 0;
+                    if (is_array($timeraw)) {
+                        $daysoffset = (int)($timeraw['number'] ?? 0);
+                    } else {
+                        $daysoffset = (int)round((int)$timeraw / DAYSECS);
+                    }
                 }
 
                 if (!empty($data[$casename . '_id'])) {

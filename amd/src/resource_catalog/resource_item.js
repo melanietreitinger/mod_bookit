@@ -27,6 +27,7 @@ import {getResourceReactive, SELECTORS} from 'mod_bookit/resource_catalog/resour
 import ModalForm from 'core_form/modalform';
 import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
+import * as Toast from 'core/toast';
 
 export default class ResourceItem extends BaseComponent {
 
@@ -34,6 +35,8 @@ export default class ResourceItem extends BaseComponent {
         const itemId = descriptor.element.dataset.bookitItemId;
         const itemEditBtnSelector = this._getEditButtonSelector(itemId);
         this.selectors[itemEditBtnSelector] = `#edit-item-${itemId}`;
+        const itemSettingsBtnSelector = this._getSettingsButtonSelector(itemId);
+        this.selectors[itemSettingsBtnSelector] = `#settings-item-${itemId}`;
     }
 
     static init(target, selectors) {
@@ -56,6 +59,16 @@ export default class ResourceItem extends BaseComponent {
      */
     _getEditButtonSelector(itemId) {
         return 'EDIT_ITEM_BTN_' + itemId;
+    }
+
+    /**
+     * Get the selector key for the settings button of a specific item.
+     *
+     * @param {string} itemId The item ID
+     * @returns {string} The selector key
+     */
+    _getSettingsButtonSelector(itemId) {
+        return 'SETTINGS_ITEM_BTN_' + itemId;
     }
 
     stateReady() {
@@ -104,6 +117,15 @@ export default class ResourceItem extends BaseComponent {
             e.preventDefault();
             this._handleEdit(e);
         });
+
+        const itemSettingsBtnSelector = this._getSettingsButtonSelector(itemId);
+        const settingsBtn = this.getElement(this.selectors[itemSettingsBtnSelector]);
+        if (settingsBtn) {
+            this.addEventListener(settingsBtn, 'click', (e) => {
+                e.preventDefault();
+                this._handleSettings(e);
+            });
+        }
     }
 
     async _handleEdit(event) {
@@ -118,14 +140,17 @@ export default class ResourceItem extends BaseComponent {
             },
         });
 
-        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (response) => {
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async(response) => {
             this.reactive.stateManager.processUpdates(response.detail);
 
             if (response.detail[0].action === 'delete') {
                 this.reactive.dispatch('itemsDeleted', {fields: {id: parseInt(response.detail[0].fields.id)}});
                 this.remove();
+                Toast.add(await getString('item_deleted', 'mod_bookit'), {type: 'success'});
                 return;
             }
+
+            await Toast.add(await getString('item_updated', 'mod_bookit'), {type: 'success'});
         });
 
         modalForm.addEventListener(modalForm.events.LOADED, () => {
@@ -148,6 +173,29 @@ export default class ResourceItem extends BaseComponent {
                     }
                 );
             });
+        });
+
+        modalForm.show();
+    }
+
+    /**
+     * Handle settings button click — open resource checklist settings modal.
+     *
+     * @param {Event} event - Click event
+     */
+    async _handleSettings(event) {
+        event.preventDefault();
+
+        const resourceId = event.currentTarget.value || event.currentTarget.dataset.itemid;
+        const modalForm = new ModalForm({
+            formClass: 'mod_bookit\\local\\form\\resource\\edit_resource_settings_item_form',
+            args: {resourceid: parseInt(resourceId)},
+            modalConfig: {title: await getString('resources:open_settings', 'mod_bookit')},
+            returnFocus: event.currentTarget,
+        });
+
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async() => {
+            await Toast.add(await getString('resources:settings_saved', 'mod_bookit'), {type: 'success'});
         });
 
         modalForm.show();

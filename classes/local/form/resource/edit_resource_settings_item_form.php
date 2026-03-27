@@ -219,7 +219,7 @@ class edit_resource_settings_item_form extends dynamic_form {
      * @return moodle_url
      */
     protected function get_page_url_for_dynamic_submission(): moodle_url {
-        return new moodle_url('/mod/bookit/admin/resource_settings.php');
+        return new moodle_url('/mod/bookit/admin/resources.php', ['id' => 'resources']);
     }
 
     /**
@@ -234,6 +234,16 @@ class edit_resource_settings_item_form extends dynamic_form {
             return;
         }
         $id = $this->optional_param('id', null, PARAM_INT);
+        if (empty($id)) {
+            // Support opening by resourceid directly (e.g. from resource catalog button).
+            $resourceid = $this->optional_param('resourceid', null, PARAM_INT);
+            if (!empty($resourceid)) {
+                $item = resource_settings_manager::get_checklist_item_by_resource($resourceid);
+                if ($item) {
+                    $id = $item->get_id();
+                }
+            }
+        }
         if (empty($id)) {
             throw new \moodle_exception('invalidchecklistitemid', 'mod_bookit');
         }

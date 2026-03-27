@@ -1,4 +1,0 @@
-# These templates are <tr> row partials.
-# They are designed to be included inside a <table>, so standalone HTML validation
-# will always report "Stray start tag tr" errors. HTML validation is skipped for them.
-resource_settings_item_row.mustache

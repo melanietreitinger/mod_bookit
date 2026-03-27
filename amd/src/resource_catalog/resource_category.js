@@ -27,6 +27,7 @@ import Templates from 'core/templates';
 import ModalForm from 'core_form/modalform';
 import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
+import * as Toast from 'core/toast';
 import ResourceItem from './resource_item';
 import {SELECTORS} from './resource_reactive';
 
@@ -498,8 +499,9 @@ export default class ResourceCategory extends BaseComponent {
             },
         });
 
-        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (e) => {
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async(e) => {
             this.reactive.dispatch('createItem', e.detail);
+            await Toast.add(await getString('item_created', 'mod_bookit'), {type: 'success'});
         });
 
         modalForm.show();
@@ -520,8 +522,15 @@ export default class ResourceCategory extends BaseComponent {
             },
         });
 
-        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (e) => {
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, async(e) => {
             this.reactive.stateManager.processUpdates(e.detail);
+
+            const action = e.detail && e.detail[0] ? e.detail[0].action : null;
+            if (action === 'delete') {
+                Toast.add(getString('category_deleted', 'mod_bookit'), {type: 'success'});
+            } else {
+                await Toast.add(await getString('category_updated', 'mod_bookit'), {type: 'success'});
+            }
         });
 
         modalForm.addEventListener(modalForm.events.LOADED, () => {
