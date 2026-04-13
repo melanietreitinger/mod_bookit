@@ -34,7 +34,6 @@ use mod_bookit\external\get_possible_starttimes;
 use core_user\fields;
 use dml_exception;
 use mod_bookit\local\entity\bookit_event;
-use mod_bookit\local\entity\resource\bookit_event_resource;
 use mod_bookit\local\entity\resource\bookit_resource_status;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
@@ -57,7 +56,7 @@ class edit_event_form extends dynamic_form {
      */
     public const BOOKINGSTATUS_NEW = 0;
     /** @var bookit_event|null An event, if an existing one is getting edited. */
-    private $event = null;
+    private ?bookit_event $event = null;
 
     /**
      * Define the form
@@ -456,7 +455,7 @@ class edit_event_form extends dynamic_form {
      * All form setup that is dependent on form values should go in here.
      *
      * @return void
-     * @throws coding_exception
+     * @throws coding_exception|dml_exception
      */
     public function definition_after_data(): void {
         global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
@@ -464,8 +463,6 @@ class edit_event_form extends dynamic_form {
         $data = $this->get_submitted_data() ?? $this->event;
 
         $context = $this->get_context_for_dynamic_submission();
-        $id = $this->_form->getElementValue('id');
-        $bookingstatus = $this->_form->getElementValue('bookingstatus');
         $usermodified = $this->_form->getElementValue('usermodified');
         $examiner = $this->_form->getElementValue('personinchargeid');
         $otherexaminers = $this->_form->getElementValue('otherexaminers') ?? [];
@@ -477,13 +474,6 @@ class edit_event_form extends dynamic_form {
             fullname($user, has_capability('moodle/site:viewfullnames', $context)) // ...TODO: find better way?
         );
 
-        // Get context and capabilities.
-        $context = $this->get_context_for_dynamic_submission();
-        // Event can be edited if capability is set, a new event is created or event is unprocessed (own events).
-        $caneditevent = (has_capability('mod/bookit:editevent', $context) || !$id ||
-                (self::BOOKINGSTATUS_NEW == (int) $bookingstatus[0] && in_array($USER->id, $otherexaminers))
-        );
-        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
         // Derive current booking-status & capability flags.
         $rawstatus = $mform->getElementValue('bookingstatus');
         $bookingstat = is_array($rawstatus) ? (int) $rawstatus[0] : self::BOOKINGSTATUS_NEW;
@@ -630,7 +620,7 @@ class edit_event_form extends dynamic_form {
      * Process the form submission, used if form was submitted via AJAX
      *
      * @return array ...
-     * @throws dml_exception
+     * @throws dml_exception|coding_exception
      */
     public function process_dynamic_submission(): array {
         $formdata = $this->get_data();
@@ -714,6 +704,8 @@ class edit_event_form extends dynamic_form {
      * @param bool $bookingcompleted When true, only booked resources are shown (read-only).
      * @param array $bookedresources Map of resourceid => ['amount' => int, 'status' => string].
      * @return void
+     * @throws coding_exception
+     * @throws dml_exception
      */
     private function add_resources_fields(
         \MoodleQuickForm $mform,
@@ -874,9 +866,17 @@ class edit_event_form extends dynamic_form {
      * @param array $data Form data
      * @param array $files Uploaded files
      * @return array Validation errors
+     * @throws coding_exception
+     * @throws dml_exception
      */
+    #[\Override]
     public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
+
+        $room = room::get_record(['id' => $data['roomid']]);
+        if ($room->get('seats') != 0 && $room->get('seats') < $data['participantsamount']) {
+            $errors['roomid'] = get_string('room_doesnt_have_enough_seats', 'mod_bookit');
+        }
 
         foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
             foreach ($categorygroup['resources'] as $resource) {
@@ -901,16 +901,6 @@ class edit_event_form extends dynamic_form {
             }
         }
 
-        return $errors;
-    }
-
-    #[\Override]
-    public function validation($data, $files) {
-        $errors = parent::validation($data, $files);
-        $room = room::get_record(['id' => $data['roomid']]);
-        if ($room->get('seats') != 0 && $room->get('seats') < $data['participantsamount']) {
-            $errors['roomid'] = get_string('room_doesnt_have_enough_seats', 'mod_bookit');
-        }
         return $errors;
     }
 }
