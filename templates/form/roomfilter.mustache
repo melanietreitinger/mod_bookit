@@ -1,0 +1,101 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/form/roomfilter
+
+    Room filter form element with two-row toggle layout.
+
+    Context variables:
+    * name - Element name
+    * id - Element ID
+    * label - Element label
+    * rooms_selected - Array of selected rooms
+    * rooms_unselected - Array of unselected rooms
+
+    Example context (json):
+    {
+        "name": "roomfilter",
+        "id": "id_roomfilter",
+        "label": "Filter by Rooms",
+        "rooms_selected": [
+            {
+                "id": 1,
+                "name": "Room A",
+                "eventcolor": "#FF0000",
+                "textcolor": "#fff"
+            }
+        ],
+        "rooms_unselected": [
+            {
+                "id": 2,
+                "name": "Room B",
+                "eventcolor": "#FFFF00",
+                "textcolor": "#000"
+            }
+        ]
+    }
+}}
+
+<div class="filter-section" {{#filter_section_id}}id="{{filter_section_id}}"{{/filter_section_id}} data-filter-id="{{id}}">
+    {{#label}}
+    <label class="filter-label">{{label}}</label>
+    {{/label}}
+
+    <div class="filter-group">
+        <div class="filter-row-selected" data-row="selected">
+            {{#rooms_selected}}
+            <button type="button"
+                    class="btn btn-sm btn-room-filter"
+                    data-value="{{id}}"
+                    data-room-name="{{name}}"
+                    data-state="selected"
+                    aria-pressed="true"
+                    style="--room-color: {{eventcolor}}; --text-color: {{textcolor}};">
+                <span class="filter-icon">✓</span>
+                {{name}}
+            </button>
+            {{/rooms_selected}}
+        </div>
+
+        <div class="filter-divider"></div>
+
+        <div class="filter-row-unselected" data-row="unselected">
+            {{#rooms_unselected}}
+            <button type="button"
+                    class="btn btn-sm btn-room-filter"
+                    data-value="{{id}}"
+                    data-room-name="{{name}}"
+                    data-state="unselected"
+                    aria-pressed="false"
+                    style="--room-color: {{eventcolor}}; --text-color: {{textcolor}};">
+                <span class="filter-icon">+</span>
+                {{name}}
+            </button>
+            {{/rooms_unselected}}
+        </div>
+    </div>
+
+    {{! Hidden select element for form submission }}
+    <select name="{{name}}" id="{{id}}" multiple class="d-none">
+        {{#rooms_selected}}
+        <option value="{{id}}" selected>{{name}}</option>
+        {{/rooms_selected}}
+        {{#rooms_unselected}}
+        <option value="{{id}}">{{name}}</option>
+        {{/rooms_unselected}}
+    </select>
+</div>

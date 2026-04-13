@@ -162,7 +162,7 @@ class get_possible_starttimes extends external_api {
         }
 
         $starttimes = [];
-        $freemodegrid = get_config('mod_bookit', 'eventstartstepwidth') * 60;
+        $freemodegrid = (int)(get_config('mod_bookit', 'eventstartstepwidth') ?: 15) * 60;
 
         foreach ($slots as $slot) {
             if ($room->get('roommode') == room::MODE_FREE || $room->get('roommode') == room::MODE_TOP_TO_BOTTOM) {

@@ -43,7 +43,9 @@ export default class extends BaseComponent {
 
     stateReady(state) {
 
-        const name = state.masterchecklists.get(1).name;
+        // Get master name for display (only place we need the full master object)
+        const masterChecklist = state.masterchecklists.get(state.activechecklist.id);
+        const name = masterChecklist.name;
 
         const titleElement = this.getElement(this.selectors.MASTER_CHECKLIST_TITLE);
 
@@ -112,7 +114,7 @@ export default class extends BaseComponent {
         const modalForm = new ModalForm({
             formClass: "mod_bookit\\local\\form\\masterchecklist\\edit_checklist_item_form",
             args: {
-                masterid: 1,
+                masterid: this.reactive.state.activechecklist.id,
                 itemid: null,
                 categories: Array.from(this.reactive.state.checklistcategories.values()),
             },
@@ -134,7 +136,7 @@ export default class extends BaseComponent {
         const modalForm = new ModalForm({
             formClass: "mod_bookit\\local\\form\\masterchecklist\\edit_checklist_category_form",
             args: {
-                masterid: 1
+                masterid: this.reactive.state.activechecklist.id
             },
             modalConfig: {
                 title: await getString('checklistcategory', 'mod_bookit'),
@@ -150,13 +152,10 @@ export default class extends BaseComponent {
     }
 
     async _handleExportChecklistButtonClick() {
-        // Get masterid from reactive state instead of dataset to avoid timing issues
-        const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
-
         const modalForm = new ModalForm({
             formClass: "mod_bookit\\local\\form\\masterchecklist\\export_checklist_form",
             args: {
-                masterid: masterid
+                masterid: this.reactive.state.activechecklist.id
             },
             modalConfig: {
                 title: await getString('export', 'mod_bookit'),
@@ -177,13 +176,10 @@ export default class extends BaseComponent {
     }
 
     async _handleImportChecklistButtonClick() {
-        // Get masterid from reactive state instead of dataset to avoid timing issues
-        const masterid = this.reactive.state.masterchecklists?.get(1)?.id || 1;
-
         const modalForm = new ModalForm({
             formClass: "mod_bookit\\local\\form\\masterchecklist\\import_checklist_form",
             args: {
-                masterid: masterid
+                masterid: this.reactive.state.activechecklist.id
             },
             modalConfig: {
                 title: await getString('import', 'mod_bookit'),
@@ -220,7 +216,7 @@ export default class extends BaseComponent {
                 id: event.element.id,
                 name: event.element.name,
                 order: event.element.order,
-                masterid: 1, // XXX TODO get from state
+                masterid: this.reactive.state.activechecklist.id,
                 type: 'category',
             })
             .then(({html, js}) => {
@@ -285,6 +281,7 @@ export default class extends BaseComponent {
                 categoryid: event.element.category,
                 roomids: event.element.roomids,
                 roomnames: roomNames,
+                isallrooms: event.element.isallrooms ?? false,
                 roleids: event.element.roleids,
                 rolenames: roleNames,
                 type: 'item',
@@ -344,7 +341,8 @@ export default class extends BaseComponent {
                 templateName = 'mod_bookit/masterchecklist/bookit_checklist_item_rooms';
                 templateData = {
                     id: event.element.id,
-                    roomnames: stateItem.roomnames
+                    roomnames: stateItem.roomnames,
+                    isallrooms: stateItem.isallrooms ?? false,
                 };
             } else if (fieldPart.startsWith('role')) {
 

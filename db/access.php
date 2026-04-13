@@ -39,12 +39,6 @@ $capabilities = [
                 'archetypes' => [],
                 'clonepermissionsfrom' => 'moodle/course:manageactivities',
         ],
-        // Add a new resource.
-        'mod/bookit:addresource' => [
-                'captype' => 'write',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [],
-        ],
         // Edit an existing event.
         'mod/bookit:editevent' => [
                 'captype' => 'write',
@@ -58,18 +52,14 @@ $capabilities = [
                 'archetypes' => [],
 
         ],
-        // Edit an existing resource.
-        'mod/bookit:editresource' => [
-                'captype' => 'write',
-                'contextlevel' => CONTEXT_COURSE,
-                'archetypes' => [],
-        ],
         // Filter by booking status in the calendar feed / UI.
         'mod/bookit:filterstatus' => [
                 'captype' => 'read',
                 'contextlevel' => CONTEXT_MODULE,
                 'archetypes' => [],
         ],
+        // Gate for all admin area functions: rooms, resources, resource checklist, weekplans,
+        // institutions, calendar. Assign this to Service Team for unrestricted admin access.
         'mod/bookit:managebasics' => [
             'riskbitmask' => RISK_CONFIG,
             'captype' => 'write',

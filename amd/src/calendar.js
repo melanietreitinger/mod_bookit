@@ -25,6 +25,7 @@ import {getString} from 'core/str';
 import ModalForm from 'core_form/modalform';
 import {prefetchStrings} from 'core/prefetch';
 import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
+import BookingFormResources from "mod_bookit/booking_form_resources";
 
 /**
  * Wait until a global property exists (EventCalendar is loaded asynchronously).
@@ -147,7 +148,10 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
                     });
-                    modalForm.addEventListener(modalForm.events.LOADED, () => initPossibleStarttimesRefresh(cmid));
+                    modalForm.addEventListener(modalForm.events.LOADED, () => {
+                        initPossibleStarttimesRefresh(cmid);
+                        BookingFormResources.init(modalForm.modal.getRoot()[0]);
+                    });
                     modalForm.show();
                 }
             }
@@ -176,7 +180,10 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
                 });
-                modalForm.addEventListener(modalForm.events.LOADED, () => initPossibleStarttimesRefresh(cmid));
+                modalForm.addEventListener(modalForm.events.LOADED, () => {
+                    initPossibleStarttimesRefresh(cmid);
+                    BookingFormResources.init(modalForm.modal.getRoot()[0]);
+                });
                 modalForm.show();
             }
         },
@@ -199,7 +206,10 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
             modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                 calendar.refetchEvents();
             });
-            modalForm.addEventListener(modalForm.events.LOADED, () => initPossibleStarttimesRefresh(cmid, id));
+            modalForm.addEventListener(modalForm.events.LOADED, () => {
+                initPossibleStarttimesRefresh(cmid, id);
+                BookingFormResources.init(modalForm.modal.getRoot()[0]);
+            });
             modalForm.show();
         },
 

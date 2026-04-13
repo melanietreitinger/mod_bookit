@@ -1,0 +1,151 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/resource_catalog/resource_item_row
+    Resource item row for table view
+
+    Context variables:
+    * id - Resource ID
+    * name - Resource name
+    * description - Resource description (optional)
+    * categoryid - Category ID
+    * amount - Amount/quantity
+    * amountirrelevant - Whether amount is irrelevant
+    * sortorder - Sort order
+    * active - Active status
+
+    Example context (json):
+    {
+        "id": 1,
+        "name": "Projector",
+        "description": "Example resource description",
+        "categoryid": 1,
+        "amount": 5,
+        "amountirrelevant": false,
+        "sortorder": 0,
+        "active": true
+    }
+}}
+<tr class="resource-item-row {{^active}}opacity-50{{/active}}"
+    id="resource-item-row-{{id}}"
+    data-region="resource-item-row"
+    data-bookit-item-id="{{id}}"
+    data-itemid="{{id}}"
+    data-item-name="{{name}}"
+    data-item-description="{{description}}"
+    data-item-categoryid="{{categoryid}}"
+    data-item-amount="{{amount}}"
+    data-item-amountirrelevant="{{amountirrelevant}}"
+    data-item-sortorder="{{sortorder}}"
+    data-item-active="{{active}}"
+    data-item-roomids="{{roomids}}"
+    data-rooms="{{roomids}}"
+    >
+
+    <td class="align-middle py-3 pl-4">
+        <span class="font-weight-medium" data-bookit-resource-tabledata-name-id="{{id}}">{{name}}</span>
+        {{#description}}
+            <br><small class="text-muted" data-bookit-resource-tabledata-description-id="{{id}}">{{{description}}}</small>
+        {{/description}}
+    </td>
+
+    <td class="align-middle py-3" data-bookit-resource-tabledata-amount-id="{{id}}">
+        {{#amountirrelevant}}
+            <span class="badge badge-secondary">{{#str}}resources:amount_unlimited, mod_bookit{{/str}}</span>
+        {{/amountirrelevant}}
+        {{^amountirrelevant}}
+            <span class="badge badge-info">{{amount}}x</span>
+        {{/amountirrelevant}}
+    </td>
+
+    <td class="align-middle py-3" data-bookit-resource-tabledata-roomids-id="{{id}}">
+        <div class="d-flex flex-nowrap align-items-center">
+            {{#isallrooms}}
+                <span class="badge badge-secondary">{{#str}}allrooms, mod_bookit{{/str}}</span>
+            {{/isallrooms}}
+            {{^isallrooms}}
+            {{#roomnames}}
+                <a href="{{roomurl}}"
+                    class="badge {{textclass}} mr-1 mb-1"
+                    style="opacity: 0.8; background-color: {{eventcolor}}; text-decoration: none;"
+                    data-toggle="tooltip"
+                    title="{{roomname}}"
+                    data-bookit-resource-tabledata-room-color="{{eventcolor}}"
+                    data-bookit-resource-tabledata-room-textclass="{{textclass}}"
+                    data-bookit-resource-tabledata-room-id="{{roomid}}"
+                    data-bookit-resource-roomname="{{roomname}}"
+                    data-bookit-resource-tabledata-is-room-element>{{shortname}}</a>
+            {{/roomnames}}
+            {{#hasmore}}
+                <span class="badge badge-light text-muted ml-1 mb-1"
+                    data-toggle="tooltip"
+                    title="{{allroomnames}}">+{{moreroomscount}}</span>
+            {{/hasmore}}
+            {{/isallrooms}}
+        </div>
+    </td>
+
+    <td class="align-middle py-3" data-bookit-resource-tabledata-active-id="{{id}}">
+        <div class="custom-control custom-switch">
+            <input type="checkbox"
+                   class="custom-control-input"
+                   data-action="toggle-active"
+                   data-item-id="{{id}}"
+                   {{#active}}checked{{/active}}
+                   id="resource-active-{{id}}">
+            <label class="custom-control-label" for="resource-active-{{id}}">
+                {{#active}}
+                    {{#str}}active, core{{/str}}
+                {{/active}}
+                {{^active}}
+                    {{#str}}inactive, core{{/str}}
+                {{/active}}
+            </label>
+        </div>
+    </td>
+
+    <td class="align-middle py-3 text-center">
+        <button type="button"
+                class="btn btn-sm btn-light rounded-pill pl-3 text-dark"
+                id="edit-item-{{id}}"
+                data-action="edit-item"
+                value="{{id}}">
+            {{#pix}}i/edit, core{{/pix}}
+        </button>
+    </td>
+
+    <td class="align-middle py-3 text-center">
+        <button type="button"
+                class="btn btn-sm btn-light rounded-pill pl-3 text-dark"
+                id="settings-item-{{id}}"
+                data-action="open-settings"
+                data-toggle="tooltip"
+                title="{{#str}}resources:open_settings, mod_bookit{{/str}}"
+                value="{{id}}">
+            {{#pix}}i/calendareventtime, core{{/pix}}
+        </button>
+    </td>
+
+    <td class="align-middle text-center py-3">
+        <button type="button"
+                class="btn btn-sm btn-light rounded-pill pl-3 text-dark"
+                data-action="drag-handle"
+                style="cursor: grab;">
+            {{#pix}}t/sort, core{{/pix}}
+        </button>
+    </td>
+</tr>

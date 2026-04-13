@@ -62,7 +62,7 @@ class bookit_notification_slot implements \renderable, \templatable {
      * Create a new instance of this class.
      *
      * @param int|null $id
-     * @param int $checklistitemid
+     * @param int|null $checklistitemid
      * @param string $type Type of notification (e.g. email, dashboard, etc.)
      * @param string|null $roleids JSON-encoded list of role IDs to notify
      * @param int|null $duedaysoffset
@@ -76,8 +76,8 @@ class bookit_notification_slot implements \renderable, \templatable {
     public function __construct(
         /** @var int|null id */
         public ?int $id,
-        /** @var int checklistitemid */
-        public int $checklistitemid,
+        /** @var int|null checklistitemid */
+        public ?int $checklistitemid,
         /** @var string type */
         public string $type,
         /** @var string|null roleids */
@@ -168,7 +168,7 @@ class bookit_notification_slot implements \renderable, \templatable {
 
         return new self(
             $record->id ?? null,
-            $record->checklistitemid,
+            $record->checklistitemid ?? null,
             $record->type ?? '',
             $record->roleids,
             $record->duedaysoffset,

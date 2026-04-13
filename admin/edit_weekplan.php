@@ -50,6 +50,7 @@ $returnurl = new moodle_url('/mod/bookit/admin/weekplans.php');
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/edit_weekplan.php', $params));
+$PAGE->set_primary_active_tab('bookit_settings');
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($title);
 $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));

@@ -146,7 +146,7 @@ if ($events) {
     $in = $inorequal[0];
     $p  = $inorequal[1];
     $sql = "SELECT er.eventid, MIN(r.name) AS room
-            FROM {bookit_event_resources} er
+            FROM {bookit_event_resource} er
         JOIN {bookit_resource}        r  ON r.id = er.resourceid
             WHERE er.eventid $in
         GROUP BY er.eventid";

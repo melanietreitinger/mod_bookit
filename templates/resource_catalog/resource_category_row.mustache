@@ -1,0 +1,85 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/resource_catalog/resource_category_row
+    Category row for table view
+
+    Context variables:
+    * id - Category ID
+    * name - Category name
+    * description - Category description (optional)
+    * sortorder - Sort order
+
+    Example context (json):
+    {
+        "id": 1,
+        "name": "Technical Equipment",
+        "description": "Audio and video equipment",
+        "sortorder": 0
+    }
+}}
+<tr class="table-active bg-light border-bottom resource-category-row"
+    id="resource-category-row-{{id}}"
+    data-region="resource-category-row"
+    data-categoryid="{{id}}"
+    data-category-sortorder="{{sortorder}}"
+    >
+
+    <td class="font-weight-bold text-dark py-3">
+        <div class="d-flex align-items-center">
+            <button type="button"
+                    class="btn btn-sm btn-link p-0 mr-2 text-dark icons-collapse-expand"
+                    data-action="toggle-category"
+                    data-categoryid="{{id}}"
+                    aria-expanded="true"
+                    aria-label="{{#str}}category_collapseexpand, mod_bookit{{/str}}"
+                    title="{{#str}}category_collapseexpand, mod_bookit{{/str}}">
+                <span class="expanded-icon">
+                    {{#pix}}t/expandedchevron, core{{/pix}}
+                </span>
+                <span class="collapsed-icon">
+                    {{#pix}}t/collapsedchevron, core{{/pix}}
+                </span>
+            </button>
+            <span>{{name}}</span>
+        </div>
+    </td>
+
+    <td class="text-muted"></td>
+    <td class="text-muted"></td>
+    <td class="text-muted"></td>
+
+    <td class="py-3 text-center">
+        <button type="button"
+                class="btn btn-sm btn-light rounded-pill pl-3 text-dark"
+                data-action="edit-category"
+                data-categoryid="{{id}}">
+            {{#pix}}i/edit, core{{/pix}}
+        </button>
+    </td>
+
+    <td class="text-muted"></td>
+
+    <td class="align-middle text-center py-3">
+        <button type="button"
+                class="btn btn-sm btn-light rounded-pill pl-3 text-dark"
+                data-action="drag-handle"
+                style="cursor: grab;">
+            {{#pix}}t/sort, core{{/pix}}
+        </button>
+    </td>
+</tr>

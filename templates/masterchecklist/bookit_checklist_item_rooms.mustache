@@ -21,21 +21,27 @@
     Example context (json):
     {
         "roomnames": [
-            {"roomid": 3, "roomname": "Room A", "textclass": "text-light", "eventcolor": "#ff0000"},
-            {"roomid": 4, "roomname": "Room B", "textclass": "text-dark", "eventcolor": "#00ff00"}
+            {"roomid": 3, "roomname": "Room A", "shortname": "RM-A", "textclass": "text-light", "eventcolor": "#ff0000"},
+            {"roomid": 4, "roomname": "Room B", "shortname": "RM-B", "textclass": "text-dark", "eventcolor": "#00ff00"}
         ]
     }
 }}
 <td class="align-middle py-3" data-bookit-checklistitem-tabledata-roomids-id="{{id}}">
-{{#roomnames}}
-    <div>
-        <span class="badge {{textclass}}"
+    <div class="d-flex flex-wrap align-items-center">
+    {{#isallrooms}}
+        <span class="badge badge-secondary">{{#str}}allrooms, mod_bookit{{/str}}</span>
+    {{/isallrooms}}
+    {{^isallrooms}}
+    {{#roomnames}}
+        <span class="badge {{textclass}} mr-1 mb-1"
             style="opacity: 0.8;background-color: {{eventcolor}};"
+            title="{{roomname}}"
             data-bookit-checklistitem-tabledata-room-color="{{eventcolor}}"
             data-bookit-checklistitem-tabledata-room-textclass="{{textclass}}"
             data-bookit-checklistitem-tabledata-room-id="{{roomid}}"
             data-bookit-checklistitem-roomname="{{roomname}}"
-            data-bookit-checklistitem-tabledata-is-room-element>{{roomname}}</span>
+            data-bookit-checklistitem-tabledata-is-room-element>{{shortname}}{{^shortname}}{{roomname}}{{/shortname}}</span>
+    {{/roomnames}}
+    {{/isallrooms}}
     </div>
-{{/roomnames}}
 </td>

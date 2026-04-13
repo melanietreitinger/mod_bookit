@@ -36,6 +36,10 @@ set_config('installhelperfinished', 1, 'mod_bookit');
 $rolesimported = install_helper::import_default_roles(false, false);
 $usersimported = install_helper::import_default_users(false, false);
 $result = install_helper::create_default_checklists(false, false); // Creates rooms as well.
+$resourcesresult = install_helper::create_default_resources(false, false);
+$weekplanresult = install_helper::create_default_weekplan(false, false);
+$courseresult = install_helper::create_default_course_and_activity(false, false);
+$eventsresult = install_helper::create_default_events(false, false);
 
 // Redirect back to settings.
 $returnurl = new moodle_url('/admin/settings.php', ['section' => 'modsettingbookit']);

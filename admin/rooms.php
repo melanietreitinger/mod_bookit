@@ -35,6 +35,7 @@ require_capability('mod/bookit:managebasics', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/rooms.php'));
+$PAGE->set_primary_active_tab('bookit_settings');
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('rooms', 'mod_bookit'));
 $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));

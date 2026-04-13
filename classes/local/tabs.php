@@ -82,11 +82,19 @@ class tabs {
                 $targeturl,
                 get_string('institutions', 'mod_bookit')
             );
+
+            // Tab to the resources page.
+            $targeturl = new moodle_url('/mod/bookit/admin/resources.php', ['id' => 'resources']);
+            $tabrow[] = new tabobject(
+                'resources',
+                $targeturl,
+                get_string('resources', 'mod_bookit')
+            );
         }
 
         if ($canmanagechecklists) {
             // Tab to the master checklist page.
-            $targeturl = new moodle_url('/mod/bookit/admin/master_checklist.php', ['id' => 'master_checklist']);
+            $targeturl = new moodle_url('/mod/bookit/admin/master_checklist.php', ['id' => 'master_checklist_items']);
             $tabrow[] = new tabobject(
                 'master_checklist',
                 $targeturl,

@@ -63,7 +63,7 @@ jobs:
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
-          IGNORE_NAMES: 'bookit_checklist_item.mustache,bookit_checklist_drag_handle.mustache,bookit_checklist_category.mustache,bookit_checklist_category_row.mustache,bookit_checklist_item_rooms.mustache,bookit_checklist_item_roles.mustache'
+          IGNORE_NAMES: 'bookit_checklist_item.mustache,bookit_checklist_drag_handle.mustache,bookit_checklist_category.mustache,bookit_checklist_category_row.mustache,bookit_checklist_item_rooms.mustache,bookit_checklist_item_roles.mustache,resource_category_row.mustache,resource_item_row.mustache,resource_checklist_catalog.mustache,resource_checklist_category_row.mustache,resource_checklist_item_row.mustache,category_row.mustache,item_row.mustache,container.mustache,event_checklist_catalog.mustache,event_resources_checklist_item_row.mustache'
           # Uncomment this to run Behat tests using the Moodle App.
           # MOODLE_APP: 'true'
 

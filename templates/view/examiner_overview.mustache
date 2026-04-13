@@ -1,0 +1,182 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_bookit/overview/examiner_overview
+
+    Examiner overview table with live search and sortable columns.
+    The title link opens the event details ModalForm (handled by existing AMD JS).
+
+    Classes required for JS:
+    * bookit-event-link
+
+    IDs required for JS:
+    * bookit-filter
+
+    Context variables required for this template:
+    * tableid - The HTML id attribute value for the table element.
+    * events - Array of event rows.
+
+    Event row fields:
+    * id - Event id.
+    * name - Event title (already formatted).
+    * room - Room label (string).
+    * personincharge - Full name of the person in charge (string).
+    * myrole - Role label for current user (string).
+    * statustext - Booking status label (string).
+    * statusstyle - Inline CSS for the status cell (string).
+    * statusoptions - Array of {value, label, selected} for admin dropdown.
+    * canmanage - Whether current user can manage events (bool).
+    * datestr - Date string for display (string).
+    * starttime - Unix timestamp used for sorting (number).
+    * cmid - Course module id for the modal (number).
+    * checklistprogress - Checklist progress percent (int, -1 = no master checklist).
+    * checklistprogress_available - Whether checklist progress is available (bool).
+    * resourcesprogress - Resources progress percent (int).
+    * resourcesprogress_available - Whether resources progress is available (bool).
+    * checklistlabel - Checklist button label (string).
+
+    Example context (json):
+    {
+      "tableid": "overview-table",
+      "events": [
+        {
+          "id": 123,
+          "name": "Exam A",
+          "room": "Room 1",
+          "personincharge": "Jane Doe",
+          "myrole": "Person in charge",
+          "statustext": "Accepted",
+          "statusstyle": "background-color:#d4edda;color:#000000;",
+          "datestr": "14.01.2026",
+          "starttime": 1768425600,
+          "cmid": 42,
+          "checklistprogress": 50,
+          "checklistprogress_available": true,
+          "resourcesprogress": 75,
+          "resourcesprogress_available": true,
+          "checklistlabel": "Checklist"
+        }
+      ]
+    }
+}}
+
+<div class="mod_bookit-overview-examiner_overview">
+    <div class="mb-3">
+        <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
+        <input type="text" id="bookit-filter" class="form-control w-auto d-inline">
+    </div>
+
+    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100">
+        <thead class="text-center">
+            <tr style="background-color:#cfe2ff;">
+                <th class="align-middle">ID</th>
+                <th class="align-middle">Title</th>
+                <th class="align-middle">Room</th>
+                <th class="align-middle">Person in charge</th>
+                <th class="align-middle">My role</th>
+                <th class="align-middle">Booking status</th>
+                <th class="align-middle">Date</th>
+                <th class="align-middle">Progress</th>
+                <th class="align-middle">Checklist</th>
+                <th class="align-middle">Resources</th>
+            </tr>
+        </thead>
+
+        <tbody class="text-center">
+            {{#events}}
+                <tr>
+                    <td class="align-middle">{{id}}</td>
+
+                    <td class="align-middle">
+                        <a href="#"
+                           class="bookit-event-link"
+                           data-eventid="{{id}}"
+                           data-cmid="{{cmid}}">
+                            {{name}}
+                        </a>
+                    </td>
+
+                    <td class="align-middle">{{room}}</td>
+                    <td class="align-middle">{{personincharge}}</td>
+                    <td class="align-middle">{{myrole}}</td>
+
+                    {{#canmanage}}
+                    <td class="align-middle text-center">
+                        <select class="custom-select custom-select-sm"
+                                data-action="update-booking-status"
+                                data-eventid="{{id}}"
+                                data-cmid="{{cmid}}"
+                                data-bookingstatus="{{bookingstatus}}">
+                            {{#statusoptions}}
+                            <option value="{{value}}" data-bg="{{bg}}" data-fg="{{fg}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                            {{/statusoptions}}
+                        </select>
+                    </td>
+                    {{/canmanage}}
+                    {{^canmanage}}
+                    <td class="align-middle" style="{{statusstyle}}">{{statustext}}</td>
+                    {{/canmanage}}
+
+                    <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
+
+                    <td class="align-middle">
+                        {{#checklistprogress_available}}
+                        <div class="mb-1">
+                            <div class="small text-muted mb-1">Checklist</div>
+                            <div class="progress position-relative" style="min-width:80px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width:{{checklistprogress}}%;"
+                                     aria-valuenow="{{checklistprogress}}"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                                <span class="position-absolute w-100 text-center" style="font-size:0.75rem;line-height:1rem;">{{checklistprogress}}%</span>
+                            </div>
+                        </div>
+                        {{/checklistprogress_available}}
+                        {{#resourcesprogress_available}}
+                        <div>
+                            <div class="small text-muted mb-1">Resources</div>
+                            <div class="progress position-relative" style="min-width:80px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width:{{resourcesprogress}}%;"
+                                     aria-valuenow="{{resourcesprogress}}"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                                <span class="position-absolute w-100 text-center" style="font-size:0.75rem;line-height:1rem;">{{resourcesprogress}}%</span>
+                            </div>
+                        </div>
+                        {{/resourcesprogress_available}}
+                        {{^checklistprogress_available}}{{^resourcesprogress_available}}--{{/resourcesprogress_available}}{{/checklistprogress_available}}
+                    </td>
+
+                    <td class="align-middle">
+                        {{#haschecklistaction}}
+                        <a href="{{checklisturl}}" class="btn btn-sm btn-primary">{{checklistlabel}}</a>
+                        {{/haschecklistaction}}
+                        {{^haschecklistaction}}-{{/haschecklistaction}}
+                    </td>
+                    <td class="align-middle">
+                        {{#hasresourcesaction}}
+                        <a href="{{resourceschecklisturl}}" class="btn btn-sm btn-primary">{{resourceschecklistlabel}}</a>
+                        {{/hasresourcesaction}}
+                        {{^hasresourcesaction}}-{{/hasresourcesaction}}
+                    </td>
+                </tr>
+            {{/events}}
+        </tbody>
+    </table>
+</div>

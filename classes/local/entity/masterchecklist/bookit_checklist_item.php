@@ -309,8 +309,12 @@ class bookit_checklist_item implements named_templatable, \renderable {
 
         foreach ($this->roomids as $roomid) {
             $room = checklist_manager::get_room_by_id((int) $roomid);
+            if (!$room) {
+                continue; // Skip rooms that no longer exist in the database.
+            }
             $data->roomnames[] = [
                 'roomname' => $room->name,
+                'shortname' => $room->shortname ?? '',
                 'roomid' => (int) $roomid,
                 'eventcolor' => $room->eventcolor,
                 'textclass' => $room->textclass,
