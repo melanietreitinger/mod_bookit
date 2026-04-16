@@ -24,9 +24,9 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
 $string['active_weekplan'] = 'Aktiver Wochenplan';
 $string['add_blocker'] = 'Blocker hinzufügen';
-$string['addbooking'] = 'Termin buchen';
 $string['afterexam'] = 'Nach der Prüfung';
 $string['allfaculties'] = 'Alle Fakultäten';
 $string['allrooms'] = 'Alle Räume';
@@ -59,7 +59,10 @@ $string['bookit:viewalldetailsofownevent'] = 'View all details of own event';
 $string['bookit:viewownoverview'] = 'Eigene Ereignisübersicht anzeigen';
 $string['bookitfieldset'] = 'PLATZHALTER';
 $string['calendar'] = 'Kalender';
+$string['calendar_addbooking'] = 'Termin buchen';
 $string['calendar_desc'] = 'Allgemeines Kalender- und Buchungsverhalten';
+$string['calendar_editevent'] = "Termin bearbeiten";
+$string['calendar_eventlist'] = 'Liste';
 $string['category_collapseexpand'] = 'Einklappen/Ausklappen';
 $string['category_created'] = 'Kategorie erfolgreich erstellt';
 $string['category_deleted'] = 'Kategorie erfolgreich gelöscht';

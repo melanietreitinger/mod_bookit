@@ -66,15 +66,16 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     }
 
     // String variables
-    await prefetchStrings('mod_bookit', ['addbooking', 'edit_event']);
+    await prefetchStrings('mod_bookit', ['calendar_addbooking', 'calendar_editevent', 'calendar_eventlist']);
     await prefetchStrings('core', ['today', 'month', 'week']);
-    await prefetchStrings('calendar', ['day', 'upcomingevents']);
-    const strRequestBooking = await getString('addbooking', 'mod_bookit');
+    await prefetchStrings('calendar', ['day']);
+    const strRequestBooking = await getString('calendar_addbooking', 'mod_bookit');
+    const editevent = await getString('calendar_editevent', 'mod_bookit');
     const strToday = await getString('today');
     const strMonth = await getString('month');
     const strWeek = await getString('week');
     const strDay = await getString('day', 'calendar');
-    const strList = await getString('upcomingevents', 'calendar');
+    const strList = await getString('calendar_eventlist', 'bookit');
 
     // Define viewtype
     let viewType = 'timeGridWeek';
@@ -99,7 +100,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         weekends: allowedWeekdays.includes(0) || allowedWeekdays.includes(6),
         scrollTime: '09:00:00',
         slotMinTime: '07:00:00',
-        dayMaxEvents: true,
+        dayMaxEvents: false,
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,
@@ -143,7 +144,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                         args: {
                             cmid: cmid
                         },
-                        modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                        modalConfig: {title: editevent},
                     });
                     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
@@ -175,7 +176,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                         cmid: cmid,
                         timeclicked: startdate,
                     },
-                    modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                    modalConfig: {title: editevent},
                 });
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
@@ -201,7 +202,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                     cmid: cmid,
                     id: id
                 },
-                modalConfig: {title: getString('edit_event', 'mod_bookit')},
+                modalConfig: {title: editevent},
             });
             modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                 calendar.refetchEvents();

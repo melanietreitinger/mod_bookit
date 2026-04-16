@@ -85,21 +85,21 @@ $PAGE->requires->js_call_amd('mod_bookit/filter_dropdown', 'init');
 $PAGE->requires->js_init_code("
 require(['jquery'], function($) {
     function pushFilters() {
-        const p = {};
-        const r = $('#filter-room').val();
-        const f = $('#filter-faculty').val();
-        const s = $('#filter-status').val();
+        var p = {};
+        var sel = window.bookitFilterSelected || {};
+        var r = sel.room || [];
+        var f = sel.faculty || [];
+        var s = sel.status || [];
 
-        if (r) p.room = r;
-        if (f) p.faculty = f;
-        if (s !== '') p.status = s;
+        if (r.length) { p.room = r.join(','); }
+        if (f.length) { p.faculty = f.join(','); }
+        if (s.length) { p.status = s.join(','); }
 
         window.currentFilterParams = p;
         if (window.bookitCalendarUpdate) {
             window.bookitCalendarUpdate(p);
         }
     }
-
     // Delegated: works even if the selects are rendered later.
     $(document).on('change', '#filter-room, #filter-faculty, #filter-status', pushFilters);
 });
@@ -169,10 +169,10 @@ foreach ($rooms as $rid => $rname) {
     ];
 }
 
-foreach ($faculties as $fac) {
+foreach ($faculties as $fid => $fname) {
     $templatecontext['faculties'][] = [
-        'value' => (string)$fac,
-        'label' => format_string($fac),
+        'value' => (string) $fid,
+        'label' => format_string($fname),
     ];
 }
 

@@ -24,9 +24,9 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
 $string['active_weekplan'] = 'Active weekplan';
 $string['add_blocker'] = 'Add blocker';
-$string['addbooking'] = 'Request booking';
 $string['afterexam'] = 'After event';
 $string['allfaculties'] = 'All faculties';
 $string['allrooms'] = 'All rooms';
@@ -66,6 +66,11 @@ $string['category_collapseexpand'] = 'Collapse/Expand';
 $string['category_created'] = 'Category created successfully';
 $string['category_deleted'] = 'Category deleted successfully';
 
+$string['calendar']          = 'Calendar';
+$string['calendar_addbooking'] = 'Request booking';
+$string['calendar_desc']     = 'General calendar & booking behaviour';
+$string['calendar_editevent'] = "Edit event";
+$string['calendar_eventlist'] = 'List';
 $string['category_name'] = 'Category name';
 $string['category_name_required'] = 'Category name is required.';
 $string['category_updated'] = 'Category updated successfully';
@@ -153,7 +158,6 @@ $string['duedatetype'] = 'Due date type';
 $string['duedatetype_help'] = 'How the due date is calculated relative to the event.';
 $string['edit'] = 'Edit';
 $string['edit_blocker'] = 'Edit blocker';
-$string['edit_event'] = "Edit event";
 $string['edit_institution'] = 'Edit institution';
 $string['edit_room'] = 'Edit room';
 $string['edit_room_data'] = 'Edit room data';
@@ -278,7 +282,6 @@ $string['item_state_unknown'] = 'Unknown';
 $string['item_updated'] = 'Resource updated successfully';
 $string['legend'] = 'Legend';
 $string['line_x'] = 'Line {$a}:';
-$string['list'] = 'List';
 $string['local_blocker'] = 'Local blocker (only for this room)';
 $string['location'] = 'Location';
 $string['master_checklist'] = 'Master checklist';
