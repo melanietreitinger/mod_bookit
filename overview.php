@@ -178,31 +178,6 @@ foreach ($events as $ev) {
     }
 
     $myrole = $roles ? implode(', ', $roles) : '-';
-    /*
-    // 1. Person in charge.
-    if ((int)$USER->id === (int)$ev->personinchargeid) {
-        $myrole = 'Person in charge';
-    }
-
-    // 2. Other examiner.
-    $others = array_filter(array_map('intval', explode(',', $ev->otherexaminers ?? '')));
-    if ($myrole === '-' && in_array((int)$USER->id, $others, true)) {
-        $myrole = 'Other examiner';
-    }
-
-    // 3. Booking person.
-    if ($myrole === '-' && (int)$USER->id === (int)$ev->usermodified) {
-        $myrole = 'Booking person';
-    }
-
-    // 4. Support person.
-    $support = array_filter(array_map('intval', explode(',', $ev->supportpersons ?? '')));
-    if ($myrole === '-' && in_array((int)$USER->id, $support, true)) {
-        $myrole = 'Support person';
-    }
-    */
-
-
 
     $datestr = userdate($ev->starttime, '%d.%m.%Y');
     $canviewchecklist = event_access_manager::can_view_event_checklist($ev, $context, (int)$USER->id);
