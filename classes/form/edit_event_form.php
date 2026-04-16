@@ -55,8 +55,9 @@ class edit_event_form extends dynamic_form {
      * @var int BOOKINGSTATUS_NEW: event is not processed yet and can be edited by the creator.
      */
     public const BOOKINGSTATUS_NEW = 0;
-    /** @var bookit_event|null An event, if an existing one is getting edited. */
-    private ?bookit_event $event = null;
+
+    /** @var bookit_event|stdClass|null An event, if an existing one is getting edited. */
+    private bookit_event|stdClass|null $event = null;
 
     /**
      * Define the form
@@ -585,18 +586,19 @@ class edit_event_form extends dynamic_form {
      * Load in existing data as form defaults
      */
     public function set_data_for_dynamic_submission(): void {
-        $event = new StdClass();
+        $e = new StdClass();
         $id = $this->optional_param('id', null, PARAM_INT);
-        if (!empty($id)) {
-            $event = event_manager::get_event($id);
-            $date = (new \DateTime())->setTimestamp($event->starttime);
-            $date->setTime(0, 0);
-            $event->startdate = $date->getTimestamp();
-            $this->event = $event;
-        }
-        $event->cmid = $this->optional_param('cmid', null, PARAM_INT);
 
-        $this->set_data($event);
+        if (!empty($id)) {
+            $e = event_manager::get_event($id);
+            $date = (new \DateTime())->setTimestamp($e->starttime);
+            $date->setTime(0, 0);
+            $e->startdate = $date->getTimestamp();
+            $this->event = $e;
+        }
+        $e->cmid = $this->optional_param('cmid', null, PARAM_INT);
+
+        $this->set_data($e);
     }
 
     /**
