@@ -42,6 +42,7 @@
         <FIELD NAME="extratimebefore" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes"/>
         <FIELD NAME="extratimeafter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes"/>
         <FIELD NAME="refcourseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Courseid of the exam course"/>
+       <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who originally created the event; never changes on update"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>

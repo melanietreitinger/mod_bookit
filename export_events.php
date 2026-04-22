@@ -71,7 +71,8 @@ if (!empty($ids)) {
                     FROM {bookit_event}
                     WHERE id $in
                     AND (
-                        usermodified = :uid
+                      AND (
+                        usercreated = :uid
                         OR personinchargeid = :uid2
                         OR $like
                     )";
@@ -103,7 +104,7 @@ if (!empty($ids)) {
                     WHERE endtime >= :starttime
                     AND starttime <= :endtime
                     AND (
-                        usermodified = :uid
+                        usercreated = :uid
                         OR personinchargeid = :uid2
                         OR $like
                     )";

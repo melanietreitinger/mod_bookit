@@ -72,7 +72,7 @@ class event_access_manager {
             return true;
         }
 
-        if ((int)($event->usermodified ?? 0) === $userid) {
+        if ((int)($event->usercreated ?? 0) === $userid) {
             return true;
         }
 

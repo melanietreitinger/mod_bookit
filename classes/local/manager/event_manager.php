@@ -108,18 +108,18 @@ class event_manager {
                     FROM {bookit_event} e
                     JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
-                    AND (e.usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
+                   AND (e.usercreated = :usercreated1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
                     UNION ' . $sqlreserved . '
-                    AND e.usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
+                    AND e.usercreated != :usercreated AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
             $params = [
                 'starttime1' => $starttimestamp,
                 'endtime1' => $endtimestamp,
-                'usermodified1' => $USER->id,
+                'usercrated1' => $USER->id,
                 'personinchargeid1' => $USER->id,
                 'otherexaminers1' => $USER->id,
                 'starttime' => $starttimestamp,
                 'endtime' => $endtimestamp,
-                'usermodified' => $USER->id,
+                'usercreated' => $USER->id,
                 'personinchargeid' => $USER->id,
                 'otherexaminers' => $USER->id];
         } else {
@@ -201,13 +201,13 @@ class event_manager {
                 e.personinchargeid,
                 e.otherexaminers,
                 e.supportpersons,
-                e.usermodified,
+                e.usercreated,
                 r.name AS room
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             WHERE
                    e.personinchargeid = :uid1
-                OR e.usermodified    = :uid2
+                OR e.usercreated    = :uid2
                 OR $otherexamcond
                 OR $supportcond
             ORDER BY e.starttime ASC

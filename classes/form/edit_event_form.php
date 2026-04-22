@@ -88,10 +88,10 @@ class edit_event_form extends dynamic_form {
         $mform->setType('id', PARAM_INT);
 
         // Show the user who created the entry.
-        $mform->addElement('text', 'usermodified', get_string('event_usermodified', 'mod_bookit'));
-        $mform->setType('usermodified', PARAM_TEXT);
-        $mform->disabledIf('usermodified', 'id', 'neq', 0);
-        $mform->hideIf('usermodified', 'id', 'eq', '');
+        $mform->addElement('text', 'usercreated', get_string('event_usercreated', 'mod_bookit'));
+        $mform->setType('usercreated', PARAM_TEXT);
+        $mform->disabledIf('usercreated', 'id', 'neq', 0);
+        $mform->hideIf('usercreated', 'id', 'eq', '');
 
         // Add the standard "name" field.
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), ['size' => '64']);
@@ -464,14 +464,14 @@ class edit_event_form extends dynamic_form {
         $data = $this->get_submitted_data() ?? $this->event;
 
         $context = $this->get_context_for_dynamic_submission();
-        $usermodified = $this->_form->getElementValue('usermodified');
+        $usercreated = $this->_form->getElementValue('usercreated');
         $examiner = $this->_form->getElementValue('personinchargeid');
         $otherexaminers = $this->_form->getElementValue('otherexaminers') ?? [];
-        array_push($otherexaminers, $usermodified, $examiner);
+        array_push($otherexaminers, $usercreated, $examiner);
 
         // Show the user who created the entry.
-        $user = $DB->get_record('user', ['id' => $usermodified]);
-        $mform->getElement('usermodified')->setValue(
+        $user = $DB->get_record('user', ['id' => $usercreated]);
+        $mform->getElement('usercreated')->setValue(
             fullname($user, has_capability('moodle/site:viewfullnames', $context)) // ...TODO: find better way?
         );
 
@@ -480,11 +480,11 @@ class edit_event_form extends dynamic_form {
         $bookingstat = is_array($rawstatus) ? (int) $rawstatus[0] : self::BOOKINGSTATUS_NEW;
 
         $id = $mform->getElementValue('id');
-        $usermodified = $mform->getElementValue('usermodified');
+        $usercreated = $mform->getElementValue('usercreated');
         $examiner = $mform->getElementValue('personinchargeid');
         $otherexaminers = array_filter(array_merge(
             $mform->getElementValue('otherexaminers') ?? [],
-            [$usermodified, $examiner]
+            [$usercreated, $examiner]
         ));
 
         $context = $this->get_context_for_dynamic_submission();
@@ -666,8 +666,8 @@ class edit_event_form extends dynamic_form {
             $formdata->refcourseid = $r[0];
         }
 
-        if (!is_int($formdata->usermodified)) {
-            unset($formdata->usermodified);
+        if (!is_int($formdata->usercreated)) {
+            unset($formdata->usercreated);
         }
 
         if (!is_int($formdata->extratimebefore)) {

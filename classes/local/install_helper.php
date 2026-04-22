@@ -1204,6 +1204,8 @@ class install_helper {
             $event->participantsamount = $data['participants'];
             $event->bookingstatus = $data['status'];
             $event->personinchargeid = $data['personid'];
+            $event->personinchargeid = $data['personid'];
+            $event->usercreated = $data['userid'];
             $event->usermodified = $data['userid'];
             $event->timecreated = time();
             $event->timemodified = time();
