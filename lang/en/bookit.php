@@ -230,6 +230,7 @@ $string['event_supportperson'] = 'Support persons';
 $string['event_supportperson_help'] = 'Support persons assigned to this event.';
 $string['event_timecompensation'] = 'Time compensation';
 $string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
+$string['event_usercreated'] = 'Created by user';
 $string['event_usermodified'] = 'Created by user';
 $string['export'] = 'Export';
 $string['export_error'] = 'Export failed. Please try again.';

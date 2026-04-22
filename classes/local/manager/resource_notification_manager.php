@@ -37,8 +37,7 @@ class resource_notification_manager {
     /**
      * Notify all relevant users when a resource status changes for an event.
      *
-     * Recipients are: the booker (usermodified), the person in charge (personinchargeid)
-     * and any other examiners (comma-separated IDs in otherexaminers).
+     * Recipients are: the booker (usercreated), the person in charge (personinchargeid)     * and any other examiners (comma-separated IDs in otherexaminers).
      * Duplicate IDs are skipped so nobody receives the message twice.
      *
      * @param int $cmid Course-module ID (used to build the context URL)
@@ -131,8 +130,8 @@ class resource_notification_manager {
     private static function collect_recipient_ids(\stdClass $event): array {
         $ids = [];
 
-        if (!empty($event->usermodified)) {
-            $ids[] = (int)$event->usermodified;
+        if (!empty($event->usercreated)) {
+            $ids[] = (int)$event->usercreated;
         }
         if (!empty($event->personinchargeid)) {
             $ids[] = (int)$event->personinchargeid;

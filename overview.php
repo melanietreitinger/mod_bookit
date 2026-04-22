@@ -163,7 +163,7 @@ foreach ($events as $ev) {
         $roles[] = 'Person in charge';
     }
 
-    if ($USER->id == $ev->usermodified) {
+    if ($USER->id == $ev->usercreated) {
         $roles[] = 'Booking person';
     }
 

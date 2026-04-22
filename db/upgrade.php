@@ -35,7 +35,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
     global $DB;
     $dbman = $DB->get_manager();
 
-    // Set this to the SAME value you set in mod/bookit/version.php ($plugin->version).
     $newversion = 2025411305;
 
     if ($oldversion < $newversion) {
