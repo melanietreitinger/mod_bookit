@@ -292,4 +292,223 @@ class bookit_event {
             }
         }
     }
+    /**
+     * Fetch event metadata for a list of event ids.
+     *
+     * Returns a map of event id to a stdClass containing bookingstatus,
+     * institutionid, roomid and roomname. Used by the calendar feed to
+     * enrich events that were originally produced for FullCalendar.
+     *
+     * @param array $ids Event ids to look up.
+     * @return array Map of event id to stdClass with bookingstatus,
+     *               institutionid, roomid and roomname fields.
+     * @throws dml_exception
+     */
+    public static function get_metadata_for_ids(array $ids): array {
+        global $DB;
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED);
+        $sql = "SELECT e.id,
+                       e.bookingstatus,
+                       e.institutionid,
+                       e.roomid,
+                       r.name AS roomname
+                  FROM {bookit_event} e
+             LEFT JOIN {bookit_room} r ON r.id = e.roomid
+                 WHERE e.id $insql";
+        return $DB->get_records_sql($sql, $inparams);
+    }
+
+    /**
+     * Add metadata fields to a list of calendar feed events.
+     *
+     * Mutates the passed events by setting bookingstatus, institutionid,
+     * roomid and roomname on each one based on a single batched query.
+     * Events without a matching record in the database are left untouched.
+     *
+     * @param array $events Events as produced by event_manager::get_events_in_timerange().
+     * @return array Same events with the four enrichment fields added.
+     * @throws dml_exception
+     */
+    public static function enrich_with_metadata(array $events): array {
+        if (empty($events)) {
+            return $events;
+        }
+
+        $ids = [];
+        foreach ($events as $ev) {
+            // Works for array or object.
+            $evid = is_array($ev) ? ($ev['id'] ?? null) : ($ev->id ?? null);
+            if ($evid) {
+                $ids[] = (int)$evid;
+            }
+        }
+        if (empty($ids)) {
+            return $events;
+        }
+
+        // Fetch all enrichment rows in a single query.
+        $rows = self::get_metadata_for_ids($ids);
+
+        foreach ($events as &$ev) {
+            $evid = is_array($ev) ? ($ev['id'] ?? null) : ($ev->id ?? null);
+            // Skip if nothing found.
+            if (!$evid || !isset($rows[$evid])) {
+                continue;
+            }
+            $row = $rows[$evid];
+
+            // Assign values safely for array or object.
+            if (is_array($ev)) {
+                $ev['bookingstatus'] = (int)($row->bookingstatus ?? 0);
+                $ev['institutionid']    = (string)($row->institutionid ?? '');
+                $ev['roomid']        = (int)($row->roomid ?? 0);
+                $ev['roomname']      = (string)($row->roomname ?? '');
+            } else {
+                $ev->bookingstatus = (int)($row->bookingstatus ?? 0);
+                $ev->institutionid    = (string)($row->institutionid ?? '');
+                $ev->roomid        = (int)($row->roomid ?? 0);
+                $ev->roomname      = (string)($row->roomname ?? '');
+            }
+        }
+        unset($ev);
+        return $events;
+    }
+
+    /**
+     * Fetch events for the export endpoint, scoped by capability.
+     *
+     * If a non-empty list of event ids is given, only those events are
+     * returned, still subject to the user's capability scope. Otherwise
+     * all events whose [starttime, endtime] window overlaps the given
+     * range are returned.
+     *
+     * Users with mod/bookit:viewalldetailsofevent receive every event in
+     * scope. Users with mod/bookit:viewalldetailsofownevent receive only
+     * events they created, are person in charge of, or are listed as other
+     * examiners on. Users with neither capability receive an empty array.
+     *
+     * @param \context_module $context Module context for the capability checks.
+     * @param int $userid User performing the export.
+     * @param array $ids Optional explicit event ids; empty means use the time range.
+     * @param int|null $startts Unix timestamp of range start, used when $ids is empty.
+     * @param int|null $endts Unix timestamp of range end, used when $ids is empty.
+     * @return array Event records keyed by id.
+     * @throws dml_exception
+     */
+    public static function get_for_export(\context_module $context, int $userid,
+                                           array $ids = [],
+                                           ?int $startts = null,
+                                           ?int $endts = null): array {
+        global $DB;
+
+        $viewall = has_capability('mod/bookit:viewalldetailsofevent', $context);
+        $viewown = has_capability('mod/bookit:viewalldetailsofownevent', $context);
+
+        if (!$viewall && !$viewown) {
+            // No details capability: nothing exportable.
+            return [];
+        }
+
+        if (!empty($ids)) {
+            // Export specific IDs, but only those the user is allowed to see in detail.
+            [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
+            if ($viewall) {
+                $sql = "SELECT *
+                          FROM {bookit_event}
+                         WHERE id $insql";
+                return $DB->get_records_sql($sql, $inparams);
+            }
+            $like = $DB->sql_like('otherexaminers', ':otherex');
+            $sql = "SELECT *
+                      FROM {bookit_event}
+                     WHERE id $insql
+                       AND (
+                              usercreated = :uid
+                           OR personinchargeid = :uid2
+                           OR $like
+                       )";
+            $params = $inparams + ['uid' => $userid, 'uid2' => $userid, 'otherex' => $userid];
+            return $DB->get_records_sql($sql, $params);
+        }
+
+        // Time-range export, capability-safe.
+        $startts = $startts ?? 0;
+        $endts   = $endts   ?? 4102444800; // 2100-01-01 UTC.
+
+        if ($viewall) {
+            $sql = "SELECT *
+                      FROM {bookit_event}
+                     WHERE endtime >= :starttime
+                       AND starttime <= :endtime";
+            return $DB->get_records_sql($sql, ['starttime' => $startts, 'endtime' => $endts]);
+        }
+
+        $like = $DB->sql_like('otherexaminers', ':otherex');
+        $sql = "SELECT *
+                  FROM {bookit_event}
+                 WHERE endtime >= :starttime
+                   AND starttime <= :endtime
+                   AND (
+                          usercreated = :uid
+                       OR personinchargeid = :uid2
+                       OR $like
+                   )";
+        $params = [
+            'starttime' => $startts,
+            'endtime'   => $endts,
+            'uid'       => $userid,
+            'uid2'      => $userid,
+            'otherex'   => $userid,
+        ];
+        return $DB->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Resolve institutionid foreign keys to institution names for export.
+     *
+     * Replaces the integer institutionid field on each event with the
+     * institution's name. Events whose institutionid does not resolve to
+     * an existing record have their institutionid cleared to an empty string.
+     *
+     * @param array $events Events keyed by event id.
+     * @return array Same events with institutionid replaced by the institution name.
+     * @throws dml_exception
+     */
+    public static function resolve_institution_names(array $events): array {
+        global $DB;
+
+        if (empty($events)) {
+            return $events;
+        }
+
+        $ids = [];
+        foreach ($events as $ev) {
+            $iid = (int)($ev->institutionid ?? 0);
+            if ($iid > 0) {
+                $ids[$iid] = $iid;
+            }
+        }
+        if (empty($ids)) {
+            return $events;
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED);
+        $sql = "SELECT id, name
+                  FROM {bookit_institution}
+                 WHERE id $insql";
+        $names = $DB->get_records_sql_menu($sql, $inparams);
+
+        foreach ($events as &$ev) {
+            $iid = (int)($ev->institutionid ?? 0);
+            $ev->institutionid = $names[$iid] ?? '';
+        }
+        unset($ev);
+        return $events;
+    }
+
 }
