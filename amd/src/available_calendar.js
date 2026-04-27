@@ -60,7 +60,7 @@ export async function init(eventsource, capabilities, lang) {
 
     var calendar;
 
-    calendar = new window.EventCalendar(document.getElementById('ec'), {
+    calendar = window.EventCalendar.create(document.getElementById('ec'), {
         locale: lang,
         view: viewType,
         firstDay: 1,
