@@ -250,4 +250,38 @@ class bookit_event_resource {
     public function set_timemodified(int $timemodified): void {
         $this->timemodified = $timemodified;
     }
+
+    /**
+     * Annotate event records with the name of their first associated room.
+     *
+     * Joins bookit_event_resource with bookit_resource and assigns the room
+     * name to a 'room' field on each event. Events without an associated
+     * resource are left untouched. The "first room" is the resource with the
+     * lowest name in lexicographic order, matching the previous SQL behaviour.
+     *
+     * @param array $events Events keyed by event id.
+     * @return array Same events with the 'room' field added where applicable.
+     * @throws dml_exception
+     */
+    public static function annotate_events_with_room(array $events): array {
+        global $DB;
+
+        if (empty($events)) {
+            return $events;
+        }
+        $ids = array_keys($events);
+        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED);
+        $sql = "SELECT er.eventid, MIN(r.name) AS room
+                  FROM {bookit_event_resource} er
+                  JOIN {bookit_resource} r ON r.id = er.resourceid
+                 WHERE er.eventid $insql
+              GROUP BY er.eventid";
+        foreach ($DB->get_records_sql($sql, $inparams) as $rec) {
+            if (isset($events[$rec->eventid])) {
+                $events[$rec->eventid]->room = $rec->room ?? '';
+            }
+        }
+        return $events;
+    }
+
 }

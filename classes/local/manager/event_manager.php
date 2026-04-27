@@ -402,4 +402,173 @@ class event_manager {
         }
         return $options;
     }
+    /**
+     * Read a value from a stdClass or array using the first non-empty key.
+     *
+     * Helper for the calendar feed, where event records may be arrays
+     * (as built by get_events_in_timerange) or stdClass objects (as
+     * returned directly from the database).
+     *
+     * @param mixed $src Record to read from, either array or stdClass.
+     * @param array $keys Candidate keys, tried in order.
+     * @return mixed Value of the first non-empty key, or null when none match.
+     */
+
+    private static function read_field(mixed $src, array $keys): mixed {
+        foreach ($keys as $k) {
+            if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) {
+                return $src[$k];
+            }
+            if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) {
+                return $src->$k;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Apply the calendar feed filters to a list of events.
+     *
+     * Each criterion is optional: an empty array or string is treated as
+     * "do not filter on this criterion". Faculty and search comparisons are
+     * case-insensitive. The search needle is matched against event name and
+     * institutionid as a single concatenated haystack.
+     *
+     * @param array $events Events to filter.
+     * @param array $roomids Selected room ids; empty means no room filter.
+     * @param array $faculties Selected institutionid values; empty means no faculty filter.
+     * @param array $statuses Selected bookingstatus values; empty means no status filter.
+     * @param string $search Free-text search needle; empty means no text filter.
+     * @return array Filtered events, reindexed.
+     */
+    public static function filter_events_by_criteria(array $events, array $roomids, array $faculties,
+                                                      array $statuses, string $search): array {
+        // Helper to read from array or object.
+        $filtered = array_filter($events, function ($ev) use ($roomids, $faculties, $statuses, $search) {
+            // ROOM filter — match any of the selected room ids.
+            if (!empty($roomids)) {
+                $eventroomid = (int) self::read_field($ev, ['roomid', 'resourceid', 'rid']);
+                if (!in_array($eventroomid, $roomids, true)) {
+                    return false;
+                }
+            }
+            // FACULTY filter — match any of the selected faculties (case-insensitive).
+            if (!empty($faculties)) {
+                $evdept = mb_strtolower(trim((string) (self::read_field($ev, ['institutionid', 'faculty', 'dept']) ?? '')));
+                $wanted = array_map('mb_strtolower', $faculties);
+                if ($evdept === '' || !in_array($evdept, $wanted, true)) {
+                    return false;
+                }
+            }
+            // STATUS filter — match any of the selected statuses.
+            if (!empty($statuses)) {
+                $evstatus = self::read_field($ev, ['bookingstatus']);
+                if ($evstatus === null || !in_array((int) $evstatus, $statuses, true)) {
+                    return false;
+                }
+            }
+            // SEARCH filter (substring in title + institutionid, case-insensitive).
+            if ($search !== '') {
+                $needle = mb_strtolower($search);
+                $title = (string) (self::read_field($ev, ['title', 'name', 'summary']) ?? '');
+                $dept = (string) (self::read_field($ev, ['institutionid', 'faculty', 'dept']) ?? '');
+                $haystack = mb_strtolower($title . ' ' . $dept);
+                if (mb_strpos($haystack, $needle) === false) {
+                    return false;
+                }
+            }
+            return true;
+        });
+        return array_values($filtered);
+    }
+
+
+
+    /**
+     * Remove events flagged as reserved from a list.
+     *
+     * Used by the calendar feed in export mode for users without the
+     * mod/bookit:viewalldetailsofevent capability, to make sure no entries
+     * for events they cannot see in detail are returned.
+     *
+     * @param array $events Events as produced by get_events_in_timerange().
+     * @return array Reindexed list with reserved events removed.
+     */
+
+    public static function strip_reserved_events(array $events): array {
+        $filtered = array_filter($events, static function ($ev) {
+            // Works for both array and object events.
+            $extended = null;
+            if (is_array($ev) && isset($ev['extendedProps'])) {
+                $extended = $ev['extendedProps'];
+            } else if (is_object($ev) && isset($ev->extendedProps)) {
+                $extended = $ev->extendedProps;
+            }
+            if (is_object($extended) && property_exists($extended, 'reserved')) {
+                // Keep only non-reserved events.
+                return !(bool)$extended->reserved;
+            }
+            return true;
+        });
+        // Reindex after filtering.
+        return array_values($filtered);
+    }
+
+    /**
+     * Normalise the start and end fields of events to ISO 8601.
+     *
+     * The events produced by get_events_in_timerange use a space between
+     * date and time, which FullCalendar's week and day views do not render
+     * correctly. This method replaces the space with a "T" and appends ":00"
+     * for seconds.
+     *
+     * @param array $events Events with possibly space-separated start/end strings.
+     * @return array Events with ISO 8601 start and end fields.
+     */
+    public static function normalize_event_times_to_iso(array $events): array {
+        return array_values(array_map(function ($e) {
+            if (isset($e->start)) {
+                $e->start = str_replace(' ', 'T', $e->start) . ':00';
+            }
+            if (isset($e->end)) {
+                $e->end = str_replace(' ', 'T', $e->end) . ':00';
+            }
+            return $e;
+        }, $events));
+    }
+
+    /**
+     * Apply the post-fetch filters used by the export endpoint.
+     *
+     * Each criterion is optional: 0 means no room filter, an empty string
+     * means no faculty filter, and a value below zero means no status filter.
+     * The room criterion is currently not enforced because the comparison
+     * field on the event records does not exist; the code path is preserved
+     * to keep behaviour identical with the previous implementation.
+     *
+     * @param array $events Events keyed by event id.
+     * @param int $room Room id, or 0 for no filter.
+     * @param string $faculty Institutionid value, or empty string for no filter.
+     * @param int $status Booking status, or a value below zero for no filter.
+     * @return array Filtered events, keys preserved.
+     */
+
+    public static function apply_export_filters(array $events, int $room, string $faculty, int $status): array {
+        $filtered = array_filter($events, static function ($e) use ($faculty, $status): bool {
+            if ($faculty !== '' && $faculty !== ($e->institutionid ?? '')) {
+                return false;
+            }
+            if ($status >= 0 && $status !== (int) ($e->bookingstatus ?? -1)) {
+                return false;
+            }
+            return true;
+        });
+        if ($room) {
+            $filtered = array_filter($filtered, function ($ev) use ($room) {
+                return (int)($ev->resourceid ?? 0) === $room;
+            });
+        }
+        return $filtered;
+    }
 }
+
