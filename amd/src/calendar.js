@@ -92,7 +92,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     // Runtime filter parameters – mutable via bookitCalendarUpdate()
     let extraFilterParams = {}; // {room:123, status:2, faculty:'ENG', …}
 
-    const calendar = new window.EventCalendar(document.getElementById('ec'), {
+    const calendar = window.EventCalendar.create(document.getElementById('ec'), {
         /* Appearance / behaviour */
         locale: lang,
         view: viewType,
