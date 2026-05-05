@@ -173,6 +173,7 @@ $string['error_category_not_found'] = 'The selected category does not exist.';
 $string['error_duedate_days_required'] = 'Number of days is required for before/after event due dates.';
 $string['error_duedate_required'] = 'Due date is required when fixed date type is selected.';
 $string['error_sortorder_negative'] = 'Sort order must be a positive number.';
+$string['error_starttime_in_past'] = 'Start time cannot be in the past.';
 $string['event_bookingstatus'] = 'Booking status';
 $string['event_bookingstatus_0'] = 'New';
 $string['event_bookingstatus_1'] = 'In Progress';
