@@ -147,13 +147,13 @@ class event_manager {
                 $roominfo .= ': ' . implode(', ', $addinfos);
             }
 
+            //Updated to work with v5 of the calendar. 
             $events[] = [
                 'id' => $record->id,
-                'title' => [
-                    'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
-                        date('H:i', $record->endtime) . '</h6>' .
-                        ($record->name ?? $reserved) . " ($roominfo)",
-                ],
+                 'title' => ($record->name ?? $reserved) . " ($roominfo)",
+                 'titleHTML' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
+                    date('H:i', $record->endtime) . '</h6>' .
+                    ($record->name ?? $reserved) . " ($roominfo)",
                 'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
                 'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
                 'backgroundColor' => $record->eventcolor,
@@ -525,17 +525,25 @@ class event_manager {
      * @param array $events Events with possibly space-separated start/end strings.
      * @return array Events with ISO 8601 start and end fields.
      */
-    public static function normalize_event_times_to_iso(array $events): array {
-        return array_values(array_map(function ($e) {
+    public static function normalize_event_times_to_iso(array $events): array {return array_values(array_map(function ($e) {
+        if (is_array($e)) {
+            if (isset($e['start'])) {
+                $e['start'] = str_replace(' ', 'T', $e['start']) . ':00';
+            }
+            if (isset($e['end'])) {
+                $e['end'] = str_replace(' ', 'T', $e['end']) . ':00';
+            }
+        } else {
             if (isset($e->start)) {
                 $e->start = str_replace(' ', 'T', $e->start) . ':00';
             }
             if (isset($e->end)) {
                 $e->end = str_replace(' ', 'T', $e->end) . ':00';
             }
-            return $e;
-        }, $events));
-    }
+        }
+        return $e;
+    }, $events));
+}
 
     /**
      * Apply the post-fetch filters used by the export endpoint.

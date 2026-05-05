@@ -874,6 +874,28 @@ class edit_event_form extends dynamic_form {
     #[\Override]
     public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
+        // Past-time check: prevent creating new events in the past.
+        $starttime = (int)($data['starttime'] ?? 0);
+        if ($starttime > 0) {
+            $now = time();
+            $eventid = (int)($data['id'] ?? 0);
+
+            if ($eventid <= 0) {
+                // Creating a new event.
+                if ($starttime < $now) {
+                    $errors['starttime'] = get_string('error_starttime_in_past', 'mod_bookit');
+                }
+            } else {
+                // Editing an existing event.
+                global $DB;
+                $original = (int)$DB->get_field('bookit_event', 'starttime', ['id' => $eventid]);
+                if ($original >= $now && $starttime < $now) {
+                    // Original was in the future, new value is in the past → reject.
+                    $errors['starttime'] = get_string('error_starttime_in_past', 'mod_bookit');
+                }
+                // If original was in the past, allow any new starttime.
+            }
+        }
 
         $room = room::get_record(['id' => $data['roomid']]);
         if ($room->get('seats') != 0 && $room->get('seats') < $data['participantsamount']) {
