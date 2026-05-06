@@ -183,6 +183,9 @@ $string['event_bookingstatus_4'] = 'Rejected';
 $string['event_bookingstatus_help'] = 'Explanation of the booking status options.';
 $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejected';
 $string['event_checklist:done'] = 'done';
+
+$string["cancelattemptinfo:view"] ="Cancel Attempt"; //TODO: einsortieren
+
 $string['event_checklist:go_to_resources'] = 'Event Resources';
 $string['event_checklist:progress'] = 'Checklist Progress';
 $string['event_checklist_heading'] = 'Checklist for Event: {$a}';
