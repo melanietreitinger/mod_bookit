@@ -114,7 +114,8 @@ class event_manager {
             $params = [
                 'starttime1' => $starttimestamp,
                 'endtime1' => $endtimestamp,
-                'usercrated1' => $USER->id,
+                'usercreated1' => $USER->id,
+                
                 'personinchargeid1' => $USER->id,
                 'otherexaminers1' => $USER->id,
                 'starttime' => $starttimestamp,
