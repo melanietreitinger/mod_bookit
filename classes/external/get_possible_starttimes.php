@@ -50,6 +50,18 @@ require_once($CFG->libdir . "/externallib.php");
  */
 class get_possible_starttimes extends external_api {
     /**
+     * Check whether a booking start timestamp lies in the past.
+     *
+     * @param int $timestamp
+     * @param int|null $referencetime
+     * @return bool
+     */
+    public static function is_starttime_in_past(int $timestamp, ?int $referencetime = null): bool {
+        $referencetime ??= time();
+        return $timestamp < $referencetime;
+    }
+
+    /**
      * Description for get_possible_slots parameters.
      *
      * @return external_function_parameters
@@ -197,6 +209,12 @@ class get_possible_starttimes extends external_api {
                 }
             }
         }
+
+        $starttimes = array_filter(
+            $starttimes,
+            static fn(int $time): bool => !self::is_starttime_in_past($time),
+            ARRAY_FILTER_USE_KEY
+        );
 
         if (empty($starttimes)) {
             return [[], 0];

@@ -50,27 +50,61 @@ class mod_bookit_generator extends testing_module_generator {
             $userid = $user->id;
         }
 
+        $roomid = 1;
+        if (!empty($event['room'])) {
+            $room = $DB->get_record('bookit_room', ['name' => $event['room']], 'id', IGNORE_MISSING);
+            if ($room) {
+                $roomid = (int)$room->id;
+            }
+        } else if (!empty($event['roomid'])) {
+            $roomid = (int)$event['roomid'];
+        }
+
+        $personinchargeid = !empty($event['personincharge_username'])
+            ? (int)$DB->get_field('user', 'id', ['username' => $event['personincharge_username']], MUST_EXIST)
+            : 2;
+
+        $otherexaminers = '';
+        if (!empty($event['otherexaminer_usernames'])) {
+            $usernames = array_filter(array_map('trim', explode(',', $event['otherexaminer_usernames'])));
+            $ids = [];
+            foreach ($usernames as $username) {
+                $ids[] = (int)$DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+            }
+            $otherexaminers = implode(',', $ids);
+        }
+
+        $supportpersons = '';
+        if (!empty($event['supportperson_usernames'])) {
+            $usernames = array_filter(array_map('trim', explode(',', $event['supportperson_usernames'])));
+            $ids = [];
+            foreach ($usernames as $username) {
+                $ids[] = (int)$DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+            }
+            $supportpersons = implode(',', $ids);
+        }
+
         $e = new bookit_event(
             0,
             $event['name'],
-            20241,
+            (int)($event['semester'] ?? 20241),
             $event['institution'],
             strtotime($event['startdate']),
             strtotime($event['enddate']),
-            90,
-            1,
-            rand(20, 250),
-            1,
-            '',
+            (int)($event['duration'] ?? 90),
+            $roomid,
+            (int)($event['participantsamount'] ?? rand(20, 250)),
+            (int)($event['timecompensation'] ?? 1),
+            $event['compensationfordisadvantages'] ?? '',
             $event['bookingstatus'],
-            2,
-            '',
-            0,
-            'External lorem ipsum',
-            'Internal Lorem Ipsum dolor...',
-            'Susi Support',
-            15,
-            15,
+            $personinchargeid,
+            $otherexaminers,
+            (int)($event['coursetemplate'] ?? 0),
+            $event['notes'] ?? 'External lorem ipsum',
+            $event['internalnotes'] ?? 'Internal Lorem Ipsum dolor...',
+            $supportpersons,
+            (int)($event['extratimebefore'] ?? 15),
+            (int)($event['extratimeafter'] ?? 15),
             null,
             $userid,
             time(),

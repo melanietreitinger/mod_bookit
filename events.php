@@ -39,9 +39,11 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 
 require_login();           // User must be logged-in.
+global $USER;
 // ...@TODO: capability check, check for sesskey!
 // ...@TODO: The id of the instance should become required in future!
 
@@ -152,6 +154,10 @@ foreach ($events as &$ev) {
         SELECT e.bookingstatus,
                e.institutionid,
                e.roomid,
+               e.personinchargeid,
+               e.otherexaminers,
+               e.supportpersons,
+               e.usermodified,
                r.name AS roomname
           FROM {bookit_event} e
      LEFT JOIN {bookit_room} r ON r.id = e.roomid
@@ -168,17 +174,37 @@ foreach ($events as &$ev) {
         $ev['institutionid']    = (string)($row->institutionid ?? '');
         $ev['roomid']        = (int)($row->roomid ?? 0);
         $ev['roomname']      = (string)($row->roomname ?? '');
+        $ev['personinchargeid'] = (int)($row->personinchargeid ?? 0);
+        $ev['otherexaminers'] = (string)($row->otherexaminers ?? '');
+        $ev['supportpersons'] = (string)($row->supportpersons ?? '');
+        $ev['usermodified'] = (int)($row->usermodified ?? 0);
     } else {
         $ev->bookingstatus = (int)($row->bookingstatus ?? 0);
         $ev->institutionid    = (string)($row->institutionid ?? '');
         $ev->roomid        = (int)($row->roomid ?? 0);
         $ev->roomname      = (string)($row->roomname ?? '');
+        $ev->personinchargeid = (int)($row->personinchargeid ?? 0);
+        $ev->otherexaminers = (string)($row->otherexaminers ?? '');
+        $ev->supportpersons = (string)($row->supportpersons ?? '');
+        $ev->usermodified = (int)($row->usermodified ?? 0);
     }
 }
 unset($ev);
 
+$events = array_filter($events, static function ($ev) use ($context, $USER) {
+    $reserved = false;
+    if (is_array($ev) && isset($ev['extendedProps']) && is_object($ev['extendedProps'])) {
+        $reserved = (bool)($ev['extendedProps']->reserved ?? false);
+    } else if (is_object($ev) && isset($ev->extendedProps) && is_object($ev->extendedProps)) {
+        $reserved = (bool)($ev->extendedProps->reserved ?? false);
+    }
 
+    if ($reserved) {
+        return true;
+    }
 
+    return event_access_manager::can_user_view_event_in_calendar((object)$ev, $context, (int)$USER->id);
+});
 
 // Apply in-memory filters (only if parameter present). For Filter user story.
 $events = array_filter($events, function ($ev) use ($roomids, $faculties, $statuses, $search) {

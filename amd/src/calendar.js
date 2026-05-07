@@ -92,7 +92,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     // Runtime filter parameters – mutable via bookitCalendarUpdate()
     let extraFilterParams = {}; // {room:123, status:2, faculty:'ENG', …}
 
-    const calendar = new window.EventCalendar(document.getElementById('ec'), {
+    const calendar = window.EventCalendar.create(document.getElementById('ec'), {
         /* Appearance / behaviour */
         locale: lang,
         view: viewType,
@@ -165,11 +165,10 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 return;
             }
 
-            let d = new Date();
-            let dateoff = new Date(d.setMinutes(d.getMinutes() - d.getTimezoneOffset()));
             let startdate = info.dateStr;
+            const isFutureSlot = info.date.getTime() > Date.now();
 
-            if (capabilities.addevent && startdate > dateoff.toISOString()) {
+            if (capabilities.addevent && isFutureSlot) {
                 const modalForm = new ModalForm({
                     formClass: 'mod_bookit\\form\\edit_event_form',
                     args: {

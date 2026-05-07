@@ -39,6 +39,315 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
  */
 class behat_mod_bookit extends behat_base {
     /**
+     * Opens the Bookit overview for the named activity and tab.
+     *
+     * @Given I open the Bookit overview :tab for :activity
+     * @param string $tab
+     * @param string $activity
+     */
+    public function i_open_the_bookit_overview_for(string $tab, string $activity): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => $tab]);
+        $this->getSession()->visit($this->locate_path($url->out_as_local_url(false)));
+    }
+
+    /**
+     * Opens the Bookit reporting overview with explicit filter parameters.
+     *
+     * @When I open the Bookit reporting overview for :activity from :start to :end with semesters :semesters
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $semesters
+     */
+    public function i_open_the_bookit_reporting_overview_for_with_filters(
+        string $activity,
+        string $start,
+        string $end,
+        string $semesters
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $params = [
+            'id' => $cm->id,
+            'tab' => 'myevents',
+            'reportstart' => $start,
+            'reportend' => $end,
+        ];
+        $query = http_build_query($params);
+        foreach (array_filter(array_map('trim', explode(',', $semesters))) as $semester) {
+            $query .= '&semesterids[]=' . rawurlencode($semester);
+        }
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Opens the event details modal for the given event title.
+     *
+     * @When I open the Bookit event details for :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function i_open_the_bookit_event_details_for(string $eventname): void {
+        $js = <<<JS
+            (function(eventLabel) {
+                var links = document.querySelectorAll('a.bookit-event-link');
+                for (var i = 0; i < links.length; i++) {
+                    if (links[i].textContent.trim() === eventLabel) {
+                        links[i].click();
+                        return 'clicked';
+                    }
+                }
+                return 'link-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'clicked') {
+            throw new ExpectationException(
+                "Could not open the event details for \"$eventname\". Result: $result",
+                $this->getSession()
+            );
+        }
+
+        $this->getSession()->wait(3000, "document.querySelector('.modal.show') !== null");
+    }
+
+    /**
+     * Assert that a modal control is enabled.
+     *
+     * @Then the Bookit event details control :controlname should be enabled
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_be_enabled(string $controlname): void {
+        $this->assert_modal_control_state($controlname, 'enabled');
+    }
+
+    /**
+     * Assert that a modal control is disabled.
+     *
+     * @Then the Bookit event details control :controlname should be disabled
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_be_disabled(string $controlname): void {
+        $this->assert_modal_control_state($controlname, 'disabled');
+    }
+
+    /**
+     * Assert that a modal control is not visible.
+     *
+     * @Then the Bookit event details control :controlname should not be visible
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_not_be_visible(string $controlname): void {
+        $this->assert_modal_control_state($controlname, 'hidden');
+    }
+
+    /**
+     * Set a select value inside the event details modal.
+     *
+     * @When I select :value in the Bookit event details control :controlname
+     * @param string $value
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function i_select_in_the_bookit_event_details_control(string $value, string $controlname): void {
+        $js = <<<JS
+            (function(controlName, targetLabel) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return 'control-not-found';
+                }
+                if (control.tagName !== 'SELECT') {
+                    return 'control-not-select';
+                }
+                for (var i = 0; i < control.options.length; i++) {
+                    if (control.options[i].textContent.trim() === targetLabel) {
+                        control.selectedIndex = i;
+                        control.dispatchEvent(new Event('change', {bubbles: true}));
+                        return 'selected';
+                    }
+                }
+                return 'option-not-found';
+            })('$controlname', '$value');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'selected') {
+            throw new ExpectationException(
+                "Could not select \"$value\" in modal control \"$controlname\". Result: $result",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Force a modal select control to a timestamp in the past.
+     *
+     * @When I set the Bookit event details control :controlname to a past timestamp
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function i_set_the_bookit_event_details_control_to_a_past_timestamp(string $controlname): void {
+        $js = <<<JS
+            (function(controlName) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return 'control-not-found';
+                }
+                if (control.tagName !== 'SELECT') {
+                    return 'control-not-select';
+                }
+                var pasttimestamp = String(Math.floor(Date.now() / 1000) - 3600);
+                var option = Array.from(control.options).find(function(item) {
+                    return item.value === pasttimestamp;
+                });
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = pasttimestamp;
+                    option.textContent = 'Forced past option';
+                    control.appendChild(option);
+                }
+                control.value = pasttimestamp;
+                control.dispatchEvent(new Event('change', {bubbles: true}));
+                return 'selected';
+            })('$controlname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'selected') {
+            throw new ExpectationException(
+                "Could not set modal control \"$controlname\" to a past timestamp. Result: $result",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Submit the currently visible event details modal.
+     *
+     * @When I submit the Bookit event details modal
+     * @throws ExpectationException
+     */
+    public function i_submit_the_bookit_event_details_modal(): void {
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
+                if (!button) {
+                    return 'save-not-found';
+                }
+                button.click();
+                return 'clicked';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'clicked') {
+            throw new ExpectationException(
+                "Could not submit the event details modal. Result: $result",
+                $this->getSession()
+            );
+        }
+
+        $this->getSession()->wait(3000);
+    }
+
+    /**
+     * Closes the currently visible modal dialog.
+     *
+     * @When I close the currently open dialog
+     * @throws ExpectationException
+     */
+    public function i_close_the_currently_open_dialog(): void {
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var button = root.querySelector('button.btn-close, button[data-bs-dismiss="modal"], button[data-dismiss="modal"]');
+                if (button) {
+                    button.click();
+                    return 'clicked';
+                }
+                document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+                return 'escape-dispatched';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if (!in_array($result, ['clicked', 'escape-dispatched'], true)) {
+            throw new ExpectationException(
+                "Could not close the current dialog. Result: $result",
+                $this->getSession()
+            );
+        }
+
+        $this->getSession()->wait(3000, "document.querySelector('.modal.show') === null");
+    }
+
+    /**
+     * Click an open-request action button in the row of the given event.
+     *
+     * @When I click the open request action :action for event :eventname
+     * @param string $action
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function i_click_the_open_request_action_for_event(string $action, string $eventname): void {
+        $js = <<<JS
+            (function(actionLabel, eventLabel) {
+                var rows = document.querySelectorAll('tr.mod-bookit-open-request-row');
+                for (var i = 0; i < rows.length; i++) {
+                    var link = rows[i].querySelector('a.bookit-event-link');
+                    if (!link || link.textContent.trim() !== eventLabel) {
+                        continue;
+                    }
+                    var buttons = rows[i].querySelectorAll('button[data-action="set-booking-status"]');
+                    for (var j = 0; j < buttons.length; j++) {
+                        if (buttons[j].textContent.trim() === actionLabel) {
+                            buttons[j].click();
+                            return 'clicked';
+                        }
+                    }
+                    return 'action-not-found';
+                }
+                return 'row-not-found';
+            })('$action', '$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'clicked') {
+            throw new ExpectationException(
+                "Could not click action \"$action\" for event \"$eventname\". Result: $result",
+                $this->getSession()
+            );
+        }
+        $this->getSession()->wait(3000);
+    }
+
+    /**
      * Checks that the given resource row has the bookit-resource-disabled class (is greyed out).
      *
      * This is the primary regression check for the room filter: after selecting a room in the
@@ -113,6 +422,47 @@ class behat_mod_bookit extends behat_base {
         if (!$expectdisabled && $isdisabled) {
             throw new ExpectationException(
                 "Resource \"$name\" was expected to be enabled but it is disabled (greyed out).",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the state of a form control inside the currently visible event details modal.
+     *
+     * @param string $controlname
+     * @param string $expectedstate enabled|disabled|hidden
+     * @throws ExpectationException
+     */
+    private function assert_modal_control_state(string $controlname, string $expectedstate): void {
+        $js = <<<JS
+            (function(controlName) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return 'hidden';
+                }
+                if (control.type === 'hidden') {
+                    return 'hidden';
+                }
+                var style = window.getComputedStyle(control);
+                var visible = style.display !== 'none' &&
+                    style.visibility !== 'hidden' &&
+                    (control.offsetWidth > 0 || control.offsetHeight > 0 || control.getClientRects().length > 0);
+                if (!visible) {
+                    return 'hidden';
+                }
+                return control.disabled ? 'disabled' : 'enabled';
+            })('$controlname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== $expectedstate) {
+            throw new ExpectationException(
+                "Expected modal control \"$controlname\" to be \"$expectedstate\" but got \"$result\".",
                 $this->getSession()
             );
         }

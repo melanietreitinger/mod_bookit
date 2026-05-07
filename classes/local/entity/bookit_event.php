@@ -43,7 +43,7 @@ class bookit_event {
      *
      * @param int $id
      * @param string $name
-     * @param int $semester
+     * @param int|null $semester
      * @param int $institutionid
      * @param int $starttime
      * @param int $endtime
@@ -68,56 +68,55 @@ class bookit_event {
      * @param array $resources
      */
     public function __construct(
-        /** @var int id */
+        /** @var int $id */
         public int $id,
-        /** @var string name */
+        /** @var string $name */
         public string $name,
-        /** @var ?int semester */
-        public int $semester,
-        /** @var int institutionid */
+        /** @var int|null $semester */
+        public ?int $semester,
+        /** @var int $institutionid */
         public int $institutionid,
-        /** @var int starttime */
+        /** @var int $starttime */
         public int $starttime,
-        /** @var int $endtime endtime */
+        /** @var int $endtime */
         public int $endtime,
-        /** @var int $duration duration */
+        /** @var int|null $duration */
         public ?int $duration,
-        /** @var int roomid */
+        /** @var int $roomid */
         public int $roomid,
-        /** @var int $participantsamount participantsamount  */
+        /** @var int|null $participantsamount */
         public ?int $participantsamount,
-        /** @var int $timecompensation timecompensation */
+        /** @var int|null $timecompensation */
         public ?int $timecompensation,
-        /** @var  string $compensationfordisadvantages compensationfordisadvantages */
+        /** @var string|null $compensationfordisadvantages */
         public ?string $compensationfordisadvantages,
-        /** @var int $bookingstatus bookingstatus  */
+        /** @var int|null $bookingstatus */
         public ?int $bookingstatus,
-        /** @var int $personinchargeid personinchargeid  */
+        /** @var int|null $personinchargeid */
         public ?int $personinchargeid,
-        /** @var string $otherexaminers otherexaminers  */
+        /** @var string|null $otherexaminers */
         public ?string $otherexaminers,
-        /** @var int $coursetemplate coursetemplate  */
+        /** @var int|null $coursetemplate */
         public ?int $coursetemplate,
-        /** @var string $notes notes */
+        /** @var string|null $notes */
         public ?string $notes,
-        /** @var string $internalnotes internalnotes  */
+        /** @var string|null $internalnotes */
         public ?string $internalnotes,
-        /** @var string $supportpersons supportpersons  */
+        /** @var string|null $supportpersons */
         public ?string $supportpersons,
-        /** @var int $extratimebefore extratimebefore*/
+        /** @var int $extratimebefore */
         public int $extratimebefore,
-        /** @var int $extratimeafter extratimeafter*/
+        /** @var int $extratimeafter */
         public int $extratimeafter,
-        /** @var mixed $refcourseid refcourseid */
+        /** @var mixed $refcourseid */
         public mixed $refcourseid,
-        /** @var int $usermodified usermodified  */
-        /** @var ?int usermodified */
+        /** @var int|null $usermodified */
         public ?int $usermodified,
-        /** @var int $timecreated timecreated  */
+        /** @var int|null $timecreated */
         public ?int $timecreated,
-        /** @var int $timemodified timemodified  */
+        /** @var int|null $timemodified */
         public ?int $timemodified,
-        /** @var array $resources resources */
+        /** @var array $resources */
         public array $resources,
     ) {
     }
@@ -157,7 +156,7 @@ class bookit_event {
     public static function from_record(array|object $record): self {
         $record = (object) $record;
 
-        $room = room::get_record(['id' => $record->roomid], MUST_EXIST);
+        $room = !empty($record->roomid) ? room::get_record(['id' => $record->roomid], IGNORE_MISSING) : null;
 
         return new self(
             $record->id ?? null,
@@ -180,8 +179,8 @@ class bookit_event {
             $record->notes ?? null,
             $record->internalnotes ?? null,
             $record->supportpersons ?? null,
-            $record->extratimebefore ?? $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore'),
-            $record->extratimeafter ?? $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter'),
+            $record->extratimebefore ?? $room?->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore'),
+            $record->extratimeafter ?? $room?->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter'),
             $record->refcourseid ?? null,
             $record->usermodified ?? null,
             $record->timecreated ?? null,

@@ -29,7 +29,8 @@ use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
-use mod_bookit\local\entity\bookit_event;
+use mod_bookit\local\manager\booking_notification_manager;
+use mod_bookit\local\manager\event_access_manager;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -61,7 +62,7 @@ class update_event_booking_status extends external_api {
      * @return array
      */
     public static function execute(int $cmid, int $eventid, int $status): array {
-        global $DB;
+        global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid'    => $cmid,
@@ -74,14 +75,29 @@ class update_event_booking_status extends external_api {
         self::validate_context($context);
         require_capability('mod/bookit:managebasics', $context);
 
-        $validstatuses = [0, 1, 2, 3, 4];
+        $validstatuses = [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+        ];
         if (!in_array($params['status'], $validstatuses, true)) {
             throw new \invalid_parameter_exception('Invalid booking status: ' . $params['status']);
         }
 
-        $event = bookit_event::from_database($params['eventid']);
+        $event = $DB->get_record('bookit_event', ['id' => $params['eventid']], '*', MUST_EXIST);
+        $oldstatus = (int)($event->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
+
+        if (!event_access_manager::can_transition_booking_status($oldstatus, $params['status'])) {
+            throw new \invalid_parameter_exception('Invalid booking workflow transition.');
+        }
+
         $event->bookingstatus = $params['status'];
-        $event->save();
+        $event->usermodified = (int)$USER->id;
+        $event->timemodified = time();
+        $DB->update_record('bookit_event', $event);
+        booking_notification_manager::notify_status_changed($params['cmid'], $params['eventid'], $oldstatus, $params['status']);
 
         return ['status' => $params['status']];
     }

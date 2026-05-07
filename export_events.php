@@ -29,6 +29,107 @@ require_once('lib.php');
 
 use mod_bookit\local\manager\event_manager;
 
+/**
+ * Extract integer user IDs from a CSV field.
+ *
+ * @param string|null $csv
+ * @return int[]
+ */
+function export_events_csv_user_ids(?string $csv): array {
+    if ($csv === null || $csv === '') {
+        return [];
+    }
+
+    return array_values(array_filter(array_map('intval', explode(',', $csv))));
+}
+
+/**
+ * Resolve user IDs to display names.
+ *
+ * @param int[] $userids
+ * @return string[]
+ */
+function export_events_user_names(array $userids): array {
+    global $DB;
+
+    $userids = array_values(array_unique(array_filter(array_map('intval', $userids))));
+    if (empty($userids)) {
+        return [];
+    }
+
+    $fields = 'id, firstname, lastname, middlename, alternatename, firstnamephonetic, lastnamephonetic';
+    $records = $DB->get_records_list('user', 'id', $userids, '', $fields);
+    $names = [];
+    foreach ($records as $record) {
+        $names[(int)$record->id] = fullname($record);
+    }
+
+    return $names;
+}
+
+/**
+ * Resolve institution IDs to display names.
+ *
+ * @param int[] $institutionids
+ * @return string[]
+ */
+function export_events_institution_names(array $institutionids): array {
+    global $DB;
+
+    $institutionids = array_values(array_unique(array_filter(array_map('intval', $institutionids))));
+    if (empty($institutionids)) {
+        return [];
+    }
+
+    $records = $DB->get_records_list('bookit_institution', 'id', $institutionids, '', 'id, name');
+    $names = [];
+    foreach ($records as $record) {
+        $names[(int)$record->id] = $record->name;
+    }
+
+    return $names;
+}
+
+/**
+ * Format semester integer values into the user-facing term label.
+ *
+ * @param int|null $semester
+ * @return string
+ */
+function export_events_semester_label(?int $semester): string {
+    if (empty($semester)) {
+        return '';
+    }
+
+    $year = (int)floor($semester / 10);
+    $term = ((int)$semester % 10) === 1 ? 'summer_semester' : 'winter_semester';
+
+    return get_string($term, 'mod_bookit') . ' ' . $year;
+}
+
+/**
+ * Format a duration from event start/end timestamps.
+ *
+ * @param int $starttime
+ * @param int $endtime
+ * @return string
+ */
+function export_events_duration_label(int $starttime, int $endtime): string {
+    $seconds = max(0, $endtime - $starttime);
+    $hours = intdiv($seconds, HOURSECS);
+    $minutes = intdiv($seconds % HOURSECS, MINSECS);
+    $parts = [];
+
+    if ($hours > 0) {
+        $parts[] = $hours . 'h';
+    }
+    if ($minutes > 0 || empty($parts)) {
+        $parts[] = $minutes . 'm';
+    }
+
+    return implode(' ', $parts);
+}
+
 /* ------------------------------------------------------------------
    0.  Parameters & capability check
    ------------------------------------------------------------------ */
@@ -141,27 +242,54 @@ if (!$events) {
 
 /* add the event room */
 if ($events) {
-    $eventids = array_keys($events);
-    $inorequal = $DB->get_in_or_equal($eventids, SQL_PARAMS_NAMED);
-    $in = $inorequal[0];
-    $p  = $inorequal[1];
-    $sql = "SELECT er.eventid, MIN(r.name) AS room
-            FROM {bookit_event_resource} er
-        JOIN {bookit_resource}        r  ON r.id = er.resourceid
-            WHERE er.eventid $in
-        GROUP BY er.eventid";
+    $roomids = array_values(array_unique(array_filter(array_map(
+        static fn($event) => (int)($event->roomid ?? 0),
+        $events
+    ))));
+    if (!empty($roomids)) {
+        $roomrecords = $DB->get_records_list('bookit_room', 'id', $roomids, '', 'id, name');
+        foreach ($events as $eventid => $event) {
+            $roomid = (int)($event->roomid ?? 0);
+            if ($roomid && isset($roomrecords[$roomid])) {
+                $events[$eventid]->room = $roomrecords[$roomid]->name;
+            }
+        }
+    }
 
-    foreach ($DB->get_records_sql($sql, $p) as $rec) {
-        $events[$rec->eventid]->room = $rec->room ?? '';
+    $missingroomeventids = array_keys(array_filter($events, static function ($event): bool {
+        return empty($event->room);
+    }));
+    if (!empty($missingroomeventids)) {
+        [$in, $p] = $DB->get_in_or_equal($missingroomeventids, SQL_PARAMS_NAMED);
+        $sql = "SELECT er.eventid, MIN(r.name) AS room
+                FROM {bookit_event_resource} er
+                JOIN {bookit_resource} r ON r.id = er.resourceid
+                WHERE er.eventid $in
+                GROUP BY er.eventid";
+
+        foreach ($DB->get_records_sql($sql, $p) as $rec) {
+            $events[$rec->eventid]->room = $rec->room ?? '';
+        }
     }
 }
 
 // Apply room filter after enrichment.
 if ($room) {
-    $events = array_filter($events, function ($ev) use ($room) {
-        return (int)$ev->resourceid === (int)$room;
+    $events = array_filter($events, static function ($ev) use ($room): bool {
+        return (int)($ev->roomid ?? 0) === (int)$room;
     });
 }
+
+$alluserids = [];
+$allinstitutionids = [];
+foreach ($events as $event) {
+    $alluserids[] = (int)($event->usermodified ?? 0);
+    $alluserids[] = (int)($event->personinchargeid ?? 0);
+    $alluserids = array_merge($alluserids, export_events_csv_user_ids($event->otherexaminers ?? ''));
+    $allinstitutionids[] = (int)($event->institutionid ?? 0);
+}
+$usernames = export_events_user_names($alluserids);
+$institutionnames = export_events_institution_names($allinstitutionids);
 
 /* ------------------------------------------------------------------
    2.  Build VCALENDAR
@@ -182,14 +310,40 @@ if ($room) {
 
         /* ------- human‑readable description ---------------------------- */
         $descrrows = [];
-        if (!empty($ev->institutionid)) {
-            $descrrows[] = 'Faculty: ' . $ev->institutionid;
+        $bookingpersonid = (int)($ev->usermodified ?? 0);
+        $personinchargeid = (int)($ev->personinchargeid ?? 0);
+        $institutionid = (int)($ev->institutionid ?? 0);
+        $otherexaminerids = export_events_csv_user_ids($ev->otherexaminers ?? '');
+        $otherexaminernames = array_values(array_filter(array_map(
+            static fn($userid) => $usernames[$userid] ?? null,
+            $otherexaminerids
+        )));
+
+        if ($bookingpersonid && isset($usernames[$bookingpersonid])) {
+            $descrrows[] = get_string('exportevents_ics_bookingperson', 'mod_bookit') . ': ' . $usernames[$bookingpersonid];
+        }
+        if ($personinchargeid && isset($usernames[$personinchargeid])) {
+            $descrrows[] = get_string('exportevents_ics_personincharge', 'mod_bookit') . ': ' . $usernames[$personinchargeid];
+        }
+        if (!empty($otherexaminernames)) {
+            $descrrows[] = get_string('exportevents_ics_otherexaminers', 'mod_bookit') . ': '
+                . implode(', ', $otherexaminernames);
+        }
+        if (!empty($ev->semester)) {
+            $descrrows[] = get_string('exportevents_ics_semester', 'mod_bookit') . ': '
+                . export_events_semester_label((int)$ev->semester);
+        }
+        $descrrows[] = get_string('exportevents_ics_duration', 'mod_bookit') . ': '
+            . export_events_duration_label((int)$ev->starttime, (int)$ev->endtime);
+        if ($institutionid && isset($institutionnames[$institutionid])) {
+            $descrrows[] = get_string('exportevents_ics_faculty', 'mod_bookit') . ': '
+                . $institutionnames[$institutionid];
         }
         if (!empty($ev->technicalneeds)) {
-            $descrrows[] = '| Requirements: ' . $ev->technicalneeds;
+            $descrrows[] = get_string('exportevents_ics_requirements', 'mod_bookit') . ': ' . $ev->technicalneeds;
         }
         if (!empty($ev->participantsamount)) {
-            $descrrows[] = '| Participants: ' . $ev->participantsamount;
+            $descrrows[] = get_string('exportevents_ics_participants', 'mod_bookit') . ': ' . $ev->participantsamount;
         }
 
         /* ------- assemble one VEVENT ----------------------------------- */

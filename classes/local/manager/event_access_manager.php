@@ -32,11 +32,46 @@ use stdClass;
  * Centralises booking-state and participant checks for event-level views.
  */
 class event_access_manager {
+    /** Booking status: new request. */
+    public const BOOKINGSTATUS_NEW = 0;
+
     /** Booking status: in progress (being processed by service team). */
     public const BOOKINGSTATUS_IN_PROGRESS = 1;
 
-    /** Confirmed booking status. */
-    public const BOOKINGSTATUS_CONFIRMED = 2;
+    /** Booking status: accepted by service team. */
+    public const BOOKINGSTATUS_ACCEPTED = 2;
+
+    /** Booking status: canceled. */
+    public const BOOKINGSTATUS_CANCELED = 3;
+
+    /** Booking status: rejected. */
+    public const BOOKINGSTATUS_REJECTED = 4;
+
+    /** @var int[] booking statuses that still require service-team action. */
+    public const OPEN_BOOKING_STATUSES = [
+        self::BOOKINGSTATUS_NEW,
+        self::BOOKINGSTATUS_IN_PROGRESS,
+    ];
+
+    /** @var array<int, int[]> allowed workflow transitions keyed by current status. */
+    private const ALLOWED_TRANSITIONS = [
+        self::BOOKINGSTATUS_NEW => [
+            self::BOOKINGSTATUS_IN_PROGRESS,
+            self::BOOKINGSTATUS_ACCEPTED,
+            self::BOOKINGSTATUS_CANCELED,
+            self::BOOKINGSTATUS_REJECTED,
+        ],
+        self::BOOKINGSTATUS_IN_PROGRESS => [
+            self::BOOKINGSTATUS_ACCEPTED,
+            self::BOOKINGSTATUS_CANCELED,
+            self::BOOKINGSTATUS_REJECTED,
+        ],
+        self::BOOKINGSTATUS_ACCEPTED => [
+            self::BOOKINGSTATUS_CANCELED,
+        ],
+        self::BOOKINGSTATUS_CANCELED => [],
+        self::BOOKINGSTATUS_REJECTED => [],
+    ];
 
     /**
      * Check whether the event booking has been confirmed by the service team.
@@ -45,7 +80,7 @@ class event_access_manager {
      * @return bool
      */
     public static function is_booking_confirmed(stdClass $event): bool {
-        return (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_CONFIRMED;
+        return (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_ACCEPTED;
     }
 
     /**
@@ -57,7 +92,257 @@ class event_access_manager {
      */
     public static function is_booking_accessible(stdClass $event): bool {
         $status = (int)($event->bookingstatus ?? -1);
-        return $status === self::BOOKINGSTATUS_IN_PROGRESS || $status === self::BOOKINGSTATUS_CONFIRMED;
+        return $status === self::BOOKINGSTATUS_IN_PROGRESS || $status === self::BOOKINGSTATUS_ACCEPTED;
+    }
+
+    /**
+     * Check whether the event is still an open request for service-team processing.
+     *
+     * @param stdClass $event
+     * @return bool
+     */
+    public static function is_open_request(stdClass $event): bool {
+        return in_array((int)($event->bookingstatus ?? -1), self::OPEN_BOOKING_STATUSES, true);
+    }
+
+    /**
+     * Get the statuses that represent open requests.
+     *
+     * @return int[]
+     */
+    public static function get_open_request_statuses(): array {
+        return self::OPEN_BOOKING_STATUSES;
+    }
+
+    /**
+     * Return the allowed transitions for a given current booking status.
+     *
+     * @param int $status
+     * @param bool $includecurrent
+     * @return int[]
+     */
+    public static function get_allowed_booking_status_transitions(int $status, bool $includecurrent = false): array {
+        $transitions = self::ALLOWED_TRANSITIONS[$status] ?? [];
+        if ($includecurrent) {
+            array_unshift($transitions, $status);
+        }
+        return array_values(array_unique(array_map('intval', $transitions)));
+    }
+
+    /**
+     * Check whether a status transition is allowed by the workflow.
+     *
+     * @param int $fromstatus
+     * @param int $tostatus
+     * @return bool
+     */
+    public static function can_transition_booking_status(int $fromstatus, int $tostatus): bool {
+        if ($fromstatus === $tostatus) {
+            return true;
+        }
+        return in_array($tostatus, self::get_allowed_booking_status_transitions($fromstatus), true);
+    }
+
+    /**
+     * Check whether the current user may manage open requests.
+     *
+     * @param context_module $context
+     * @return bool
+     */
+    public static function can_manage_open_requests(context_module $context): bool {
+        return has_capability('mod/bookit:managebasics', $context)
+            || has_capability('mod/bookit:viewalldetailsofevent', $context);
+    }
+
+    /**
+     * Return all BookIt participant roles that the user has on the event.
+     *
+     * @param stdClass $event
+     * @param int $userid
+     * @return string[]
+     */
+    public static function get_user_roles_for_event(stdClass $event, int $userid): array {
+        $roles = [];
+
+        if ((int)($event->personinchargeid ?? 0) === $userid) {
+            $roles[] = 'personincharge';
+        }
+
+        if ((int)($event->usermodified ?? 0) === $userid) {
+            $roles[] = 'bookingperson';
+        }
+
+        if (in_array($userid, self::parse_csv_ids($event->otherexaminers ?? ''), true)) {
+            $roles[] = 'otherexaminer';
+        }
+
+        if (in_array($userid, self::parse_csv_ids($event->supportpersons ?? ''), true)) {
+            $roles[] = 'supportperson';
+        }
+
+        return $roles;
+    }
+
+    /**
+     * Check whether the event can still be freely edited by a participant.
+     *
+     * @param stdClass $event
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_participant_edit_event(stdClass $event, int $userid): bool {
+        if ((int)($event->bookingstatus ?? self::BOOKINGSTATUS_NEW) !== self::BOOKINGSTATUS_NEW) {
+            return false;
+        }
+
+        $roles = self::get_user_roles_for_event($event, $userid);
+        return !empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']));
+    }
+
+    /**
+     * Check whether the user may open the event details with full event data.
+     *
+     * Service-team users may always access the event. Other users need the own-event
+     * detail capability and must participate in the booking. Support persons may access
+     * the booking only once it has been accepted unless another participant role grants
+     * wider visibility.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_user_view_event_details(stdClass $event, context_module $context, int $userid): bool {
+        if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
+            return true;
+        }
+
+        if (!has_capability('mod/bookit:viewalldetailsofownevent', $context)) {
+            return false;
+        }
+
+        $roles = self::get_user_roles_for_event($event, $userid);
+        if (empty($roles)) {
+            return false;
+        }
+
+        if (!empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']))) {
+            return true;
+        }
+
+        return in_array('supportperson', $roles, true) && self::is_booking_confirmed($event);
+    }
+
+    /**
+     * Check whether the user may see the event in participant-facing overviews.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_user_view_event_in_overview(stdClass $event, context_module $context, int $userid): bool {
+        if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
+            return true;
+        }
+
+        if (!has_capability('mod/bookit:viewownoverview', $context)) {
+            return false;
+        }
+
+        return self::can_user_view_event_details($event, $context, $userid);
+    }
+
+    /**
+     * Check whether the user may see the detailed calendar event instead of a reserved placeholder.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_user_view_event_in_calendar(stdClass $event, context_module $context, int $userid): bool {
+        return self::can_user_view_event_details($event, $context, $userid);
+    }
+
+    /**
+     * Check whether support-on-site fields may be shown to the user.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_supportperson_view_internal_fields(
+        stdClass $event,
+        context_module $context,
+        int $userid
+    ): bool {
+        return in_array('supportperson', self::get_user_roles_for_event($event, $userid), true)
+            && self::can_user_view_event_details($event, $context, $userid);
+    }
+
+    /**
+     * Check whether the user may edit only the internal notes field.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_supportperson_edit_internal_notes(
+        stdClass $event,
+        context_module $context,
+        int $userid
+    ): bool {
+        return self::can_supportperson_view_internal_fields($event, $context, $userid);
+    }
+
+    /**
+     * Check whether the user may only cancel the event after the workflow left "New".
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_participant_cancel_only(stdClass $event, context_module $context, int $userid): bool {
+        return self::can_cancel_event($event, $context, $userid)
+            && !self::can_participant_edit_event($event, $userid)
+            && !has_capability('mod/bookit:editevent', $context)
+            && !has_capability('mod/bookit:editinternal', $context);
+    }
+
+    /**
+     * Check whether the current user may cancel the event.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_cancel_event(stdClass $event, context_module $context, int $userid): bool {
+        if (self::can_manage_open_requests($context)) {
+            return true;
+        }
+
+        if (
+            in_array(
+                (int)($event->bookingstatus ?? -1),
+                [
+                    self::BOOKINGSTATUS_CANCELED,
+                    self::BOOKINGSTATUS_REJECTED,
+                ],
+                true
+            )
+        ) {
+            return false;
+        }
+
+        return !empty(array_intersect(
+            self::get_user_roles_for_event($event, $userid),
+            ['bookingperson', 'personincharge', 'otherexaminer']
+        ));
     }
 
     /**
@@ -96,11 +381,7 @@ class event_access_manager {
             return true;
         }
 
-        if (!self::is_booking_accessible($event)) {
-            return false;
-        }
-
-        if (!has_capability('mod/bookit:viewalldetailsofownevent', $context)) {
+        if (!self::is_booking_accessible($event) || !self::can_user_view_event_details($event, $context, $userid)) {
             return false;
         }
 
@@ -120,11 +401,7 @@ class event_access_manager {
             return true;
         }
 
-        if (!self::is_booking_accessible($event)) {
-            return false;
-        }
-
-        if (!has_capability('mod/bookit:viewalldetailsofownevent', $context)) {
+        if (!self::is_booking_accessible($event) || !self::can_user_view_event_details($event, $context, $userid)) {
             return false;
         }
 

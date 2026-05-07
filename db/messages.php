@@ -26,6 +26,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $messageproviders = [
+    'bookit_booking_status_changed' => [
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
     'bookit_resource_status_changed' => [
         'defaults' => [
             'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,

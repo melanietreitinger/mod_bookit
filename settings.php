@@ -56,6 +56,67 @@ if ($hassiteconfig) {
     ));
     // XXX TODO: write some text as introduction to bookit.
 
+    $settings->add(new admin_setting_heading(
+        'mod_bookit_bookingstatus_notifications_heading',
+        get_string('bookingstatus_notifications_heading', 'mod_bookit'),
+        get_string('bookingstatus_notifications_desc', 'mod_bookit')
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'mod_bookit/bookingstatus_service_addresses',
+        get_string('bookingstatus_service_addresses', 'mod_bookit'),
+        get_string('bookingstatus_service_addresses_desc', 'mod_bookit'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_bookit/bookingstatus_notify_bookingperson',
+        get_string('bookingstatus_notify_bookingperson', 'mod_bookit'),
+        get_string('bookingstatus_notify_bookingperson_desc', 'mod_bookit'),
+        1
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_bookit/bookingstatus_notify_personincharge',
+        get_string('bookingstatus_notify_personincharge', 'mod_bookit'),
+        get_string('bookingstatus_notify_personincharge_desc', 'mod_bookit'),
+        1
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_bookit/bookingstatus_notify_otherexaminers',
+        get_string('bookingstatus_notify_otherexaminers', 'mod_bookit'),
+        get_string('bookingstatus_notify_otherexaminers_desc', 'mod_bookit'),
+        1
+    ));
+
+    $notificationstatuses = [
+        0 => 'new',
+        1 => 'inprogress',
+        2 => 'accepted',
+        3 => 'canceled',
+        4 => 'rejected',
+    ];
+
+    foreach ($notificationstatuses as $statusid => $statuskey) {
+        $settings->add(new admin_setting_configtext(
+            'mod_bookit/bookingstatus_subject_' . $statusid,
+            get_string('bookingstatus_subject_' . $statuskey, 'mod_bookit'),
+            get_string('bookingstatus_subject_desc', 'mod_bookit'),
+            '',
+            PARAM_TEXT
+        ));
+
+        $settings->add(new admin_setting_configtextarea(
+            'mod_bookit/bookingstatus_body_' . $statusid,
+            get_string('bookingstatus_body_' . $statuskey, 'mod_bookit'),
+            get_string('bookingstatus_body_desc', 'mod_bookit'),
+            '',
+            PARAM_RAW
+        ));
+    }
+
     // Install helper.
     // XXX TODO: remove next line!!
     set_config('installhelperfinished', 0, 'mod_bookit');

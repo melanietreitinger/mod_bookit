@@ -227,3 +227,144 @@
     white-space: nowrap;
     vertical-align: middle;
 }
+
+.mod_bookit-overview-examiner_overview .nav-tabs .badge {
+    vertical-align: middle;
+}
+
+.mod-bookit-open-request-actions {
+    gap: 0.35rem;
+}
+
+.mod-bookit-open-requests-table tr.mod-bookit-open-request-row td {
+    vertical-align: middle;
+}
+
+.mod-bookit-status-cell {
+    min-width: 10rem;
+}
+
+.mod-bookit-status-chip {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 8.5rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.mod-bookit-status-row-open td:first-child {
+    box-shadow: inset 4px 0 0 #ffe08a;
+}
+
+.mod-bookit-status-row-confirmed td:first-child {
+    box-shadow: inset 4px 0 0 #198754;
+}
+
+.mod-bookit-status-row-closed td:first-child {
+    box-shadow: inset 4px 0 0 #842029;
+}
+
+.mod-bookit-status-chip-open,
+.ec-event.bookit-bookingstatus-0,
+.ec-event.bookit-bookingstatus-1 {
+    opacity: 0.82;
+    border-style: dashed !important;
+}
+
+.mod-bookit-status-chip-confirmed,
+.ec-event.bookit-bookingstatus-2 {
+    opacity: 1;
+    font-weight: 600;
+}
+
+.mod-bookit-status-chip-closed,
+.ec-event.bookit-bookingstatus-3,
+.ec-event.bookit-bookingstatus-4 {
+    opacity: 0.72;
+}
+
+.bookit-bookingstatus-0,
+.ec-event.bookit-bookingstatus-0 {
+    background: #e2e3e5 !important;
+    border-color: #c6c8ca !important;
+    color: #212529 !important;
+}
+
+.bookit-bookingstatus-1,
+.ec-event.bookit-bookingstatus-1 {
+    background: #fff3cd !important;
+    border-color: #ffe08a !important;
+    color: #664d03 !important;
+}
+
+.bookit-bookingstatus-2,
+.ec-event.bookit-bookingstatus-2 {
+    background: #d1e7dd !important;
+    border-color: #a3cfbb !important;
+    color: #0f5132 !important;
+}
+
+.bookit-bookingstatus-3,
+.ec-event.bookit-bookingstatus-3 {
+    background: #343a40 !important;
+    border-color: #343a40 !important;
+    color: #ffffff !important;
+}
+
+.bookit-bookingstatus-4,
+.ec-event.bookit-bookingstatus-4 {
+    background: #f8d7da !important;
+    border-color: #f1aeb5 !important;
+    color: #842029 !important;
+}
+
+.ec-time-grid .ec-event,
+.ec-day-grid .ec-event {
+    min-width: 0;
+}
+
+.ec-time-grid .ec-event .ec-event-title,
+.ec-day-grid .ec-event .ec-event-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+}
+
+.ec-time-grid .ec-event .ec-event-time,
+.ec-day-grid .ec-event .ec-event-time {
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.ec-time-grid .ec-event .ec-event-body,
+.ec-day-grid .ec-event .ec-event-body {
+    overflow: hidden;
+}
+
+.bookit-export-toolbar .form-control[type="date"] {
+    min-width: 11rem;
+}
+
+.bookit-export-item {
+    cursor: pointer;
+}
+
+.bookit-export-item .form-check-input {
+    margin-top: 0.25rem;
+}
+
+.bookit-export-item-text {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.bookit-export-item-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+}

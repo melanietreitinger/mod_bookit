@@ -76,10 +76,65 @@
 
 <div class="mod_bookit-overview-examiner_overview">
     <div class="mb-3">
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link {{#myeventsactive}}active{{/myeventsactive}}" href="{{myeventsurl}}">
+                    {{myeventstitle}}
+                </a>
+            </li>
+            {{#showopenrequestsnav}}
+            <li class="nav-item">
+                <a class="nav-link {{#openrequestsactive}}active{{/openrequestsactive}}" href="{{openrequestsurl}}">
+                    {{openrequeststitle}}
+                    <span class="badge badge-pill badge-warning ml-1">{{openrequestcount}}</span>
+                </a>
+            </li>
+            {{/showopenrequestsnav}}
+        </ul>
+    </div>
+
+    <div class="mb-3">
         <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
         <input type="text" id="bookit-filter" class="form-control w-auto d-inline">
     </div>
 
+    {{#showmyeventssection}}
+    <div class="mb-3">
+        <h3 class="h5 mb-0">{{myeventstitle}}</h3>
+        {{#showreportfilters}}
+        <div class="text-muted small mt-1">{{reportinghelp}}</div>
+        {{/showreportfilters}}
+    </div>
+    {{#showreportfilters}}
+    <form method="get" class="mb-3">
+        <input type="hidden" name="id" value="{{cmid}}">
+        <input type="hidden" name="tab" value="myevents">
+        <div class="form-row align-items-end">
+            <div class="form-group col-md-3">
+                <label for="bookit-reportstart">{{reportstartlabel}}</label>
+                <input type="date" id="bookit-reportstart" name="reportstart" class="form-control" value="{{reportstartvalue}}">
+            </div>
+            <div class="form-group col-md-3">
+                <label for="bookit-reportend">{{reportendlabel}}</label>
+                <input type="date" id="bookit-reportend" name="reportend" class="form-control" value="{{reportendvalue}}">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="bookit-semesterids">{{#str}}select_semester, mod_bookit{{/str}}</label>
+                <select id="bookit-semesterids" name="semesterids[]" class="form-control" multiple size="4">
+                    {{#semesteroptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/semesteroptions}}
+                </select>
+            </div>
+            <div class="form-group col-md-2">
+                <button type="submit" class="btn btn-primary btn-block mb-2">{{reportapplylabel}}</button>
+                <a href="{{reportreseturl}}" class="btn btn-outline-secondary btn-block">{{reportresetlabel}}</a>
+            </div>
+        </div>
+    </form>
+    <div class="badge badge-info mb-3 p-2">{{eventcounttext}}</div>
+    {{/showreportfilters}}
+    {{#hasevents}}
     <table id="{{tableid}}" class="generaltable table-striped table-hover w-100">
         <thead class="text-center">
             <tr style="background-color:#cfe2ff;">
@@ -98,16 +153,19 @@
 
         <tbody class="text-center">
             {{#events}}
-                <tr>
+                <tr class="mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
                     <td class="align-middle">{{id}}</td>
 
                     <td class="align-middle">
+                        {{#caneventdetails}}
                         <a href="#"
                            class="bookit-event-link"
                            data-eventid="{{id}}"
                            data-cmid="{{cmid}}">
                             {{name}}
                         </a>
+                        {{/caneventdetails}}
+                        {{^caneventdetails}}{{name}}{{/caneventdetails}}
                     </td>
 
                     <td class="align-middle">{{room}}</td>
@@ -115,7 +173,7 @@
                     <td class="align-middle">{{myrole}}</td>
 
                     {{#canmanage}}
-                    <td class="align-middle text-center">
+                    <td class="align-middle text-center mod-bookit-status-cell">
                         <select class="custom-select custom-select-sm"
                                 data-action="update-booking-status"
                                 data-eventid="{{id}}"
@@ -125,10 +183,17 @@
                             <option value="{{value}}" data-bg="{{bg}}" data-fg="{{fg}}" {{#selected}}selected{{/selected}}>{{label}}</option>
                             {{/statusoptions}}
                         </select>
+                        <div class="small text-muted mt-1">{{statusgrouptext}}</div>
                     </td>
                     {{/canmanage}}
                     {{^canmanage}}
-                    <td class="align-middle" style="{{statusstyle}}">{{statustext}}</td>
+                    <td class="align-middle mod-bookit-status-cell">
+                        <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
+                             style="{{statusstyle}}">
+                            <div class="font-weight-bold">{{statustext}}</div>
+                            <div class="small">{{statusgrouptext}}</div>
+                        </div>
+                    </td>
                     {{/canmanage}}
 
                     <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
@@ -179,4 +244,90 @@
             {{/events}}
         </tbody>
     </table>
+    {{#showreportfilters}}
+    <div class="badge badge-info mt-3 p-2">{{eventcounttext}}</div>
+    {{/showreportfilters}}
+    {{/hasevents}}
+    {{^hasevents}}
+    <div class="alert alert-info">{{noeventsmessage}}</div>
+    {{/hasevents}}
+    {{/showmyeventssection}}
+
+    {{#showopenrequestssection}}
+    <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <h3 class="h5 mb-1">{{openrequeststitle}}</h3>
+            <div class="text-muted small">{{openrequestshelp}}</div>
+        </div>
+        <div class="mod-bookit-open-requests-count badge badge-warning badge-pill p-2">
+            {{openrequestcounttext}}
+        </div>
+    </div>
+
+    {{#hasopenrequests}}
+    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-open-requests-table">
+        <thead class="text-center">
+            <tr style="background-color:#fff3cd;">
+                <th class="align-middle">ID</th>
+                <th class="align-middle">Title</th>
+                <th class="align-middle">Room</th>
+                <th class="align-middle">Person in charge</th>
+                <th class="align-middle">My role</th>
+                <th class="align-middle">Booking status</th>
+                <th class="align-middle">Date</th>
+                <th class="align-middle">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="text-center">
+            {{#openrequests}}
+            <tr class="mod-bookit-open-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
+                <td class="align-middle">{{id}}</td>
+                <td class="align-middle">
+                    {{#caneventdetails}}
+                    <a href="#"
+                       class="bookit-event-link"
+                       data-eventid="{{id}}"
+                       data-cmid="{{cmid}}">
+                        {{name}}
+                    </a>
+                    {{/caneventdetails}}
+                    {{^caneventdetails}}{{name}}{{/caneventdetails}}
+                </td>
+                <td class="align-middle">{{room}}</td>
+                <td class="align-middle">{{personincharge}}</td>
+                <td class="align-middle">{{myrole}}</td>
+                <td class="align-middle mod-bookit-status-cell">
+                    <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
+                         style="{{statusstyle}}">
+                        <div class="font-weight-bold">{{statustext}}</div>
+                        <div class="small">{{statusgrouptext}}</div>
+                    </div>
+                </td>
+                <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
+                <td class="align-middle">
+                    <div class="d-flex flex-wrap justify-content-center mod-bookit-open-request-actions">
+                        {{#actions}}
+                        <button type="button"
+                                class="btn btn-sm {{btnclass}}"
+                                data-action="set-booking-status"
+                                data-eventid="{{eventid}}"
+                                data-cmid="{{cmid}}"
+                                data-status="{{value}}">
+                            {{label}}
+                        </button>
+                        {{/actions}}
+                    </div>
+                </td>
+            </tr>
+            {{/openrequests}}
+        </tbody>
+    </table>
+    {{/hasopenrequests}}
+
+    {{^hasopenrequests}}
+    <div class="alert alert-info mb-0">
+        {{openrequestsempty}}
+    </div>
+    {{/hasopenrequests}}
+    {{/showopenrequestssection}}
 </div>

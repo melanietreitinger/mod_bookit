@@ -48,6 +48,50 @@ $string['booking:resource_unavailable'] = 'Not available in selected room';
 $string['booking:resources_booked'] = 'Booked Resources';
 $string['booking:resources_header'] = 'Resources';
 $string['booking:resources_info'] = 'Select the resources you need for this booking.';
+$string['bookingstatus_action_accept'] = 'Accept';
+$string['bookingstatus_action_cancel'] = 'Cancel';
+$string['bookingstatus_action_inprogress'] = 'Set in progress';
+$string['bookingstatus_action_reject'] = 'Reject';
+$string['bookingstatus_body_accepted'] = 'Message body for Accepted';
+$string['bookingstatus_body_canceled'] = 'Message body for Canceled';
+$string['bookingstatus_body_desc'] = 'Leave empty to use the default message. You can use placeholders documented above.';
+$string['bookingstatus_body_inprogress'] = 'Message body for In Progress';
+$string['bookingstatus_body_new'] = 'Message body for New';
+$string['bookingstatus_body_rejected'] = 'Message body for Rejected';
+$string['bookingstatus_notification_body_default'] = 'The booking request "###EVENTNAME###" has been updated to "###BOOKINGSTATUS###".'
+    . "\n\n"
+    . 'Room: ###ROOM###'
+    . "\n"
+    . 'Start: ###STARTTIME###'
+    . "\n"
+    . 'End: ###ENDTIME###'
+    . "\n"
+    . 'Booking person: ###BOOKINGPERSON###'
+    . "\n"
+    . 'Person in charge: ###PERSONINCHARGE###'
+    . "\n"
+    . 'Other examiners: ###OTHEREXAMINERS###'
+    . "\n\n"
+    . 'Open booking: ###EVENTURL###';
+$string['bookingstatus_notification_subject_default'] = 'Booking status updated: {$a->eventname} ({$a->bookingstatus})';
+$string['bookingstatus_notifications_desc'] = 'Configure recipients and message templates for booking-status changes. Supported placeholders: ###EVENTNAME###, ###BOOKINGSTATUS###, ###OLDBOOKINGSTATUS###, ###EVENTURL###, ###ROOM###, ###STARTTIME###, ###ENDTIME###, ###BOOKINGPERSON###, ###PERSONINCHARGE###, ###OTHEREXAMINERS###.';
+$string['bookingstatus_notifications_heading'] = 'Booking status notifications';
+$string['bookingstatus_notify_bookingperson'] = 'Notify booking person';
+$string['bookingstatus_notify_bookingperson_desc'] = 'Send booking-status messages to the user who created the booking request.';
+$string['bookingstatus_notify_otherexaminers'] = 'Notify other examiners';
+$string['bookingstatus_notify_otherexaminers_desc'] = 'Send booking-status messages to all additional examiners assigned to the booking request.';
+$string['bookingstatus_notify_personincharge'] = 'Notify person in charge';
+$string['bookingstatus_notify_personincharge_desc'] = 'Send booking-status messages to the responsible examiner.';
+$string['bookingstatus_service_addresses'] = 'University service addresses';
+$string['bookingstatus_service_addresses_desc'] = 'Optional list of email addresses that should receive booking-status notifications (comma, semicolon, or whitespace separated).';
+$string['bookingstatus_service_recipient_firstname'] = 'University';
+$string['bookingstatus_service_recipient_lastname'] = 'Service';
+$string['bookingstatus_subject_accepted'] = 'Message subject for Accepted';
+$string['bookingstatus_subject_canceled'] = 'Message subject for Canceled';
+$string['bookingstatus_subject_desc'] = 'Leave empty to use the default subject.';
+$string['bookingstatus_subject_inprogress'] = 'Message subject for In Progress';
+$string['bookingstatus_subject_new'] = 'Message subject for New';
+$string['bookingstatus_subject_rejected'] = 'Message subject for Rejected';
 $string['bookit:addevent'] = 'Add an event';
 $string['bookit:addinstance'] = 'Add BookIt instance';
 $string['bookit:editevent'] = 'Edit an event';
@@ -181,6 +225,7 @@ $string['event_bookingstatus_3'] = 'Canceled';
 $string['event_bookingstatus_4'] = 'Rejected';
 $string['event_bookingstatus_help'] = 'Explanation of the booking status options.';
 $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejected';
+$string['event_cancel_only_notice'] = 'This request can no longer be edited freely. You may only cancel it.';
 $string['event_checklist:done'] = 'done';
 $string['event_checklist:go_to_resources'] = 'Event Resources';
 $string['event_checklist:progress'] = 'Checklist Progress';
@@ -228,6 +273,7 @@ $string['event_students'] = 'Amount of participants';
 $string['event_students_help'] = 'Enter amount of participants as a number.';
 $string['event_supportperson'] = 'Support persons';
 $string['event_supportperson_help'] = 'Support persons assigned to this event.';
+$string['event_supportperson_internalnotes_notice'] = 'Support on site may edit only the internal notes field.';
 $string['event_timecompensation'] = 'Time compensation';
 $string['event_timecompensation_help'] = 'Check if you have participants entitled to time compensation.';
 $string['event_usermodified'] = 'Created by user';
@@ -238,6 +284,19 @@ $string['export_help'] = 'You can choose between two file formats for export. Us
 $string['export_success'] = 'Export completed successfully';
 $string['exportedon'] = 'Exported on: {$a}';
 $string['exportevents'] = 'Export events';
+$string['exportevents_from'] = 'From';
+$string['exportevents_ics_bookingperson'] = 'Booking person';
+$string['exportevents_ics_duration'] = 'Duration';
+$string['exportevents_ics_faculty'] = 'Faculty';
+$string['exportevents_ics_otherexaminers'] = 'Other examiners';
+$string['exportevents_ics_participants'] = 'Participants';
+$string['exportevents_ics_personincharge'] = 'Person in charge';
+$string['exportevents_ics_requirements'] = 'Requirements';
+$string['exportevents_ics_semester'] = 'Semester term';
+$string['exportevents_reset_range'] = 'Reset range';
+$string['exportevents_selected'] = 'Selected';
+$string['exportevents_selectedcount'] = 'Selected: {$a}';
+$string['exportevents_to'] = 'To';
 $string['exportfailed'] = 'Export failed: {$a}';
 $string['filtercategories'] = 'Filtercategories';
 $string['filters'] = 'Filters: ';
@@ -314,7 +373,27 @@ $string['overlapping_mode'] = 'Should overlapping events be prevented?';
 $string['overlapping_non_confirmed'] = 'Allow overlapping with non-confirmed events';
 $string['overview'] = 'My booked events';
 $string['overview_action_requires_confirmed_booking'] = 'Checklist and resources are available only after the booking has been confirmed.';
+$string['overview_all_events'] = 'All bookings';
+$string['overview_apply_filters'] = 'Apply filters';
+$string['overview_count'] = '{$a} events';
+$string['overview_filter_enddate'] = 'End date';
+$string['overview_filter_startdate'] = 'Start date';
 $string['overview_help'] = 'Shows every event for which you are listed as examiner.';
+$string['overview_my_events'] = 'My booked events';
+$string['overview_no_results'] = 'No bookings match the selected filters.';
+$string['overview_open_request_count'] = '{$a} open requests';
+$string['overview_open_requests'] = 'Open requests';
+$string['overview_open_requests_empty'] = 'There are currently no open booking requests.';
+$string['overview_open_requests_help'] = 'Shows all booking requests with status New or In Progress.';
+$string['overview_reporting_help'] = 'Shows all bookings in the selected period and semester.';
+$string['overview_reset_filters'] = 'Reset filters';
+$string['overview_role_bookingperson'] = 'Booking person';
+$string['overview_role_otherexaminer'] = 'Other examiner';
+$string['overview_role_personincharge'] = 'Person in charge';
+$string['overview_role_supportperson'] = 'Support person';
+$string['overview_status_group_closed'] = 'Closed / not confirmed';
+$string['overview_status_group_confirmed'] = 'Confirmed booking';
+$string['overview_status_group_open'] = 'Open request';
 $string['overwrite_extratimeafter'] = 'Overwrite global extratimeafter setting?';
 $string['overwrite_extratimebefore'] = 'Overwrite global extratimebefore setting?';
 $string['pdf_format'] = 'PDF (Portable Document Format)';

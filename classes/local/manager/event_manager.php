@@ -84,7 +84,7 @@ class event_manager {
         $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
 
         $sqlreserved =
-            'SELECT e.id, NULL as name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+            'SELECT e.id, NULL as name, e.bookingstatus, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
                 r.name as roomname, r.shortname, r.location ' .
             'FROM {bookit_event} e ' .
             'JOIN {bookit_room} r ON r.id = e.roomid ' .
@@ -93,7 +93,7 @@ class event_manager {
         // Service-Team: can view all events in detail.
         if ($viewalldetailsofevent) {
             $sql =
-                'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+                'SELECT e.id, e.name, e.bookingstatus, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
                      r.name as roomname, r.shortname, r.location ' .
                 'FROM {bookit_event} e ' .
                 'JOIN {bookit_room} r ON r.id = e.roomid ' .
@@ -102,26 +102,35 @@ class event_manager {
         } else if ($viewalldetailsofownevent) {
             $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
             $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
+            $supportpersons = $DB->sql_like('supportpersons', ':supportpersons');
+            $supportpersons1 = $DB->sql_like('supportpersons', ':supportpersons1');
             // Every user: can view own events in detail.
-            $sql = 'SELECT e.id, e.name, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
+            $sql = 'SELECT e.id, e.name, e.bookingstatus, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
                     r.name as roomname, r.shortname, r.location
                     FROM {bookit_event} e
                     JOIN {bookit_room} r ON r.id = e.roomid
                     WHERE endtime >= :starttime1 AND starttime <= :endtime1
-                    AND (e.usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR ' . $otherexaminers1 . ')
+                    AND (e.usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR '
+                    . $otherexaminers1 . ' OR (' . $supportpersons1 . ' AND e.bookingstatus = :acceptedstatus1))
                     UNION ' . $sqlreserved . '
-                    AND e.usermodified != :usermodified AND personinchargeid != :personinchargeid AND NOT ' . $otherexaminers;
+                    AND e.usermodified != :usermodified AND personinchargeid != :personinchargeid
+                    AND NOT ' . $otherexaminers . ' AND NOT (' . $supportpersons . ' AND e.bookingstatus = :acceptedstatus)';
             $params = [
                 'starttime1' => $starttimestamp,
                 'endtime1' => $endtimestamp,
                 'usermodified1' => $USER->id,
                 'personinchargeid1' => $USER->id,
                 'otherexaminers1' => $USER->id,
+                'supportpersons1' => $USER->id,
+                'acceptedstatus1' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
                 'starttime' => $starttimestamp,
                 'endtime' => $endtimestamp,
                 'usermodified' => $USER->id,
                 'personinchargeid' => $USER->id,
-                'otherexaminers' => $USER->id];
+                'otherexaminers' => $USER->id,
+                'supportpersons' => $USER->id,
+                'acceptedstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            ];
         } else {
             // Every user: can view no details.
             $sql = $sqlreserved;
@@ -149,17 +158,23 @@ class event_manager {
 
             $events[] = [
                 'id' => $record->id,
-                'title' => [
-                    'html' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
-                        date('H:i', $record->endtime) . '</h6>' .
-                        ($record->name ?? $reserved) . " ($roominfo)",
-                ],
+                'title' => ($record->name ?? $reserved) . " ($roominfo)",
+                'titleHTML' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
+                    date('H:i', $record->endtime) . '</h6>' .
+                    ($record->name ?? $reserved) . " ($roominfo)",
                 'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
                 'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
                 'backgroundColor' => $record->eventcolor,
                 'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
-                'extendedProps' => (object) ['reserved' => !$record->name],
-                'classNames' => 'hide-event-time',
+                'extendedProps' => (object) [
+                    'reserved' => !$record->name,
+                    'bookingstatus' => (int)($record->bookingstatus ?? event_access_manager::BOOKINGSTATUS_ACCEPTED),
+                    'roomname' => $record->roomname,
+                ],
+                'classNames' => [
+                    'hide-event-time',
+                    self::get_booking_status_class((int)($record->bookingstatus ?? event_access_manager::BOOKINGSTATUS_ACCEPTED)),
+                ],
             ];
         }
         return $events;
@@ -224,6 +239,51 @@ class event_manager {
     }
 
     /**
+     * Return all open booking requests for service-team overview.
+     *
+     * @return array
+     * @throws dml_exception
+     */
+    public static function get_open_requests(): array {
+        global $DB;
+
+        [$statussql, $params] = $DB->get_in_or_equal(event_access_manager::get_open_request_statuses(), SQL_PARAMS_NAMED);
+
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            WHERE e.bookingstatus $statussql
+            ORDER BY e.starttime ASC
+        ";
+
+        return $DB->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Return the number of open booking requests.
+     *
+     * @return int
+     * @throws dml_exception
+     */
+    public static function count_open_requests(): int {
+        global $DB;
+
+        [$statussql, $params] = $DB->get_in_or_equal(event_access_manager::get_open_request_statuses(), SQL_PARAMS_NAMED);
+        return (int)$DB->count_records_select('bookit_event', "bookingstatus $statussql", $params);
+    }
+
+    /**
      * Get all institutions that should appear in the filter dropdown.
      *
      * Returns an associative array  id => name  so the caller can use
@@ -272,6 +332,133 @@ class event_manager {
         // Sort by name, preserving id keys.
         asort($result, SORT_NATURAL | SORT_FLAG_CASE);
         return $result;
+    }
+
+    /**
+     * Return the semester value that corresponds to the given reference time.
+     *
+     * Winter terms bridge the year boundary, so January through March still belong to the
+     * previous winter semester.
+     *
+     * @param int|null $referencetime
+     * @return int
+     */
+    public static function get_current_semester(?int $referencetime = null): int {
+        $date = (new DateTime())->setTimestamp($referencetime ?? time());
+        $year = (int)$date->format('Y');
+        $month = (int)$date->format('n');
+
+        if ($month >= 4 && $month <= 9) {
+            return ($year * 10) + 1;
+        }
+
+        if ($month >= 10) {
+            return ($year * 10) + 2;
+        }
+
+        return (($year - 1) * 10) + 2;
+    }
+
+    /**
+     * Return the default reporting range for the year of the given reference time.
+     *
+     * @param int|null $referencetime
+     * @return int[]
+     */
+    public static function get_reporting_default_range(?int $referencetime = null): array {
+        $date = (new DateTime())->setTimestamp($referencetime ?? time());
+        $year = (int)$date->format('Y');
+
+        $start = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
+        $end = (new DateTime())->setDate($year, 12, 31)->setTime(23, 59, 59)->getTimestamp();
+
+        return [$start, $end];
+    }
+
+    /**
+     * Build semester filter options around the current semester.
+     *
+     * @param int|null $referencetime
+     * @return array
+     */
+    public static function get_semester_filter_options(?int $referencetime = null): array {
+        $currentsemester = self::get_current_semester($referencetime);
+        $baseyear = (int)floor($currentsemester / 10);
+        $options = [];
+
+        for ($year = $baseyear - 1; $year <= $baseyear + 1; $year++) {
+            $options[($year * 10) + 1] = get_string('summer_semester', 'mod_bookit') . ' ' . $year;
+            $options[($year * 10) + 2] = get_string('winter_semester', 'mod_bookit') . ' ' . $year;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Return reporting events filtered by range and semester and then reduced by the current user's access.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @param int $starttime
+     * @param int $endtime
+     * @param int[] $semesterids
+     * @return array
+     * @throws dml_exception
+     */
+    public static function get_events_for_reporting(
+        context_module $context,
+        int $userid,
+        int $starttime,
+        int $endtime,
+        array $semesterids = []
+    ): array {
+        global $DB;
+
+        $params = [
+            'starttime' => $starttime,
+            'endtime' => $endtime,
+        ];
+        $conditions = [
+            'e.endtime >= :starttime',
+            'e.starttime <= :endtime',
+        ];
+
+        $semesterids = array_values(array_filter(array_map('intval', $semesterids)));
+        if (!empty($semesterids)) {
+            [$semestersql, $semesterparams] = $DB->get_in_or_equal($semesterids, SQL_PARAMS_NAMED);
+            $conditions[] = "(e.semester $semestersql OR e.semester IS NULL OR e.semester = 0)";
+            $params = array_merge($params, $semesterparams);
+        }
+
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.semester,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            WHERE " . implode(' AND ', $conditions) . "
+            ORDER BY e.starttime ASC
+        ";
+
+        $records = $DB->get_records_sql($sql, $params);
+        $events = [];
+        foreach ($records as $record) {
+            if (!event_access_manager::can_user_view_event_in_overview($record, $context, $userid)) {
+                continue;
+            }
+            $events[] = $record;
+        }
+
+        return $events;
     }
 
 
@@ -389,9 +576,22 @@ class event_manager {
      * @return array
      */
     public static function get_booking_status_options(int $current): array {
+        return self::get_booking_status_transition_options($current, true);
+    }
+
+    /**
+     * Return workflow-aware booking status options.
+     *
+     * @param int $current
+     * @param bool $includecurrent
+     * @return array
+     */
+    public static function get_booking_status_transition_options(int $current, bool $includecurrent = false): array {
         $colors = self::get_booking_status_colors();
         $options = [];
-        foreach ($colors as $value => $color) {
+        $allowedvalues = event_access_manager::get_allowed_booking_status_transitions($current, $includecurrent);
+        foreach ($allowedvalues as $value) {
+            $color = $colors[$value];
             $options[] = [
                 'value'    => $value,
                 'label'    => get_string('event_bookingstatus_' . $value, 'mod_bookit'),
@@ -401,5 +601,15 @@ class event_manager {
             ];
         }
         return $options;
+    }
+
+    /**
+     * Return a CSS class name for the current booking status.
+     *
+     * @param int $status
+     * @return string
+     */
+    public static function get_booking_status_class(int $status): string {
+        return 'bookit-bookingstatus-' . $status;
     }
 }

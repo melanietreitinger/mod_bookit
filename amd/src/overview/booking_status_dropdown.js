@@ -28,6 +28,7 @@ import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 
 const SELECTOR = 'select[data-action="update-booking-status"]';
+const BUTTON_SELECTOR = 'button[data-action="set-booking-status"]';
 
 /**
  * Apply status colour to a select element by reading data attributes from the selected option.
@@ -73,11 +74,37 @@ export const init = () => {
         }])[0]
         .then(() => {
             applyColor(select);
-            select.disabled = false;
-            return;
+            window.location.reload();
+            return null;
         })
         .catch((err) => {
             select.disabled = false;
+            Notification.exception(err);
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest(BUTTON_SELECTOR);
+        if (!button) {
+            return;
+        }
+
+        const cmid = parseInt(button.dataset.cmid, 10);
+        const eventid = parseInt(button.dataset.eventid, 10);
+        const status = parseInt(button.dataset.status, 10);
+
+        button.disabled = true;
+
+        Ajax.call([{
+            methodname: 'mod_bookit_update_event_booking_status',
+            args: {cmid, eventid, status},
+        }])[0]
+        .then(() => {
+            window.location.reload();
+            return null;
+        })
+        .catch((err) => {
+            button.disabled = false;
             Notification.exception(err);
         });
     });
