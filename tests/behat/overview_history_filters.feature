@@ -37,9 +37,9 @@ Feature: Complete overview defaults, history and role-specific columns
 
   Scenario: Service team starts in the current semester and sees the ID column
     Given the following "mod_bookit > events" exist:
-      | name                | username    | startdate            | enddate              | bookingstatus | institution | semester |
-      | Summer review exam  | serviceteam | 2026-05-10T09:00:00 | 2026-05-10T11:00:00 | 2             | 1           | 20261    |
-      | Winter review exam  | serviceteam | 2026-11-10T09:00:00 | 2026-11-10T11:00:00 | 2             | 1           | 20262    |
+      | name                | username    | startdate            | enddate              | bookingstatus | institution |
+      | Summer review exam  | serviceteam | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+      | Winter review exam  | serviceteam | ##+180 days 09:00##%Y-%m-%dT%H:%M:%S## | ##+180 days 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
     When I log in as "serviceteam"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Summer review exam"
@@ -49,9 +49,9 @@ Feature: Complete overview defaults, history and role-specific columns
 
   Scenario: Participant history is separated from active events
     Given the following "mod_bookit > events" exist:
-      | name             | username    | startdate                                | enddate                                  | bookingstatus | institution | semester |
-      | Future own exam  | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S##     | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S##    | 2             | 1           | 20261    |
-      | Past own exam    | bookinguser | ##yesterday noon##%Y-%m-%dT%H:%M:%S##    | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S##   | 2             | 1           | 20261    |
+      | name             | username    | startdate                                | enddate                                  | bookingstatus | institution |
+      | Future own exam  | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S##     | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S##    | 2             | 1 |
+      | Past own exam    | bookinguser | ##yesterday noon##%Y-%m-%dT%H:%M:%S##    | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S##   | 2             | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Future own exam"

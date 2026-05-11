@@ -55,7 +55,10 @@ final class lifecycle_history_test extends advanced_testcase {
     private function create_room(): int {
         /** @var \mod_bookit_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
-        return $generator->create_room(['name' => 'Lifecycle room']);
+        return $generator->create_room([
+            'name' => 'Lifecycle room',
+            'shortname' => 'LIFE01',
+        ]);
     }
 
     /**

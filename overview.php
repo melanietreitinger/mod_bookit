@@ -242,7 +242,10 @@ $templatecontext = [
     'myeventsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'myevents']))->out(false),
     'historyurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'history']))->out(false),
     'openrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'openrequests']))->out(false),
-    'rejectedrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'rejectedrequests']))->out(false),
+    'rejectedrequestsurl' => (new moodle_url(
+        '/mod/bookit/overview.php',
+        ['id' => $cm->id, 'tab' => 'rejectedrequests']
+    ))->out(false),
     'myeventstitle' => get_string('overview_my_events', 'mod_bookit'),
     'historytitle' => get_string('overview_history', 'mod_bookit'),
     'sectiontitle' => $currenttab === 'history'
@@ -398,10 +401,7 @@ $prepareeventrow = function (
     $latesthistory = $latesthistorymap[(int)$ev->id] ?? null;
     $latesthistorysummary = '';
     if ($latesthistory) {
-        $actorname = trim(fullname((object)[
-            'firstname' => $latesthistory->firstname ?? '',
-            'lastname' => $latesthistory->lastname ?? '',
-        ]));
+        $actorname = trim(($latesthistory->firstname ?? '') . ' ' . ($latesthistory->lastname ?? ''));
         $actionlabel = get_string('history_action_' . $latesthistory->action, 'mod_bookit');
         $latesthistorysummary = $actionlabel . ' · '
             . userdate((int)$latesthistory->timecreated, get_string('strftimedatetime', 'langconfig'));

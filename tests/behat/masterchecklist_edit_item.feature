@@ -50,11 +50,9 @@ Feature: Edit master checklist item
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
     And I click on "button[name='before_due_reset']" "css_element"
     And I wait "1" seconds
-    And I should see "Confirm"
+    And I click on "Reset" "button"
     And I wait "1" seconds
-    And I click on "Reset" "button" in the "Confirm" "dialogue"
-    And I wait "1" seconds
-    Then the field "before_due_messagetext[text]" does not match value "This is my behat notification edit test message. Cool."
+    Then the Bookit editor field "before_due_messagetext[text]" should not equal "This is my behat notification edit test message. Cool."
 
   Scenario: Service-Team can edit a master checklist item
     Given I log in as "serviceteam1"
@@ -89,8 +87,6 @@ Feature: Edit master checklist item
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
     And I click on "button[name='before_due_reset']" "css_element"
     And I wait "1" seconds
-    And I should see "Confirm"
+    And I click on "Reset" "button"
     And I wait "1" seconds
-    And I click on "Reset" "button" in the "Confirm" "dialogue"
-    And I wait "1" seconds
-    Then the field "before_due_messagetext[text]" does not match value "This is my behat notification edit test message. Cool."
+    Then the Bookit editor field "before_due_messagetext[text]" should not equal "This is my behat notification edit test message. Cool."

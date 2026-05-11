@@ -82,7 +82,7 @@ class behat_mod_bookit extends behat_base {
             'facultyid' => $faculty,
         ];
         $query = http_build_query($params);
-        foreach (array_filter(array_map('trim', explode(',', $semesters))) as $semester) {
+        foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
             $query .= '&semesterids[]=' . rawurlencode($semester);
         }
 
@@ -111,15 +111,74 @@ class behat_mod_bookit extends behat_base {
         $params = [
             'id' => $cm->id,
             'tab' => 'myevents',
-            'reportstart' => $start,
-            'reportend' => $end,
+            'reportstart' => $this->resolve_filter_date_value($start),
+            'reportend' => $this->resolve_filter_date_value($end),
         ];
         $query = http_build_query($params);
-        foreach (array_filter(array_map('trim', explode(',', $semesters))) as $semester) {
+        foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
             $query .= '&semesterids[]=' . rawurlencode($semester);
         }
 
         $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Resolve semester filter tokens used in Behat scenarios.
+     *
+     * @param string $semesters
+     * @return string[]
+     */
+    private function resolve_semester_filter_values(string $semesters): array {
+        $currentsemester = \mod_bookit\local\manager\event_manager::get_current_semester();
+
+        return array_values(array_filter(array_map(static function (string $semester) use ($currentsemester): string {
+            return match (trim($semester)) {
+                'current' => (string)$currentsemester,
+                'next' => (string)($currentsemester % 10 === 1 ? $currentsemester + 1 : $currentsemester + 9),
+                'previous' => (string)($currentsemester % 10 === 1 ? $currentsemester - 9 : $currentsemester - 1),
+                default => trim($semester),
+            };
+        }, explode(',', $semesters))));
+    }
+
+    /**
+     * Resolve a reporting filter date token into a Y-m-d string.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function resolve_filter_date_value(string $value): string {
+        $value = trim($value);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return $value;
+        }
+
+        $timestamp = strtotime($value);
+        if ($timestamp === false) {
+            throw new \coding_exception('Unsupported Behat reporting date token: ' . $value);
+        }
+
+        return date('Y-m-d', $timestamp);
+    }
+
+    /**
+     * Resolve a Behat datetime token into an ISO-like datetime string.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function resolve_datetime_value(string $value): string {
+        $value = trim($value);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $value)) {
+            return $value;
+        }
+
+        $timestamp = strtotime($value);
+        if ($timestamp === false) {
+            throw new \coding_exception('Unsupported Behat datetime token: ' . $value);
+        }
+
+        return date('Y-m-d\\TH:i:s', $timestamp);
     }
 
     /**
@@ -137,8 +196,8 @@ class behat_mod_bookit extends behat_base {
         $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
         $url = (new moodle_url('/mod/bookit/events.php', [
             'id' => $cm->id,
-            'start' => $start,
-            'end' => $end,
+            'start' => $this->resolve_datetime_value($start),
+            'end' => $this->resolve_datetime_value($end),
             'export' => 1,
         ]))->out(false);
 
@@ -566,6 +625,24 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Assert that a named Bookit editor field does not equal a value, even when hidden by rich editors.
+     *
+     * @Then the Bookit editor field :field should not equal :value
+     * @param string $field
+     * @param string $value
+     * @throws ExpectationException
+     */
+    public function the_bookit_editor_field_should_not_equal(string $field, string $value): void {
+        $actual = $this->get_named_form_control_value($field);
+        if ($actual === $value) {
+            throw new ExpectationException(
+                "The Bookit editor field \"$field\" unexpectedly matched \"$value\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
      * Checks that the given resource row has the bookit-resource-disabled class (is greyed out).
      *
      * This is the primary regression check for the room filter: after selecting a room in the
@@ -746,8 +823,8 @@ class behat_mod_bookit extends behat_base {
         \accesslib_clear_all_caches(true);
         load_all_capabilities();
         $events = \mod_bookit\local\manager\event_manager::get_events_in_timerange(
-            (new \DateTime($start))->format('Y-m-d H:i'),
-            (new \DateTime($end))->format('Y-m-d H:i'),
+            (new \DateTime($this->resolve_datetime_value($start)))->format('Y-m-d H:i'),
+            (new \DateTime($this->resolve_datetime_value($end)))->format('Y-m-d H:i'),
             $cm->id
         );
         \core\session\manager::set_user($previoususer);
@@ -755,6 +832,42 @@ class behat_mod_bookit extends behat_base {
         load_all_capabilities();
 
         return json_encode($events);
+    }
+
+    /**
+     * Return the value of a form control by name, including hidden editor-backed fields.
+     *
+     * @param string $name
+     * @return string
+     * @throws ExpectationException
+     */
+    private function get_named_form_control_value(string $name): string {
+        $script = <<<JS
+            (function(fieldName) {
+                var elements = document.querySelectorAll('textarea, input, select');
+                for (var i = 0; i < elements.length; i++) {
+                    if (elements[i].getAttribute('name') === fieldName) {
+                        if (window.tinymce && elements[i].id) {
+                            var editor = window.tinymce.get(elements[i].id);
+                            if (editor) {
+                                editor.save();
+                            }
+                        }
+                        return elements[i].value;
+                    }
+                }
+                return null;
+            })(%s);
+        JS;
+        $value = $this->getSession()->evaluateScript(sprintf($script, json_encode($name)));
+        if ($value === null) {
+            throw new ExpectationException(
+                "The Bookit editor field \"$name\" was not found in the DOM.",
+                $this->getSession()
+            );
+        }
+
+        return (string)$value;
     }
 
     /**

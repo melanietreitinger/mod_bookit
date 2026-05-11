@@ -578,7 +578,9 @@ class event_manager {
             'action' => $action,
             'oldstatus' => $oldstatus,
             'newstatus' => $newstatus,
-            'changedfields' => empty($changedfields) ? null : json_encode($changedfields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'changedfields' => empty($changedfields)
+                ? null
+                : json_encode($changedfields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'recoverymarker' => $recoverymarker ? 1 : 0,
             'usermodified' => $userid,
             'timecreated' => time(),
@@ -1060,7 +1062,7 @@ class event_manager {
             ];
         }
 
-        usort($normalised, static function(array $left, array $right): int {
+        usort($normalised, static function (array $left, array $right): int {
             if ($left['resourceid'] === $right['resourceid']) {
                 return $left['amount'] <=> $right['amount'];
             }
@@ -1079,16 +1081,20 @@ class event_manager {
      * @return string
      */
     private static function resolve_booking_history_action(int $oldstatus, int $newstatus): string {
-        if ($oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+        if (
+            $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
             && in_array($newstatus, [
                 event_access_manager::BOOKINGSTATUS_NEW,
                 event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            ], true)) {
+            ], true)
+        ) {
             return 'restored';
         }
 
-        if ($oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED
-            && $newstatus === event_access_manager::BOOKINGSTATUS_NEW) {
+        if (
+            $oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED
+            && $newstatus === event_access_manager::BOOKINGSTATUS_NEW
+        ) {
             return 'reactivated';
         }
 

@@ -33,12 +33,12 @@ Feature: Keep calendar and overview visibility aligned
   Scenario: Support person sees only accepted bookings across calendar and overview
     Given the following "mod_bookit > events" exist:
       | name                  | username    | supportperson_usernames | startdate            | enddate              | bookingstatus | institution |
-      | Accepted support exam | bookinguser | supportuser             | 2026-05-10T09:00:00 | 2026-05-10T11:00:00 | 2             | 1           |
-      | Hidden support exam   | bookinguser | supportuser             | 2026-05-10T12:00:00 | 2026-05-10T14:00:00 | 0             | 1           |
+      | Accepted support exam | bookinguser | supportuser             | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+      | Hidden support exam   | bookinguser | supportuser             | ##tomorrow 12:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0             | 1 |
     When I log in as "supportuser"
-    Then the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "2026-05-10T00:00:00" to "2026-05-11T00:00:00" should contain "Accepted support exam"
-    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "2026-05-10T00:00:00" to "2026-05-11T00:00:00" should not contain "Hidden support exam"
-    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "2026-05-10T00:00:00" to "2026-05-11T00:00:00" should not contain "Reserved"
+    Then the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Accepted support exam"
+    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Hidden support exam"
+    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Reserved"
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Accepted support exam"
     And I should not see "Hidden support exam"
@@ -46,11 +46,11 @@ Feature: Keep calendar and overview visibility aligned
   Scenario: Mixed-role user keeps participant visibility in both surfaces
     Given the following "mod_bookit > events" exist:
       | name                | username    | otherexaminer_usernames | supportperson_usernames | startdate            | enddate              | bookingstatus | institution |
-      | Mixed role exam     | bookinguser | mixeduser               | mixeduser               | 2026-05-10T15:00:00 | 2026-05-10T17:00:00 | 1             | 1           |
-      | Accepted helper exam | bookinguser |                         | mixeduser               | 2026-05-11T09:00:00 | 2026-05-11T11:00:00 | 2             | 1           |
+      | Mixed role exam      | bookinguser | mixeduser               | mixeduser               | ##tomorrow 15:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 17:00##%Y-%m-%dT%H:%M:%S## | 1             | 1 |
+      | Accepted helper exam | bookinguser |                         | mixeduser               | ##+2 days 09:00##%Y-%m-%dT%H:%M:%S##  | ##+2 days 11:00##%Y-%m-%dT%H:%M:%S##  | 2             | 1 |
     When I log in as "mixeduser"
-    Then the Bookit calendar projection for user "mixeduser" in "My BookIt Activity" from "2026-05-10T00:00:00" to "2026-05-12T00:00:00" should contain "Mixed role exam"
-    And the Bookit calendar projection for user "mixeduser" in "My BookIt Activity" from "2026-05-10T00:00:00" to "2026-05-12T00:00:00" should contain "Accepted helper exam"
+    Then the Bookit calendar projection for user "mixeduser" in "My BookIt Activity" from "tomorrow 00:00" to "+2 days 23:59" should contain "Mixed role exam"
+    And the Bookit calendar projection for user "mixeduser" in "My BookIt Activity" from "tomorrow 00:00" to "+2 days 23:59" should contain "Accepted helper exam"
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Mixed role exam"
     And I should see "Accepted helper exam"

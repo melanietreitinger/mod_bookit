@@ -88,8 +88,10 @@ class update_event_booking_status extends external_api {
         $event = $DB->get_record('bookit_event', ['id' => $params['eventid']], '*', MUST_EXIST);
         $oldstatus = (int)($event->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
 
-        if ($params['status'] === event_access_manager::BOOKINGSTATUS_NEW
-            && $oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED) {
+        if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED
+        ) {
             if (!event_access_manager::can_manage_open_requests($context)) {
                 throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
             }

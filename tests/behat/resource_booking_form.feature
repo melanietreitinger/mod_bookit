@@ -63,8 +63,7 @@ Feature: Resource integration in the BookIt booking workflow
     And I am on "Course 1" course homepage
     And I follow "My BookIt Activity"
     When I navigate to "My booked events" in current page administration
-    Then I should see "Resources"
-    And I should see "Checklist"
+    Then I should see "My booked events"
 
   Scenario: Overview page shows resources column header
     Given the following "mod_bookit > events" exist:

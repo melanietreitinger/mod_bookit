@@ -25,6 +25,7 @@
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\entity\resource\bookit_resource;
 use mod_bookit\local\entity\resource\bookit_resource_category;
+use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
 
 /**
@@ -84,12 +85,17 @@ class mod_bookit_generator extends testing_module_generator {
             $supportpersons = implode(',', $ids);
         }
 
+        $starttime = strtotime($event['startdate']);
+        $semester = isset($event['semester'])
+            ? (int)$event['semester']
+            : event_manager::get_current_semester($starttime);
+
         $e = new bookit_event(
             0,
             $event['name'],
-            (int)($event['semester'] ?? 20241),
+            $semester,
             $event['institution'],
-            strtotime($event['startdate']),
+            $starttime,
             strtotime($event['enddate']),
             (int)($event['duration'] ?? 90),
             $roomid,

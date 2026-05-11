@@ -31,21 +31,21 @@ Feature: Filter reporting data and block past-date saves
 
   Scenario: Reporting overview filters by date range and semester
     Given the following "mod_bookit > events" exist:
-      | name                | username    | startdate            | enddate              | bookingstatus | institution | semester |
-      | Summer review exam  | susiservice | 2026-05-10T09:00:00 | 2026-05-10T11:00:00 | 2             | 1           | 20261    |
-      | Winter review exam  | susiservice | 2026-11-10T09:00:00 | 2026-11-10T11:00:00 | 2             | 1           | 20262    |
+      | name                | username    | startdate            | enddate              | bookingstatus | institution |
+      | Summer review exam  | susiservice | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S##  | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S##  | 2             | 1 |
+      | Winter review exam  | susiservice | ##+180 days 09:00##%Y-%m-%dT%H:%M:%S## | ##+180 days 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
     When I log in as "susiservice"
-    And I open the Bookit reporting overview for "My BookIt Activity" from "2026-01-01" to "2026-08-31" with semesters "20261"
+    And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     Then I should see "Summer review exam"
     And I should not see "Winter review exam"
     And I should see "1 events"
 
   Scenario: Saving an event with a forced past start time is rejected
     Given the following "mod_bookit > events" exist:
-      | name                | username    | startdate            | enddate              | bookingstatus | institution | semester |
-      | Future validation exam | susiservice | 2026-05-10T09:00:00 | 2026-05-10T11:00:00 | 0             | 1           | 20261    |
+      | name                | username    | startdate            | enddate              | bookingstatus | institution |
+      | Future validation exam | susiservice | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 0             | 1 |
     When I log in as "susiservice"
-    And I open the Bookit reporting overview for "My BookIt Activity" from "2026-01-01" to "2026-08-31" with semesters "20261"
+    And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     And I open the Bookit event details for "Future validation exam"
     And I set the Bookit event details control "starttime" to a past timestamp
     And I submit the Bookit event details modal

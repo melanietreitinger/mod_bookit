@@ -204,8 +204,11 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame('rejected', $history[0]->action);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_IN_PROGRESS, (int)$history[0]->oldstatus);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_REJECTED, (int)$history[0]->newstatus);
-        $this->assertSame($user->id, (int)$history[0]->usermodified);
-        $this->assertSame('{"bookingstatus":{"from":1,"to":4}}', $history[0]->changedfields);
+        $this->assertSame((int)$user->id, (int)$history[0]->usermodified);
+        $this->assertSame(
+            ['bookingstatus' => ['from' => 1, 'to' => 4]],
+            json_decode($history[0]->changedfields, true)
+        );
     }
 
     /**

@@ -29,8 +29,6 @@ use context_module;
 use core\event\base;
 use stdClass;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Audit event for rejected-request reactivation.
  */
