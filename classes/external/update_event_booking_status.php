@@ -29,8 +29,8 @@ use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
-use mod_bookit\local\manager\booking_notification_manager;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\event_manager;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -73,7 +73,6 @@ class update_event_booking_status extends external_api {
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
-        require_capability('mod/bookit:managebasics', $context);
 
         $validstatuses = [
             event_access_manager::BOOKINGSTATUS_NEW,
@@ -89,15 +88,20 @@ class update_event_booking_status extends external_api {
         $event = $DB->get_record('bookit_event', ['id' => $params['eventid']], '*', MUST_EXIST);
         $oldstatus = (int)($event->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
 
+        if ($params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED) {
+            if (!event_access_manager::can_manage_open_requests($context)) {
+                throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
+            }
+        } else {
+            require_capability('mod/bookit:managebasics', $context);
+        }
+
         if (!event_access_manager::can_transition_booking_status($oldstatus, $params['status'])) {
             throw new \invalid_parameter_exception('Invalid booking workflow transition.');
         }
 
-        $event->bookingstatus = $params['status'];
-        $event->usermodified = (int)$USER->id;
-        $event->timemodified = time();
-        $DB->update_record('bookit_event', $event);
-        booking_notification_manager::notify_status_changed($params['cmid'], $params['eventid'], $oldstatus, $params['status']);
+        event_manager::transition_booking_status($event, $params['status'], (int)$USER->id, $context, (int)$params['cmid']);
 
         return ['status' => $params['status']];
     }

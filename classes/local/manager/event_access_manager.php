@@ -70,7 +70,9 @@ class event_access_manager {
             self::BOOKINGSTATUS_CANCELED,
         ],
         self::BOOKINGSTATUS_CANCELED => [],
-        self::BOOKINGSTATUS_REJECTED => [],
+        self::BOOKINGSTATUS_REJECTED => [
+            self::BOOKINGSTATUS_NEW,
+        ],
     ];
 
     /**
@@ -112,6 +114,21 @@ class event_access_manager {
      */
     public static function get_open_request_statuses(): array {
         return self::OPEN_BOOKING_STATUSES;
+    }
+
+    /**
+     * Check whether the event is a rejected request that may still be re-opened operationally.
+     *
+     * @param stdClass $event
+     * @param int|null $referencetime
+     * @return bool
+     */
+    public static function is_rejected_request(stdClass $event, ?int $referencetime = null): bool {
+        if ((int)($event->bookingstatus ?? -1) !== self::BOOKINGSTATUS_REJECTED) {
+            return false;
+        }
+
+        return (int)($event->endtime ?? 0) >= ($referencetime ?? time());
     }
 
     /**
@@ -221,16 +238,7 @@ class event_access_manager {
             return false;
         }
 
-        $roles = self::get_user_roles_for_event($event, $userid);
-        if (empty($roles)) {
-            return false;
-        }
-
-        if (!empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']))) {
-            return true;
-        }
-
-        return in_array('supportperson', $roles, true) && self::is_booking_confirmed($event);
+        return self::user_has_participant_visibility($event, $userid);
     }
 
     /**
@@ -250,7 +258,7 @@ class event_access_manager {
             return false;
         }
 
-        return self::can_user_view_event_details($event, $context, $userid);
+        return self::user_has_participant_visibility($event, $userid);
     }
 
     /**
@@ -262,7 +270,22 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_calendar(stdClass $event, context_module $context, int $userid): bool {
-        return self::can_user_view_event_details($event, $context, $userid);
+        return self::can_user_view_event_in_overview($event, $context, $userid);
+    }
+
+    /**
+     * Check whether the user may see the event in the overview history.
+     *
+     * History follows the same visibility projection as the active overview so hidden
+     * requests never reappear through a different entry point.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_user_view_event_in_history(stdClass $event, context_module $context, int $userid): bool {
+        return self::can_user_view_event_in_overview($event, $context, $userid);
     }
 
     /**
@@ -460,5 +483,25 @@ class event_access_manager {
         }
 
         return array_values(array_filter(array_map('intval', explode(',', $ids))));
+    }
+
+    /**
+     * Resolve participant visibility for non-service-team users once so all booking views stay aligned.
+     *
+     * @param stdClass $event
+     * @param int $userid
+     * @return bool
+     */
+    private static function user_has_participant_visibility(stdClass $event, int $userid): bool {
+        $roles = self::get_user_roles_for_event($event, $userid);
+        if (empty($roles)) {
+            return false;
+        }
+
+        if (!empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']))) {
+            return true;
+        }
+
+        return in_array('supportperson', $roles, true) && self::is_booking_confirmed($event);
     }
 }

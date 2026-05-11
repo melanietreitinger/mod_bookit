@@ -92,6 +92,10 @@ final class event_access_manager_test extends advanced_testcase {
             event_access_manager::BOOKINGSTATUS_ACCEPTED,
             event_access_manager::BOOKINGSTATUS_CANCELED
         ));
+        $this->assertTrue(event_access_manager::can_transition_booking_status(
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+            event_access_manager::BOOKINGSTATUS_NEW
+        ));
 
         $this->assertFalse(event_access_manager::can_transition_booking_status(
             event_access_manager::BOOKINGSTATUS_ACCEPTED,
@@ -117,6 +121,21 @@ final class event_access_manager_test extends advanced_testcase {
 
         $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
         $this->assertFalse(event_access_manager::is_open_request($event));
+    }
+
+    /**
+     * Rejected requests remain visible until their requested slot is over.
+     *
+     * @return void
+     */
+    public function test_is_rejected_request_uses_requested_end_time(): void {
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'endtime' => strtotime('2026-05-07 12:00:00'),
+        ];
+
+        $this->assertTrue(event_access_manager::is_rejected_request($event, strtotime('2026-05-07 11:59:59')));
+        $this->assertFalse(event_access_manager::is_rejected_request($event, strtotime('2026-05-07 12:00:01')));
     }
 
     /**
@@ -186,6 +205,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertFalse(event_access_manager::can_user_view_event_details($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
 
@@ -194,6 +214,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_user_view_event_details($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
     }
@@ -220,6 +241,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_user_view_event_details($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
     }

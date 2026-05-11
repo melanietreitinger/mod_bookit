@@ -23,27 +23,15 @@
  */
 
 /**
- * WORK IN PROGRESS by vadym (user story event filters)
- * Event feed for the BookIt calendar -- now with optional filters
- *
- * When no filter parameter is passed the behaviour is identical to the
- * original file: all* events in the requested time-range are returned.
- *
- * Optional GET parameters (all of them can be omitted):
- * room     (string) → comma-separated resource ids of rooms
- * faculty  (string) → comma-separated institutionIDs (exact match each)
- * status   (string) → comma-separated bookingstatus values 0-4
- * search   (string) → free-text search in event name OR faculty
+ * Event feed for the BookIt calendar with optional room, faculty, status and search filters.
  */
 
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
-use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 
 require_login();           // User must be logged-in.
-global $USER;
 // ...@TODO: capability check, check for sesskey!
 // ...@TODO: The id of the instance should become required in future!
 
@@ -95,116 +83,9 @@ if ($statusraw !== '' && $canfilterstatus) {
 // Fetch events using the helper.
 $events = event_manager::get_events_in_timerange($start, $end, $id);
 
-// If this is an export request and the user is NOT service team,
-// remove reserved events completely from the response.
-if ($export && !has_capability('mod/bookit:viewalldetailsofevent', $context)) {
-    $events = array_filter($events, static function ($ev) {
-        // Works for both array and object events.
-        $extended = null;
-        if (is_array($ev) && isset($ev['extendedProps'])) {
-            $extended = $ev['extendedProps'];
-        } else if (is_object($ev) && isset($ev->extendedProps)) {
-            $extended = $ev->extendedProps;
-        }
-
-        $reserved = false;
-        if (is_object($extended) && property_exists($extended, 'reserved')) {
-            $reserved = (bool)$extended->reserved;
-        }
-
-        // Keep only non-reserved events.
-        return !$reserved;
-    });
-    // Reindex after filtering.
+if ($export) {
     $events = array_values($events);
 }
-
-// Access helpers that work for arrays and objects.
-$aget = static function ($src, array $keys) {
-    foreach ($keys as $k) {
-        if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) {
-            return $src[$k];
-        }
-        if (is_object($src) && isset($src->$k) && $src->$k !== '' && $src->$k !== null) {
-            return $src->$k;
-        }
-    }
-    return null;
-};
-$aset = static function (&$dst, $key, $val) {
-    if (is_array($dst)) {
-        $dst[$key] = $val;
-    } else {
-        $dst->$key = $val;
-    }
-};
-
-// ...TODO outsource?
-global $DB;
-
-foreach ($events as &$ev) {
-    // Works for array or object.
-    $evid = is_array($ev) ? ($ev['id'] ?? null) : ($ev->id ?? null);
-    if (!$evid) {
-        continue;
-    }
-
-    // Fetch a single enrichment row.
-    $row = $DB->get_record_sql("
-        SELECT e.bookingstatus,
-               e.institutionid,
-               e.roomid,
-               e.personinchargeid,
-               e.otherexaminers,
-               e.supportpersons,
-               e.usermodified,
-               r.name AS roomname
-          FROM {bookit_event} e
-     LEFT JOIN {bookit_room} r ON r.id = e.roomid
-         WHERE e.id = ?", [$evid]);
-
-    // Skip if nothing found.
-    if (!$row) {
-        continue;
-    }
-
-    // Assign values safely for array or object.
-    if (is_array($ev)) {
-        $ev['bookingstatus'] = (int)($row->bookingstatus ?? 0);
-        $ev['institutionid']    = (string)($row->institutionid ?? '');
-        $ev['roomid']        = (int)($row->roomid ?? 0);
-        $ev['roomname']      = (string)($row->roomname ?? '');
-        $ev['personinchargeid'] = (int)($row->personinchargeid ?? 0);
-        $ev['otherexaminers'] = (string)($row->otherexaminers ?? '');
-        $ev['supportpersons'] = (string)($row->supportpersons ?? '');
-        $ev['usermodified'] = (int)($row->usermodified ?? 0);
-    } else {
-        $ev->bookingstatus = (int)($row->bookingstatus ?? 0);
-        $ev->institutionid    = (string)($row->institutionid ?? '');
-        $ev->roomid        = (int)($row->roomid ?? 0);
-        $ev->roomname      = (string)($row->roomname ?? '');
-        $ev->personinchargeid = (int)($row->personinchargeid ?? 0);
-        $ev->otherexaminers = (string)($row->otherexaminers ?? '');
-        $ev->supportpersons = (string)($row->supportpersons ?? '');
-        $ev->usermodified = (int)($row->usermodified ?? 0);
-    }
-}
-unset($ev);
-
-$events = array_filter($events, static function ($ev) use ($context, $USER) {
-    $reserved = false;
-    if (is_array($ev) && isset($ev['extendedProps']) && is_object($ev['extendedProps'])) {
-        $reserved = (bool)($ev['extendedProps']->reserved ?? false);
-    } else if (is_object($ev) && isset($ev->extendedProps) && is_object($ev->extendedProps)) {
-        $reserved = (bool)($ev->extendedProps->reserved ?? false);
-    }
-
-    if ($reserved) {
-        return true;
-    }
-
-    return event_access_manager::can_user_view_event_in_calendar((object)$ev, $context, (int)$USER->id);
-});
 
 // Apply in-memory filters (only if parameter present). For Filter user story.
 $events = array_filter($events, function ($ev) use ($roomids, $faculties, $statuses, $search) {

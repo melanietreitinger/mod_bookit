@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/bookit/db" VERSION="20251021" COMMENT="XMLDB file for Moodle mod_bookit"
+<XMLDB PATH="mod/bookit/db" VERSION="2025511306" COMMENT="XMLDB file for Moodle mod_bookit"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -53,6 +53,28 @@
         <KEY NAME="even_cou_fk" TYPE="foreign" FIELDS="coursetemplate" REFTABLE="course" REFFIELDS="id"/>
         <KEY NAME="even_ref_fk" TYPE="foreign" FIELDS="refcourseid" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_event_history" COMMENT="Stores visible second-pass workflow history for booking events.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="oldstatus" TYPE="int" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="newstatus" TYPE="int" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="changedfields" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="recoverymarker" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit_event" REFFIELDS="id"/>
+        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="eventid_idx" UNIQUE="false" FIELDS="eventid" COMMENT="Index for event history lookups"/>
+        <INDEX NAME="event_time_idx" UNIQUE="false" FIELDS="eventid,timecreated" COMMENT="Index for ordered event history lookups"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="bookit_resource_category" COMMENT="Stores the categories of resources">
       <FIELDS>

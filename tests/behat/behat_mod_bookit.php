@@ -55,6 +55,41 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Opens the Bookit overview with explicit personal filter parameters.
+     *
+     * @When I open the filtered Bookit overview :tab for :activity with status :status faculty :faculty and semesters :semesters
+     * @param string $tab
+     * @param string $activity
+     * @param string $status
+     * @param string $faculty
+     * @param string $semesters
+     */
+    public function i_open_the_filtered_bookit_overview_for(
+        string $tab,
+        string $activity,
+        string $status,
+        string $faculty,
+        string $semesters
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $params = [
+            'id' => $cm->id,
+            'tab' => $tab,
+            'bookingstatusfilter' => $status,
+            'facultyid' => $faculty,
+        ];
+        $query = http_build_query($params);
+        foreach (array_filter(array_map('trim', explode(',', $semesters))) as $semester) {
+            $query .= '&semesterids[]=' . rawurlencode($semester);
+        }
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
      * Opens the Bookit reporting overview with explicit filter parameters.
      *
      * @When I open the Bookit reporting overview for :activity from :start to :end with semesters :semesters
@@ -85,6 +120,99 @@ class behat_mod_bookit extends behat_base {
         }
 
         $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Opens the calendar feed for the given activity and range.
+     *
+     * @When I request the Bookit calendar feed for :activity from :start to :end
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     */
+    public function i_request_the_bookit_calendar_feed_for(string $activity, string $start, string $end): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $url = (new moodle_url('/mod/bookit/events.php', [
+            'id' => $cm->id,
+            'start' => $start,
+            'end' => $end,
+            'export' => 1,
+        ]))->out(false);
+
+        $js = <<<JS
+            (function(targetUrl) {
+                var request = new XMLHttpRequest();
+                request.open('GET', targetUrl, false);
+                request.send(null);
+                window.bookitLastFeedResponse = request.responseText;
+                return request.status;
+            })('$url');
+        JS;
+
+        $status = $this->getSession()->evaluateScript($js);
+        if ((int)$status !== 200) {
+            throw new ExpectationException(
+                "Could not fetch the calendar feed. HTTP status: $status",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the server-side calendar projection contains a booking for the given user.
+     *
+     * @Then the Bookit calendar projection for user :username in :activity from :start to :end should contain :text
+     * @param string $username
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_calendar_projection_for_user_should_contain(
+        string $username,
+        string $activity,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_calendar_projection_content($username, $activity, $start, $end);
+        if (mb_strpos($content, $text) === false) {
+            throw new ExpectationException(
+                "The calendar projection did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the server-side calendar projection hides a booking for the given user.
+     *
+     * @Then the Bookit calendar projection for user :username in :activity from :start to :end should not contain :text
+     * @param string $username
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_calendar_projection_for_user_should_not_contain(
+        string $username,
+        string $activity,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_calendar_projection_content($username, $activity, $start, $end);
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                "The calendar projection unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
     }
 
     /**
@@ -348,6 +476,96 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Assert that the overview table currently renders the ID column.
+     *
+     * @Then the Bookit overview should show the ID column
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_the_id_column(): void {
+        $this->assert_overview_id_column(true);
+    }
+
+    /**
+     * Assert that the overview table currently hides the ID column.
+     *
+     * @Then the Bookit overview should not show the ID column
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_show_the_id_column(): void {
+        $this->assert_overview_id_column(false);
+    }
+
+    /**
+     * Assert the exact set of event titles currently rendered in the overview table.
+     *
+     * @Then the Bookit overview should list only the events :eventlist
+     * @param string $eventlist
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_list_only_the_events(string $eventlist): void {
+        $expected = array_values(array_filter(array_map('trim', explode(',', $eventlist))));
+        $js = <<<'JS'
+            (function() {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(function(row) {
+                    var cells = row.querySelectorAll('td');
+                    for (var i = 0; i < cells.length; i++) {
+                        var link = cells[i].querySelector('a.bookit-event-link');
+                        if (link) {
+                            return link.textContent.trim();
+                        }
+                    }
+                    return cells.length ? cells[0].textContent.trim() : '';
+                }).filter(Boolean);
+            })();
+        JS;
+
+        $actual = $this->getSession()->evaluateScript($js);
+        sort($expected);
+        sort($actual);
+        if ($actual !== $expected) {
+            throw new ExpectationException(
+                'Unexpected overview event list. Expected ' . json_encode($expected) . ' but got ' . json_encode($actual),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the raw response contains a string.
+     *
+     * @Then the Bookit raw response should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_raw_response_should_contain(string $text): void {
+        $content = (string)$this->getSession()->evaluateScript('window.bookitLastFeedResponse || ""');
+        if (mb_strpos($content, $text) === false) {
+            throw new ExpectationException(
+                "The raw response did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the raw response does not contain a string.
+     *
+     * @Then the Bookit raw response should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_raw_response_should_not_contain(string $text): void {
+        $content = (string)$this->getSession()->evaluateScript('window.bookitLastFeedResponse || ""');
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                "The raw response unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
      * Checks that the given resource row has the bookit-resource-disabled class (is greyed out).
      *
      * This is the primary regression check for the room filter: after selecting a room in the
@@ -466,6 +684,77 @@ class behat_mod_bookit extends behat_base {
                 $this->getSession()
             );
         }
+    }
+
+    /**
+     * Assert whether the active overview table shows the leading ID column.
+     *
+     * @param bool $expected
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_overview_id_column(bool $expected): void {
+        $js = <<<'JS'
+            (function() {
+                var table = document.querySelector('#overview-table, #open-requests-table');
+                if (!table) {
+                    return 'table-not-found';
+                }
+                var firstHeader = table.querySelector('thead th');
+                if (!firstHeader) {
+                    return 'header-not-found';
+                }
+                return firstHeader.textContent.trim();
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result === 'table-not-found' || $result === 'header-not-found') {
+            throw new ExpectationException(
+                "Could not resolve overview table header state. Result: $result",
+                $this->getSession()
+            );
+        }
+
+        $actual = str_starts_with($result, 'ID');
+        if ($actual !== $expected) {
+            $message = $expected
+                ? 'Expected the overview to show the ID column, but it did not.'
+                : 'Expected the overview to hide the ID column, but it was visible.';
+            throw new ExpectationException($message, $this->getSession());
+        }
+    }
+
+    /**
+     * Build the raw calendar projection string for a given user and activity.
+     *
+     * @param string $username
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @return string
+     */
+    private function get_calendar_projection_content(string $username, string $activity, string $start, string $end): string {
+        global $DB, $USER;
+
+        $user = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+
+        $previoususer = clone($USER);
+        \core\session\manager::set_user($user);
+        \accesslib_clear_all_caches(true);
+        load_all_capabilities();
+        $events = \mod_bookit\local\manager\event_manager::get_events_in_timerange(
+            (new \DateTime($start))->format('Y-m-d H:i'),
+            (new \DateTime($end))->format('Y-m-d H:i'),
+            $cm->id
+        );
+        \core\session\manager::set_user($previoususer);
+        \accesslib_clear_all_caches(true);
+        load_all_capabilities();
+
+        return json_encode($events);
     }
 
     /**

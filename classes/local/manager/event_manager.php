@@ -28,6 +28,9 @@ use coding_exception;
 use context_module;
 use DateTime;
 use dml_exception;
+use mod_bookit\event\booking_reactivated;
+use mod_bookit\event\booking_status_changed;
+use mod_bookit\local\entity\bookit_event;
 use stdClass;
 
 /**
@@ -77,74 +80,25 @@ class event_manager {
         // ...@TODO use instance id.
         $starttimestamp = DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
         $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
-        $reserved = get_string('event_reserved', 'bookit');
-
         $context = context_module::instance($instanceid);
-        $viewalldetailsofevent = has_capability('mod/bookit:viewalldetailsofevent', $context);
-        $viewalldetailsofownevent = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-
-        $sqlreserved =
-            'SELECT e.id, NULL as name, e.bookingstatus, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
-                r.name as roomname, r.shortname, r.location ' .
-            'FROM {bookit_event} e ' .
-            'JOIN {bookit_room} r ON r.id = e.roomid ' .
-            'WHERE endtime >= :starttime AND starttime <= :endtime';
-
-        // Service-Team: can view all events in detail.
-        if ($viewalldetailsofevent) {
-            $sql =
-                'SELECT e.id, e.name, e.bookingstatus, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
-                     r.name as roomname, r.shortname, r.location ' .
-                'FROM {bookit_event} e ' .
-                'JOIN {bookit_room} r ON r.id = e.roomid ' .
-                'WHERE endtime >= :starttime AND starttime <= :endtime';
-            $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
-        } else if ($viewalldetailsofownevent) {
-            $otherexaminers = $DB->sql_like('otherexaminers', ':otherexaminers');
-            $otherexaminers1 = $DB->sql_like('otherexaminers', ':otherexaminers1');
-            $supportpersons = $DB->sql_like('supportpersons', ':supportpersons');
-            $supportpersons1 = $DB->sql_like('supportpersons', ':supportpersons1');
-            // Every user: can view own events in detail.
-            $sql = 'SELECT e.id, e.name, e.bookingstatus, e.starttime, e.endtime, e.extratimebefore, e.extratimeafter, r.eventcolor,
-                    r.name as roomname, r.shortname, r.location
-                    FROM {bookit_event} e
-                    JOIN {bookit_room} r ON r.id = e.roomid
-                    WHERE endtime >= :starttime1 AND starttime <= :endtime1
-                    AND (e.usermodified = :usermodified1 OR personinchargeid = :personinchargeid1 OR '
-                    . $otherexaminers1 . ' OR (' . $supportpersons1 . ' AND e.bookingstatus = :acceptedstatus1))
-                    UNION ' . $sqlreserved . '
-                    AND e.usermodified != :usermodified AND personinchargeid != :personinchargeid
-                    AND NOT ' . $otherexaminers . ' AND NOT (' . $supportpersons . ' AND e.bookingstatus = :acceptedstatus)';
-            $params = [
-                'starttime1' => $starttimestamp,
-                'endtime1' => $endtimestamp,
-                'usermodified1' => $USER->id,
-                'personinchargeid1' => $USER->id,
-                'otherexaminers1' => $USER->id,
-                'supportpersons1' => $USER->id,
-                'acceptedstatus1' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
-                'starttime' => $starttimestamp,
-                'endtime' => $endtimestamp,
-                'usermodified' => $USER->id,
-                'personinchargeid' => $USER->id,
-                'otherexaminers' => $USER->id,
-                'supportpersons' => $USER->id,
-                'acceptedstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
-            ];
-        } else {
-            // Every user: can view no details.
-            $sql = $sqlreserved;
-            $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
-        }
-
-        // Order events by starttime.
-        $sql .= ' ORDER BY starttime';
+        $sql = 'SELECT e.id, e.name, e.semester, e.institutionid, e.roomid, e.bookingstatus, e.starttime, e.endtime,
+                    e.extratimebefore, e.extratimeafter, e.personinchargeid, e.otherexaminers, e.supportpersons,
+                    e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
+                FROM {bookit_event} e
+                LEFT JOIN {bookit_room} r ON r.id = e.roomid
+                WHERE endtime >= :starttime AND starttime <= :endtime
+                ORDER BY starttime';
+        $params = ['starttime' => $starttimestamp, 'endtime' => $endtimestamp];
 
         $records = $DB->get_records_sql($sql, $params);
         $events = [];
 
         foreach ($records as $record) {
-            $roominfo = $record->roomname;
+            if (!event_access_manager::can_user_view_event_in_calendar($record, $context, (int)$USER->id)) {
+                continue;
+            }
+
+            $roominfo = $record->roomname ?? get_string('resources:all_rooms', 'mod_bookit');
             $addinfos = [];
             if ($record->shortname) {
                 $addinfos[] = $record->shortname;
@@ -156,24 +110,35 @@ class event_manager {
                 $roominfo .= ': ' . implode(', ', $addinfos);
             }
 
+            $eventcolor = $record->eventcolor ?? '#3a87ad';
+
             $events[] = [
                 'id' => $record->id,
-                'title' => ($record->name ?? $reserved) . " ($roominfo)",
+                'title' => $record->name . " ($roominfo)",
                 'titleHTML' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
                     date('H:i', $record->endtime) . '</h6>' .
-                    ($record->name ?? $reserved) . " ($roominfo)",
+                    $record->name . " ($roominfo)",
                 'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
                 'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
-                'backgroundColor' => $record->eventcolor,
-                'textColor' => color_manager::get_textcolor_for_background($record->eventcolor),
+                'backgroundColor' => $eventcolor,
+                'textColor' => color_manager::get_textcolor_for_background($eventcolor),
+                'bookingstatus' => (int)$record->bookingstatus,
+                'institutionid' => (int)($record->institutionid ?? 0),
+                'semester' => (int)($record->semester ?? 0),
+                'roomid' => (int)($record->roomid ?? 0),
+                'roomname' => $record->roomname,
+                'personinchargeid' => (int)($record->personinchargeid ?? 0),
+                'otherexaminers' => (string)($record->otherexaminers ?? ''),
+                'supportpersons' => (string)($record->supportpersons ?? ''),
+                'usermodified' => (int)($record->usermodified ?? 0),
                 'extendedProps' => (object) [
-                    'reserved' => !$record->name,
-                    'bookingstatus' => (int)($record->bookingstatus ?? event_access_manager::BOOKINGSTATUS_ACCEPTED),
+                    'reserved' => false,
+                    'bookingstatus' => (int)$record->bookingstatus,
                     'roomname' => $record->roomname,
                 ],
                 'classNames' => [
                     'hide-event-time',
-                    self::get_booking_status_class((int)($record->bookingstatus ?? event_access_manager::BOOKINGSTATUS_ACCEPTED)),
+                    self::get_booking_status_class((int)$record->bookingstatus),
                 ],
             ];
         }
@@ -211,8 +176,11 @@ class event_manager {
             SELECT
                 e.id,
                 e.name,
+                e.institutionid,
+                e.semester,
                 e.bookingstatus,
                 e.starttime,
+                e.endtime,
                 e.personinchargeid,
                 e.otherexaminers,
                 e.supportpersons,
@@ -376,6 +344,16 @@ class event_manager {
     }
 
     /**
+     * Return the default reporting semester selection.
+     *
+     * @param int|null $referencetime
+     * @return int[]
+     */
+    public static function get_reporting_default_semester_ids(?int $referencetime = null): array {
+        return [self::get_current_semester($referencetime)];
+    }
+
+    /**
      * Build semester filter options around the current semester.
      *
      * @param int|null $referencetime
@@ -384,7 +362,7 @@ class event_manager {
     public static function get_semester_filter_options(?int $referencetime = null): array {
         $currentsemester = self::get_current_semester($referencetime);
         $baseyear = (int)floor($currentsemester / 10);
-        $options = [];
+        $options = [0 => get_string('overview_filter_semester_legacy', 'mod_bookit')];
 
         for ($year = $baseyear - 1; $year <= $baseyear + 1; $year++) {
             $options[($year * 10) + 1] = get_string('summer_semester', 'mod_bookit') . ' ' . $year;
@@ -423,17 +401,11 @@ class event_manager {
             'e.starttime <= :endtime',
         ];
 
-        $semesterids = array_values(array_filter(array_map('intval', $semesterids)));
-        if (!empty($semesterids)) {
-            [$semestersql, $semesterparams] = $DB->get_in_or_equal($semesterids, SQL_PARAMS_NAMED);
-            $conditions[] = "(e.semester $semestersql OR e.semester IS NULL OR e.semester = 0)";
-            $params = array_merge($params, $semesterparams);
-        }
-
         $sql = "
             SELECT
                 e.id,
                 e.name,
+                e.institutionid,
                 e.semester,
                 e.bookingstatus,
                 e.starttime,
@@ -459,6 +431,349 @@ class event_manager {
         }
 
         return $events;
+    }
+
+    /**
+     * Filter overview events by active/history split and optional status, faculty and semester filters.
+     *
+     * @param stdClass[] $events
+     * @param array $filters
+     * @param bool $history
+     * @param int|null $referencetime
+     * @return stdClass[]
+     */
+    public static function filter_overview_events(
+        array $events,
+        array $filters = [],
+        bool $history = false,
+        ?int $referencetime = null
+    ): array {
+        $bookingstatuses = self::normalise_filter_ids($filters['bookingstatuses'] ?? []);
+        $facultyids = self::normalise_filter_ids($filters['facultyids'] ?? []);
+        $semesterids = self::normalise_filter_ids($filters['semesterids'] ?? []);
+        $selectedsemesters = array_values(array_filter($semesterids, static fn(int $value): bool => $value !== 0));
+        $includelegacysemester = in_array(0, $semesterids, true);
+
+        return array_values(array_filter($events, static function (stdClass $event) use (
+            $history,
+            $referencetime,
+            $bookingstatuses,
+            $facultyids,
+            $selectedsemesters,
+            $includelegacysemester
+        ): bool {
+            if (self::is_event_in_history($event, $referencetime) !== $history) {
+                return false;
+            }
+
+            if (!empty($bookingstatuses) && !in_array((int)($event->bookingstatus ?? -1), $bookingstatuses, true)) {
+                return false;
+            }
+
+            if (!empty($facultyids) && !in_array((int)($event->institutionid ?? 0), $facultyids, true)) {
+                return false;
+            }
+
+            if (empty($selectedsemesters) && !$includelegacysemester) {
+                return true;
+            }
+
+            $semester = (int)($event->semester ?? 0);
+            if (!empty($selectedsemesters) && in_array($semester, $selectedsemesters, true)) {
+                return true;
+            }
+
+            return $includelegacysemester && self::is_legacy_semester_value($event->semester ?? 0);
+        }));
+    }
+
+    /**
+     * Check whether an event belongs to the history view.
+     *
+     * @param stdClass $event
+     * @param int|null $referencetime
+     * @return bool
+     */
+    public static function is_event_in_history(stdClass $event, ?int $referencetime = null): bool {
+        return (int)($event->endtime ?? 0) < ($referencetime ?? time());
+    }
+
+    /**
+     * Return all rejected requests that are still operationally visible until the requested slot is over.
+     *
+     * @param int|null $referencetime
+     * @return array
+     * @throws dml_exception
+     */
+    public static function get_rejected_requests(?int $referencetime = null): array {
+        global $DB;
+
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            WHERE e.bookingstatus = :status
+              AND e.endtime >= :referencetime
+            ORDER BY e.starttime ASC
+        ";
+
+        return $DB->get_records_sql($sql, [
+            'status' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'referencetime' => $referencetime ?? time(),
+        ]);
+    }
+
+    /**
+     * Return the number of currently visible rejected requests.
+     *
+     * @param int|null $referencetime
+     * @return int
+     * @throws dml_exception
+     */
+    public static function count_rejected_requests(?int $referencetime = null): int {
+        global $DB;
+
+        return (int)$DB->count_records_select('bookit_event', 'bookingstatus = :status AND endtime >= :referencetime', [
+            'status' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'referencetime' => $referencetime ?? time(),
+        ]);
+    }
+
+    /**
+     * Persist a workflow history entry for the booking event.
+     *
+     * @param int $eventid
+     * @param string $action
+     * @param int $userid
+     * @param int|null $oldstatus
+     * @param int|null $newstatus
+     * @param array $changedfields
+     * @param bool $recoverymarker
+     * @return int
+     * @throws dml_exception
+     */
+    public static function record_booking_history(
+        int $eventid,
+        string $action,
+        int $userid,
+        ?int $oldstatus = null,
+        ?int $newstatus = null,
+        array $changedfields = [],
+        bool $recoverymarker = false
+    ): int {
+        global $DB;
+
+        $record = (object)[
+            'eventid' => $eventid,
+            'action' => $action,
+            'oldstatus' => $oldstatus,
+            'newstatus' => $newstatus,
+            'changedfields' => empty($changedfields) ? null : json_encode($changedfields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'recoverymarker' => $recoverymarker ? 1 : 0,
+            'usermodified' => $userid,
+            'timecreated' => time(),
+        ];
+
+        return (int)$DB->insert_record('bookit_event_history', $record);
+    }
+
+    /**
+     * Return workflow history entries for the booking event.
+     *
+     * @param int $eventid
+     * @param int $limit
+     * @return stdClass[]
+     * @throws dml_exception
+     */
+    public static function get_booking_history(int $eventid, int $limit = 50): array {
+        global $DB;
+
+        $limit = max(1, $limit);
+        $sql = "
+            SELECT h.*, u.firstname, u.lastname
+              FROM {bookit_event_history} h
+         LEFT JOIN {user} u ON u.id = h.usermodified
+             WHERE h.eventid = :eventid
+          ORDER BY h.timecreated DESC, h.id DESC
+        ";
+
+        return $DB->get_records_sql($sql, ['eventid' => $eventid], 0, $limit);
+    }
+
+    /**
+     * Return the latest workflow history entry per event id.
+     *
+     * @param int[] $eventids
+     * @return array<int, stdClass>
+     * @throws dml_exception
+     */
+    public static function get_latest_booking_history_entries(array $eventids): array {
+        global $DB;
+
+        $eventids = array_values(array_unique(array_map('intval', array_filter($eventids))));
+        if (empty($eventids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($eventids, SQL_PARAMS_NAMED);
+        $sql = "
+            SELECT h.*, u.firstname, u.lastname
+              FROM {bookit_event_history} h
+         LEFT JOIN {user} u ON u.id = h.usermodified
+             WHERE h.eventid $insql
+          ORDER BY h.eventid ASC, h.timecreated DESC, h.id DESC
+        ";
+
+        $entries = $DB->get_records_sql($sql, $params);
+        $latest = [];
+        foreach ($entries as $entry) {
+            $eventid = (int)$entry->eventid;
+            if (!array_key_exists($eventid, $latest)) {
+                $latest[$eventid] = $entry;
+            }
+        }
+
+        return $latest;
+    }
+
+    /**
+     * Save a booking event while keeping visible history and audit events aligned.
+     *
+     * @param bookit_event $event
+     * @param bookit_event|null $previousevent
+     * @param int $userid
+     * @param context_module $context
+     * @param int|null $cmid
+     * @return bookit_event
+     * @throws dml_exception
+     */
+    public static function save_event_with_lifecycle_tracking(
+        bookit_event $event,
+        ?bookit_event $previousevent,
+        int $userid,
+        context_module $context,
+        ?int $cmid = null
+    ): bookit_event {
+        $oldstatus = $previousevent
+            ? (int)($previousevent->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW)
+            : null;
+
+        $event->save($userid);
+
+        $persistedevent = bookit_event::from_database((int)$event->id);
+        $persistedrecord = self::get_event((int)$event->id);
+        $newstatus = (int)($persistedrecord->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
+
+        if ($previousevent === null) {
+            self::record_booking_history((int)$persistedrecord->id, 'created', $userid, null, $newstatus);
+            self::trigger_booking_lifecycle_audit(
+                $persistedrecord,
+                $context,
+                $userid,
+                $newstatus,
+                $newstatus,
+                'created'
+            );
+            return $persistedevent;
+        }
+
+        $changedfields = self::build_booking_history_changed_fields($previousevent, $persistedevent);
+        if (empty($changedfields)) {
+            return $persistedevent;
+        }
+
+        $action = $oldstatus !== $newstatus
+            ? self::resolve_booking_history_action($oldstatus, $newstatus)
+            : 'updated';
+        $recoverymarker = in_array($action, ['reactivated', 'restored'], true);
+
+        self::record_booking_history(
+            (int)$persistedrecord->id,
+            $action,
+            $userid,
+            $oldstatus,
+            $newstatus,
+            $changedfields,
+            $recoverymarker
+        );
+
+        if ($oldstatus !== $newstatus && $cmid !== null) {
+            booking_notification_manager::notify_status_changed($cmid, (int)$persistedrecord->id, $oldstatus, $newstatus);
+        }
+
+        self::trigger_booking_lifecycle_audit(
+            $persistedrecord,
+            $context,
+            $userid,
+            $oldstatus,
+            $newstatus,
+            $action
+        );
+
+        return $persistedevent;
+    }
+
+    /**
+     * Transition an event booking status and keep notifications, history and audit events aligned.
+     *
+     * @param stdClass $event
+     * @param int $newstatus
+     * @param int $userid
+     * @param context_module $context
+     * @param int|null $cmid
+     * @return stdClass
+     * @throws dml_exception
+     */
+    public static function transition_booking_status(
+        stdClass $event,
+        int $newstatus,
+        int $userid,
+        context_module $context,
+        ?int $cmid = null
+    ): stdClass {
+        global $DB;
+
+        $oldstatus = (int)($event->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
+        $changed = $oldstatus !== $newstatus;
+
+        $event->bookingstatus = $newstatus;
+        $event->usermodified = $userid;
+        $event->timemodified = time();
+        $DB->update_record('bookit_event', $event);
+
+        if (!$changed) {
+            return $event;
+        }
+
+        $action = self::resolve_booking_history_action($oldstatus, $newstatus);
+        $recoverymarker = in_array($action, ['reactivated', 'restored'], true);
+        self::record_booking_history(
+            (int)$event->id,
+            $action,
+            $userid,
+            $oldstatus,
+            $newstatus,
+            ['bookingstatus' => ['from' => $oldstatus, 'to' => $newstatus]],
+            $recoverymarker
+        );
+
+        if ($cmid !== null) {
+            booking_notification_manager::notify_status_changed($cmid, (int)$event->id, $oldstatus, $newstatus);
+        }
+
+        self::trigger_booking_lifecycle_audit($event, $context, $userid, $oldstatus, $newstatus, $action);
+
+        return $event;
     }
 
 
@@ -611,5 +926,178 @@ class event_manager {
      */
     public static function get_booking_status_class(int $status): string {
         return 'bookit-bookingstatus-' . $status;
+    }
+
+    /**
+     * Normalise filter ids from request payloads.
+     *
+     * @param mixed $values
+     * @return int[]
+     */
+    private static function normalise_filter_ids(mixed $values): array {
+        if (!is_array($values)) {
+            $values = [$values];
+        }
+
+        return array_values(array_unique(array_map('intval', array_filter(
+            $values,
+            static fn(mixed $value): bool => $value !== '' && $value !== null
+        ))));
+    }
+
+    /**
+     * Check whether the semester value represents a legacy booking without an explicit semester.
+     *
+     * @param mixed $semester
+     * @return bool
+     */
+    private static function is_legacy_semester_value(mixed $semester): bool {
+        return empty((int)$semester);
+    }
+
+    /**
+     * Build a changed-field map for visible booking history.
+     *
+     * @param bookit_event $before
+     * @param bookit_event $after
+     * @return array
+     */
+    private static function build_booking_history_changed_fields(bookit_event $before, bookit_event $after): array {
+        $changes = [];
+        $fields = [
+            'name',
+            'semester',
+            'institutionid',
+            'starttime',
+            'endtime',
+            'duration',
+            'roomid',
+            'participantsamount',
+            'timecompensation',
+            'compensationfordisadvantages',
+            'bookingstatus',
+            'personinchargeid',
+            'otherexaminers',
+            'coursetemplate',
+            'notes',
+            'internalnotes',
+            'supportpersons',
+            'extratimebefore',
+            'extratimeafter',
+            'refcourseid',
+        ];
+
+        foreach ($fields as $field) {
+            $fromvalue = self::normalise_history_field_value($before->{$field});
+            $tovalue = self::normalise_history_field_value($after->{$field});
+            if ($fromvalue !== $tovalue) {
+                $changes[$field] = ['from' => $fromvalue, 'to' => $tovalue];
+            }
+        }
+
+        $fromresources = self::normalise_history_resources($before->resources);
+        $toresources = self::normalise_history_resources($after->resources);
+        if ($fromresources !== $toresources) {
+            $changes['resources'] = ['from' => $fromresources, 'to' => $toresources];
+        }
+
+        return $changes;
+    }
+
+    /**
+     * Trigger the lifecycle audit event matching the resolved booking action.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @param int $oldstatus
+     * @param int $newstatus
+     * @param string $action
+     * @return void
+     */
+    private static function trigger_booking_lifecycle_audit(
+        stdClass $event,
+        context_module $context,
+        int $userid,
+        int $oldstatus,
+        int $newstatus,
+        string $action
+    ): void {
+        if ($action === 'reactivated') {
+            booking_reactivated::create_from_event($event, $context, $userid, $oldstatus, $newstatus)->trigger();
+            return;
+        }
+
+        booking_status_changed::create_from_event($event, $context, $userid, $oldstatus, $newstatus, $action)->trigger();
+    }
+
+    /**
+     * Normalise one event field value for history comparisons.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    private static function normalise_history_field_value(mixed $value): mixed {
+        if (is_string($value)) {
+            return trim($value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Normalise event-resource mappings for deterministic history comparisons.
+     *
+     * @param array $resources
+     * @return array
+     */
+    private static function normalise_history_resources(array $resources): array {
+        $normalised = [];
+        foreach ($resources as $resource) {
+            $normalised[] = [
+                'resourceid' => (int)($resource->resourceid ?? 0),
+                'amount' => (int)($resource->amount ?? 0),
+            ];
+        }
+
+        usort($normalised, static function(array $left, array $right): int {
+            if ($left['resourceid'] === $right['resourceid']) {
+                return $left['amount'] <=> $right['amount'];
+            }
+
+            return $left['resourceid'] <=> $right['resourceid'];
+        });
+
+        return $normalised;
+    }
+
+    /**
+     * Resolve the history action name for a workflow status change.
+     *
+     * @param int $oldstatus
+     * @param int $newstatus
+     * @return string
+     */
+    private static function resolve_booking_history_action(int $oldstatus, int $newstatus): string {
+        if ($oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+            && in_array($newstatus, [
+                event_access_manager::BOOKINGSTATUS_NEW,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            ], true)) {
+            return 'restored';
+        }
+
+        if ($oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED
+            && $newstatus === event_access_manager::BOOKINGSTATUS_NEW) {
+            return 'reactivated';
+        }
+
+        return match ($newstatus) {
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'moved_to_in_progress',
+            event_access_manager::BOOKINGSTATUS_ACCEPTED => 'accepted',
+            event_access_manager::BOOKINGSTATUS_CANCELED => 'canceled',
+            event_access_manager::BOOKINGSTATUS_REJECTED => 'rejected',
+            default => 'updated',
+        };
     }
 }

@@ -835,7 +835,14 @@ class edit_event_form extends dynamic_form {
         }
 
         $event = bookit_event::from_record($formdata);
-        $event->save();
+        $cmid = (int)$this->optional_param('cmid', 0, PARAM_INT);
+        event_manager::save_event_with_lifecycle_tracking(
+            $event,
+            $currentevent,
+            (int)$USER->id,
+            $context,
+            $cmid > 0 ? $cmid : null
+        );
 
         return [];
     }

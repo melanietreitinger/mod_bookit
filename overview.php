@@ -45,24 +45,35 @@ $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
 $canmanage = has_capability('mod/bookit:managebasics', $context);
 $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
 $showreportfilters = $canmanageopenrequests;
-$currenttab = ($tab === 'openrequests' && $canmanageopenrequests) ? 'openrequests' : 'myevents';
-$tableid = $currenttab === 'openrequests' ? 'open-requests-table' : 'overview-table';
+$selectedstatus = optional_param('bookingstatusfilter', -1, PARAM_INT);
+$selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
+$selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
+$currenttab = match (true) {
+    $tab === 'openrequests' && $canmanageopenrequests => 'openrequests',
+    $tab === 'rejectedrequests' && $canmanageopenrequests => 'rejectedrequests',
+    $tab === 'history' => 'history',
+    default => 'myevents',
+};
+$tableid = match ($currenttab) {
+    'openrequests' => 'open-requests-table',
+    'rejectedrequests' => 'rejected-requests-table',
+    default => 'overview-table',
+};
 
 [$defaultreportstart, $defaultreportend] = event_manager::get_reporting_default_range();
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
 $defaultreportendvalue = date('Y-m-d', $defaultreportend);
 $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT);
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
-$selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
-$hasexplicitreportfilters = $showreportfilters && (
-    array_key_exists('reportstart', $_GET)
-    || array_key_exists('reportend', $_GET)
-    || array_key_exists('semesterids', $_GET)
-);
-if ($showreportfilters && empty($selectedsemesterids)) {
-    $selectedsemesterids = [event_manager::get_current_semester()];
+$hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
+if ($showreportfilters && !$hasexplicitsemesterfilter) {
+    $selectedsemesterids = event_manager::get_reporting_default_semester_ids();
 }
-$appliedsemesterids = $hasexplicitreportfilters ? $selectedsemesterids : [];
+$overviewfilters = [
+    'bookingstatuses' => $selectedstatus >= 0 ? [$selectedstatus] : [],
+    'facultyids' => $selectedfacultyid > 0 ? [$selectedfacultyid] : [],
+    'semesterids' => $selectedsemesterids,
+];
 
 $parsetimestamp = static function (string $value, int $fallback, bool $endofday = false): int {
     $date = \DateTime::createFromFormat('Y-m-d H:i:s', $value . ($endofday ? ' 23:59:59' : ' 00:00:00'));
@@ -156,20 +167,49 @@ $events = $showreportfilters
         (int)$USER->id,
         $reportstarttimestamp,
         $reportendtimestamp,
-        $appliedsemesterids
+        $selectedsemesterids
     )
     : event_manager::get_events_for_examiner($USER->id);
+$events = event_manager::filter_overview_events(
+    $events,
+    $overviewfilters,
+    $currenttab === 'history'
+);
 $openrequests = $canmanageopenrequests ? event_manager::get_open_requests() : [];
 $openrequestcount = $canmanageopenrequests ? event_manager::count_open_requests() : 0;
+$rejectedrequests = $canmanageopenrequests ? event_manager::get_rejected_requests() : [];
+$rejectedrequestcount = $canmanageopenrequests ? event_manager::count_rejected_requests() : 0;
 $semesteroptions = [];
-if ($showreportfilters) {
-    foreach (event_manager::get_semester_filter_options() as $value => $label) {
-        $semesteroptions[] = [
-            'value' => (string)$value,
-            'label' => $label,
-            'selected' => in_array((int)$value, $selectedsemesterids, true),
-        ];
-    }
+foreach (event_manager::get_semester_filter_options() as $value => $label) {
+    $semesteroptions[] = [
+        'value' => (string)$value,
+        'label' => $label,
+        'selected' => in_array((int)$value, $selectedsemesterids, true),
+    ];
+}
+$facultyoptions = [[
+    'value' => '0',
+    'label' => get_string('overview_filter_all_faculties', 'mod_bookit'),
+    'selected' => $selectedfacultyid === 0,
+]];
+foreach (event_manager::get_faculties() as $value => $label) {
+    $facultyoptions[] = [
+        'value' => (string)$value,
+        'label' => $label,
+        'selected' => (int)$value === $selectedfacultyid,
+    ];
+}
+$statusfilteroptions = [[
+    'value' => '-1',
+    'label' => get_string('overview_filter_all_statuses', 'mod_bookit'),
+    'selected' => $selectedstatus < 0,
+]];
+foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+    $statusfilteroptions[] = [
+        'value' => (string)$statusvalue,
+        'label' => get_string('event_bookingstatus_' . $statusvalue, 'mod_bookit'),
+        'selected' => $statusvalue === $selectedstatus,
+    ];
 }
 
 // Fetch master checklist ID directly (no entity = no JS side effects).
@@ -188,37 +228,62 @@ $templatecontext = [
     'cmid' => $cm->id,
     'tableid' => (string)$tableid,
     'canmanage' => $canmanage,
+    'showidcolumn' => $canmanageopenrequests,
     'showopenrequestsnav' => $canmanageopenrequests,
-    'showmyeventssection' => $currenttab === 'myevents',
+    'showrejectedrequestsnav' => $canmanageopenrequests,
+    'showhistorynav' => true,
+    'showmyeventssection' => !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
     'showopenrequestssection' => $currenttab === 'openrequests',
+    'showrejectedrequestssection' => $currenttab === 'rejectedrequests',
     'myeventsactive' => $currenttab === 'myevents',
+    'historyactive' => $currenttab === 'history',
     'openrequestsactive' => $currenttab === 'openrequests',
+    'rejectedrequestsactive' => $currenttab === 'rejectedrequests',
     'myeventsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'myevents']))->out(false),
+    'historyurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'history']))->out(false),
     'openrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'openrequests']))->out(false),
-    'myeventstitle' => $showreportfilters
-        ? get_string('overview_all_events', 'mod_bookit')
-        : get_string('overview_my_events', 'mod_bookit'),
+    'rejectedrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'rejectedrequests']))->out(false),
+    'myeventstitle' => get_string('overview_my_events', 'mod_bookit'),
+    'historytitle' => get_string('overview_history', 'mod_bookit'),
+    'sectiontitle' => $currenttab === 'history'
+        ? get_string('overview_history', 'mod_bookit')
+        : ($showreportfilters ? get_string('overview_all_events', 'mod_bookit') : get_string('overview_my_events', 'mod_bookit')),
     'openrequeststitle' => get_string('overview_open_requests', 'mod_bookit'),
     'openrequestshelp' => get_string('overview_open_requests_help', 'mod_bookit'),
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
     'openrequestcount' => $openrequestcount,
     'openrequestcounttext' => get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
-    'showreportfilters' => $showreportfilters,
-    'reportinghelp' => get_string('overview_reporting_help', 'mod_bookit'),
+    'rejectedrequeststitle' => get_string('overview_rejected_requests', 'mod_bookit'),
+    'rejectedrequestshelp' => get_string('overview_rejected_requests_help', 'mod_bookit'),
+    'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
+    'rejectedrequestcount' => $rejectedrequestcount,
+    'rejectedrequestcounttext' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
+    'showoverviewfilters' => !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
+    'showreportfilters' => $showreportfilters && !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
+    'reportinghelp' => $currenttab === 'history'
+        ? get_string('overview_history_help', 'mod_bookit')
+        : get_string('overview_reporting_help', 'mod_bookit'),
     'reportstartvalue' => $reportstartvalue,
     'reportendvalue' => $reportendvalue,
     'reportstartlabel' => get_string('overview_filter_startdate', 'mod_bookit'),
     'reportendlabel' => get_string('overview_filter_enddate', 'mod_bookit'),
+    'statusfilterlabel' => get_string('overview_filter_status', 'mod_bookit'),
+    'facultyfilterlabel' => get_string('overview_filter_faculty', 'mod_bookit'),
+    'semesterfilterlabel' => get_string('select_semester', 'mod_bookit'),
     'reportapplylabel' => get_string('overview_apply_filters', 'mod_bookit'),
     'reportresetlabel' => get_string('overview_reset_filters', 'mod_bookit'),
-    'reportreseturl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'myevents']))->out(false),
+    'reportreseturl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => $currenttab]))->out(false),
+    'facultyoptions' => $facultyoptions,
+    'statusfilteroptions' => $statusfilteroptions,
     'semesteroptions' => $semesteroptions,
     'hasevents' => false,
     'eventcounttext' => get_string('overview_count', 'mod_bookit', 0),
     'noeventsmessage' => get_string('overview_no_results', 'mod_bookit'),
     'hasopenrequests' => !empty($openrequests),
+    'hasrejectedrequests' => !empty($rejectedrequests),
     'events' => [],
     'openrequests' => [],
+    'rejectedrequests' => [],
 ];
 
 // Precompute checklist progress for all events in a single query.
@@ -231,6 +296,12 @@ if (!empty($events)) {
     }
     $resourceprogressmap = event_resource_manager::get_resource_progress_for_events($eventids);
 }
+$historyeventids = array_unique(array_merge(
+    array_map(static fn($ev): int => (int)$ev->id, $events),
+    array_map(static fn($ev): int => (int)$ev->id, $openrequests),
+    array_map(static fn($ev): int => (int)$ev->id, $rejectedrequests),
+));
+$latesthistorymap = event_manager::get_latest_booking_history_entries($historyeventids);
 
 $prepareeventrow = function (
     stdClass $ev,
@@ -243,7 +314,8 @@ $prepareeventrow = function (
     $canmanage,
     $statuscolors,
     $progressmap,
-    $resourceprogressmap
+    $resourceprogressmap,
+    $latesthistorymap
 ): array {
     $room = $ev->room ?: '-';
 
@@ -307,6 +379,10 @@ $prepareeventrow = function (
                 'eventid' => (int)$ev->id,
                 'cmid' => (int)$cm->id,
                 'label' => match ((int)$option['value']) {
+                    event_access_manager::BOOKINGSTATUS_NEW
+                        => ((int)($ev->bookingstatus ?? 0) === event_access_manager::BOOKINGSTATUS_REJECTED)
+                            ? get_string('bookingstatus_action_reactivate', 'mod_bookit')
+                            : $option['label'],
                     event_access_manager::BOOKINGSTATUS_IN_PROGRESS => get_string('bookingstatus_action_inprogress', 'mod_bookit'),
                     event_access_manager::BOOKINGSTATUS_ACCEPTED => get_string('bookingstatus_action_accept', 'mod_bookit'),
                     event_access_manager::BOOKINGSTATUS_CANCELED => get_string('bookingstatus_action_cancel', 'mod_bookit'),
@@ -319,6 +395,20 @@ $prepareeventrow = function (
     }
 
     $caneventdetails = event_access_manager::can_user_view_event_details($ev, $context, (int)$USER->id);
+    $latesthistory = $latesthistorymap[(int)$ev->id] ?? null;
+    $latesthistorysummary = '';
+    if ($latesthistory) {
+        $actorname = trim(fullname((object)[
+            'firstname' => $latesthistory->firstname ?? '',
+            'lastname' => $latesthistory->lastname ?? '',
+        ]));
+        $actionlabel = get_string('history_action_' . $latesthistory->action, 'mod_bookit');
+        $latesthistorysummary = $actionlabel . ' · '
+            . userdate((int)$latesthistory->timecreated, get_string('strftimedatetime', 'langconfig'));
+        if ($actorname !== '') {
+            $latesthistorysummary .= ' · ' . $actorname;
+        }
+    }
 
     return [
         'id' => (string)$ev->id,
@@ -358,11 +448,16 @@ $prepareeventrow = function (
         ]))->out(false),
         'resourcesprogress' => $resourceprogressmap[(int)$ev->id]['percent'] ?? 0,
         'resourcesprogress_available' => ($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0,
+        'haslatesthistorysummary' => $latesthistorysummary !== '',
+        'latesthistorysummary' => s($latesthistorysummary),
     ];
 };
 
 foreach ($events as $ev) {
-    if (event_access_manager::can_user_view_event_in_overview($ev, $context, (int)$USER->id)) {
+    $canviewevent = $currenttab === 'history'
+        ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)
+        : event_access_manager::can_user_view_event_in_overview($ev, $context, (int)$USER->id);
+    if ($canviewevent) {
         $templatecontext['events'][] = $prepareeventrow($ev);
     }
 }
@@ -372,6 +467,10 @@ $templatecontext['eventcounttext'] = get_string('overview_count', 'mod_bookit', 
 
 foreach ($openrequests as $ev) {
     $templatecontext['openrequests'][] = $prepareeventrow($ev, true);
+}
+
+foreach ($rejectedrequests as $ev) {
+    $templatecontext['rejectedrequests'][] = $prepareeventrow($ev, true);
 }
 
 // Render Mustache.

@@ -36,7 +36,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
     $dbman = $DB->get_manager();
 
     // Set this to the SAME value you set in mod/bookit/version.php ($plugin->version).
-    $newversion = 2025411305;
+    $newversion = 2025511306;
 
     if ($oldversion < $newversion) {
         $table = new xmldb_table('bookit_event');
@@ -48,6 +48,28 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         if ($dbman->field_exists($table, $old) && !$dbman->field_exists($table, $new)) {
             $dbman->rename_field($table, $old, 'institutionid');
         }
+
+        $historytable = new xmldb_table('bookit_event_history');
+        if (!$dbman->table_exists($historytable)) {
+            $historytable->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $historytable->add_field('eventid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $historytable->add_field('action', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
+            $historytable->add_field('oldstatus', XMLDB_TYPE_INTEGER, '6', null, null, null, null);
+            $historytable->add_field('newstatus', XMLDB_TYPE_INTEGER, '6', null, null, null, null);
+            $historytable->add_field('changedfields', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $historytable->add_field('recoverymarker', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            $historytable->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $historytable->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            $historytable->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $historytable->add_key('eventid_fk', XMLDB_KEY_FOREIGN, ['eventid'], 'bookit_event', ['id']);
+            $historytable->add_key('usermodified_fk', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+            $historytable->add_index('eventid_idx', XMLDB_INDEX_NOTUNIQUE, ['eventid']);
+            $historytable->add_index('event_time_idx', XMLDB_INDEX_NOTUNIQUE, ['eventid', 'timecreated']);
+
+            $dbman->create_table($historytable);
+        }
+
         upgrade_mod_savepoint(true, $newversion, 'bookit');
     }
     return true;

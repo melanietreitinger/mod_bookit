@@ -82,6 +82,13 @@
                     {{myeventstitle}}
                 </a>
             </li>
+            {{#showhistorynav}}
+            <li class="nav-item">
+                <a class="nav-link {{#historyactive}}active{{/historyactive}}" href="{{historyurl}}">
+                    {{historytitle}}
+                </a>
+            </li>
+            {{/showhistorynav}}
             {{#showopenrequestsnav}}
             <li class="nav-item">
                 <a class="nav-link {{#openrequestsactive}}active{{/openrequestsactive}}" href="{{openrequestsurl}}">
@@ -90,6 +97,14 @@
                 </a>
             </li>
             {{/showopenrequestsnav}}
+            {{#showrejectedrequestsnav}}
+            <li class="nav-item">
+                <a class="nav-link {{#rejectedrequestsactive}}active{{/rejectedrequestsactive}}" href="{{rejectedrequestsurl}}">
+                    {{rejectedrequeststitle}}
+                    <span class="badge badge-pill badge-danger ml-1">{{rejectedrequestcount}}</span>
+                </a>
+            </li>
+            {{/showrejectedrequestsnav}}
         </ul>
     </div>
 
@@ -100,16 +115,17 @@
 
     {{#showmyeventssection}}
     <div class="mb-3">
-        <h3 class="h5 mb-0">{{myeventstitle}}</h3>
-        {{#showreportfilters}}
+        <h3 class="h5 mb-0">{{sectiontitle}}</h3>
+        {{#showoverviewfilters}}
         <div class="text-muted small mt-1">{{reportinghelp}}</div>
-        {{/showreportfilters}}
+        {{/showoverviewfilters}}
     </div>
-    {{#showreportfilters}}
+    {{#showoverviewfilters}}
     <form method="get" class="mb-3">
         <input type="hidden" name="id" value="{{cmid}}">
-        <input type="hidden" name="tab" value="myevents">
+        <input type="hidden" name="tab" value="{{#historyactive}}history{{/historyactive}}{{^historyactive}}myevents{{/historyactive}}">
         <div class="form-row align-items-end">
+            {{#showreportfilters}}
             <div class="form-group col-md-3">
                 <label for="bookit-reportstart">{{reportstartlabel}}</label>
                 <input type="date" id="bookit-reportstart" name="reportstart" class="form-control" value="{{reportstartvalue}}">
@@ -118,8 +134,25 @@
                 <label for="bookit-reportend">{{reportendlabel}}</label>
                 <input type="date" id="bookit-reportend" name="reportend" class="form-control" value="{{reportendvalue}}">
             </div>
-            <div class="form-group col-md-4">
-                <label for="bookit-semesterids">{{#str}}select_semester, mod_bookit{{/str}}</label>
+            {{/showreportfilters}}
+            <div class="form-group col-md-2">
+                <label for="bookit-bookingstatusfilter">{{statusfilterlabel}}</label>
+                <select id="bookit-bookingstatusfilter" name="bookingstatusfilter" class="form-control">
+                    {{#statusfilteroptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/statusfilteroptions}}
+                </select>
+            </div>
+            <div class="form-group col-md-2">
+                <label for="bookit-facultyid">{{facultyfilterlabel}}</label>
+                <select id="bookit-facultyid" name="facultyid" class="form-control">
+                    {{#facultyoptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/facultyoptions}}
+                </select>
+            </div>
+            <div class="form-group {{#showreportfilters}}col-md-2{{/showreportfilters}}{{^showreportfilters}}col-md-4{{/showreportfilters}}">
+                <label for="bookit-semesterids">{{semesterfilterlabel}}</label>
                 <select id="bookit-semesterids" name="semesterids[]" class="form-control" multiple size="4">
                     {{#semesteroptions}}
                     <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
@@ -133,12 +166,14 @@
         </div>
     </form>
     <div class="badge badge-info mb-3 p-2">{{eventcounttext}}</div>
-    {{/showreportfilters}}
+    {{/showoverviewfilters}}
     {{#hasevents}}
     <table id="{{tableid}}" class="generaltable table-striped table-hover w-100">
         <thead class="text-center">
             <tr style="background-color:#cfe2ff;">
+                {{#showidcolumn}}
                 <th class="align-middle">ID</th>
+                {{/showidcolumn}}
                 <th class="align-middle">Title</th>
                 <th class="align-middle">Room</th>
                 <th class="align-middle">Person in charge</th>
@@ -154,7 +189,9 @@
         <tbody class="text-center">
             {{#events}}
                 <tr class="mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
+                    {{#showidcolumn}}
                     <td class="align-middle">{{id}}</td>
+                    {{/showidcolumn}}
 
                     <td class="align-middle">
                         {{#caneventdetails}}
@@ -244,9 +281,9 @@
             {{/events}}
         </tbody>
     </table>
-    {{#showreportfilters}}
+    {{#showoverviewfilters}}
     <div class="badge badge-info mt-3 p-2">{{eventcounttext}}</div>
-    {{/showreportfilters}}
+    {{/showoverviewfilters}}
     {{/hasevents}}
     {{^hasevents}}
     <div class="alert alert-info">{{noeventsmessage}}</div>
@@ -301,6 +338,9 @@
                          style="{{statusstyle}}">
                         <div class="font-weight-bold">{{statustext}}</div>
                         <div class="small">{{statusgrouptext}}</div>
+                        {{#haslatesthistorysummary}}
+                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
+                        {{/haslatesthistorysummary}}
                     </div>
                 </td>
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
@@ -330,4 +370,85 @@
     </div>
     {{/hasopenrequests}}
     {{/showopenrequestssection}}
+
+    {{#showrejectedrequestssection}}
+    <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <h3 class="h5 mb-1">{{rejectedrequeststitle}}</h3>
+            <div class="text-muted small">{{rejectedrequestshelp}}</div>
+        </div>
+        <div class="mod-bookit-rejected-requests-count badge badge-danger badge-pill p-2">
+            {{rejectedrequestcounttext}}
+        </div>
+    </div>
+
+    {{#hasrejectedrequests}}
+    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-rejected-requests-table">
+        <thead class="text-center">
+            <tr style="background-color:#f8d7da;">
+                <th class="align-middle">ID</th>
+                <th class="align-middle">Title</th>
+                <th class="align-middle">Room</th>
+                <th class="align-middle">Person in charge</th>
+                <th class="align-middle">My role</th>
+                <th class="align-middle">Booking status</th>
+                <th class="align-middle">Date</th>
+                <th class="align-middle">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="text-center">
+            {{#rejectedrequests}}
+            <tr class="mod-bookit-rejected-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
+                <td class="align-middle">{{id}}</td>
+                <td class="align-middle">
+                    {{#caneventdetails}}
+                    <a href="#"
+                       class="bookit-event-link"
+                       data-eventid="{{id}}"
+                       data-cmid="{{cmid}}">
+                        {{name}}
+                    </a>
+                    {{/caneventdetails}}
+                    {{^caneventdetails}}{{name}}{{/caneventdetails}}
+                </td>
+                <td class="align-middle">{{room}}</td>
+                <td class="align-middle">{{personincharge}}</td>
+                <td class="align-middle">{{myrole}}</td>
+                <td class="align-middle mod-bookit-status-cell">
+                    <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
+                         style="{{statusstyle}}">
+                        <div class="font-weight-bold">{{statustext}}</div>
+                        <div class="small">{{statusgrouptext}}</div>
+                        {{#haslatesthistorysummary}}
+                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
+                        {{/haslatesthistorysummary}}
+                    </div>
+                </td>
+                <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
+                <td class="align-middle">
+                    <div class="d-flex flex-wrap justify-content-center mod-bookit-open-request-actions">
+                        {{#actions}}
+                        <button type="button"
+                                class="btn btn-sm {{btnclass}}"
+                                data-action="set-booking-status"
+                                data-eventid="{{eventid}}"
+                                data-cmid="{{cmid}}"
+                                data-status="{{value}}">
+                            {{label}}
+                        </button>
+                        {{/actions}}
+                    </div>
+                </td>
+            </tr>
+            {{/rejectedrequests}}
+        </tbody>
+    </table>
+    {{/hasrejectedrequests}}
+
+    {{^hasrejectedrequests}}
+    <div class="alert alert-info mb-0">
+        {{rejectedrequestsempty}}
+    </div>
+    {{/hasrejectedrequests}}
+    {{/showrejectedrequestssection}}
 </div>
