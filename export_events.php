@@ -28,6 +28,7 @@ require('../../config.php');
 require_once('lib.php');
 
 use mod_bookit\local\manager\event_manager;
+use mod_bookit\local\manager\event_access_manager;
 
 /**
  * Extract integer user IDs from a CSV field.
@@ -144,6 +145,9 @@ $course  = get_course($cm->course);
 $context = context_module::instance($cm->id);
 
 require_login($course, false, $cm);
+if (event_access_manager::is_observer_restricted_mode($context)) {
+    throw new moodle_exception('observer_no_detail_access', 'mod_bookit');
+}
 require_capability('mod/bookit:viewownoverview', $context);
 
 /* ------------------------------------------------------------------

@@ -77,11 +77,13 @@
 <div class="mod_bookit-overview-examiner_overview">
     <div class="mb-3">
         <ul class="nav nav-tabs">
+            {{#showmyeventsnav}}
             <li class="nav-item">
                 <a class="nav-link {{#myeventsactive}}active{{/myeventsactive}}" href="{{myeventsurl}}">
                     {{myeventstitle}}
                 </a>
             </li>
+            {{/showmyeventsnav}}
             {{#showhistorynav}}
             <li class="nav-item">
                 <a class="nav-link {{#historyactive}}active{{/historyactive}}" href="{{historyurl}}">
@@ -194,15 +196,21 @@
                     {{/showidcolumn}}
 
                     <td class="align-middle">
+                        {{#is_reserved_projection}}
+                        <span data-is-reserved-projection="1">{{name}}</span>
+                        {{/is_reserved_projection}}
+                        {{^is_reserved_projection}}
                         {{#caneventdetails}}
                         <a href="#"
                            class="bookit-event-link"
                            data-eventid="{{id}}"
-                           data-cmid="{{cmid}}">
+                           data-cmid="{{cmid}}"
+                           data-is-reserved-projection="{{#is_reserved_projection}}1{{/is_reserved_projection}}{{^is_reserved_projection}}0{{/is_reserved_projection}}">
                             {{name}}
                         </a>
                         {{/caneventdetails}}
                         {{^caneventdetails}}{{name}}{{/caneventdetails}}
+                        {{/is_reserved_projection}}
                     </td>
 
                     <td class="align-middle">{{room}}</td>
@@ -221,6 +229,9 @@
                             {{/statusoptions}}
                         </select>
                         <div class="small text-muted mt-1">{{statusgrouptext}}</div>
+                        {{#haslatesthistorysummary}}
+                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
+                        {{/haslatesthistorysummary}}
                     </td>
                     {{/canmanage}}
                     {{^canmanage}}
@@ -230,6 +241,9 @@
                             <div class="font-weight-bold">{{statustext}}</div>
                             <div class="small">{{statusgrouptext}}</div>
                         </div>
+                        {{#haslatesthistorysummary}}
+                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
+                        {{/haslatesthistorysummary}}
                     </td>
                     {{/canmanage}}
 

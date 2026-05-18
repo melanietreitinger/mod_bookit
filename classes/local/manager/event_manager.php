@@ -81,6 +81,7 @@ class event_manager {
         $starttimestamp = DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
         $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
         $context = context_module::instance($instanceid);
+        $observerrestricted = event_access_manager::is_observer_restricted_mode($context);
         $sql = 'SELECT e.id, e.name, e.semester, e.institutionid, e.roomid, e.bookingstatus, e.starttime, e.endtime,
                     e.extratimebefore, e.extratimeafter, e.personinchargeid, e.otherexaminers, e.supportpersons,
                     e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
@@ -98,6 +99,10 @@ class event_manager {
                 continue;
             }
 
+            if ($observerrestricted && (int)$record->bookingstatus !== event_access_manager::BOOKINGSTATUS_ACCEPTED) {
+                continue;
+            }
+
             $roominfo = $record->roomname ?? get_string('resources:all_rooms', 'mod_bookit');
             $addinfos = [];
             if ($record->shortname) {
@@ -111,13 +116,20 @@ class event_manager {
             }
 
             $eventcolor = $record->eventcolor ?? '#3a87ad';
+            $displaytitle = $observerrestricted
+                ? get_string('event_reserved', 'mod_bookit')
+                : $record->name . " ($roominfo)";
+            $displaytitlehtml = $observerrestricted
+                ? '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
+                    date('H:i', $record->endtime) . '</h6>' . get_string('event_reserved', 'mod_bookit')
+                : '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
+                    date('H:i', $record->endtime) . '</h6>' .
+                    $record->name . " ($roominfo)";
 
             $events[] = [
                 'id' => $record->id,
-                'title' => $record->name . " ($roominfo)",
-                'titleHTML' => '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
-                    date('H:i', $record->endtime) . '</h6>' .
-                    $record->name . " ($roominfo)",
+                'title' => $displaytitle,
+                'titleHTML' => $displaytitlehtml,
                 'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
                 'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
                 'backgroundColor' => $eventcolor,
@@ -132,7 +144,8 @@ class event_manager {
                 'supportpersons' => (string)($record->supportpersons ?? ''),
                 'usermodified' => (int)($record->usermodified ?? 0),
                 'extendedProps' => (object) [
-                    'reserved' => false,
+                    'reserved' => $observerrestricted,
+                    'is_reserved_projection' => $observerrestricted,
                     'bookingstatus' => (int)$record->bookingstatus,
                     'roomname' => $record->roomname,
                 ],
@@ -354,6 +367,26 @@ class event_manager {
     }
 
     /**
+     * Resolve the effective semester filter selection used by the overview.
+     *
+     * @param int[] $semesterids
+     * @param bool $hasexplicitsemesterfilter
+     * @param int|null $referencetime
+     * @return int[]
+     */
+    public static function resolve_effective_semester_filter_ids(
+        array $semesterids,
+        bool $hasexplicitsemesterfilter,
+        ?int $referencetime = null
+    ): array {
+        if ($hasexplicitsemesterfilter) {
+            return array_values(array_map('intval', $semesterids));
+        }
+
+        return self::get_reporting_default_semester_ids($referencetime);
+    }
+
+    /**
      * Build semester filter options around the current semester.
      *
      * @param int|null $referencetime
@@ -499,6 +532,10 @@ class event_manager {
      * @return bool
      */
     public static function is_event_in_history(stdClass $event, ?int $referencetime = null): bool {
+        if ((int)($event->bookingstatus ?? -1) === event_access_manager::BOOKINGSTATUS_CANCELED) {
+            return true;
+        }
+
         return (int)($event->endtime ?? 0) < ($referencetime ?? time());
     }
 
@@ -744,8 +781,11 @@ class event_manager {
             return $persistedevent;
         }
 
+        $isselfcancelnew = $oldstatus !== null
+            && $newstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+            && self::is_self_cancel_new_transition($persistedrecord, $context, $userid, $oldstatus);
         $action = $oldstatus !== $newstatus
-            ? self::resolve_booking_history_action($oldstatus, $newstatus)
+            ? self::resolve_booking_history_action($oldstatus, $newstatus, $isselfcancelnew)
             : 'updated';
         $recoverymarker = in_array($action, ['reactivated', 'restored'], true);
 
@@ -807,7 +847,12 @@ class event_manager {
             return $event;
         }
 
-        $action = self::resolve_booking_history_action($oldstatus, $newstatus);
+        $action = self::resolve_booking_history_action(
+            $oldstatus,
+            $newstatus,
+            $newstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+                && self::is_self_cancel_new_transition($event, $context, $userid, $oldstatus)
+        );
         $recoverymarker = in_array($action, ['reactivated', 'restored'], true);
         self::record_booking_history(
             (int)$event->id,
@@ -838,7 +883,7 @@ class event_manager {
      * @return bool
      * @throws dml_exception
      */
-    private static function is_hidden_from_active_overview(stdClass $event): bool {
+    public static function is_hidden_from_active_overview(stdClass $event): bool {
         if ((int)($event->bookingstatus ?? -1) !== event_access_manager::BOOKINGSTATUS_CANCELED) {
             return false;
         }
@@ -849,7 +894,8 @@ class event_manager {
         }
 
         $entry = reset($latest);
-        return (int)($entry->oldstatus ?? -1) === event_access_manager::BOOKINGSTATUS_NEW
+        return (string)($entry->action ?? '') === 'self_canceled'
+            && (int)($entry->oldstatus ?? -1) === event_access_manager::BOOKINGSTATUS_NEW
             && (int)($entry->newstatus ?? -1) === event_access_manager::BOOKINGSTATUS_CANCELED;
     }
 
@@ -1155,7 +1201,15 @@ class event_manager {
      * @param int $newstatus
      * @return string
      */
-    private static function resolve_booking_history_action(int $oldstatus, int $newstatus): string {
+    private static function resolve_booking_history_action(
+        int $oldstatus,
+        int $newstatus,
+        bool $isselfcancelnew = false
+    ): string {
+        if ($isselfcancelnew) {
+            return 'self_canceled';
+        }
+
         if (
             $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
             && in_array($newstatus, [
@@ -1180,5 +1234,29 @@ class event_manager {
             event_access_manager::BOOKINGSTATUS_REJECTED => 'rejected',
             default => 'updated',
         };
+    }
+
+    /**
+     * Check whether a status transition represents a requester self-cancel of a New request.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @param int $oldstatus
+     * @return bool
+     */
+    private static function is_self_cancel_new_transition(
+        stdClass $event,
+        context_module $context,
+        int $userid,
+        int $oldstatus
+    ): bool {
+        if ($oldstatus !== event_access_manager::BOOKINGSTATUS_NEW) {
+            return false;
+        }
+
+        $candidate = clone $event;
+        $candidate->bookingstatus = $oldstatus;
+        return event_access_manager::can_self_cancel_new_request($candidate, $context, $userid);
     }
 }

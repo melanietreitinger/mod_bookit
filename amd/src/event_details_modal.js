@@ -8,6 +8,10 @@ define(['jquery', 'core_form/modalform'], function($, ModalForm) {
                 }
 
                 e.preventDefault();
+                if (link.dataset.isReservedProjection === '1') {
+                    return;
+                }
+
                 const cmid = link.dataset.cmid;
                 const event = link.dataset.eventid;
 

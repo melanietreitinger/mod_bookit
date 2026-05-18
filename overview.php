@@ -38,17 +38,21 @@ $course  = get_course($cm->course);
 $context = context_module::instance($cm->id);
 
 require_login($course, false, $cm);
-require_capability('mod/bookit:viewownoverview', $context);
+$isobserverrestricted = event_access_manager::is_observer_restricted_mode($context);
+if (!$isobserverrestricted && !has_capability('mod/bookit:viewownoverview', $context)) {
+    require_capability('mod/bookit:viewownoverview', $context);
+}
 
 global $USER, $DB;
 $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
 $canmanage = has_capability('mod/bookit:managebasics', $context);
 $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
-$showreportfilters = $canmanageopenrequests;
+$showreportfilters = $canmanageopenrequests || $isobserverrestricted;
 $selectedstatus = optional_param('bookingstatusfilter', -1, PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $currenttab = match (true) {
+    $isobserverrestricted => 'myevents',
     $tab === 'openrequests' && $canmanageopenrequests => 'openrequests',
     $tab === 'rejectedrequests' && $canmanageopenrequests => 'rejectedrequests',
     $tab === 'history' => 'history',
@@ -66,8 +70,11 @@ $defaultreportendvalue = date('Y-m-d', $defaultreportend);
 $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT);
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
 $hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
-if ($showreportfilters && !$hasexplicitsemesterfilter) {
-    $selectedsemesterids = event_manager::get_reporting_default_semester_ids();
+if ($showreportfilters) {
+    $selectedsemesterids = event_manager::resolve_effective_semester_filter_ids(
+        $selectedsemesterids,
+        $hasexplicitsemesterfilter
+    );
 }
 $overviewfilters = [
     'bookingstatuses' => $selectedstatus >= 0 ? [$selectedstatus] : [],
@@ -229,9 +236,10 @@ $templatecontext = [
     'tableid' => (string)$tableid,
     'canmanage' => $canmanage,
     'showidcolumn' => $canmanageopenrequests,
+    'showmyeventsnav' => !$isobserverrestricted,
     'showopenrequestsnav' => $canmanageopenrequests,
     'showrejectedrequestsnav' => $canmanageopenrequests,
-    'showhistorynav' => true,
+    'showhistorynav' => !$isobserverrestricted,
     'showmyeventssection' => !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
     'showopenrequestssection' => $currenttab === 'openrequests',
     'showrejectedrequestssection' => $currenttab === 'rejectedrequests',
@@ -246,7 +254,9 @@ $templatecontext = [
         '/mod/bookit/overview.php',
         ['id' => $cm->id, 'tab' => 'rejectedrequests']
     ))->out(false),
-    'myeventstitle' => get_string('overview_my_events', 'mod_bookit'),
+    'myeventstitle' => $isobserverrestricted
+        ? get_string('overview_all_events', 'mod_bookit')
+        : get_string('overview_my_events', 'mod_bookit'),
     'historytitle' => get_string('overview_history', 'mod_bookit'),
     'sectiontitle' => $currenttab === 'history'
         ? get_string('overview_history', 'mod_bookit')
@@ -281,7 +291,9 @@ $templatecontext = [
     'semesteroptions' => $semesteroptions,
     'hasevents' => false,
     'eventcounttext' => get_string('overview_count', 'mod_bookit', 0),
-    'noeventsmessage' => get_string('overview_no_results', 'mod_bookit'),
+    'noeventsmessage' => $isobserverrestricted
+        ? get_string('observer_empty_state', 'mod_bookit')
+        : get_string('overview_no_results', 'mod_bookit'),
     'hasopenrequests' => !empty($openrequests),
     'hasrejectedrequests' => !empty($rejectedrequests),
     'events' => [],
@@ -380,6 +392,7 @@ $prepareeventrow = function (
     $cm,
     $masterid,
     $canmanage,
+    $isobserverrestricted,
     $statuscolors,
     $progressmap,
     $resourceprogressmap,
@@ -387,6 +400,7 @@ $prepareeventrow = function (
     $buildhistorydetails
 ): array {
     $room = $ev->room ?: '-';
+    $isreservedprojection = $isobserverrestricted;
 
     $statusbg  = $statuscolors[$ev->bookingstatus]['bg'] ?? '#ffffff';
     $statusfg  = $statuscolors[$ev->bookingstatus]['fg'] ?? '#000000';
@@ -418,6 +432,9 @@ $prepareeventrow = function (
     }
 
     $myrole = $roles ? implode(', ', $roles) : '-';
+    if ($isreservedprojection) {
+        $myrole = '-';
+    }
 
     $datestr = userdate($ev->starttime, '%d.%m.%Y');
     $canviewchecklist = event_access_manager::can_view_event_checklist($ev, $context, (int)$USER->id);
@@ -427,6 +444,9 @@ $prepareeventrow = function (
     if (!empty($ev->personinchargeid)) {
         $u = core_user::get_user((int)$ev->personinchargeid);
         $pic = $u ? fullname($u) : '-';
+    }
+    if ($isreservedprojection) {
+        $pic = '-';
     }
 
     $actions = [];
@@ -463,7 +483,8 @@ $prepareeventrow = function (
         }
     }
 
-    $caneventdetails = event_access_manager::can_user_view_event_details($ev, $context, (int)$USER->id);
+    $caneventdetails = !$isreservedprojection
+        && event_access_manager::can_user_view_event_details($ev, $context, (int)$USER->id);
     $latesthistory = $latesthistorymap[(int)$ev->id] ?? null;
     $latesthistorysummary = '';
     if ($latesthistory) {
@@ -479,7 +500,10 @@ $prepareeventrow = function (
 
     return [
         'id' => (string)$ev->id,
-        'name' => format_string($ev->name),
+        'name' => $isreservedprojection
+            ? get_string('event_reserved', 'mod_bookit')
+            : format_string($ev->name),
+        'is_reserved_projection' => $isreservedprojection,
         'caneventdetails' => $caneventdetails,
         'room' => s($room),
         'personincharge' => s($pic),
@@ -501,13 +525,13 @@ $prepareeventrow = function (
         'cmid' => (int)$cm->id,
         'checklistprogress' => $progressmap[(int)$ev->id] ?? 0,
         'checklistprogress_available' => $masterid > 0,
-        'haschecklistaction' => $canviewchecklist,
+        'haschecklistaction' => !$isreservedprojection && $canviewchecklist,
         'checklistlabel' => get_string('checklist', 'mod_bookit'),
         'checklisturl' => (new moodle_url('/mod/bookit/view/event_checklist_view.php', [
             'id' => $cm->id,
             'eventid' => (int)$ev->id,
         ]))->out(false),
-        'hasresourcesaction' => $canviewresources,
+        'hasresourcesaction' => !$isreservedprojection && $canviewresources,
         'resourceschecklistlabel' => get_string('resources', 'mod_bookit'),
         'resourceschecklisturl' => (new moodle_url('/mod/bookit/view/event_resources.php', [
             'id' => $cm->id,
@@ -515,13 +539,13 @@ $prepareeventrow = function (
         ]))->out(false),
         'resourcesprogress' => $resourceprogressmap[(int)$ev->id]['percent'] ?? 0,
         'resourcesprogress_available' => ($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0,
-        'haslatesthistorysummary' => $latesthistorysummary !== '',
+        'haslatesthistorysummary' => !$isreservedprojection && $latesthistorysummary !== '',
         'latesthistorysummary' => s($latesthistorysummary),
-        'showhistorydetails' => $isopenrequest,
+        'showhistorydetails' => !$isreservedprojection && $isopenrequest,
         'historydetailslabel' => get_string('overview_workflow_history', 'mod_bookit'),
         'historydetailsempty' => get_string('overview_workflow_history_empty', 'mod_bookit'),
-        'hashistoryentries' => !empty($historydetails),
-        'historyentries' => $historydetails,
+        'hashistoryentries' => !$isreservedprojection && !empty($historydetails),
+        'historyentries' => !$isreservedprojection ? $historydetails : [],
     ];
 };
 

@@ -703,6 +703,102 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Assert that the overview row for an event does not expose a detail link.
+     *
+     * @Then the Bookit overview should not expose a detail link for event :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_expose_a_detail_link_for_event(string $eventname): void {
+        $js = <<<JS
+            (function(targetName) {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                for (var i = 0; i < rows.length; i++) {
+                    if (rows[i].textContent.indexOf(targetName) === -1) {
+                        continue;
+                    }
+                    return rows[i].querySelector('a.bookit-event-link') ? 'has-link' : 'no-link';
+                }
+                return 'row-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'no-link') {
+            throw new ExpectationException(
+                "Expected no detail link for \"$eventname\" but got result: $result",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the overview navigation tabs do not contain a specific label.
+     *
+     * @Then the Bookit overview navigation should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_navigation_should_not_contain(string $text): void {
+        $js = <<<'JS'
+            (function() {
+                var nav = document.querySelector('.mod_bookit-overview-examiner_overview .nav-tabs');
+                return nav ? nav.textContent.replace(/\s+/g, ' ').trim() : '';
+            })();
+        JS;
+
+        $content = (string)$this->getSession()->evaluateScript($js);
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                'The Bookit overview navigation unexpectedly contained "' . $text . '".',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the selected semester options in the overview filter.
+     *
+     * @Then the Bookit overview semester filter should select :semesters
+     * @param string $semesters
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_semester_filter_should_select(string $semesters): void {
+        $expectedvalues = $this->resolve_semester_filter_values($semesters);
+        $js = <<<'JS'
+            (function() {
+                var select = document.querySelector('#bookit-semesterids');
+                if (!select) {
+                    return JSON.stringify({status: 'missing'});
+                }
+                var values = Array.from(select.options)
+                    .filter(function(option) { return option.selected; })
+                    .map(function(option) { return option.value; });
+                return JSON.stringify({status: 'ok', values: values});
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect the semester filter selection. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        sort($expectedvalues);
+        $actualvalues = $result['values'] ?? [];
+        sort($actualvalues);
+        if ($actualvalues !== $expectedvalues) {
+            throw new ExpectationException(
+                'Unexpected semester selection. Expected ' . json_encode($expectedvalues)
+                    . ' but got ' . json_encode($actualvalues),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
      * Assert that the raw response contains a string.
      *
      * @Then the Bookit raw response should contain :text

@@ -64,7 +64,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $historytable->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
             $historytable->add_key('eventid_fk', XMLDB_KEY_FOREIGN, ['eventid'], 'bookit_event', ['id']);
             $historytable->add_key('usermodified_fk', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
-            $historytable->add_index('eventid_idx', XMLDB_INDEX_NOTUNIQUE, ['eventid']);
             $historytable->add_index('event_time_idx', XMLDB_INDEX_NOTUNIQUE, ['eventid', 'timecreated']);
 
             $dbman->create_table($historytable);

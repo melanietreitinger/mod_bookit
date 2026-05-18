@@ -25,6 +25,7 @@
 use mod_bookit\event\course_module_viewed;
 use mod_bookit\local\manager\resource_manager;
 use mod_bookit\local\manager\event_manager;
+use mod_bookit\local\manager\event_access_manager;
 
 
 
@@ -52,6 +53,8 @@ if ($id) {
 require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
+require_capability('mod/bookit:view', $modulecontext);
+$observerrestricted = event_access_manager::is_observer_restricted_mode($modulecontext);
 
 // Helper data for the filter <select>s  (WORK IN PROGRESS).
 // $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced'.
@@ -160,6 +163,7 @@ $templatecontext = [
     'faculties' => [],
     'statuses' => [],
     'canfilterstatus' => has_capability('mod/bookit:filterstatus', $modulecontext),
+    'canexportevents' => !$observerrestricted,
 ];
 
 foreach ($rooms as $rid => $rname) {

@@ -42,10 +42,22 @@ Feature: Complete overview defaults, history and role-specific columns
       | Winter review exam  | serviceteam | ##+180 days 09:00##%Y-%m-%dT%H:%M:%S## | ##+180 days 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
     When I log in as "serviceteam"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit overview semester filter should select "current"
     Then I should see "Summer review exam"
     And I should not see "Winter review exam"
     And I should see "1 events"
     And the Bookit overview should show the ID column
+
+  Scenario: Explicit non-default semester selection stays active
+    Given the following "mod_bookit > events" exist:
+      | name                 | username    | startdate                         | enddate                              | bookingstatus | institution |
+      | Current semester exam | serviceteam | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+      | Next semester exam    | serviceteam | ##+180 days 09:00##%Y-%m-%dT%H:%M:%S## | ##+180 days 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+    When I log in as "serviceteam"
+    And I open the filtered Bookit overview "myevents" for "My BookIt Activity" with status "-1" faculty "0" and semesters "next"
+    Then the Bookit overview semester filter should select "next"
+    And I should see "Next semester exam"
+    And I should not see "Current semester exam"
 
   Scenario: Participant history is separated from active events
     Given the following "mod_bookit > events" exist:
@@ -60,3 +72,19 @@ Feature: Complete overview defaults, history and role-specific columns
     When I open the Bookit overview "history" for "My BookIt Activity"
     Then I should see "Past own exam"
     And I should not see "Future own exam"
+
+  Scenario: Self-cancelled new requests stay out of active lists and remain distinguishable in history
+    Given the following "mod_bookit > events" exist:
+      | name                | username    | personincharge_username | startdate                         | enddate                              | bookingstatus | institution |
+      | Self-cancel history | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
+    When I log in as "bookinguser"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    And I open the Bookit event details for "Self-cancel history"
+    And I select "Canceled" in the Bookit event details control "bookingstatus"
+    And I submit the Bookit event details modal
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit overview should list only the events ""
+    When I log in as "serviceteam"
+    And I open the Bookit overview "history" for "My BookIt Activity"
+    Then I should see "Self-cancel history"
+    And I should see "Cancelled by requester"

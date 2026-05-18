@@ -9,21 +9,28 @@ Feature: Enforce role-based visibility and editing for booking requests
       | username      | firstname | lastname |
       | bookinguser   | Bella     | Booker   |
       | supportuser   | Sam       | Support  |
+      | observeruser  | Olivia    | Observer |
     And the following "courses" exist:
       | fullname | shortname |
       | Course 1 | C1        |
     And the following "roles" exist:
       | shortname        | name               | archetype |
       | bookitparticipant | Bookit Participant | student   |
+      | bookitobserver   | Bookit Observer    | student   |
     And the following "role capability" exists:
       | role                              | bookitparticipant |
       | mod/bookit:view                   | allow             |
       | mod/bookit:viewownoverview        | allow             |
       | mod/bookit:viewalldetailsofownevent | allow           |
+    And the following "role capability" exists:
+      | role                             | bookitobserver |
+      | mod/bookit:view                  | allow          |
+      | mod/bookit:viewrestrictedobserver | allow         |
     And the following "course enrolments" exist:
       | user        | course | role              |
       | bookinguser | C1     | bookitparticipant |
       | supportuser | C1     | bookitparticipant |
+      | observeruser | C1    | bookitobserver    |
     And the following "activities" exist:
       | activity | name               | course | idnumber |
       | bookit   | My BookIt Activity | C1     | 1        |
@@ -80,3 +87,30 @@ Feature: Enforce role-based visibility and editing for booking requests
     And I submit the Bookit event details modal
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview should list only the events ""
+
+  Scenario: Observer sees only accepted bookings in a neutral reserved projection
+    Given the following "mod_bookit > events" exist:
+      | name                    | username    | startdate                         | enddate                              | bookingstatus | institution |
+      | Observer visible exam   | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
+      | Observer hidden request | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 15:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
+    When I log in as "observeruser"
+    Then the Bookit calendar projection for user "observeruser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Reserved"
+    And the Bookit calendar projection for user "observeruser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Observer visible exam"
+    And the Bookit calendar projection for user "observeruser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Observer hidden request"
+    When I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit overview should list only the events "Reserved"
+
+  Scenario: Observer overview rows do not open event details
+    Given the following "mod_bookit > events" exist:
+      | name                  | username    | startdate                         | enddate                              | bookingstatus | institution |
+      | Observer detail exam  | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
+    When I log in as "observeruser"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit overview should not expose a detail link for event "Reserved"
+
+  Scenario: Observer overview has no personal navigation and shows the restricted empty state
+    When I log in as "observeruser"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit overview navigation should not contain "My booked events"
+    And the Bookit overview navigation should not contain "History"
+    And I should see "No accepted bookings are currently available for your role."

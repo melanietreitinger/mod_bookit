@@ -187,6 +187,20 @@ class event_access_manager {
     }
 
     /**
+     * Check whether the current user is in restricted observer mode.
+     *
+     * @param context_module $context
+     * @return bool
+     */
+    public static function is_observer_restricted_mode(context_module $context): bool {
+        if (!get_capability_info('mod/bookit:viewrestrictedobserver', false)) {
+            return false;
+        }
+
+        return has_capability('mod/bookit:viewrestrictedobserver', $context);
+    }
+
+    /**
      * Return all BookIt participant roles that the user has on the event.
      *
      * @param stdClass $event
@@ -259,6 +273,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_details(stdClass $event, context_module $context, int $userid): bool {
+        if (self::is_observer_restricted_mode($context)) {
+            return false;
+        }
+
         if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
             return true;
         }
@@ -279,6 +297,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_overview(stdClass $event, context_module $context, int $userid): bool {
+        if (self::is_observer_restricted_mode($context)) {
+            return self::is_booking_confirmed($event);
+        }
+
         if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
             return true;
         }
@@ -299,6 +321,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_calendar(stdClass $event, context_module $context, int $userid): bool {
+        if (self::is_observer_restricted_mode($context)) {
+            return self::is_booking_confirmed($event);
+        }
+
         return self::can_user_view_event_in_overview($event, $context, $userid);
     }
 
@@ -314,6 +340,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_history(stdClass $event, context_module $context, int $userid): bool {
+        if (self::is_observer_restricted_mode($context)) {
+            return false;
+        }
+
         return self::can_user_view_event_in_overview($event, $context, $userid);
     }
 

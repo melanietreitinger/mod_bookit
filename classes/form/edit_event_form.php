@@ -98,6 +98,7 @@ class edit_event_form extends dynamic_form {
         $cancancelonly = $existingevent
             && event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
         $showbookingstatus = $caneditinternal || $canviewrestrictedfields || $cancancelonly || $canselfcancelnew;
+        $requirepublicfields = $caneditevent && !$canselfcancelnew;
         $cmid = $this->_ajaxformdata['cmid'] ?? false;
         $course = get_course_and_cm_from_cmid($cmid);
         $contextcourse = context_course::instance($course[0]->id);
@@ -134,7 +135,7 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), ['size' => '64']);
         $mform->setType('name', PARAM_TEXT);
         $mform->disabledIf('name', 'editevent', 'neq');
-        if ($caneditevent) {
+        if ($requirepublicfields) {
             $mform->addRule('name', null, 'required', null, 'client');
         }
         $mform->addRule('name', null, 'maxlength', 255, 'client');
@@ -153,7 +154,7 @@ class edit_event_form extends dynamic_form {
 
         $mform->addElement('select', 'semester', get_string('select_semester', 'mod_bookit'), $semesters);
         $mform->disabledIf('semester', 'editevent', 'neq');
-        if ($caneditevent) {
+        if ($requirepublicfields) {
             $mform->addRule('semester', null, 'required', null, 'client');
         }
         $mform->addHelpButton('semester', 'select_semester', 'mod_bookit');
@@ -171,7 +172,7 @@ class edit_event_form extends dynamic_form {
 
         $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
         $mform->disabledIf('institutionid', 'editevent', 'neq');
-        if ($caneditevent) {
+        if ($requirepublicfields) {
             $mform->addRule('institutionid', null, 'required', null, 'client');
         }
         $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
@@ -229,7 +230,7 @@ class edit_event_form extends dynamic_form {
 
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('startdate', 'editevent', 'neq');
-        if ($caneditevent) {
+        if ($requirepublicfields) {
             $mform->addRule('startdate', null, 'required', null, 'client');
         }
         $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
@@ -251,7 +252,7 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('text', 'participantsamount', get_string('event_students', 'mod_bookit'), ['size' => '4']);
         $mform->disabledIf('participantsamount', 'editevent', 'neq');
         $mform->setType('participantsamount', PARAM_INT);
-        if ($caneditevent) {
+        if ($requirepublicfields) {
             $mform->addRule('participantsamount', null, 'required', null, 'client');
         }
         $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
@@ -279,7 +280,7 @@ class edit_event_form extends dynamic_form {
         $mform->disabledIf('personinchargeid', 'editevent', 'neq');
         $mform->setType('personinchargeid', PARAM_TEXT);
         $mform->setDefault('personinchargeid', '');
-        if ($caneditevent) {
+        if ($requirepublicfields) {
             $mform->addRule('personinchargeid', null, 'required', null, 'client');
         }
         $mform->addHelpButton('personinchargeid', 'event_personincharge', 'mod_bookit');
@@ -305,7 +306,7 @@ class edit_event_form extends dynamic_form {
             $coursetemplates = [0 => get_string('default')];
             $mform->addElement('select', 'coursetemplate', get_string('select_coursetemplate', 'mod_bookit'), $coursetemplates);
             $mform->disabledIf('coursetemplate', 'editevent', 'neq');
-            if ($caneditevent) {
+            if ($requirepublicfields) {
                 $mform->addRule('coursetemplate', null, 'required', null, 'client');
             }
             $mform->addHelpButton('coursetemplate', 'select_coursetemplate', 'mod_bookit');
@@ -774,6 +775,10 @@ class edit_event_form extends dynamic_form {
         }
 
         $event = event_manager::get_event($eventid);
+        if (event_access_manager::is_observer_restricted_mode($context)) {
+            throw new moodle_exception('observer_no_detail_access', 'mod_bookit');
+        }
+
         if (
             !event_access_manager::can_user_view_event_details($event, $context, (int)$USER->id)
             && !event_access_manager::can_manage_open_requests($context)
@@ -801,6 +806,7 @@ class edit_event_form extends dynamic_form {
         $caneditinternalnotes = $caneditinternal;
         $caneditbookingstatus = $caneditinternal;
         $bookingstatustransition = null;
+        $statusonlyselfcancel = false;
 
         if (!empty($formdata->id)) {
             $currentevent = bookit_event::from_database((int)$formdata->id);
@@ -813,6 +819,9 @@ class edit_event_form extends dynamic_form {
             $caneditbookingstatus = $caneditinternal
                 || event_access_manager::can_participant_cancel_only($currentrecord, $context, (int)$USER->id)
                 || $canselfcancelnew;
+            $requestedstatus = (int)($formdata->bookingstatus ?? $currentrecord->bookingstatus);
+            $statusonlyselfcancel = $canselfcancelnew
+                && $requestedstatus === event_access_manager::BOOKINGSTATUS_CANCELED;
 
             if (!$caneditpublic && !$caneditinternalnotes && !$caneditbookingstatus) {
                 throw new moodle_exception('nopermissions', 'error', '', 'update event');
@@ -820,7 +829,7 @@ class edit_event_form extends dynamic_form {
         }
 
         $mappings = [];
-        if ($caneditpublic) {
+        if ($caneditpublic && !$statusonlyselfcancel) {
             foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
                 // Rooms.
                 foreach ($categorygroup['resources'] as $resource) {
@@ -851,7 +860,7 @@ class edit_event_form extends dynamic_form {
         }
         $formdata->resources = $mappings;
 
-        if ($caneditpublic) {
+        if ($caneditpublic && !$statusonlyselfcancel) {
             $resolvedstarttime = $submittedstarttime ?? ($formdata->starttime ?? null);
             $resolvedduration = $submittedduration ?? ($formdata->duration ?? null) ?? $currentevent?->duration;
 
@@ -1179,7 +1188,11 @@ class edit_event_form extends dynamic_form {
                 return $errors;
             }
 
-            if (!$caneditpublic) {
+            $statusonlyselfcancel = $canselfcancelnew
+                && (int)($data['bookingstatus'] ?? $existingevent->bookingstatus)
+                    === event_access_manager::BOOKINGSTATUS_CANCELED;
+
+            if (!$caneditpublic || $statusonlyselfcancel) {
                 $data['name'] = $data['name'] ?? $existingevent->name;
                 $data['semester'] = $data['semester'] ?? $existingevent->semester;
                 $data['institutionid'] = $data['institutionid'] ?? $existingevent->institutionid;

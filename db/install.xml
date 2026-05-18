@@ -72,7 +72,6 @@
         <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="eventid_idx" UNIQUE="false" FIELDS="eventid" COMMENT="Index for event history lookups"/>
         <INDEX NAME="event_time_idx" UNIQUE="false" FIELDS="eventid,timecreated" COMMENT="Index for ordered event history lookups"/>
       </INDEXES>
     </TABLE>

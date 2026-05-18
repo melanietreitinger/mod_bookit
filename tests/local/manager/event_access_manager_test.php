@@ -46,6 +46,7 @@ final class event_access_manager_test extends advanced_testcase {
         $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Bookit test']);
         $context = context_module::instance($bookit->cmid);
 
+        \update_capabilities('mod_bookit');
         $roleid = \create_role('Bookit participant', 'bookitparticipant', 'student');
         \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
         \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
@@ -66,6 +67,41 @@ final class event_access_manager_test extends advanced_testcase {
         global $DB;
 
         $role = $DB->get_record('role', ['shortname' => 'bookitparticipant'], 'id', MUST_EXIST);
+        \role_assign($role->id, $userid, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+    }
+
+    /**
+     * Create a Bookit module context with an observer role.
+     *
+     * @return context_module
+     */
+    private function create_bookit_context_with_observer_role(): context_module {
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Bookit observer test']);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit observer', 'bookitobserver', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewrestrictedobserver', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        return $context;
+    }
+
+    /**
+     * Assign a role by shortname to the given user.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @param string $roleshortname
+     * @return void
+     */
+    private function assign_role_by_shortname(context_module $context, int $userid, string $roleshortname): void {
+        global $DB;
+
+        $role = $DB->get_record('role', ['shortname' => $roleshortname], 'id', MUST_EXIST);
         \role_assign($role->id, $userid, $context->id);
         \accesslib_clear_all_caches_for_unit_testing();
     }
@@ -220,6 +256,44 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Observer restricted mode is driven only by the dedicated capability and blocks details.
+     *
+     * @return void
+     */
+    public function test_observer_restricted_mode_and_visibility_rules(): void {
+        $this->resetAfterTest(true);
+
+        $observercontext = $this->create_bookit_context_with_observer_role();
+        $observer = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($observercontext, $observer->id, 'bookitobserver');
+        $this->setUser($observer);
+
+        $accepted = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'usermodified' => 0,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $newrequest = clone $accepted;
+        $newrequest->bookingstatus = event_access_manager::BOOKINGSTATUS_NEW;
+
+        $this->assertTrue(event_access_manager::is_observer_restricted_mode($observercontext));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($accepted, $observercontext, $observer->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($accepted, $observercontext, $observer->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_details($accepted, $observercontext, $observer->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_history($accepted, $observercontext, $observer->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($newrequest, $observercontext, $observer->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($newrequest, $observercontext, $observer->id));
+
+        $participantcontext = $this->create_bookit_context_with_participant_role();
+        $participant = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($participantcontext, $participant->id);
+        $this->setUser($participant);
+        $this->assertFalse(event_access_manager::is_observer_restricted_mode($participantcontext));
+    }
+
+    /**
      * Multi-role users keep visibility even if the support role would otherwise be restricted.
      *
      * @return void
@@ -292,8 +366,17 @@ final class event_access_manager_test extends advanced_testcase {
         ];
 
         $this->assertTrue(event_access_manager::can_self_cancel_new_request($event, $context, $user->id));
-        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
-        $this->assertFalse(event_access_manager::can_self_cancel_new_request($event, $context, $user->id));
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+            ] as $status
+        ) {
+            $event->bookingstatus = $status;
+            $this->assertFalse(event_access_manager::can_self_cancel_new_request($event, $context, $user->id));
+        }
     }
 
     /**

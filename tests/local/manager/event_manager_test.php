@@ -36,6 +36,65 @@ use context_module;
  */
 final class event_manager_test extends advanced_testcase {
     /**
+     * Create a Bookit module context with an observer role assigned to the provided user.
+     *
+     * @param int $userid
+     * @return context_module
+     */
+    private function create_observer_context_for_user(int $userid): context_module {
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Observer reporting']);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit observer', 'bookitobserver', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewrestrictedobserver', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $userid, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        return $context;
+    }
+
+    /**
+     * Insert a minimal event record for tests.
+     *
+     * @param array $overrides
+     * @return int
+     */
+    private function create_event_record(array $overrides = []): int {
+        global $DB;
+
+        $defaults = [
+            'name' => 'Test event',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+
+        return (int)$DB->insert_record('bookit_event', (object)array_merge($defaults, $overrides));
+    }
+
+    /**
      * Winter terms must bridge the year boundary correctly.
      *
      * @return void
@@ -65,6 +124,54 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_get_reporting_default_semester_ids_returns_current_semester(): void {
         $this->assertSame([20261], event_manager::get_reporting_default_semester_ids(strtotime('2026-05-07 10:00:00')));
+    }
+
+    /**
+     * Explicit semester selections must bypass the automatic current-semester default.
+     *
+     * @return void
+     */
+    public function test_resolve_effective_semester_filter_ids_preserves_explicit_selection(): void {
+        $this->assertSame(
+            [20261],
+            event_manager::resolve_effective_semester_filter_ids([], false, strtotime('2026-05-07 10:00:00'))
+        );
+        $this->assertSame(
+            [20262],
+            event_manager::resolve_effective_semester_filter_ids([20262], true, strtotime('2026-05-07 10:00:00'))
+        );
+    }
+
+    /**
+     * Observer mode must return only accepted events in a neutral reserved projection.
+     *
+     * @return void
+     */
+    public function test_get_events_in_timerange_returns_accepted_only_for_observer(): void {
+        $this->resetAfterTest(true);
+        $observer = $this->getDataGenerator()->create_user();
+        $context = $this->create_observer_context_for_user($observer->id);
+        $this->setUser($observer);
+
+        $this->create_event_record([
+            'name' => 'Observer hidden request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => strtotime('2026-05-08 08:00:00'),
+            'endtime' => strtotime('2026-05-08 09:00:00'),
+        ]);
+        $acceptedid = $this->create_event_record([
+            'name' => 'Observer accepted booking',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'starttime' => strtotime('2026-05-08 10:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+        ]);
+
+        $events = event_manager::get_events_in_timerange('2026-05-08 00:00', '2026-05-08 23:59', (int)$context->instanceid);
+
+        $this->assertCount(1, $events);
+        $this->assertSame($acceptedid, (int)$events[0]['id']);
+        $this->assertSame('Reserved', $events[0]['title']);
+        $this->assertTrue((bool)$events[0]['extendedProps']->reserved);
     }
 
     /**
@@ -416,7 +523,7 @@ final class event_manager_test extends advanced_testcase {
         ]);
         event_manager::record_booking_history(
             $eventid,
-            'canceled',
+            'self_canceled',
             (int)$user->id,
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_CANCELED,
@@ -435,5 +542,51 @@ final class event_manager_test extends advanced_testcase {
         ], [], false, strtotime('2026-05-07 10:00:00'));
 
         $this->assertSame([], $visible);
+    }
+
+    /**
+     * Self-cancelled New requests must keep a distinct history action from service-team cancellations.
+     *
+     * @return void
+     */
+    public function test_transition_booking_status_marks_requester_self_cancel_distinctly(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Self cancel']);
+        $context = context_module::instance($bookit->cmid);
+        $requester = $this->getDataGenerator()->create_user();
+
+        $participantrole = \create_role('Bookit participant', 'bookitparticipant', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \role_assign($participantrole, $requester->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($requester);
+
+        $eventid = $this->create_event_record([
+            'name' => 'Requester self cancel',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => $requester->id,
+            'usermodified' => $requester->id,
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            (int)$requester->id,
+            $context
+        );
+
+        $history = array_values(event_manager::get_booking_history($eventid));
+        $this->assertCount(1, $history);
+        $this->assertSame('self_canceled', $history[0]->action);
+        $this->assertSame((int)$requester->id, (int)$history[0]->usermodified);
+        $this->assertTrue(event_manager::is_hidden_from_active_overview(
+            $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST)
+        ));
     }
 }
