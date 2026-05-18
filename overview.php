@@ -305,6 +305,71 @@ $historyeventids = array_unique(array_merge(
     array_map(static fn($ev): int => (int)$ev->id, $rejectedrequests),
 ));
 $latesthistorymap = event_manager::get_latest_booking_history_entries($historyeventids);
+$historyfieldlabels = [
+    'bookingstatus' => 'event_bookingstatus',
+    'institutionid' => 'event_department',
+    'internalnotes' => 'event_internalnotes',
+    'name' => 'event_name',
+    'notes' => 'event_notes',
+    'otherexaminers' => 'event_otherexaminers',
+    'participantsamount' => 'event_students',
+    'personinchargeid' => 'event_personincharge',
+    'roomid' => 'event_room',
+    'starttime' => 'event_start',
+];
+$resolvehistoryfieldlabel = static function (string $field) use ($historyfieldlabels): string {
+    if (!empty($historyfieldlabels[$field])) {
+        return get_string($historyfieldlabels[$field], 'mod_bookit');
+    }
+
+    return ucfirst(str_replace('_', ' ', $field));
+};
+$formathistoryvalue = static function (string $field, $value): string {
+    if ($value === null || $value === '') {
+        return '-';
+    }
+
+    return match ($field) {
+        'bookingstatus' => get_string('event_bookingstatus_' . (int)$value, 'mod_bookit'),
+        'starttime', 'endtime' => userdate((int)$value, get_string('strftimedatetime', 'langconfig')),
+        default => is_scalar($value) ? (string)$value : '-',
+    };
+};
+$buildhistorydetails = static function (int $eventid) use ($resolvehistoryfieldlabel, $formathistoryvalue): array {
+    $entries = [];
+    foreach (array_values(event_manager::get_booking_history($eventid, 10)) as $entry) {
+        $actorname = trim(($entry->firstname ?? '') . ' ' . ($entry->lastname ?? ''));
+        $summary = get_string('history_action_' . $entry->action, 'mod_bookit') . ' · '
+            . userdate((int)$entry->timecreated, get_string('strftimedatetime', 'langconfig'));
+        if ($actorname !== '') {
+            $summary .= ' · ' . $actorname;
+        }
+
+        $changes = [];
+        $rawchangedfields = json_decode((string)($entry->changedfields ?? ''), true);
+        if (is_array($rawchangedfields)) {
+            foreach ($rawchangedfields as $field => $change) {
+                $changes[] = [
+                    'text' => get_string('overview_workflow_history_change', 'mod_bookit', (object)[
+                        'field' => $resolvehistoryfieldlabel((string)$field),
+                        'from' => $formathistoryvalue((string)$field, $change['from'] ?? null),
+                        'to' => $formathistoryvalue((string)$field, $change['to'] ?? null),
+                    ]),
+                ];
+            }
+        }
+
+        $entries[] = [
+            'summary' => s($summary),
+            'haschanges' => !empty($changes),
+            'changes' => $changes,
+            'hasrecoverymarker' => !empty($entry->recoverymarker),
+            'recoverymarkertext' => get_string('overview_workflow_history_recovery', 'mod_bookit'),
+        ];
+    }
+
+    return $entries;
+};
 
 $prepareeventrow = function (
     stdClass $ev,
@@ -318,7 +383,8 @@ $prepareeventrow = function (
     $statuscolors,
     $progressmap,
     $resourceprogressmap,
-    $latesthistorymap
+    $latesthistorymap,
+    $buildhistorydetails
 ): array {
     $room = $ev->room ?: '-';
 
@@ -409,6 +475,7 @@ $prepareeventrow = function (
             $latesthistorysummary .= ' · ' . $actorname;
         }
     }
+    $historydetails = $isopenrequest ? $buildhistorydetails((int)$ev->id) : [];
 
     return [
         'id' => (string)$ev->id,
@@ -450,6 +517,11 @@ $prepareeventrow = function (
         'resourcesprogress_available' => ($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0,
         'haslatesthistorysummary' => $latesthistorysummary !== '',
         'latesthistorysummary' => s($latesthistorysummary),
+        'showhistorydetails' => $isopenrequest,
+        'historydetailslabel' => get_string('overview_workflow_history', 'mod_bookit'),
+        'historydetailsempty' => get_string('overview_workflow_history_empty', 'mod_bookit'),
+        'hashistoryentries' => !empty($historydetails),
+        'historyentries' => $historydetails,
     ];
 };
 

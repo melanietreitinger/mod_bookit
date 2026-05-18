@@ -44,6 +44,10 @@ class behat_mod_bookit_generator extends behat_generator_base {
                     'datagenerator' => 'room',
                     'required' => ['name'],
                 ],
+                'institutions' => [
+                    'datagenerator' => 'institution',
+                    'required' => ['name'],
+                ],
                 'resource_categories' => [
                     'datagenerator' => 'resource_category',
                     'required' => ['name'],

@@ -37,6 +37,186 @@ use mod_bookit\local\manager\weekplan_manager;
  * Installation helper class.
  */
 class install_helper {
+    /** Default standalone room name. */
+    public const DEFAULT_ROOM_NAME = 'Default room';
+
+    /** Default standalone room description. */
+    public const DEFAULT_ROOM_DESCRIPTION = 'Default room for standalone calendar bookings.';
+
+    /** Default standalone institution name. */
+    public const DEFAULT_INSTITUTION_NAME = 'Standard-Institution';
+
+    /** Default standalone weekplan name. */
+    public const DEFAULT_WEEKPLAN_NAME = 'Default Weekplan';
+
+    /** Default standalone weekplan schedule. */
+    public const DEFAULT_WEEKPLAN_SCHEDULE = "Mo 09:00-17:00\nDi 09:00-17:00\nMi 09:00-17:00\nDo 09:00-17:00\nFr 09:00-17:00";
+
+    /**
+     * Return all shipped role preset file names.
+     *
+     * @return string[]
+     */
+    public static function get_default_role_preset_filenames(): array {
+        return [
+            'bookit_bookingperson.xml',
+            'bookit_examiner.xml',
+            'bookit_observer.xml',
+            'bookit_serviceteam.xml',
+            'bookit_supportonsite.xml',
+        ];
+    }
+
+    /**
+     * Ensure the agreed fresh-install baseline exists exactly once.
+     *
+     * @param bool $verbose
+     * @return array{status:string,operations:array<string,array>,errors:string[]}
+     */
+    public static function ensure_fresh_install_baseline(bool $verbose = false): array {
+        $operations = [
+            'institution' => self::ensure_default_institution($verbose),
+            'room' => self::ensure_default_room($verbose),
+        ];
+        $operations['weekplan'] = self::ensure_default_weekplan((int)($operations['room']['id'] ?? 0), $verbose);
+
+        $errors = [];
+        foreach ($operations as $operation) {
+            if (!empty($operation['message']) && in_array($operation['status'], ['failed', 'partial'], true)) {
+                $errors[] = $operation['message'];
+            }
+        }
+
+        return [
+            'status' => self::resolve_report_status(array_column($operations, 'status'), $errors),
+            'operations' => $operations,
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * Import shipped role presets with explicit per-file outcomes.
+     *
+     * @param bool $force
+     * @param bool $verbose
+     * @return array{status:string,imported:string[],skipped:string[],errors:string[]}
+     */
+    public static function import_default_roles_with_report(bool $force = false, bool $verbose = false): array {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/accesslib.php');
+        require_once($CFG->dirroot . '/admin/roles/classes/preset.php');
+
+        $rolesdir = $CFG->dirroot . '/mod/bookit/assets/roles/';
+        $imported = [];
+        $skipped = [];
+        $errors = [];
+
+        foreach (self::get_default_role_preset_filenames() as $filename) {
+            $fullpath = $rolesdir . $filename;
+            if ($verbose) {
+                mtrace('Processing role file: ' . $filename);
+            }
+
+            if (!is_readable($fullpath)) {
+                $errors[] = 'Role preset file missing: ' . $filename;
+                continue;
+            }
+
+            $xml = file_get_contents($fullpath);
+            if ($xml === false || $xml === '') {
+                $errors[] = 'Role preset file could not be read: ' . $filename;
+                continue;
+            }
+
+            if (!\core_role_preset::is_valid_preset($xml)) {
+                $errors[] = 'Invalid role preset XML: ' . $filename;
+                continue;
+            }
+
+            $roleinfo = \core_role_preset::parse_preset($xml);
+            if (!$roleinfo) {
+                $errors[] = 'Role preset XML could not be parsed: ' . $filename;
+                continue;
+            }
+
+            $roleid = null;
+            if ($existingrole = $DB->get_record('role', ['shortname' => $roleinfo['shortname']])) {
+                if (!$force) {
+                    $skipped[] = $roleinfo['shortname'];
+                    if ($verbose) {
+                        mtrace('Role already exists and stays unchanged: ' . $roleinfo['shortname']);
+                    }
+                    continue;
+                }
+                $roleid = (int)$existingrole->id;
+            } else {
+                $roleid = (int)create_role(
+                    $roleinfo['name'],
+                    $roleinfo['shortname'],
+                    $roleinfo['description'],
+                    $roleinfo['archetype']
+                );
+            }
+
+            if (isset($roleinfo['contextlevels']) && is_array($roleinfo['contextlevels'])) {
+                $DB->delete_records('role_context_levels', ['roleid' => $roleid]);
+                foreach ($roleinfo['contextlevels'] as $contextlevel) {
+                    $DB->insert_record('role_context_levels', [
+                        'roleid' => $roleid,
+                        'contextlevel' => $contextlevel,
+                    ]);
+                }
+            }
+
+            if (isset($roleinfo['permissions']) && is_array($roleinfo['permissions'])) {
+                $systemcontext = \context_system::instance();
+                foreach ($roleinfo['permissions'] as $capability => $permission) {
+                    $DB->delete_records('role_capabilities', [
+                        'roleid' => $roleid,
+                        'capability' => $capability,
+                        'contextid' => $systemcontext->id,
+                    ]);
+                    if ($permission != CAP_INHERIT) {
+                        $DB->insert_record('role_capabilities', [
+                            'roleid' => $roleid,
+                            'capability' => $capability,
+                            'permission' => $permission,
+                            'contextid' => $systemcontext->id,
+                            'timemodified' => time(),
+                        ]);
+                    }
+                }
+            }
+
+            foreach (['assign', 'override', 'switch', 'view'] as $type) {
+                if (!isset($roleinfo['allow' . $type]) || !is_array($roleinfo['allow' . $type])) {
+                    continue;
+                }
+                $DB->delete_records('role_allow_' . $type, ['roleid' => $roleid]);
+                foreach ($roleinfo['allow' . $type] as $allowid) {
+                    $DB->insert_record('role_allow_' . $type, [
+                        'roleid' => $roleid,
+                        'allow' . $type => $allowid == -1 ? $roleid : $allowid,
+                    ]);
+                }
+            }
+
+            $imported[] = $roleinfo['shortname'];
+            if ($verbose) {
+                mtrace('Imported role preset: ' . $roleinfo['shortname']);
+            }
+        }
+
+        return [
+            'status' => self::resolve_report_status([
+                empty($imported) ? 'idempotent' : 'success',
+            ], $errors, !empty($imported), !empty($skipped)),
+            'imported' => array_values(array_unique($imported)),
+            'skipped' => array_values(array_unique($skipped)),
+            'errors' => $errors,
+        ];
+    }
+
     /**
      * Create default checklist data during installation.
      *
@@ -292,173 +472,8 @@ class install_helper {
      * @return bool True if at least one role was imported, false otherwise
      */
     public static function import_default_roles(bool $force = false, bool $verbose = false): bool {
-        global $CFG, $DB;
-        require_once($CFG->libdir . '/accesslib.php');
-        require_once($CFG->dirroot . '/admin/roles/classes/preset.php');
-
-        $rolesdir = $CFG->dirroot . '/mod/bookit/assets/roles/';
-        $dirhandle = opendir($rolesdir);
-        if (!$dirhandle) {
-            if ($verbose) {
-                mtrace('Could not open roles directory: ' . $rolesdir);
-            }
-            return false;
-        }
-
-        $rolesimported = false;
-
-        while (false !== ($filename = readdir($dirhandle))) {
-            if (substr($filename, -4) !== '.xml') {
-                continue;
-            }
-
-            $fullpath = $rolesdir . $filename;
-            if ($verbose) {
-                mtrace('Processing role file: ' . $filename);
-            }
-
-            $xml = file_get_contents($fullpath);
-            if (!$xml) {
-                if ($verbose) {
-                    mtrace('Could not read file: ' . $fullpath);
-                }
-                continue;
-            }
-
-            if (!\core_role_preset::is_valid_preset($xml)) {
-                if ($verbose) {
-                    mtrace('Invalid role preset XML in file: ' . $fullpath);
-                }
-                continue;
-            }
-
-            // Parse the XML file to get role information.
-            $roleinfo = \core_role_preset::parse_preset($xml);
-            if (!$roleinfo) {
-                if ($verbose) {
-                    mtrace('Could not parse role preset XML in file: ' . $fullpath);
-                }
-                continue;
-            }
-
-            // Check if role with this shortname already exists.
-            if ($existingrole = $DB->get_record('role', ['shortname' => $roleinfo['shortname']])) {
-                if ($verbose) {
-                    mtrace('Role with shortname "' . $roleinfo['shortname'] . '" already exists (ID: ' . $existingrole->id . ')');
-                }
-                if (!$force) {
-                    continue;
-                }
-                if ($verbose) {
-                    mtrace('Updating existing role due to force flag.');
-                }
-                $roleid = $existingrole->id;
-            } else {
-                // Create a new role record.
-                $role = new \stdClass();
-                $role->name = $roleinfo['name'];
-                $role->shortname = $roleinfo['shortname'];
-                $role->description = $roleinfo['description'];
-                $role->archetype = $roleinfo['archetype'];
-
-                $roleid = create_role($role->name, $role->shortname, $role->description, $role->archetype);
-
-                if ($verbose) {
-                    mtrace('Created new role with ID: ' . $roleid);
-                }
-            }
-
-            // Set context levels for this role.
-            if (isset($roleinfo['contextlevels']) && is_array($roleinfo['contextlevels'])) {
-                // First, reset current context levels.
-                $DB->delete_records('role_context_levels', ['roleid' => $roleid]);
-
-                // Then add new context levels.
-                foreach ($roleinfo['contextlevels'] as $contextlevel) {
-                    $DB->insert_record('role_context_levels', [
-                        'roleid' => $roleid,
-                        'contextlevel' => $contextlevel,
-                    ]);
-                }
-                if ($verbose) {
-                    mtrace('Set ' . count($roleinfo['contextlevels']) . ' context levels for role.');
-                }
-            }
-
-            // Set role permissions.
-            if (isset($roleinfo['permissions']) && is_array($roleinfo['permissions'])) {
-                $systemcontext = \context_system::instance();
-
-                foreach ($roleinfo['permissions'] as $capability => $permission) {
-                    if ($permission != CAP_INHERIT) {
-                        // Delete any existing capability.
-                        $DB->delete_records('role_capabilities', [
-                            'roleid' => $roleid,
-                            'capability' => $capability,
-                            'contextid' => $systemcontext->id,
-                        ]);
-
-                        // Add the new capability.
-                        $DB->insert_record('role_capabilities', [
-                            'roleid' => $roleid,
-                            'capability' => $capability,
-                            'permission' => $permission,
-                            'contextid' => $systemcontext->id,
-                            'timemodified' => time(),
-                        ]);
-                    }
-                }
-                if ($verbose) {
-                    mtrace('Set permissions for role.');
-                }
-            }
-
-            // Handle role relationships (assign, override, switch).
-            foreach (['assign', 'override', 'switch', 'view'] as $type) {
-                if (isset($roleinfo['allow' . $type]) && is_array($roleinfo['allow' . $type])) {
-                    // First, remove existing records.
-                    $DB->delete_records('role_allow_' . $type, ['roleid' => $roleid]);
-
-                    // Add new records.
-                    foreach ($roleinfo['allow' . $type] as $allowid) {
-                        if ($allowid == -1) {
-                            // Special case: allow assigning/overriding self.
-                            $DB->insert_record('role_allow_' . $type, [
-                                'roleid' => $roleid,
-                                'allow' . $type => $roleid,
-                            ]);
-                        } else {
-                            $DB->insert_record('role_allow_' . $type, [
-                                'roleid' => $roleid,
-                                'allow' . $type => $allowid,
-                            ]);
-                        }
-                    }
-                    if ($verbose) {
-                        mtrace('Set allow' . $type . ' permissions for role.');
-                    }
-                }
-            }
-
-            // Mark that at least one role was imported.
-            $rolesimported = true;
-
-            if ($verbose) {
-                mtrace('Successfully imported role: ' . $roleinfo['name']);
-            }
-        }
-
-        closedir($dirhandle);
-
-        if ($verbose) {
-            if ($rolesimported) {
-                mtrace('Completed importing roles.');
-            } else {
-                mtrace('No roles were imported.');
-            }
-        }
-
-        return $rolesimported;
+        $report = self::import_default_roles_with_report($force, $verbose);
+        return !empty($report['imported']);
     }
 
     /**
@@ -469,84 +484,8 @@ class install_helper {
      * @return bool True if rooms were created, false otherwise
      */
     public static function create_default_rooms(bool $force = false, bool $verbose = false): bool {
-        global $DB, $USER;
-
-        // Check if rooms already exist.
-        $existing = $DB->count_records('bookit_room');
-        if ($existing > 0 && !$force) {
-            if ($verbose) {
-                mtrace('Rooms already exist. Skipping creation.');
-            }
-            return false;
-        }
-
-        if ($verbose) {
-            mtrace('Creating default rooms for BookIt...');
-        }
-
-        // Define sample rooms.
-        $rooms = [
-            [
-                'name' => 'Lecture Hall A',
-                'shortname' => 'LH-A',
-                'description' => 'Large lecture hall with 200 seats, equipped with modern AV technology',
-                'eventcolor' => '#FF6B6B',
-                'active' => 1,
-                'roommode' => 1,
-            ],
-            [
-                'name' => 'Seminar Room B',
-                'shortname' => 'SR-B',
-                'description' => 'Medium-sized seminar room for up to 50 students',
-                'eventcolor' => '#4ECDC4',
-                'active' => 1,
-                'roommode' => 0,
-            ],
-            [
-                'name' => 'Computer Lab C',
-                'shortname' => 'CL-C',
-                'description' => 'Computer laboratory with 30 workstations',
-                'eventcolor' => '#45B7D1',
-                'active' => 1,
-                'roommode' => 1,
-            ],
-            [
-                'name' => 'Conference Room D',
-                'shortname' => 'CR-D',
-                'description' => 'Small conference room for meetings and group work',
-                'eventcolor' => '#96CEB4',
-                'active' => 1,
-                'roommode' => 0,
-            ],
-        ];
-
-        $roomscreated = 0;
-        foreach ($rooms as $roomdata) {
-            $room = new \stdClass();
-            $room->name = $roomdata['name'];
-            $room->shortname = $roomdata['shortname'];
-            $room->description = $roomdata['description'];
-            $room->eventcolor = $roomdata['eventcolor'];
-            $room->active = $roomdata['active'];
-            $room->roommode = $roomdata['roommode'];
-            $room->usermodified = $USER->id ?? 2; // Default to admin user if no user set.
-            $room->timecreated = time();
-            $room->timemodified = time();
-
-            $roomid = $DB->insert_record('bookit_room', $room);
-
-            if ($verbose) {
-                mtrace("Created room: {$room->name} (ID: $roomid)");
-            }
-
-            $roomscreated++;
-        }
-
-        if ($verbose) {
-            mtrace("Successfully created $roomscreated default rooms!");
-        }
-
-        return $roomscreated > 0;
+        $result = self::ensure_default_room($verbose);
+        return $result['status'] === 'created';
     }
 
     /**
@@ -945,58 +884,250 @@ class install_helper {
      * @return bool True if weekplan was created, false otherwise
      */
     public static function create_default_weekplan(bool $force = false, bool $verbose = false): bool {
-        global $DB, $USER;
+        global $DB;
 
-        $existing = $DB->count_records('bookit_weekplan');
-        if ($existing > 0 && !$force) {
+        $roomid = (int)$DB->get_field_sql('SELECT MIN(id) FROM {bookit_room}');
+        $result = self::ensure_default_weekplan($roomid, $verbose);
+        return $result['status'] === 'created';
+    }
+
+    /**
+     * Ensure exactly one default institution exists.
+     *
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function ensure_default_institution(bool $verbose = false): array {
+        global $DB;
+
+        $institutions = $DB->get_records('bookit_institution');
+        if (empty($institutions)) {
+            $record = (object)[
+                'name' => self::DEFAULT_INSTITUTION_NAME,
+                'internalnotes' => null,
+                'active' => 1,
+                'usermodified' => self::get_actor_userid(),
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ];
+            $id = (int)$DB->insert_record('bookit_institution', $record);
             if ($verbose) {
-                mtrace('Weekplan data already exists. Skipping creation.');
+                mtrace('Created default institution: ' . self::DEFAULT_INSTITUTION_NAME . ' (ID: ' . $id . ')');
             }
+            return ['status' => 'created', 'id' => $id, 'message' => null];
+        }
+
+        if (count($institutions) === 1) {
+            $institution = reset($institutions);
+            if ((string)$institution->name === self::DEFAULT_INSTITUTION_NAME && (int)$institution->active === 1) {
+                return ['status' => 'idempotent', 'id' => (int)$institution->id, 'message' => null];
+            }
+        }
+
+        return [
+            'status' => 'failed',
+            'id' => null,
+            'message' => 'Fresh-install baseline requires exactly one active institution named "' .
+                self::DEFAULT_INSTITUTION_NAME . '".',
+        ];
+    }
+
+    /**
+     * Ensure exactly one default room exists.
+     *
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function ensure_default_room(bool $verbose = false): array {
+        global $DB;
+
+        $rooms = $DB->get_records('bookit_room');
+        if (empty($rooms)) {
+            $record = (object)[
+                'name' => self::DEFAULT_ROOM_NAME,
+                'shortname' => 'DFLTRM',
+                'description' => self::DEFAULT_ROOM_DESCRIPTION,
+                'location' => '',
+                'eventcolor' => '#3a87ad',
+                'active' => 1,
+                'roommode' => 0,
+                'seats' => 0,
+                'extratimebefore' => null,
+                'extratimeafter' => null,
+                'preventoverlap' => 2,
+                'usermodified' => self::get_actor_userid(),
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ];
+            $id = (int)$DB->insert_record('bookit_room', $record);
+            if ($verbose) {
+                mtrace('Created default room: ' . self::DEFAULT_ROOM_NAME . ' (ID: ' . $id . ')');
+            }
+            return ['status' => 'created', 'id' => $id, 'message' => null];
+        }
+
+        if (count($rooms) === 1) {
+            $room = reset($rooms);
+            if ((string)$room->name === self::DEFAULT_ROOM_NAME && (int)$room->active === 1) {
+                return ['status' => 'idempotent', 'id' => (int)$room->id, 'message' => null];
+            }
+        }
+
+        return [
+            'status' => 'failed',
+            'id' => null,
+            'message' => 'Fresh-install baseline requires exactly one active room named "' . self::DEFAULT_ROOM_NAME . '".',
+        ];
+    }
+
+    /**
+     * Ensure exactly one default weekplan exists and is assigned to the default room.
+     *
+     * @param int $roomid
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function ensure_default_weekplan(int $roomid, bool $verbose = false): array {
+        global $DB;
+
+        if ($roomid <= 0) {
+            return ['status' => 'failed', 'id' => null, 'message' => 'Default weekplan requires an existing default room.'];
+        }
+
+        $weekplans = $DB->get_records('bookit_weekplan');
+        if (empty($weekplans)) {
+            $record = (object)[
+                'name' => self::DEFAULT_WEEKPLAN_NAME,
+                'usermodified' => self::get_actor_userid(),
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ];
+            $weekplanid = (int)$DB->insert_record('bookit_weekplan', $record);
+            weekplan_manager::save_string_weekplan_to_db(self::DEFAULT_WEEKPLAN_SCHEDULE, $weekplanid);
+            self::ensure_weekplan_room_assignment($weekplanid, $roomid);
+            if ($verbose) {
+                mtrace('Created default weekplan: ' . self::DEFAULT_WEEKPLAN_NAME . ' (ID: ' . $weekplanid . ')');
+            }
+            return ['status' => 'created', 'id' => $weekplanid, 'message' => null];
+        }
+
+        if (count($weekplans) === 1) {
+            $weekplan = reset($weekplans);
+            if (
+                (string)$weekplan->name === self::DEFAULT_WEEKPLAN_NAME &&
+                    self::has_default_weekplan_schedule((int)$weekplan->id)
+            ) {
+                self::ensure_weekplan_room_assignment((int)$weekplan->id, $roomid);
+                return ['status' => 'idempotent', 'id' => (int)$weekplan->id, 'message' => null];
+            }
+        }
+
+        return [
+            'status' => 'failed',
+            'id' => null,
+            'message' => 'Fresh-install baseline requires exactly one weekplan named "' .
+                self::DEFAULT_WEEKPLAN_NAME . '" with Monday-Friday 09:00-17:00 slots.',
+        ];
+    }
+
+    /**
+     * Ensure the default room assignment exists for the weekplan.
+     *
+     * @param int $weekplanid
+     * @param int $roomid
+     * @return void
+     */
+    private static function ensure_weekplan_room_assignment(int $weekplanid, int $roomid): void {
+        global $DB;
+
+        if ($DB->record_exists('bookit_weekplan_room', ['weekplanid' => $weekplanid, 'roomid' => $roomid])) {
+            return;
+        }
+
+        $DB->insert_record('bookit_weekplan_room', [
+            'weekplanid' => $weekplanid,
+            'roomid' => $roomid,
+            'starttime' => time() - DAYSECS,
+            'endtime' => null,
+            'usermodified' => self::get_actor_userid(),
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+    }
+
+    /**
+     * Check whether the stored weekplan matches the agreed standalone schedule.
+     *
+     * @param int $weekplanid
+     * @return bool
+     */
+    private static function has_default_weekplan_schedule(int $weekplanid): bool {
+        global $DB;
+
+        [, $expectedslots] = weekplan_manager::parse_weekplan(self::DEFAULT_WEEKPLAN_SCHEDULE);
+        $actualslots = $DB->get_records('bookit_weekplanslot', ['weekplanid' => $weekplanid], 'starttime ASC', 'starttime,endtime');
+
+        if (count($actualslots) !== count($expectedslots)) {
             return false;
         }
 
-        if ($verbose) {
-            mtrace('Creating default weekplan for BookIt...');
-        }
-
-        $record = new \stdClass();
-        $record->name = 'Standard Weekplan';
-        $record->usermodified = $USER->id ?? 2;
-        $record->timecreated = time();
-        $record->timemodified = time();
-        $weekplanid = $DB->insert_record('bookit_weekplan', $record);
-
-        $schedule = "Mo 08:00-20:00\nDi 08:00-20:00\nMi 08:00-20:00\nDo 08:00-20:00\nFr 08:00-20:00";
-        weekplan_manager::save_string_weekplan_to_db($schedule, $weekplanid);
-
-        if ($verbose) {
-            mtrace("Created weekplan: Standard Weekplan (ID: $weekplanid, Mon-Fri 08:00-20:00)");
-        }
-
-        $rooms = $DB->get_records('bookit_room', ['active' => 1]);
-        $starttime = time() - (30 * DAYSECS);
-        $assigned = 0;
-        foreach ($rooms as $room) {
-            $assignment = new \stdClass();
-            $assignment->weekplanid = $weekplanid;
-            $assignment->roomid = $room->id;
-            $assignment->starttime = $starttime;
-            $assignment->endtime = null;
-            $assignment->usermodified = $USER->id ?? 2;
-            $assignment->timecreated = time();
-            $assignment->timemodified = time();
-            $DB->insert_record('bookit_weekplan_room', $assignment);
-            $assigned++;
-            if ($verbose) {
-                mtrace("  Assigned room: {$room->name} (ID: {$room->id})");
+        $index = 0;
+        foreach ($actualslots as $slot) {
+            if (
+                (int)$slot->starttime !== (int)$expectedslots[$index][0] ||
+                    (int)$slot->endtime !== (int)$expectedslots[$index][1]
+            ) {
+                return false;
             }
-        }
-
-        if ($verbose) {
-            mtrace("Assigned $assigned rooms to weekplan.");
+            $index++;
         }
 
         return true;
+    }
+
+    /**
+     * Resolve a high-level report status from operation outcomes.
+     *
+     * @param string[] $statuses
+     * @param string[] $errors
+     * @param bool $hassuccess
+     * @param bool $hasidempotent
+     * @return string
+     */
+    private static function resolve_report_status(
+        array $statuses,
+        array $errors = [],
+        bool $hassuccess = false,
+        bool $hasidempotent = false
+    ): string {
+        $statuses = array_values(array_unique($statuses));
+        if (!empty($errors)) {
+            return ($hassuccess || $hasidempotent || count($statuses) > 1) ? 'partial' : 'failed';
+        }
+        if (in_array('created', $statuses, true) || $hassuccess) {
+            return 'success';
+        }
+        return 'idempotent';
+    }
+
+    /**
+     * Resolve the user id that should be written into fresh-install baseline records.
+     *
+     * @return int
+     */
+    private static function get_actor_userid(): int {
+        global $USER;
+
+        if (!empty($USER->id)) {
+            return (int)$USER->id;
+        }
+
+        $admin = get_admin();
+        if (!empty($admin->id)) {
+            return (int)$admin->id;
+        }
+
+        return 2;
     }
 
     /**

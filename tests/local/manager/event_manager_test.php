@@ -325,4 +325,115 @@ final class event_manager_test extends advanced_testcase {
         $this->assertCount(1, $events);
         $this->assertInstanceOf(\mod_bookit\event\booking_reactivated::class, $events[0]);
     }
+
+    /**
+     * Restore requests must resolve to the last valid state stored before cancellation.
+     *
+     * @return void
+     * @throws \dml_exception
+     */
+    public function test_resolve_requested_booking_status_uses_last_pre_cancel_state(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Restorable event',
+            'semester' => 20261,
+            'institutionid' => null,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        event_manager::record_booking_history(
+            $eventid,
+            'canceled',
+            (int)$user->id,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            ['bookingstatus' => ['from' => 2, 'to' => 3]]
+        );
+
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $this->assertSame(
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_manager::resolve_requested_booking_status($event, event_access_manager::BOOKINGSTATUS_NEW)
+        );
+    }
+
+    /**
+     * Self-cancelled New requests must leave active overview projections immediately.
+     *
+     * @return void
+     * @throws \dml_exception
+     */
+    public function test_filter_overview_events_hides_self_cancelled_new_requests_from_active_view(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Cancelled request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        event_manager::record_booking_history(
+            $eventid,
+            'canceled',
+            (int)$user->id,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            ['bookingstatus' => ['from' => 0, 'to' => 3]]
+        );
+
+        $visible = event_manager::filter_overview_events([
+            (object)[
+                'id' => $eventid,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+            ],
+        ], [], false, strtotime('2026-05-07 10:00:00'));
+
+        $this->assertSame([], $visible);
+    }
 }

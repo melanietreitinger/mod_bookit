@@ -127,27 +127,19 @@ class booking_notification_manager {
 
         $data = new stdClass();
         $data->eventname = $event->name ?? '';
-        $data->bookingstatus = get_string('event_bookingstatus_' . $newstatus, 'mod_bookit');
-        $data->oldbookingstatus = get_string('event_bookingstatus_' . $oldstatus, 'mod_bookit');
         $data->eventurl = $url->out(false);
         $data->room = self::get_room_name((int)($event->roomid ?? 0));
-        $data->starttime = userdate((int)($event->starttime ?? 0));
-        $data->endtime = userdate((int)($event->endtime ?? 0));
+        $data->starttimestamp = (int)($event->starttime ?? 0);
+        $data->endtimestamp = (int)($event->endtime ?? 0);
         $data->bookingperson = self::get_user_name((int)($event->usermodified ?? 0));
         $data->personincharge = self::get_user_name((int)($event->personinchargeid ?? 0));
         $data->otherexaminers = self::get_user_names_csv((string)($event->otherexaminers ?? ''));
-        $data->subject = trim((string)get_config('mod_bookit', 'bookingstatus_subject_' . $newstatus));
-        $data->body = trim((string)get_config('mod_bookit', 'bookingstatus_body_' . $newstatus));
+        $data->newstatus = $newstatus;
+        $data->oldstatus = $oldstatus;
+        $data->configuredsubject = trim((string)get_config('mod_bookit', 'bookingstatus_subject_' . $newstatus));
+        $data->configuredbody = trim((string)get_config('mod_bookit', 'bookingstatus_body_' . $newstatus));
 
-        if ($data->subject === '') {
-            $data->subject = get_string('bookingstatus_notification_subject_default', 'mod_bookit', $data);
-        }
-
-        if ($data->body === '') {
-            $data->body = get_string('bookingstatus_notification_body_default', 'mod_bookit', $data);
-        }
-
-        return $data;
+        return self::localize_template_data($data);
     }
 
     /**
@@ -169,8 +161,15 @@ class booking_notification_manager {
             }
 
             $oldlang = force_current_language($userto->lang);
-            $subject = self::replace_placeholders($template->subject, $template);
-            $body = self::replace_placeholders($template->body, $template);
+            $localizedtemplate = self::localize_template_data($template);
+            $subject = self::replace_placeholders(
+                self::resolve_template_text($localizedtemplate, 'subject'),
+                $localizedtemplate
+            );
+            $body = self::replace_placeholders(
+                self::resolve_template_text($localizedtemplate, 'body'),
+                $localizedtemplate
+            );
             force_current_language($oldlang);
 
             $message = new \core\message\message();
@@ -204,8 +203,15 @@ class booking_notification_manager {
      */
     private static function send_service_notifications(array $serviceaddresses, stdClass $template): int {
         $userfrom = core_user::get_noreply_user();
-        $subject = self::replace_placeholders($template->subject, $template);
-        $body = self::replace_placeholders($template->body, $template);
+        $localizedtemplate = self::localize_template_data($template);
+        $subject = self::replace_placeholders(
+            self::resolve_template_text($localizedtemplate, 'subject'),
+            $localizedtemplate
+        );
+        $body = self::replace_placeholders(
+            self::resolve_template_text($localizedtemplate, 'body'),
+            $localizedtemplate
+        );
         $sent = 0;
 
         foreach ($serviceaddresses as $address) {
@@ -249,6 +255,42 @@ class booking_notification_manager {
         ];
 
         return strtr($template, $replacements);
+    }
+
+    /**
+     * Resolve configured or language-default template text.
+     *
+     * @param stdClass $data
+     * @param string $field
+     * @return string
+     */
+    private static function resolve_template_text(stdClass $data, string $field): string {
+        $configured = trim((string)($field === 'subject' ? ($data->configuredsubject ?? '') : ($data->configuredbody ?? '')));
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        $stringkey = $field === 'subject'
+            ? 'bookingstatus_notification_subject_default'
+            : 'bookingstatus_notification_body_default';
+
+        return get_string($stringkey, 'mod_bookit', $data);
+    }
+
+    /**
+     * Refresh language-sensitive template fields in the current language context.
+     *
+     * @param stdClass $template
+     * @return stdClass
+     */
+    private static function localize_template_data(stdClass $template): stdClass {
+        $localized = clone $template;
+        $localized->bookingstatus = get_string('event_bookingstatus_' . (int)$template->newstatus, 'mod_bookit');
+        $localized->oldbookingstatus = get_string('event_bookingstatus_' . (int)$template->oldstatus, 'mod_bookit');
+        $localized->starttime = userdate((int)($template->starttimestamp ?? 0));
+        $localized->endtime = userdate((int)($template->endtimestamp ?? 0));
+
+        return $localized;
     }
 
     /**

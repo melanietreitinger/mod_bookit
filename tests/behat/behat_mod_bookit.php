@@ -340,6 +340,36 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Assert that a modal select/autocomplete control contains a specific option label.
+     *
+     * @Then the Bookit event details control :controlname should contain option :optionlabel
+     * @param string $controlname
+     * @param string $optionlabel
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_contain_option(
+        string $controlname,
+        string $optionlabel
+    ): void {
+        $this->assert_modal_control_option($controlname, $optionlabel, true);
+    }
+
+    /**
+     * Assert that a modal select/autocomplete control does not contain a specific option label.
+     *
+     * @Then the Bookit event details control :controlname should not contain option :optionlabel
+     * @param string $controlname
+     * @param string $optionlabel
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_not_contain_option(
+        string $controlname,
+        string $optionlabel
+    ): void {
+        $this->assert_modal_control_option($controlname, $optionlabel, false);
+    }
+
+    /**
      * Set a select value inside the event details modal.
      *
      * @When I select :value in the Bookit event details control :controlname
@@ -363,7 +393,10 @@ class behat_mod_bookit extends behat_base {
                 }
                 for (var i = 0; i < control.options.length; i++) {
                     if (control.options[i].textContent.trim() === targetLabel) {
+                        control.value = control.options[i].value;
                         control.selectedIndex = i;
+                        control.options[i].selected = true;
+                        control.dispatchEvent(new Event('input', {bubbles: true}));
                         control.dispatchEvent(new Event('change', {bubbles: true}));
                         return 'selected';
                     }
@@ -428,18 +461,19 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
-     * Submit the currently visible event details modal.
+     * Click the save action in the currently visible event details modal.
      *
-     * @When I submit the Bookit event details modal
+     * @When I click the save action in the Bookit event details modal
      * @throws ExpectationException
      */
-    public function i_submit_the_bookit_event_details_modal(): void {
+    public function i_click_the_save_action_in_the_bookit_event_details_modal(): void {
         $js = <<<'JS'
             (function() {
                 var root = document.querySelector('.modal.show');
                 if (!root) {
                     return 'modal-not-found';
                 }
+                window.skipClientValidation = true;
                 var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
                 if (!button) {
                     return 'save-not-found';
@@ -452,12 +486,88 @@ class behat_mod_bookit extends behat_base {
         $result = $this->getSession()->evaluateScript($js);
         if ($result !== 'clicked') {
             throw new ExpectationException(
-                "Could not submit the event details modal. Result: $result",
+                "Could not click the event details modal save action. Result: $result",
                 $this->getSession()
             );
         }
+    }
 
-        $this->getSession()->wait(3000);
+    /**
+     * Submit the currently visible event details modal.
+     *
+     * @When I submit the Bookit event details modal
+     * @throws ExpectationException
+     */
+    public function i_submit_the_bookit_event_details_modal(): void {
+        $this->i_click_the_save_action_in_the_bookit_event_details_modal();
+
+        $this->getSession()->wait(10000, "document.querySelector('.modal.show') === null");
+        $modalstillopen = $this->getSession()->evaluateScript("document.querySelector('.modal.show') !== null");
+        if ($modalstillopen) {
+            $details = $this->getSession()->evaluateScript(<<<'JS'
+                (function() {
+                    var root = document.querySelector('.modal.show');
+                    if (!root) {
+                        return '';
+                    }
+                    var texts = [];
+                    root.querySelectorAll('.invalid-feedback, .form-control-feedback').forEach(function(node) {
+                        var text = (node.textContent || '').trim();
+                        if (!text) {
+                            return;
+                        }
+                        var field = node.closest('.fitem, .mb-3, .form-group');
+                        var label = '';
+                        if (field) {
+                            var labelnode = field.querySelector('label, .col-form-label, .fitemtitle');
+                            label = labelnode ? (labelnode.textContent || '').replace(/\s+/g, ' ').trim() : '';
+                        }
+                        texts.push(label ? (label + ': ' + text) : text);
+                    });
+                    root.querySelectorAll('.alert-danger').forEach(function(node) {
+                        var text = (node.textContent || '').trim();
+                        if (text) {
+                            texts.push(text);
+                        }
+                    });
+                    root.querySelectorAll('input:invalid, select:invalid, textarea:invalid').forEach(function(node) {
+                        var label = '';
+                        if (node.id) {
+                            var labelnode = root.querySelector('label[for=\"' + node.id + '\"]');
+                            label = labelnode ? (labelnode.textContent || '').replace(/\s+/g, ' ').trim() : '';
+                        }
+                        var name = node.getAttribute('name') || node.id || 'unknown';
+                        texts.push('invalid-control ' + name + (label ? ' (' + label + ')' : ''));
+                    });
+                    root.querySelectorAll('.is-invalid, [aria-invalid=\"true\"]').forEach(function(node) {
+                        var label = '';
+                        if (node.id) {
+                            var labelnode = root.querySelector('label[for=\"' + node.id + '\"]');
+                            label = labelnode ? (labelnode.textContent || '').replace(/\s+/g, ' ').trim() : '';
+                        }
+                        var name = node.getAttribute('name') || node.id || node.className || 'unknown';
+                        texts.push('aria-invalid ' + name + (label ? ' (' + label + ')' : ''));
+                    });
+                    var saveButton = root.querySelector('button[data-action=\"save\"], footer button.btn-primary');
+                    if (saveButton) {
+                        texts.push('save-button disabled=' + String(!!saveButton.disabled));
+                    }
+                    var bookingstatus = root.querySelector('#id_bookingstatus, [name=\"bookingstatus\"]');
+                    if (bookingstatus) {
+                        texts.push('bookingstatus value=' + String(bookingstatus.value));
+                    }
+                    if (texts.length === 0) {
+                        texts.push((root.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 400));
+                    }
+                    return texts.join(' | ');
+                })();
+            JS);
+            throw new ExpectationException(
+                'The event details modal stayed open after submit. The dynamic form did not complete successfully. '
+                    . 'Visible modal feedback: ' . $details,
+                $this->getSession()
+            );
+        }
     }
 
     /**
@@ -505,7 +615,9 @@ class behat_mod_bookit extends behat_base {
     public function i_click_the_open_request_action_for_event(string $action, string $eventname): void {
         $js = <<<JS
             (function(actionLabel, eventLabel) {
-                var rows = document.querySelectorAll('tr.mod-bookit-open-request-row');
+                var rows = document.querySelectorAll(
+                    'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row'
+                );
                 for (var i = 0; i < rows.length; i++) {
                     var link = rows[i].querySelector('a.bookit-event-link');
                     if (!link || link.textContent.trim() !== eventLabel) {
@@ -758,6 +870,62 @@ class behat_mod_bookit extends behat_base {
         if ($result !== $expectedstate) {
             throw new ExpectationException(
                 "Expected modal control \"$controlname\" to be \"$expectedstate\" but got \"$result\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert whether a modal select/autocomplete control contains an option label.
+     *
+     * @param string $controlname
+     * @param string $optionlabel
+     * @param bool $shouldcontain
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_modal_control_option(string $controlname, string $optionlabel, bool $shouldcontain): void {
+        $js = <<<JS
+            (function(controlName) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return JSON.stringify({status: 'modal-not-found'});
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return JSON.stringify({status: 'control-not-found'});
+                }
+                var options = Array.from(control.options || []).map(function(option) {
+                    return option.textContent.trim();
+                }).filter(function(text) {
+                    return text !== '';
+                });
+                return JSON.stringify({status: 'ok', options: options});
+            })('$controlname');
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect modal control options for "' . $controlname . '". Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        $options = $result['options'] ?? [];
+        $contains = in_array($optionlabel, $options, true);
+        if ($shouldcontain && !$contains) {
+            throw new ExpectationException(
+                'Expected modal control "' . $controlname . '" to contain option "' . $optionlabel
+                    . '" but options were ' . json_encode($options),
+                $this->getSession()
+            );
+        }
+
+        if (!$shouldcontain && $contains) {
+            throw new ExpectationException(
+                'Expected modal control "' . $controlname . '" not to contain option "' . $optionlabel
+                    . '" but options were ' . json_encode($options),
                 $this->getSession()
             );
         }

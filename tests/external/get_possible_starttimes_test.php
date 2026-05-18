@@ -27,6 +27,7 @@
 namespace mod_bookit\external;
 
 use advanced_testcase;
+use mod_bookit\local\install_helper;
 
 /**
  * Unit tests for get_possible_starttimes.
@@ -46,5 +47,49 @@ final class get_possible_starttimes_test extends advanced_testcase {
         $this->assertTrue(get_possible_starttimes::is_starttime_in_past($referencetime - 1, $referencetime));
         $this->assertFalse(get_possible_starttimes::is_starttime_in_past($referencetime, $referencetime));
         $this->assertFalse(get_possible_starttimes::is_starttime_in_past($referencetime + 3600, $referencetime));
+    }
+
+    /**
+     * Past-day slots must stay hidden for requesters but remain available to service-team flows.
+     *
+     * @runInSeparateProcess
+     * @return void
+     * @throws \dml_exception
+     */
+    public function test_list_possible_starttimes_respects_allowpast_flag(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        install_helper::ensure_fresh_install_baseline();
+
+        $roomid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_room}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => install_helper::DEFAULT_ROOM_NAME],
+            MUST_EXIST
+        );
+        $DB->set_field('bookit_weekplan_room', 'starttime', 0, ['roomid' => $roomid]);
+        $date = (new \DateTimeImmutable('last friday'))->setTime(0, 0);
+
+        [$blockedslots, $blockedstatus] = get_possible_starttimes::list_possible_starttimes(
+            \DateTime::createFromImmutable($date),
+            60,
+            $roomid,
+            null,
+            false
+        );
+        [$allowedslots, $allowedstatus] = get_possible_starttimes::list_possible_starttimes(
+            \DateTime::createFromImmutable($date),
+            60,
+            $roomid,
+            null,
+            true
+        );
+
+        $this->assertSame([], $blockedslots);
+        $this->assertSame(0, $blockedstatus);
+        $this->assertNotEmpty($allowedslots);
+        $this->assertNull($allowedstatus);
     }
 }

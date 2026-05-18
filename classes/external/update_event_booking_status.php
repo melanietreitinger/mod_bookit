@@ -87,25 +87,36 @@ class update_event_booking_status extends external_api {
 
         $event = $DB->get_record('bookit_event', ['id' => $params['eventid']], '*', MUST_EXIST);
         $oldstatus = (int)($event->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
+        $effectivestatus = event_manager::resolve_requested_booking_status($event, (int)$params['status']);
 
         if (
             $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
             && $oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED
         ) {
-            if (!event_access_manager::can_manage_open_requests($context)) {
+            if (!event_access_manager::can_reactivate_rejected_request($event, $context)) {
+                throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
+            }
+        } else if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+        ) {
+            if (
+                $effectivestatus === null
+                || !event_access_manager::can_restore_canceled_booking($event, $context, $effectivestatus)
+            ) {
                 throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
             }
         } else {
             require_capability('mod/bookit:managebasics', $context);
         }
 
-        if (!event_access_manager::can_transition_booking_status($oldstatus, $params['status'])) {
+        if ($effectivestatus === null || !event_access_manager::can_transition_booking_status($oldstatus, $effectivestatus)) {
             throw new \invalid_parameter_exception('Invalid booking workflow transition.');
         }
 
-        event_manager::transition_booking_status($event, $params['status'], (int)$USER->id, $context, (int)$params['cmid']);
+        event_manager::transition_booking_status($event, $effectivestatus, (int)$USER->id, $context, (int)$params['cmid']);
 
-        return ['status' => $params['status']];
+        return ['status' => $effectivestatus];
     }
 
     /**

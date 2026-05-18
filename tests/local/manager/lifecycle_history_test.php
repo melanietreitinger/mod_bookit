@@ -28,6 +28,7 @@ namespace mod_bookit\local\manager;
 
 use advanced_testcase;
 use context_module;
+use stdClass;
 use mod_bookit\local\entity\bookit_event;
 
 /**
@@ -121,6 +122,9 @@ final class lifecycle_history_test extends advanced_testcase {
         $this->assertNull($history[0]->oldstatus);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$history[0]->newstatus);
         $this->assertNull($history[0]->changedfields);
+        $this->assertGreaterThan(0, (int)$history[0]->timecreated);
+        $this->assertSame($user->firstname, $history[0]->firstname);
+        $this->assertSame($user->lastname, $history[0]->lastname);
     }
 
     /**
@@ -156,5 +160,47 @@ final class lifecycle_history_test extends advanced_testcase {
         $this->assertSame('Updated lifecycle event', $changedfields['name']['to']);
         $this->assertSame('Internal note', $changedfields['internalnotes']['from']);
         $this->assertSame('Updated internal note', $changedfields['internalnotes']['to']);
+        $this->assertGreaterThan(0, (int)$history[0]->timecreated);
+        $this->assertSame($user->firstname, $history[0]->firstname);
+        $this->assertSame($user->lastname, $history[0]->lastname);
+    }
+
+    /**
+     * Recovery transitions must keep a visible marker in the workflow history.
+     *
+     * @return void
+     */
+    public function test_transition_booking_status_marks_recovery_entries(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_event($roomid, (int)$user->id, [
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'name' => 'Recovery lifecycle event',
+        ]);
+        $event->save((int)$user->id);
+
+        global $DB;
+
+        /** @var stdClass $persisted */
+        $persisted = $DB->get_record('bookit_event', ['id' => $event->id], '*', MUST_EXIST);
+        event_manager::transition_booking_status(
+            $persisted,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            (int)$user->id,
+            $context
+        );
+
+        $history = array_values(event_manager::get_booking_history($event->id));
+        $this->assertCount(1, $history);
+        $this->assertSame('restored', $history[0]->action);
+        $this->assertSame(1, (int)$history[0]->recoverymarker);
+
+        $changedfields = json_decode($history[0]->changedfields, true);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, $changedfields['bookingstatus']['from']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, $changedfields['bookingstatus']['to']);
     }
 }

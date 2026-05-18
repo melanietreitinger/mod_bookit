@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use DateTime;
 use mod_bookit\local\bool_timeline;
+use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\weekplan_manager;
 use mod_bookit\local\persistent\blocker;
@@ -130,10 +131,17 @@ class get_possible_starttimes extends external_api {
      * @param int $duration
      * @param int $roomid
      * @param ?int $excepteventid Optionally, an eventid to exclude from blocking events.
+     * @param bool $allowpast
      * @return array Pair of (associative array of [Timestamp => Time string])
      * and optional integer in case of no starttimes. 1 Means there is no weekplan assigned to that day.
      */
-    public static function list_possible_starttimes(DateTime $date, int $duration, int $roomid, ?int $excepteventid = null): array {
+    public static function list_possible_starttimes(
+        DateTime $date,
+        int $duration,
+        int $roomid,
+        ?int $excepteventid = null,
+        bool $allowpast = false
+    ): array {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
 
         $extratimebefore = $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore');
@@ -210,11 +218,13 @@ class get_possible_starttimes extends external_api {
             }
         }
 
-        $starttimes = array_filter(
-            $starttimes,
-            static fn(int $time): bool => !self::is_starttime_in_past($time),
-            ARRAY_FILTER_USE_KEY
-        );
+        if (!$allowpast) {
+            $starttimes = array_filter(
+                $starttimes,
+                static fn(int $time): bool => !self::is_starttime_in_past($time),
+                ARRAY_FILTER_USE_KEY
+            );
+        }
 
         if (empty($starttimes)) {
             return [[], 0];
@@ -264,12 +274,13 @@ class get_possible_starttimes extends external_api {
         $context = \context_module::instance($cmid);
         self::validate_context($context);
         require_capability('mod/bookit:addevent', $context);
+        $allowpast = event_access_manager::can_manage_past_bookings($context);
 
         $date = new \DateTime("now");
         $date->setTime(0, 0);
         $date->setDate($year, $month, $day);
 
-        [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid, $excepteventid);
+        [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid, $excepteventid, $allowpast);
         $transformed = [];
 
         if ($status !== null && !has_capability('mod/bookit:managebasics', $context)) {

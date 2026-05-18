@@ -271,4 +271,55 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_cancel_event($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_participant_cancel_only($event, $context, $user->id));
     }
+
+    /**
+     * Editable New requests expose a self-cancel path for participant roles.
+     *
+     * @return void
+     */
+    public function test_can_self_cancel_new_request(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => $user->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_self_cancel_new_request($event, $context, $user->id));
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $this->assertFalse(event_access_manager::can_self_cancel_new_request($event, $context, $user->id));
+    }
+
+    /**
+     * Past booking management is reserved for service-team style capabilities.
+     *
+     * @return void
+     */
+    public function test_can_manage_past_bookings_requires_service_capabilities(): void {
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Bookit test']);
+        $context = context_module::instance($bookit->cmid);
+
+        $servicerole = \create_role('Bookit service team', 'bookitservice', 'manager');
+        \assign_capability('mod/bookit:editevent', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $servicerole, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $requester = $this->getDataGenerator()->create_user();
+        $serviceuser = $this->getDataGenerator()->create_user();
+        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($requester);
+        $this->assertFalse(event_access_manager::can_manage_past_bookings($context));
+        $this->setUser($serviceuser);
+        $this->assertTrue(event_access_manager::can_manage_past_bookings($context));
+    }
 }

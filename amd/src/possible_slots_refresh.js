@@ -71,7 +71,8 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             }
         }])[0];
 
-        const currentSelected = new Date(timeEl.value * 1000);
+        const currentSelectionValue = timeEl.value || timeEl.dataset.currentStarttime || '';
+        const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
 
         while (timeEl.options.length) {
             timeEl.options.remove(0);
@@ -91,10 +92,16 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             opt.value = slot.timestamp;
             opt.innerText = slot.string;
             const date = new Date(slot.timestamp * 1000);
-            if (date.getHours() * 60 + date.getMinutes() === currentSelected.getHours() * 60 + currentSelected.getMinutes()) {
+            if (
+                currentSelected !== null &&
+                date.getHours() * 60 + date.getMinutes() === currentSelected.getHours() * 60 + currentSelected.getMinutes()
+            ) {
                 opt.selected = true;
             }
             timeEl.options.add(opt);
+        }
+        if (timeEl.value) {
+            timeEl.dataset.currentStarttime = timeEl.value;
         }
     };
 

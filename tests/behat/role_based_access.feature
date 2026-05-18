@@ -27,6 +27,12 @@ Feature: Enforce role-based visibility and editing for booking requests
     And the following "activities" exist:
       | activity | name               | course | idnumber |
       | bookit   | My BookIt Activity | C1     | 1        |
+    And the following "mod_bookit > institutions" exist:
+      | name                 |
+      | Standard-Institution |
+    And the following "mod_bookit > rooms" exist:
+      | name         | shortname | seats |
+      | Default room | DEF       | 0     |
 
   Scenario: Support person sees only accepted bookings and may edit only internal notes
     Given the following "mod_bookit > events" exist:
@@ -46,14 +52,14 @@ Feature: Enforce role-based visibility and editing for booking requests
 
   Scenario: Booking person may edit only while status is New and may later only cancel
     Given the following "mod_bookit > events" exist:
-      | name                    | username    | startdate                         | enddate                              | bookingstatus | institution |
-      | Editable booking        | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
-      | Cancel-only booking     | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 15:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
+      | name                    | username    | personincharge_username | startdate                         | enddate                              | bookingstatus | institution |
+      | Editable booking        | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
+      | Cancel-only booking     | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 15:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     And I open the Bookit event details for "Editable booking"
     Then the Bookit event details control "name" should be enabled
-    And the Bookit event details control "bookingstatus" should not be visible
+    And the Bookit event details control "bookingstatus" should be enabled
     When I close the currently open dialog
     And I open the Bookit event details for "Cancel-only booking"
     Then the Bookit event details control "name" should be disabled
@@ -61,3 +67,16 @@ Feature: Enforce role-based visibility and editing for booking requests
     When I select "Canceled" in the Bookit event details control "bookingstatus"
     And I submit the Bookit event details modal
     Then I should see "Canceled"
+
+  Scenario: Booking person may self-cancel a new request and it leaves the active overview
+    Given the following "mod_bookit > events" exist:
+      | name                    | username    | personincharge_username | startdate                         | enddate                              | bookingstatus | institution |
+      | Self-cancel booking     | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
+    When I log in as "bookinguser"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    And I open the Bookit event details for "Self-cancel booking"
+    Then the Bookit event details control "bookingstatus" should be enabled
+    When I select "Canceled" in the Bookit event details control "bookingstatus"
+    And I submit the Bookit event details modal
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit overview should list only the events ""

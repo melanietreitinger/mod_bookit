@@ -69,7 +69,11 @@ class event_access_manager {
         self::BOOKINGSTATUS_ACCEPTED => [
             self::BOOKINGSTATUS_CANCELED,
         ],
-        self::BOOKINGSTATUS_CANCELED => [],
+        self::BOOKINGSTATUS_CANCELED => [
+            self::BOOKINGSTATUS_NEW,
+            self::BOOKINGSTATUS_IN_PROGRESS,
+            self::BOOKINGSTATUS_ACCEPTED,
+        ],
         self::BOOKINGSTATUS_REJECTED => [
             self::BOOKINGSTATUS_NEW,
         ],
@@ -172,6 +176,17 @@ class event_access_manager {
     }
 
     /**
+     * Check whether the current user may request bookings in the past.
+     *
+     * @param context_module $context
+     * @return bool
+     */
+    public static function can_manage_past_bookings(context_module $context): bool {
+        return has_capability('mod/bookit:managebasics', $context)
+            || has_capability('mod/bookit:editevent', $context);
+    }
+
+    /**
      * Return all BookIt participant roles that the user has on the event.
      *
      * @param stdClass $event
@@ -214,6 +229,20 @@ class event_access_manager {
 
         $roles = self::get_user_roles_for_event($event, $userid);
         return !empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']));
+    }
+
+    /**
+     * Check whether the user may self-cancel a still-editable New request.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_self_cancel_new_request(stdClass $event, context_module $context, int $userid): bool {
+        return self::can_participant_edit_event($event, $userid)
+            && !self::can_manage_open_requests($context)
+            && (int)($event->bookingstatus ?? self::BOOKINGSTATUS_NEW) === self::BOOKINGSTATUS_NEW;
     }
 
     /**
@@ -366,6 +395,50 @@ class event_access_manager {
             self::get_user_roles_for_event($event, $userid),
             ['bookingperson', 'personincharge', 'otherexaminer']
         ));
+    }
+
+    /**
+     * Check whether a rejected request may be reactivated by the service team.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int|null $referencetime
+     * @return bool
+     */
+    public static function can_reactivate_rejected_request(
+        stdClass $event,
+        context_module $context,
+        ?int $referencetime = null
+    ): bool {
+        return self::can_manage_open_requests($context) && self::is_rejected_request($event, $referencetime);
+    }
+
+    /**
+     * Check whether a cancelled booking may be restored to a prior valid state.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int|null $restoredstatus
+     * @return bool
+     */
+    public static function can_restore_canceled_booking(
+        stdClass $event,
+        context_module $context,
+        ?int $restoredstatus = null
+    ): bool {
+        if (!self::can_manage_open_requests($context)) {
+            return false;
+        }
+
+        if ((int)($event->bookingstatus ?? -1) !== self::BOOKINGSTATUS_CANCELED) {
+            return false;
+        }
+
+        if ($restoredstatus === null) {
+            return false;
+        }
+
+        return self::can_transition_booking_status(self::BOOKINGSTATUS_CANCELED, $restoredstatus);
     }
 
     /**

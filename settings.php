@@ -117,27 +117,110 @@ if ($hassiteconfig) {
         ));
     }
 
-    // Install helper.
-    // XXX TODO: remove next line!!
-    set_config('installhelperfinished', 0, 'mod_bookit');
-    $installhelperfinished = get_config('mod_bookit', 'installhelperfinished');
+    $settings->add(new admin_setting_heading(
+        'mod_bookit_calendar_profile_heading',
+        get_string('calendar_profile_heading', 'mod_bookit'),
+        get_string('calendar_profile_desc', 'mod_bookit')
+    ));
 
-    if (empty($installhelperfinished)) {
-        $installurl = new moodle_url('/mod/bookit/admin/install_helper_run.php', ['sesskey' => sesskey()]);
-        $description = new lang_string('runinstallhelperinfo', 'mod_bookit');
-        $description .= \core\output\html_writer::empty_tag('br');
-        $description .= \core\output\html_writer::link(
-            $installurl,
-            new lang_string('runinstallhelper', 'mod_bookit'),
-            ['class' => 'btn btn-secondary mt-3', 'role' => 'button']
+    $settings->add(new admin_setting_configtext(
+        'mod_bookit/semesterlookbackyears',
+        get_string('semesterlookbackyears', 'mod_bookit'),
+        get_string('semesterlookbackyears_desc', 'mod_bookit'),
+        1,
+        PARAM_INT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'mod_bookit/semesterlookaheadyears',
+        get_string('semesterlookaheadyears', 'mod_bookit'),
+        get_string('semesterlookaheadyears_desc', 'mod_bookit'),
+        1,
+        PARAM_INT
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'mod_bookit/examiner_pool_usernames',
+        get_string('examiner_pool_usernames', 'mod_bookit'),
+        get_string('examiner_pool_usernames_desc', 'mod_bookit'),
+        '',
+        PARAM_RAW_TRIMMED
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'mod_bookit/calendar_optional_fields',
+        get_string('calendar_optional_fields', 'mod_bookit'),
+        get_string('calendar_optional_fields_desc', 'mod_bookit'),
+        'timecompensation,compensationfordisadvantages,notes,refcourseid,coursetemplate',
+        PARAM_RAW_TRIMMED
+    ));
+
+    $installhelperfinished = (int)get_config('mod_bookit', 'installhelperfinished');
+    $installhelperstatus = optional_param('installhelperstatus', '', PARAM_ALPHAEXT);
+    $rolesimported = optional_param('rolesimported', 0, PARAM_INT);
+    $rolesskipped = optional_param('rolesskipped', 0, PARAM_INT);
+    $baselinecreated = optional_param('baselinecreated', 0, PARAM_INT);
+    $baselineverified = optional_param('baselineverified', 0, PARAM_INT);
+    $installhelpererrors = optional_param('installhelpererrors', 0, PARAM_INT);
+    $installhelperdetails = trim((string)optional_param('installhelperdetails', '', PARAM_TEXT));
+
+    $settings->add(new admin_setting_heading(
+        'mod_bookit_installation_heading',
+        get_string('installation_heading', 'mod_bookit'),
+        get_string('installation_heading_desc', 'mod_bookit')
+    ));
+
+    $statushtml = '';
+    if ($installhelperstatus !== '') {
+        $summarykey = 'runinstallhelper_result_' . $installhelperstatus;
+        $summary = get_string($summarykey, 'mod_bookit', (object)[
+            'rolesimported' => $rolesimported,
+            'rolesskipped' => $rolesskipped,
+            'baselinecreated' => $baselinecreated,
+            'baselineverified' => $baselineverified,
+            'errors' => $installhelpererrors,
+        ]);
+        $statushtml .= \core\output\html_writer::div(
+            $summary,
+            'alert ' . (
+                $installhelperstatus === 'failed' ? 'alert-danger' :
+                    ($installhelperstatus === 'partial' ? 'alert-warning' : 'alert-success')
+            )
         );
-
-        $runinstallhelper = new admin_setting_heading(
-            'mod_bookit/runinstallhelper',
-            new lang_string('runinstallhelper', 'mod_bookit'),
-            $description
+        if ($installhelperdetails !== '') {
+            $statushtml .= \core\output\html_writer::div(s($installhelperdetails), 'text-muted small');
+        }
+    } else if ($installhelperfinished !== 0) {
+        $statushtml .= \core\output\html_writer::div(
+            get_string('runinstallhelper_ready_state', 'mod_bookit'),
+            'alert alert-success'
         );
-
-        $settings->add($runinstallhelper);
     }
+
+    $installurl = new moodle_url('/mod/bookit/admin/install_helper_run.php', ['sesskey' => sesskey()]);
+    $rolelinks = [];
+    foreach (\mod_bookit\local\install_helper::get_default_role_preset_filenames() as $presetfile) {
+        $url = new moodle_url('/mod/bookit/assets/roles/' . $presetfile);
+        $rolelinks[] = \core\output\html_writer::link($url, $presetfile, ['download' => $presetfile]);
+    }
+
+    $description = $statushtml;
+    $description .= \core\output\html_writer::div(get_string('runinstallhelperinfo', 'mod_bookit'));
+    $description .= \core\output\html_writer::link(
+        $installurl,
+        new lang_string('runinstallhelper', 'mod_bookit'),
+        ['class' => 'btn btn-secondary mt-3 mb-3', 'role' => 'button']
+    );
+    $description .= \core\output\html_writer::tag(
+        'div',
+        get_string('rolepresetdownloads', 'mod_bookit') . ': '
+            . \core\output\html_writer::alist($rolelinks, ['class' => 'mb-0']),
+        ['class' => 'mt-3']
+    );
+
+    $settings->add(new admin_setting_heading(
+        'mod_bookit/runinstallhelper',
+        new lang_string('runinstallhelper', 'mod_bookit'),
+        $description
+    ));
 }

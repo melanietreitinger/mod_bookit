@@ -28,6 +28,12 @@ Feature: Filter reporting data and block past-date saves
     And the following "activities" exist:
       | activity | name               | course | idnumber |
       | bookit   | My BookIt Activity | C1     | 1        |
+    And the following "mod_bookit > institutions" exist:
+      | name                 |
+      | Standard-Institution |
+    And the following "mod_bookit > rooms" exist:
+      | name         | shortname | seats |
+      | Default room | DEF       | 0     |
 
   Scenario: Reporting overview filters by date range and semester
     Given the following "mod_bookit > events" exist:
@@ -48,5 +54,5 @@ Feature: Filter reporting data and block past-date saves
     And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     And I open the Bookit event details for "Future validation exam"
     And I set the Bookit event details control "starttime" to a past timestamp
-    And I submit the Bookit event details modal
+    And I click the save action in the Bookit event details modal
     Then I should see "You cannot enter events in the past."

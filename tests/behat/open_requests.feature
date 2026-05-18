@@ -48,3 +48,18 @@ Feature: Process open booking requests
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Exam Chemistry I"
     And I should see "Accepted"
+
+  Scenario: Service team reactivates a rejected request from the dedicated queue
+    Given the following "mod_bookit > events" exist:
+      | name              | startdate                         | enddate                              | bookingstatus | institution |
+      | Rejected oral exam | ##today noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | 4 | 1 |
+    When I log in as "susiservice"
+    And I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
+    Then I should see "Rejected oral exam"
+    And I should see "Workflow history"
+    When I click the open request action "Reactivate as new request" for event "Rejected oral exam"
+    When I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
+    Then I should not see "Rejected oral exam"
+    When I open the Bookit overview "openrequests" for "My BookIt Activity"
+    Then I should see "Rejected oral exam"
+    And I should see "Reactivated as new request"

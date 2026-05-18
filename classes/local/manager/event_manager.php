@@ -466,6 +466,10 @@ class event_manager {
                 return false;
             }
 
+            if (!$history && self::is_hidden_from_active_overview($event)) {
+                return false;
+            }
+
             if (!empty($bookingstatuses) && !in_array((int)($event->bookingstatus ?? -1), $bookingstatuses, true)) {
                 return false;
             }
@@ -610,6 +614,52 @@ class event_manager {
         ";
 
         return $DB->get_records_sql($sql, ['eventid' => $eventid], 0, $limit);
+    }
+
+    /**
+     * Resolve the effective target status for a requested workflow action.
+     *
+     * A request for "New" on cancelled items is treated as a restore request and resolves to the
+     * last valid pre-cancel status stored in the append-only history table.
+     *
+     * @param stdClass $event
+     * @param int $requestedstatus
+     * @return int|null
+     * @throws dml_exception
+     */
+    public static function resolve_requested_booking_status(stdClass $event, int $requestedstatus): ?int {
+        $currentstatus = (int)($event->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
+        if (
+            $currentstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+            && $requestedstatus === event_access_manager::BOOKINGSTATUS_NEW
+        ) {
+            return self::resolve_restore_booking_status((int)$event->id);
+        }
+
+        return $requestedstatus;
+    }
+
+    /**
+     * Resolve the last valid pre-cancel booking status for a canceled item.
+     *
+     * @param int $eventid
+     * @return int|null
+     * @throws dml_exception
+     */
+    public static function resolve_restore_booking_status(int $eventid): ?int {
+        $history = self::get_booking_history($eventid, 50);
+        foreach ($history as $entry) {
+            if ((int)($entry->newstatus ?? -1) !== event_access_manager::BOOKINGSTATUS_CANCELED) {
+                continue;
+            }
+
+            $oldstatus = $entry->oldstatus === null ? null : (int)$entry->oldstatus;
+            if ($oldstatus !== null) {
+                return $oldstatus;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -776,6 +826,31 @@ class event_manager {
         self::trigger_booking_lifecycle_audit($event, $context, $userid, $oldstatus, $newstatus, $action);
 
         return $event;
+    }
+
+    /**
+     * Check whether the event should stay hidden from active participant overviews.
+     *
+     * This is currently used for self-cancelled New requests, which remain auditable via the
+     * append-only history but should leave active operational views immediately.
+     *
+     * @param stdClass $event
+     * @return bool
+     * @throws dml_exception
+     */
+    private static function is_hidden_from_active_overview(stdClass $event): bool {
+        if ((int)($event->bookingstatus ?? -1) !== event_access_manager::BOOKINGSTATUS_CANCELED) {
+            return false;
+        }
+
+        $latest = self::get_booking_history((int)$event->id, 1);
+        if (empty($latest)) {
+            return false;
+        }
+
+        $entry = reset($latest);
+        return (int)($entry->oldstatus ?? -1) === event_access_manager::BOOKINGSTATUS_NEW
+            && (int)($entry->newstatus ?? -1) === event_access_manager::BOOKINGSTATUS_CANCELED;
     }
 
 
