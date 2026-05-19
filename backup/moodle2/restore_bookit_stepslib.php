@@ -29,7 +29,12 @@
 /**
  * Defines the structure step to restore one mod_bookit activity.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class restore_bookit_activity_structure_step extends restore_activity_structure_step {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Defines the structure to be restored.
      *

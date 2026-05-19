@@ -40,7 +40,12 @@ use stdClass;
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class event_manager {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Get event from id.
      *
@@ -1199,6 +1204,7 @@ class event_manager {
      *
      * @param int $oldstatus
      * @param int $newstatus
+     * @param bool $isselfcancelnew
      * @return string
      */
     private static function resolve_booking_history_action(

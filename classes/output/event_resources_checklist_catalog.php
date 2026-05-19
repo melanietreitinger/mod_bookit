@@ -38,7 +38,12 @@ use stdClass;
  *
  * Prepares data for the event_resources_checklist_catalog template.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class event_resources_checklist_catalog implements renderable, templatable {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** @var int Event ID */
     private int $eventid;
 

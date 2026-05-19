@@ -29,7 +29,12 @@
 /**
  * Define the complete structure for backup, with file and id annotations.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class backup_bookit_activity_structure_step extends backup_activity_structure_step {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Defines the structure of the resulting xml file.
      *

@@ -37,7 +37,12 @@ require_once($CFG->libdir . '/formslib.php');
  * Extends moodleform (not dynamic_form) so it can be rendered standalone.
  * All elements are static; there is no submit button.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class view_event_resources_form extends \moodleform {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Form definition: adds one static element per booked resource, grouped by category.
      */

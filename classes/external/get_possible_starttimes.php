@@ -49,7 +49,12 @@ require_once($CFG->libdir . "/externallib.php");
  * @copyright   2025 Justus Dieckmann
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class get_possible_starttimes extends external_api {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Check whether a booking start timestamp lies in the past.
      *

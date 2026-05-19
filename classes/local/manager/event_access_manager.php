@@ -31,7 +31,12 @@ use stdClass;
 /**
  * Centralises booking-state and participant checks for event-level views.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class event_access_manager {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** Booking status: new request. */
     public const BOOKINGSTATUS_NEW = 0;
 

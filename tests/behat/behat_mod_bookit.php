@@ -28,6 +28,7 @@ use Behat\Mink\Exception\ExpectationException;
 
 require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
 
+// phpcs:disable moodle.Commenting.ValidTags.Invalid
 /**
  * Custom Behat step definitions for mod_bookit.
  *
@@ -36,8 +37,10 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
  * @copyright   2026 ssystems GmbH <oss@ssystems.de>
  * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @SuppressWarnings(PHPMD)
  */
 class behat_mod_bookit extends behat_base {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid
     /**
      * Opens the Bookit overview for the named activity and tab.
      *

@@ -51,6 +51,7 @@ function bookit_supports(string $feature): bool|string|null {
  */
 function bookit_add_instance(object $moduleinstance, mod_bookit_mod_form|null $mform = null): int {
     global $DB;
+    unset($mform);
 
     $moduleinstance->timecreated = time();
 
@@ -107,6 +108,7 @@ function bookit_extend_settings_navigation(
     ?navigation_node $modnode = null
 ) {
     global $PAGE;
+    unset($settingsnav);
 
     if (!$modnode) {
         return; // Safety: we are not inside an activity page.

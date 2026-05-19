@@ -42,7 +42,15 @@ use mod_bookit\local\entity\resource\bookit_resource_status;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers      \mod_bookit\local\manager\event_resource_manager
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * Coverage metadata and PHPMD suppression for the resource workflow test case.
+ *
+ * @covers \mod_bookit\local\manager\event_resource_manager
+ * @SuppressWarnings(PHPMD)
+ */
 final class event_resource_manager_test extends advanced_testcase {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** @var int Test category ID */
     private int $categoryid;
 

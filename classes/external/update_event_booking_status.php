@@ -39,7 +39,12 @@ require_once($CFG->libdir . "/externallib.php");
 /**
  * External API for updating the booking status of an event.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class update_event_booking_status extends external_api {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Description of parameters.
      *

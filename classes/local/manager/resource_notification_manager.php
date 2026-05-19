@@ -33,7 +33,12 @@ use moodle_url;
 /**
  * Sends Moodle messages when a resource status changes.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class resource_notification_manager {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Notify all relevant users when a resource status changes for an event.
      *

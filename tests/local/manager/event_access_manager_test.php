@@ -35,7 +35,15 @@ use stdClass;
  *
  * @covers \mod_bookit\local\manager\event_access_manager
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * Coverage metadata and PHPMD suppression for the large scenario-based test case.
+ *
+ * @covers \mod_bookit\local\manager\event_access_manager
+ * @SuppressWarnings(PHPMD)
+ */
 final class event_access_manager_test extends advanced_testcase {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Create a Bookit module context with a participant role that may open the overview and own-event details.
      *

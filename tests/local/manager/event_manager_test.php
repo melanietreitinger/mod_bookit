@@ -34,7 +34,15 @@ use context_module;
  *
  * @covers \mod_bookit\local\manager\event_manager
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * Coverage metadata and PHPMD suppression for the reporting workflow test case.
+ *
+ * @covers \mod_bookit\local\manager\event_manager
+ * @SuppressWarnings(PHPMD)
+ */
 final class event_manager_test extends advanced_testcase {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Create a Bookit module context with an observer role assigned to the provided user.
      *

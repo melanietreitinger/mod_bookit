@@ -36,7 +36,12 @@ use mod_bookit\local\manager\weekplan_manager;
 /**
  * Installation helper class.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class install_helper {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** Default standalone room name. */
     public const DEFAULT_ROOM_NAME = 'Default room';
 

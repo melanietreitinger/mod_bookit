@@ -202,6 +202,7 @@ final class booking_notification_manager_test extends advanced_testcase {
      * @param int $usermodified
      * @param int|null $personinchargeid
      * @param string|null $otherexaminers
+     * @param string $name
      * @return int
      */
     private function create_test_event(

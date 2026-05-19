@@ -29,14 +29,17 @@ use mod_bookit\local\install_helper;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
 
+// phpcs:disable moodle.Commenting.ValidTags.Invalid
 /**
  * Data generator for mod_bookit
  *
  * @package     mod_bookit
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @SuppressWarnings(PHPMD)
  */
 class mod_bookit_generator extends testing_module_generator {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid
     /**
      * Create a new event.
      * @param array $event
