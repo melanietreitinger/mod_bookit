@@ -58,6 +58,26 @@ if ($hassiteconfig) {
     // XXX TODO: write some text as introduction to bookit.
 
     $settings->add(new admin_setting_heading(
+        'mod_bookit_optional_parts_heading',
+        get_string('optional_plugin_parts_heading', 'mod_bookit'),
+        get_string('optional_plugin_parts_desc', 'mod_bookit')
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_bookit/' . install_helper::CONFIG_RESOURCES_ENABLED,
+        get_string('optional_resources_enabled', 'mod_bookit'),
+        get_string('optional_resources_enabled_desc', 'mod_bookit'),
+        0
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_bookit/' . install_helper::CONFIG_CHECKLIST_ENABLED,
+        get_string('optional_checklist_enabled', 'mod_bookit'),
+        get_string('optional_checklist_enabled_desc', 'mod_bookit'),
+        0
+    ));
+
+    $settings->add(new admin_setting_heading(
         'mod_bookit_bookingstatus_notifications_heading',
         get_string('bookingstatus_notifications_heading', 'mod_bookit'),
         get_string('bookingstatus_notifications_desc', 'mod_bookit')
@@ -156,26 +176,6 @@ if ($hassiteconfig) {
         PARAM_RAW_TRIMMED
     ));
 
-    $settings->add(new admin_setting_heading(
-        'mod_bookit_optional_parts_heading',
-        get_string('optional_plugin_parts_heading', 'mod_bookit'),
-        get_string('optional_plugin_parts_desc', 'mod_bookit')
-    ));
-
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_bookit/' . install_helper::CONFIG_RESOURCES_ENABLED,
-        get_string('optional_resources_enabled', 'mod_bookit'),
-        get_string('optional_resources_enabled_desc', 'mod_bookit'),
-        0
-    ));
-
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_bookit/' . install_helper::CONFIG_CHECKLIST_ENABLED,
-        get_string('optional_checklist_enabled', 'mod_bookit'),
-        get_string('optional_checklist_enabled_desc', 'mod_bookit'),
-        0
-    ));
-
     $installhelperfinished = (int)get_config('mod_bookit', 'installhelperfinished');
     $installhelperstatus = optional_param('installhelperstatus', '', PARAM_ALPHAEXT);
     $rolesimported = optional_param('rolesimported', 0, PARAM_INT);
@@ -241,7 +241,7 @@ if ($hassiteconfig) {
 
     $settings->add(new admin_setting_heading(
         'mod_bookit/runinstallhelper',
-        new lang_string('runinstallhelper', 'mod_bookit'),
+        '',
         $description
     ));
 }
