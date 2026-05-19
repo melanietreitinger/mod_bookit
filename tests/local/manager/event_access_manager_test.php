@@ -28,6 +28,7 @@ namespace mod_bookit\local\manager;
 
 use advanced_testcase;
 use context_module;
+use mod_bookit\local\install_helper;
 use stdClass;
 
 /**
@@ -412,5 +413,36 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertFalse(event_access_manager::can_manage_past_bookings($context));
         $this->setUser($serviceuser);
         $this->assertTrue(event_access_manager::can_manage_past_bookings($context));
+    }
+
+    /**
+     * Event checklist and resources pages must disappear completely when the optional module parts are disabled.
+     *
+     * @return void
+     */
+    public function test_optional_module_toggles_block_event_checklist_and_resources(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 999,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        set_config(install_helper::CONFIG_CHECKLIST_ENABLED, 0, 'mod_bookit');
+        set_config(install_helper::CONFIG_RESOURCES_ENABLED, 0, 'mod_bookit');
+        $this->assertFalse(event_access_manager::can_view_event_checklist($event, $context, (int)$user->id));
+        $this->assertFalse(event_access_manager::can_view_event_resources($event, $context, (int)$user->id));
+
+        set_config(install_helper::CONFIG_CHECKLIST_ENABLED, 1, 'mod_bookit');
+        set_config(install_helper::CONFIG_RESOURCES_ENABLED, 1, 'mod_bookit');
+        $this->assertTrue(event_access_manager::can_view_event_checklist($event, $context, (int)$user->id));
+        $this->assertTrue(event_access_manager::can_view_event_resources($event, $context, (int)$user->id));
     }
 }

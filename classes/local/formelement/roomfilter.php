@@ -140,7 +140,8 @@ class roomfilter extends HTML_QuickForm_select implements \core\output\templatab
         $colors = [];
 
         foreach ($rooms as $room) {
-            $colors[$room->get('id')] = $room->get('eventcolor');
+            $eventcolor = trim((string)$room->get('eventcolor'));
+            $colors[$room->get('id')] = $eventcolor !== '' ? $eventcolor : '#6c757d';
         }
 
         return $colors;

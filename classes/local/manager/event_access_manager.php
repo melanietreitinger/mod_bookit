@@ -26,6 +26,7 @@
 namespace mod_bookit\local\manager;
 
 use context_module;
+use mod_bookit\local\install_helper;
 use stdClass;
 
 /**
@@ -189,6 +190,24 @@ class event_access_manager {
     public static function can_manage_past_bookings(context_module $context): bool {
         return has_capability('mod/bookit:managebasics', $context)
             || has_capability('mod/bookit:editevent', $context);
+    }
+
+    /**
+     * Check whether the optional checklist module is enabled.
+     *
+     * @return bool
+     */
+    public static function is_checklist_enabled(): bool {
+        return install_helper::is_checklist_enabled();
+    }
+
+    /**
+     * Check whether the optional resources module is enabled.
+     *
+     * @return bool
+     */
+    public static function is_resources_enabled(): bool {
+        return install_helper::is_resources_enabled();
     }
 
     /**
@@ -508,6 +527,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_view_event_checklist(stdClass $event, context_module $context, int $userid): bool {
+        if (!self::is_checklist_enabled()) {
+            return false;
+        }
+
         if (has_capability('mod/bookit:managebasics', $context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
             return true;
         }
@@ -528,6 +551,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_view_event_resources(stdClass $event, context_module $context, int $userid): bool {
+        if (!self::is_resources_enabled()) {
+            return false;
+        }
+
         if (has_capability('mod/bookit:managebasics', $context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
             return true;
         }

@@ -48,6 +48,8 @@ $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
 $canmanage = has_capability('mod/bookit:managebasics', $context);
 $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
 $showreportfilters = $canmanageopenrequests || $isobserverrestricted;
+$checklistenabled = event_access_manager::is_checklist_enabled();
+$resourcesenabled = event_access_manager::is_resources_enabled();
 $selectedstatus = optional_param('bookingstatusfilter', -1, PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
@@ -273,6 +275,9 @@ $templatecontext = [
     'rejectedrequestcounttext' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
     'showoverviewfilters' => !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
     'showreportfilters' => $showreportfilters && !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
+    'showprogresscolumn' => $checklistenabled || $resourcesenabled,
+    'showchecklistcolumn' => $checklistenabled,
+    'showresourcescolumn' => $resourcesenabled,
     'reportinghelp' => $currenttab === 'history'
         ? get_string('overview_history_help', 'mod_bookit')
         : get_string('overview_reporting_help', 'mod_bookit'),
@@ -306,10 +311,12 @@ $progressmap = [];
 $resourceprogressmap = [];
 if (!empty($events)) {
     $eventids = array_map(fn($ev) => (int)$ev->id, $events);
-    if ($masterid > 0) {
+    if ($checklistenabled && $masterid > 0) {
         $progressmap = event_checklist_state_manager::get_progress_percent_for_events($eventids, $masterid);
     }
-    $resourceprogressmap = event_resource_manager::get_resource_progress_for_events($eventids);
+    if ($resourcesenabled) {
+        $resourceprogressmap = event_resource_manager::get_resource_progress_for_events($eventids);
+    }
 }
 $historyeventids = array_unique(array_merge(
     array_map(static fn($ev): int => (int)$ev->id, $events),
@@ -392,9 +399,11 @@ $prepareeventrow = function (
     $cm,
     $masterid,
     $canmanage,
+    $checklistenabled,
     $isobserverrestricted,
     $statuscolors,
     $progressmap,
+    $resourcesenabled,
     $resourceprogressmap,
     $latesthistorymap,
     $buildhistorydetails
@@ -524,21 +533,21 @@ $prepareeventrow = function (
         'starttime' => (int)$ev->starttime,
         'cmid' => (int)$cm->id,
         'checklistprogress' => $progressmap[(int)$ev->id] ?? 0,
-        'checklistprogress_available' => $masterid > 0,
-        'haschecklistaction' => !$isreservedprojection && $canviewchecklist,
+        'checklistprogress_available' => $checklistenabled && $masterid > 0,
+        'haschecklistaction' => $checklistenabled && !$isreservedprojection && $canviewchecklist,
         'checklistlabel' => get_string('checklist', 'mod_bookit'),
         'checklisturl' => (new moodle_url('/mod/bookit/view/event_checklist_view.php', [
             'id' => $cm->id,
             'eventid' => (int)$ev->id,
         ]))->out(false),
-        'hasresourcesaction' => !$isreservedprojection && $canviewresources,
+        'hasresourcesaction' => $resourcesenabled && !$isreservedprojection && $canviewresources,
         'resourceschecklistlabel' => get_string('resources', 'mod_bookit'),
         'resourceschecklisturl' => (new moodle_url('/mod/bookit/view/event_resources.php', [
             'id' => $cm->id,
             'eventid' => (int)$ev->id,
         ]))->out(false),
         'resourcesprogress' => $resourceprogressmap[(int)$ev->id]['percent'] ?? 0,
-        'resourcesprogress_available' => ($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0,
+        'resourcesprogress_available' => $resourcesenabled && (($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0),
         'haslatesthistorysummary' => !$isreservedprojection && $latesthistorysummary !== '',
         'latesthistorysummary' => s($latesthistorysummary),
         'showhistorydetails' => !$isreservedprojection && $isopenrequest,

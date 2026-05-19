@@ -25,6 +25,7 @@
 
 use mod_bookit\local\manager\checklist_manager;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
+use mod_bookit\local\install_helper;
 use mod_bookit\local\tabs;
 
 require_once(__DIR__ . '/../../../config.php');
@@ -34,6 +35,10 @@ $context = context_system::instance();
 
 require_login();
 require_capability('mod/bookit:managemasterchecklist', $context);
+if (!install_helper::is_checklist_enabled()) {
+    $settingsurl = new moodle_url('/admin/settings.php', ['section' => 'modsettingbookit']);
+    redirect($settingsurl, get_string('optional_part_disabled', 'mod_bookit'), null, \core\output\notification::NOTIFY_WARNING);
+}
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/master_checklist.php'));

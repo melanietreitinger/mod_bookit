@@ -32,6 +32,7 @@ use mod_bookit\local\entity\resource\bookit_resource_category;
 use mod_bookit\local\entity\resource\bookit_resource;
 use mod_bookit\local\manager\resource_manager;
 use mod_bookit\local\manager\weekplan_manager;
+use mod_bookit\local\persistent\room;
 
 /**
  * Installation helper class.
@@ -46,7 +47,7 @@ class install_helper {
     public const DEFAULT_ROOM_NAME = 'Default room';
 
     /** Default standalone room description. */
-    public const DEFAULT_ROOM_DESCRIPTION = 'Default room for standalone calendar bookings.';
+    public const DEFAULT_ROOM_DESCRIPTION = 'The default room for all events.';
 
     /** Default standalone institution name. */
     public const DEFAULT_INSTITUTION_NAME = 'Standard-Institution';
@@ -56,6 +57,48 @@ class install_helper {
 
     /** Default standalone weekplan schedule. */
     public const DEFAULT_WEEKPLAN_SCHEDULE = "Mo 09:00-17:00\nDi 09:00-17:00\nMi 09:00-17:00\nDo 09:00-17:00\nFr 09:00-17:00";
+
+    /** Config key for the optional resources module state. */
+    public const CONFIG_RESOURCES_ENABLED = 'resourcesenabled';
+
+    /** Config key for the optional checklist module state. */
+    public const CONFIG_CHECKLIST_ENABLED = 'checklistenabled';
+
+    /**
+     * Check whether the optional resources module is enabled.
+     *
+     * @return bool
+     */
+    public static function is_resources_enabled(): bool {
+        return (int)get_config('mod_bookit', self::CONFIG_RESOURCES_ENABLED) === 1;
+    }
+
+    /**
+     * Check whether the optional checklist module is enabled.
+     *
+     * @return bool
+     */
+    public static function is_checklist_enabled(): bool {
+        return (int)get_config('mod_bookit', self::CONFIG_CHECKLIST_ENABLED) === 1;
+    }
+
+    /**
+     * Ensure optional plugin-part config defaults exist.
+     *
+     * @param bool $enabledbydefault
+     * @return void
+     */
+    public static function ensure_optional_part_defaults(bool $enabledbydefault = false): void {
+        $defaultvalue = $enabledbydefault ? 1 : 0;
+
+        if (get_config('mod_bookit', self::CONFIG_RESOURCES_ENABLED) === false) {
+            set_config(self::CONFIG_RESOURCES_ENABLED, $defaultvalue, 'mod_bookit');
+        }
+
+        if (get_config('mod_bookit', self::CONFIG_CHECKLIST_ENABLED) === false) {
+            set_config(self::CONFIG_CHECKLIST_ENABLED, $defaultvalue, 'mod_bookit');
+        }
+    }
 
     /**
      * Return all shipped role preset file names.
@@ -88,6 +131,33 @@ class install_helper {
         $errors = [];
         foreach ($operations as $operation) {
             if (!empty($operation['message']) && in_array($operation['status'], ['failed', 'partial'], true)) {
+                $errors[] = $operation['message'];
+            }
+        }
+
+        return [
+            'status' => self::resolve_report_status(array_column($operations, 'status'), $errors),
+            'operations' => $operations,
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * Backfill only missing baseline records for legacy installs without changing existing setups.
+     *
+     * @param bool $verbose
+     * @return array{status:string,operations:array<string,array>,errors:string[]}
+     */
+    public static function ensure_upgrade_baseline_backfill(bool $verbose = false): array {
+        $operations = [
+            'institution' => self::backfill_default_institution($verbose),
+            'room' => self::backfill_default_room($verbose),
+        ];
+        $operations['weekplan'] = self::backfill_default_weekplan((int)($operations['room']['id'] ?? 0), $verbose);
+
+        $errors = [];
+        foreach ($operations as $operation) {
+            if (!empty($operation['message']) && ($operation['status'] ?? '') === 'failed') {
                 $errors[] = $operation['message'];
             }
         }
@@ -882,7 +952,7 @@ class install_helper {
     }
 
     /**
-     * Create a default weekplan (Mon-Fri 08:00-20:00) and assign all rooms to it.
+     * Create the baseline default weekplan and assign the default room to it.
      *
      * @param bool $force Force creation even if weekplan already exists
      * @param bool $verbose Print verbose output
@@ -907,25 +977,13 @@ class install_helper {
 
         $institutions = $DB->get_records('bookit_institution');
         if (empty($institutions)) {
-            $record = (object)[
-                'name' => self::DEFAULT_INSTITUTION_NAME,
-                'internalnotes' => null,
-                'active' => 1,
-                'usermodified' => self::get_actor_userid(),
-                'timecreated' => time(),
-                'timemodified' => time(),
-            ];
-            $id = (int)$DB->insert_record('bookit_institution', $record);
-            if ($verbose) {
-                mtrace('Created default institution: ' . self::DEFAULT_INSTITUTION_NAME . ' (ID: ' . $id . ')');
-            }
-            return ['status' => 'created', 'id' => $id, 'message' => null];
+            return self::create_default_institution($verbose);
         }
 
         if (count($institutions) === 1) {
             $institution = reset($institutions);
-            if ((string)$institution->name === self::DEFAULT_INSTITUTION_NAME && (int)$institution->active === 1) {
-                return ['status' => 'idempotent', 'id' => (int)$institution->id, 'message' => null];
+            if ((string)$institution->name === self::DEFAULT_INSTITUTION_NAME) {
+                return self::sync_default_institution((int)$institution->id, $verbose);
             }
         }
 
@@ -948,33 +1006,13 @@ class install_helper {
 
         $rooms = $DB->get_records('bookit_room');
         if (empty($rooms)) {
-            $record = (object)[
-                'name' => self::DEFAULT_ROOM_NAME,
-                'shortname' => 'DFLTRM',
-                'description' => self::DEFAULT_ROOM_DESCRIPTION,
-                'location' => '',
-                'eventcolor' => '#3a87ad',
-                'active' => 1,
-                'roommode' => 0,
-                'seats' => 0,
-                'extratimebefore' => null,
-                'extratimeafter' => null,
-                'preventoverlap' => 2,
-                'usermodified' => self::get_actor_userid(),
-                'timecreated' => time(),
-                'timemodified' => time(),
-            ];
-            $id = (int)$DB->insert_record('bookit_room', $record);
-            if ($verbose) {
-                mtrace('Created default room: ' . self::DEFAULT_ROOM_NAME . ' (ID: ' . $id . ')');
-            }
-            return ['status' => 'created', 'id' => $id, 'message' => null];
+            return self::create_default_room($verbose);
         }
 
         if (count($rooms) === 1) {
-            $room = reset($rooms);
-            if ((string)$room->name === self::DEFAULT_ROOM_NAME && (int)$room->active === 1) {
-                return ['status' => 'idempotent', 'id' => (int)$room->id, 'message' => null];
+            $roomrecord = reset($rooms);
+            if ((string)$roomrecord->name === self::DEFAULT_ROOM_NAME) {
+                return self::sync_default_room((int)$roomrecord->id, $verbose);
             }
         }
 
@@ -1001,29 +1039,13 @@ class install_helper {
 
         $weekplans = $DB->get_records('bookit_weekplan');
         if (empty($weekplans)) {
-            $record = (object)[
-                'name' => self::DEFAULT_WEEKPLAN_NAME,
-                'usermodified' => self::get_actor_userid(),
-                'timecreated' => time(),
-                'timemodified' => time(),
-            ];
-            $weekplanid = (int)$DB->insert_record('bookit_weekplan', $record);
-            weekplan_manager::save_string_weekplan_to_db(self::DEFAULT_WEEKPLAN_SCHEDULE, $weekplanid);
-            self::ensure_weekplan_room_assignment($weekplanid, $roomid);
-            if ($verbose) {
-                mtrace('Created default weekplan: ' . self::DEFAULT_WEEKPLAN_NAME . ' (ID: ' . $weekplanid . ')');
-            }
-            return ['status' => 'created', 'id' => $weekplanid, 'message' => null];
+            return self::create_default_weekplan_baseline($roomid, $verbose);
         }
 
         if (count($weekplans) === 1) {
             $weekplan = reset($weekplans);
-            if (
-                (string)$weekplan->name === self::DEFAULT_WEEKPLAN_NAME &&
-                    self::has_default_weekplan_schedule((int)$weekplan->id)
-            ) {
-                self::ensure_weekplan_room_assignment((int)$weekplan->id, $roomid);
-                return ['status' => 'idempotent', 'id' => (int)$weekplan->id, 'message' => null];
+            if ((string)$weekplan->name === self::DEFAULT_WEEKPLAN_NAME) {
+                return self::sync_default_weekplan((int)$weekplan->id, $roomid, $verbose);
             }
         }
 
@@ -1033,6 +1055,325 @@ class install_helper {
             'message' => 'Fresh-install baseline requires exactly one weekplan named "' .
                 self::DEFAULT_WEEKPLAN_NAME . '" with Monday-Friday 09:00-17:00 slots.',
         ];
+    }
+
+    /**
+     * Backfill the default institution only when legacy installs are still missing one entirely.
+     *
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function backfill_default_institution(bool $verbose = false): array {
+        global $DB;
+
+        $existing = $DB->get_record('bookit_institution', ['name' => self::DEFAULT_INSTITUTION_NAME]);
+        if ($existing) {
+            return self::sync_default_institution((int)$existing->id, $verbose);
+        }
+
+        if (!$DB->record_exists('bookit_institution', [])) {
+            return self::create_default_institution($verbose);
+        }
+
+        return ['status' => 'skipped', 'id' => null, 'message' => null];
+    }
+
+    /**
+     * Backfill the default room only when legacy installs are still missing one entirely.
+     *
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function backfill_default_room(bool $verbose = false): array {
+        global $DB;
+
+        $existing = $DB->get_record('bookit_room', ['name' => self::DEFAULT_ROOM_NAME]);
+        if ($existing) {
+            return self::sync_default_room((int)$existing->id, $verbose);
+        }
+
+        if (!$DB->record_exists('bookit_room', [])) {
+            return self::create_default_room($verbose);
+        }
+
+        return ['status' => 'skipped', 'id' => null, 'message' => null];
+    }
+
+    /**
+     * Backfill the default weekplan only when legacy installs are still missing one entirely.
+     *
+     * @param int $roomid
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function backfill_default_weekplan(int $roomid, bool $verbose = false): array {
+        global $DB;
+
+        if ($roomid <= 0) {
+            return ['status' => 'skipped', 'id' => null, 'message' => null];
+        }
+
+        $existing = $DB->get_record('bookit_weekplan', ['name' => self::DEFAULT_WEEKPLAN_NAME]);
+        if ($existing) {
+            return self::sync_default_weekplan((int)$existing->id, $roomid, $verbose);
+        }
+
+        if (!$DB->record_exists('bookit_weekplan', [])) {
+            return self::create_default_weekplan_baseline($roomid, $verbose);
+        }
+
+        return ['status' => 'skipped', 'id' => null, 'message' => null];
+    }
+
+    /**
+     * Create the default institution.
+     *
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function create_default_institution(bool $verbose = false): array {
+        global $DB;
+
+        $record = self::default_institution_record();
+        $id = (int)$DB->insert_record('bookit_institution', $record);
+        if ($verbose) {
+            mtrace('Created default institution: ' . self::DEFAULT_INSTITUTION_NAME . ' (ID: ' . $id . ')');
+        }
+
+        return ['status' => 'created', 'id' => $id, 'message' => null];
+    }
+
+    /**
+     * Create the default room.
+     *
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function create_default_room(bool $verbose = false): array {
+        global $DB;
+
+        $record = self::default_room_record();
+        $id = (int)$DB->insert_record('bookit_room', $record);
+        if ($verbose) {
+            mtrace('Created default room: ' . self::DEFAULT_ROOM_NAME . ' (ID: ' . $id . ')');
+        }
+
+        return ['status' => 'created', 'id' => $id, 'message' => null];
+    }
+
+    /**
+     * Create the default weekplan and assign it to the default room.
+     *
+     * @param int $roomid
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function create_default_weekplan_baseline(int $roomid, bool $verbose = false): array {
+        global $DB;
+
+        $record = self::default_weekplan_record();
+        $weekplanid = (int)$DB->insert_record('bookit_weekplan', $record);
+        weekplan_manager::save_string_weekplan_to_db(self::DEFAULT_WEEKPLAN_SCHEDULE, $weekplanid);
+        self::ensure_weekplan_room_assignment($weekplanid, $roomid);
+        if ($verbose) {
+            mtrace('Created default weekplan: ' . self::DEFAULT_WEEKPLAN_NAME . ' (ID: ' . $weekplanid . ')');
+        }
+
+        return ['status' => 'created', 'id' => $weekplanid, 'message' => null];
+    }
+
+    /**
+     * Ensure the default institution matches the agreed baseline profile.
+     *
+     * @param int $institutionid
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function sync_default_institution(int $institutionid, bool $verbose = false): array {
+        global $DB;
+
+        $institution = $DB->get_record('bookit_institution', ['id' => $institutionid], '*', MUST_EXIST);
+        $record = self::default_institution_record();
+        $updaterecord = (object)['id' => $institutionid];
+        $haschanges = false;
+
+        foreach (['name', 'internalnotes', 'active'] as $field) {
+            if (!self::baseline_values_match($institution->$field ?? null, $record->$field ?? null)) {
+                $updaterecord->$field = $record->$field;
+                $haschanges = true;
+            }
+        }
+
+        if ($haschanges) {
+            $updaterecord->usermodified = self::get_actor_userid();
+            $updaterecord->timemodified = time();
+            $DB->update_record('bookit_institution', $updaterecord);
+            if ($verbose) {
+                mtrace('Updated default institution baseline: ' . self::DEFAULT_INSTITUTION_NAME . ' (ID: ' . $institutionid . ')');
+            }
+            return ['status' => 'created', 'id' => $institutionid, 'message' => null];
+        }
+
+        return ['status' => 'idempotent', 'id' => $institutionid, 'message' => null];
+    }
+
+    /**
+     * Ensure the default room matches the agreed baseline profile.
+     *
+     * @param int $roomid
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function sync_default_room(int $roomid, bool $verbose = false): array {
+        global $DB;
+
+        $roomrecord = $DB->get_record('bookit_room', ['id' => $roomid], '*', MUST_EXIST);
+        $record = self::default_room_record();
+        $updaterecord = (object)['id' => $roomid];
+        $haschanges = false;
+
+        foreach (
+            ['name', 'shortname', 'description', 'location', 'eventcolor', 'active', 'roommode', 'seats',
+            'extratimebefore', 'extratimeafter', 'preventoverlap'] as $field
+        ) {
+            if (!self::baseline_values_match($roomrecord->$field ?? null, $record->$field ?? null)) {
+                $updaterecord->$field = $record->$field;
+                $haschanges = true;
+            }
+        }
+
+        if ($haschanges) {
+            $updaterecord->usermodified = self::get_actor_userid();
+            $updaterecord->timemodified = time();
+            $DB->update_record('bookit_room', $updaterecord);
+            if ($verbose) {
+                mtrace('Updated default room baseline: ' . self::DEFAULT_ROOM_NAME . ' (ID: ' . $roomid . ')');
+            }
+            return ['status' => 'created', 'id' => $roomid, 'message' => null];
+        }
+
+        return ['status' => 'idempotent', 'id' => $roomid, 'message' => null];
+    }
+
+    /**
+     * Ensure the default weekplan matches the agreed baseline profile.
+     *
+     * @param int $weekplanid
+     * @param int $roomid
+     * @param bool $verbose
+     * @return array{status:string,id:int|null,message:string|null}
+     */
+    private static function sync_default_weekplan(int $weekplanid, int $roomid, bool $verbose = false): array {
+        global $DB;
+
+        $weekplan = $DB->get_record('bookit_weekplan', ['id' => $weekplanid], '*', MUST_EXIST);
+        $updaterecord = (object)['id' => $weekplanid];
+        $haschanges = false;
+
+        if ((string)$weekplan->name !== self::DEFAULT_WEEKPLAN_NAME) {
+            $updaterecord->name = self::DEFAULT_WEEKPLAN_NAME;
+            $haschanges = true;
+        }
+
+        if (!self::has_default_weekplan_schedule($weekplanid)) {
+            weekplan_manager::save_string_weekplan_to_db(self::DEFAULT_WEEKPLAN_SCHEDULE, $weekplanid);
+            $haschanges = true;
+        }
+
+        $assignmentbefore = self::has_weekplan_room_assignment($weekplanid, $roomid);
+        self::ensure_weekplan_room_assignment($weekplanid, $roomid);
+        if (!$assignmentbefore) {
+            $haschanges = true;
+        }
+
+        if ($haschanges) {
+            $updaterecord->usermodified = self::get_actor_userid();
+            $updaterecord->timemodified = time();
+            $DB->update_record('bookit_weekplan', $updaterecord);
+            if ($verbose) {
+                mtrace('Updated default weekplan baseline: ' . self::DEFAULT_WEEKPLAN_NAME . ' (ID: ' . $weekplanid . ')');
+            }
+            return ['status' => 'created', 'id' => $weekplanid, 'message' => null];
+        }
+
+        return ['status' => 'idempotent', 'id' => $weekplanid, 'message' => null];
+    }
+
+    /**
+     * Build the default institution record payload.
+     *
+     * @return \stdClass
+     */
+    private static function default_institution_record(): \stdClass {
+        return (object)[
+            'name' => self::DEFAULT_INSTITUTION_NAME,
+            'internalnotes' => null,
+            'active' => 1,
+            'usermodified' => self::get_actor_userid(),
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+    }
+
+    /**
+     * Build the default room record payload.
+     *
+     * @return \stdClass
+     */
+    private static function default_room_record(): \stdClass {
+        return (object)[
+            'name' => self::DEFAULT_ROOM_NAME,
+            'shortname' => '',
+            'description' => self::DEFAULT_ROOM_DESCRIPTION,
+            'location' => '',
+            'eventcolor' => '',
+            'active' => 1,
+            'roommode' => room::MODE_FREE,
+            'seats' => 0,
+            'extratimebefore' => null,
+            'extratimeafter' => null,
+            'preventoverlap' => room::OVERLAPPING_ALLOW_NONE,
+            'usermodified' => self::get_actor_userid(),
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+    }
+
+    /**
+     * Build the default weekplan record payload.
+     *
+     * @return \stdClass
+     */
+    private static function default_weekplan_record(): \stdClass {
+        return (object)[
+            'name' => self::DEFAULT_WEEKPLAN_NAME,
+            'usermodified' => self::get_actor_userid(),
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+    }
+
+    /**
+     * Compare persisted baseline values while ignoring database scalar type differences.
+     *
+     * @param mixed $current
+     * @param mixed $expected
+     * @return bool
+     */
+    private static function baseline_values_match(mixed $current, mixed $expected): bool {
+        if ($current === $expected) {
+            return true;
+        }
+
+        if ($current === null || $expected === null) {
+            return $current === $expected;
+        }
+
+        if (is_numeric($current) && is_numeric($expected)) {
+            return (int)$current === (int)$expected;
+        }
+
+        return (string)$current === (string)$expected;
     }
 
     /**
@@ -1058,6 +1399,19 @@ class install_helper {
             'timecreated' => time(),
             'timemodified' => time(),
         ]);
+    }
+
+    /**
+     * Check whether the weekplan-room assignment already exists.
+     *
+     * @param int $weekplanid
+     * @param int $roomid
+     * @return bool
+     */
+    private static function has_weekplan_room_assignment(int $weekplanid, int $roomid): bool {
+        global $DB;
+
+        return $DB->record_exists('bookit_weekplan_room', ['weekplanid' => $weekplanid, 'roomid' => $roomid]);
     }
 
     /**

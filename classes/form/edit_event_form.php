@@ -75,11 +75,9 @@ class edit_event_form extends dynamic_form {
         // Get the plugin config.
         $config = get_config('mod_bookit');
 
-        // Get the ressources.
-        $catresourceslist = resource_manager::get_resources();
-
         // Define variables.
         $context = $this->get_context_for_dynamic_submission();
+        $resourcesenabled = event_access_manager::is_resources_enabled();
         $caneditinternal = has_capability('mod/bookit:editinternal', $context);
         $eventid = $this->optional_param('id', null, PARAM_INT);
         $existingevent = !empty($eventid) ? event_manager::get_event($eventid) : null;
@@ -539,7 +537,7 @@ class edit_event_form extends dynamic_form {
         $eventid = $this->optional_param('id', null, PARAM_INT);
         $bookingcompleted = false;
         $bookedresources = [];
-        if (!empty($eventid)) {
+        if (!empty($eventid) && $resourcesenabled) {
             $eventrec = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus');
             if ($eventrec && (int)$eventrec->bookingstatus >= 2) {
                 $bookingcompleted = true;
@@ -559,10 +557,10 @@ class edit_event_form extends dynamic_form {
         $mform->setDefault('starttime', $selectedtime);
 
         // Get active resources grouped by category for booking form.
-        $resourcesdata = resource_manager::get_active_resources_grouped();
-
-        // Add resources section.
-        $this->add_resources_fields($mform, $resourcesdata, $bookingcompleted, $bookedresources);
+        if ($resourcesenabled) {
+            $resourcesdata = resource_manager::get_active_resources_grouped();
+            $this->add_resources_fields($mform, $resourcesdata, $bookingcompleted, $bookedresources);
+        }
     }
 
     /**
@@ -812,6 +810,7 @@ class edit_event_form extends dynamic_form {
         $caneditbookingstatus = $caneditinternal;
         $bookingstatustransition = null;
         $statusonlyselfcancel = false;
+        $resourcesenabled = event_access_manager::is_resources_enabled();
 
         if (!empty($formdata->id)) {
             $currentevent = bookit_event::from_database((int)$formdata->id);
@@ -834,7 +833,7 @@ class edit_event_form extends dynamic_form {
         }
 
         $mappings = [];
-        if ($caneditpublic && !$statusonlyselfcancel) {
+        if ($resourcesenabled && $caneditpublic && !$statusonlyselfcancel) {
             foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
                 // Rooms.
                 foreach ($categorygroup['resources'] as $resource) {
@@ -1177,6 +1176,7 @@ class edit_event_form extends dynamic_form {
         $context = $this->get_context_for_dynamic_submission();
         $existingevent = null;
         $submittedstarttime = $this->_ajaxformdata['starttime'] ?? null;
+        $resourcesenabled = event_access_manager::is_resources_enabled();
         if (!empty($data['id'])) {
             $existingevent = event_manager::get_event((int)$data['id']);
             $caneditpublic = has_capability('mod/bookit:editevent', $context)
@@ -1245,25 +1245,27 @@ class edit_event_form extends dynamic_form {
             $errors['roomid'] = get_string('room_doesnt_have_enough_seats', 'mod_bookit');
         }
 
-        foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
-            foreach ($categorygroup['resources'] as $resource) {
-                $id = $resource['id'];
-                if (empty($data['checkbox_' . $id]) || $resource['amountirrelevant']) {
-                    continue;
-                }
-                $requested = (int)($data['resource_' . $id] ?? 0);
-                $maxamount = (int)$resource['amount'];
-                if ($requested < 1) {
-                    $errors['resourcegroup_' . $id] = get_string(
-                        'booking:resource_amount_too_low',
-                        'mod_bookit'
-                    );
-                } else if ($maxamount > 0 && $requested > $maxamount) {
-                    $errors['resourcegroup_' . $id] = get_string(
-                        'booking:resource_amount_invalid',
-                        'mod_bookit',
-                        (object)['requested' => $requested, 'available' => $maxamount]
-                    );
+        if ($resourcesenabled) {
+            foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
+                foreach ($categorygroup['resources'] as $resource) {
+                    $id = $resource['id'];
+                    if (empty($data['checkbox_' . $id]) || $resource['amountirrelevant']) {
+                        continue;
+                    }
+                    $requested = (int)($data['resource_' . $id] ?? 0);
+                    $maxamount = (int)$resource['amount'];
+                    if ($requested < 1) {
+                        $errors['resourcegroup_' . $id] = get_string(
+                            'booking:resource_amount_too_low',
+                            'mod_bookit'
+                        );
+                    } else if ($maxamount > 0 && $requested > $maxamount) {
+                        $errors['resourcegroup_' . $id] = get_string(
+                            'booking:resource_amount_invalid',
+                            'mod_bookit',
+                            (object)['requested' => $requested, 'available' => $maxamount]
+                        );
+                    }
                 }
             }
         }

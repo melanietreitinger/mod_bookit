@@ -120,7 +120,7 @@ class event_manager {
                 $roominfo .= ': ' . implode(', ', $addinfos);
             }
 
-            $eventcolor = $record->eventcolor ?? '#3a87ad';
+            $eventcolor = trim((string)($record->eventcolor ?? '')) !== '' ? $record->eventcolor : '#3a87ad';
             $displaytitle = $observerrestricted
                 ? get_string('event_reserved', 'mod_bookit')
                 : $record->name . " ($roominfo)";

@@ -182,9 +182,15 @@
                 <th class="align-middle">My role</th>
                 <th class="align-middle">Booking status</th>
                 <th class="align-middle">Date</th>
+                {{#showprogresscolumn}}
                 <th class="align-middle">Progress</th>
+                {{/showprogresscolumn}}
+                {{#showchecklistcolumn}}
                 <th class="align-middle">Checklist</th>
+                {{/showchecklistcolumn}}
+                {{#showresourcescolumn}}
                 <th class="align-middle">Resources</th>
+                {{/showresourcescolumn}}
             </tr>
         </thead>
 
@@ -249,6 +255,7 @@
 
                     <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
 
+                    {{#showprogresscolumn}}
                     <td class="align-middle">
                         {{#checklistprogress_available}}
                         <div class="mb-1">
@@ -278,19 +285,23 @@
                         {{/resourcesprogress_available}}
                         {{^checklistprogress_available}}{{^resourcesprogress_available}}--{{/resourcesprogress_available}}{{/checklistprogress_available}}
                     </td>
-
+                    {{/showprogresscolumn}}
+                    {{#showchecklistcolumn}}
                     <td class="align-middle">
                         {{#haschecklistaction}}
                         <a href="{{checklisturl}}" class="btn btn-sm btn-primary">{{checklistlabel}}</a>
                         {{/haschecklistaction}}
                         {{^haschecklistaction}}-{{/haschecklistaction}}
                     </td>
+                    {{/showchecklistcolumn}}
+                    {{#showresourcescolumn}}
                     <td class="align-middle">
                         {{#hasresourcesaction}}
                         <a href="{{resourceschecklisturl}}" class="btn btn-sm btn-primary">{{resourceschecklistlabel}}</a>
                         {{/hasresourcesaction}}
                         {{^hasresourcesaction}}-{{/hasresourcesaction}}
                     </td>
+                    {{/showresourcescolumn}}
                 </tr>
             {{/events}}
         </tbody>

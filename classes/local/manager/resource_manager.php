@@ -616,11 +616,12 @@ class resource_manager {
         $rooms = $DB->get_records('bookit_room', ['active' => 1], '', 'id, name, shortname, eventcolor');
         $roomsbyid = [];
         foreach ($rooms as $room) {
+            $eventcolor = trim((string)($room->eventcolor ?? ''));
             $roomsbyid[$room->id] = [
                 'id' => (int)$room->id,
                 'name' => $room->name,
                 'shortname' => $room->shortname,
-                'color' => $room->eventcolor,
+                'color' => $eventcolor !== '' ? $eventcolor : '#6c757d',
             ];
         }
 

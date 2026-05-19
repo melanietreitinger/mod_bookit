@@ -157,4 +157,35 @@ final class lifecycle_events_test extends advanced_testcase {
         $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$events[0]->other['oldstatus']);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, (int)$events[0]->other['newstatus']);
     }
+
+    /**
+     * Updating business fields without changing the booking status must still trigger the lifecycle audit event.
+     *
+     * @return void
+     */
+    public function test_save_event_with_lifecycle_tracking_triggers_updated_audit_event(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_event($roomid, (int)$user->id, ['name' => 'Lifecycle update baseline']);
+        $event->save((int)$user->id);
+
+        $before = bookit_event::from_database($event->id);
+        $updated = bookit_event::from_database($event->id);
+        $updated->name = 'Lifecycle update changed';
+
+        $sink = $this->redirectEvents();
+        event_manager::save_event_with_lifecycle_tracking($updated, $before, (int)$user->id, $context);
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(booking_status_changed::class, $events[0]);
+        $this->assertSame('updated', $events[0]->other['action']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$events[0]->other['oldstatus']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$events[0]->other['newstatus']);
+    }
 }

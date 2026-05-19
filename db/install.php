@@ -15,18 +15,26 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Plugin installation callbacks.
  *
  * @package     mod_bookit
- * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @copyright   2026 ssystems GmbH <oss@ssystems.de>
+ * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Seed the required calendar-only baseline for fresh installs.
+ *
+ * @return void
+ */
+function xmldb_bookit_install(): void {
+    $report = \mod_bookit\local\install_helper::ensure_fresh_install_baseline();
+    \mod_bookit\local\install_helper::ensure_optional_part_defaults(false);
 
-$plugin->component = 'mod_bookit';
-$plugin->version = 2025511307;
-$plugin->release = '0.1.0';
-$plugin->requires = 2024100700; // Moodle 4.5 (LTS).
-$plugin->supported = [405, 406];
-$plugin->maturity = MATURITY_ALPHA;
+    set_config(
+        'installhelperfinished',
+        in_array($report['status'], ['success', 'idempotent'], true) ? 1 : 0,
+        'mod_bookit'
+    );
+}

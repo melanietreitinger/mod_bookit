@@ -28,6 +28,7 @@ namespace mod_bookit\local;
 
 use advanced_testcase;
 use mod_bookit\local\manager\weekplan_manager;
+use mod_bookit\local\persistent\room;
 
 /**
  * Unit tests for install_helper.
@@ -47,7 +48,7 @@ final class install_helper_test extends advanced_testcase {
 
         $report = install_helper::ensure_fresh_install_baseline();
 
-        $this->assertSame('success', $report['status']);
+        $this->assertContains($report['status'], ['success', 'idempotent']);
         $this->assertSame(1, $DB->count_records('bookit_room'));
         $this->assertSame(1, $DB->count_records('bookit_weekplan'));
         $this->assertSame(1, $DB->count_records('bookit_institution'));
@@ -57,7 +58,14 @@ final class install_helper_test extends advanced_testcase {
         $institution = $DB->get_record('bookit_institution', [], '*', MUST_EXIST);
 
         $this->assertSame(install_helper::DEFAULT_ROOM_NAME, $room->name);
-        $this->assertLessThanOrEqual(6, strlen((string)$room->shortname));
+        $this->assertSame('', (string)$room->shortname);
+        $this->assertSame(install_helper::DEFAULT_ROOM_DESCRIPTION, (string)$room->description);
+        $this->assertSame('', (string)$room->eventcolor);
+        $this->assertSame('', (string)$room->location);
+        $this->assertSame(1, (int)$room->active);
+        $this->assertSame(0, (int)$room->seats);
+        $this->assertSame(room::MODE_FREE, (int)$room->roommode);
+        $this->assertSame(room::OVERLAPPING_ALLOW_NONE, (int)$room->preventoverlap);
         $this->assertSame(install_helper::DEFAULT_WEEKPLAN_NAME, $weekplan->name);
         $this->assertSame(install_helper::DEFAULT_INSTITUTION_NAME, $institution->name);
         [, $expectedslots] = weekplan_manager::parse_weekplan(install_helper::DEFAULT_WEEKPLAN_SCHEDULE);
@@ -112,5 +120,25 @@ final class install_helper_test extends advanced_testcase {
         $this->assertSame('idempotent', $second['status']);
         $this->assertSame([], $second['imported']);
         $this->assertCount(5, $second['skipped']);
+    }
+
+    /**
+     * Fresh installs must keep optional resources and checklist parts disabled until the admin enables them.
+     *
+     * @return void
+     */
+    public function test_ensure_optional_part_defaults_uses_requested_default_state(): void {
+        $this->resetAfterTest(true);
+
+        install_helper::ensure_optional_part_defaults(false);
+        $this->assertFalse(install_helper::is_resources_enabled());
+        $this->assertFalse(install_helper::is_checklist_enabled());
+
+        unset_config(install_helper::CONFIG_RESOURCES_ENABLED, 'mod_bookit');
+        unset_config(install_helper::CONFIG_CHECKLIST_ENABLED, 'mod_bookit');
+
+        install_helper::ensure_optional_part_defaults(true);
+        $this->assertTrue(install_helper::is_resources_enabled());
+        $this->assertTrue(install_helper::is_checklist_enabled());
     }
 }

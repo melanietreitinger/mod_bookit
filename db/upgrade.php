@@ -35,10 +35,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
     global $DB;
     $dbman = $DB->get_manager();
 
-    // Set this to the SAME value you set in mod/bookit/version.php ($plugin->version).
-    $newversion = 2025511306;
-
-    if ($oldversion < $newversion) {
+    if ($oldversion < 2025511306) {
         $table = new xmldb_table('bookit_event');
 
         $old = new xmldb_field('department', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semester');
@@ -69,7 +66,14 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
             $dbman->create_table($historytable);
         }
 
-        upgrade_mod_savepoint(true, $newversion, 'bookit');
+        upgrade_mod_savepoint(true, 2025511306, 'bookit');
+    }
+
+    if ($oldversion < 2025511307) {
+        \mod_bookit\local\install_helper::ensure_optional_part_defaults(true);
+        \mod_bookit\local\install_helper::ensure_upgrade_baseline_backfill();
+
+        upgrade_mod_savepoint(true, 2025511307, 'bookit');
     }
     return true;
 }
