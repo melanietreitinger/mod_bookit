@@ -112,30 +112,40 @@ if ($hassiteconfig) {
         1
     ));
 
-    $notificationstatuses = [
-        0 => 'new',
-        1 => 'inprogress',
-        2 => 'accepted',
-        3 => 'canceled',
-        4 => 'rejected',
-    ];
+    foreach (install_helper::get_booking_status_notification_statuses() as $statuskey => $statusdata) {
+        $enabledsetting = new admin_setting_configcheckbox(
+            'mod_bookit/' . $statusdata['enabledconfig'],
+            get_string($statusdata['enabledstring'], 'mod_bookit'),
+            '',
+            1
+        );
+        $settings->add($enabledsetting);
 
-    foreach ($notificationstatuses as $statusid => $statuskey) {
-        $settings->add(new admin_setting_configtext(
-            'mod_bookit/bookingstatus_subject_' . $statusid,
-            get_string('bookingstatus_subject_' . $statuskey, 'mod_bookit'),
+        $subjectsetting = new admin_setting_configtext(
+            'mod_bookit/' . $statusdata['subjectconfig'],
+            get_string($statusdata['subjectstring'], 'mod_bookit'),
             get_string('bookingstatus_subject_desc', 'mod_bookit'),
-            '',
+            install_helper::get_booking_status_notification_default_subject($statuskey),
             PARAM_TEXT
-        ));
+        );
+        $subjectsetting->add_dependent_on(
+            'mod_bookit/' . $statusdata['enabledconfig'],
+            '1'
+        );
+        $settings->add($subjectsetting);
 
-        $settings->add(new admin_setting_configtextarea(
-            'mod_bookit/bookingstatus_body_' . $statusid,
-            get_string('bookingstatus_body_' . $statuskey, 'mod_bookit'),
+        $bodysetting = new admin_setting_configtextarea(
+            'mod_bookit/' . $statusdata['bodyconfig'],
+            get_string($statusdata['bodystring'], 'mod_bookit'),
             get_string('bookingstatus_body_desc', 'mod_bookit'),
-            '',
+            install_helper::get_booking_status_notification_default_body($statuskey),
             PARAM_RAW
-        ));
+        );
+        $bodysetting->add_dependent_on(
+            'mod_bookit/' . $statusdata['enabledconfig'],
+            '1'
+        );
+        $settings->add($bodysetting);
     }
 
     $settings->add(new admin_setting_heading(

@@ -141,4 +141,31 @@ final class install_helper_test extends advanced_testcase {
         $this->assertTrue(install_helper::is_resources_enabled());
         $this->assertTrue(install_helper::is_checklist_enabled());
     }
+
+    /**
+     * Fresh installs must seed expressive booking-status notification defaults without numeric keys.
+     *
+     * @return void
+     */
+    public function test_ensure_booking_status_notification_defaults_seeds_expressive_config_keys(): void {
+        $this->resetAfterTest(true);
+
+        install_helper::ensure_booking_status_notification_defaults();
+
+        foreach (install_helper::get_booking_status_notification_statuses() as $statuskey => $statusdata) {
+            $this->assertSame(1, (int)get_config('mod_bookit', $statusdata['enabledconfig']));
+            $this->assertSame(
+                install_helper::get_booking_status_notification_default_subject($statuskey),
+                get_config('mod_bookit', $statusdata['subjectconfig'])
+            );
+            $this->assertSame(
+                install_helper::get_booking_status_notification_default_body($statuskey),
+                get_config('mod_bookit', $statusdata['bodyconfig'])
+            );
+        }
+
+        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_subject_0'));
+        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_body_0'));
+        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_enabled_0'));
+    }
 }

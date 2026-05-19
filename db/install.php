@@ -31,6 +31,7 @@
 function xmldb_bookit_install(): void {
     $report = \mod_bookit\local\install_helper::ensure_fresh_install_baseline();
     \mod_bookit\local\install_helper::ensure_optional_part_defaults(false);
+    \mod_bookit\local\install_helper::ensure_booking_status_notification_defaults();
 
     set_config(
         'installhelperfinished',

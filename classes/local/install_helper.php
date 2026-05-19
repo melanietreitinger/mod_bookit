@@ -30,6 +30,7 @@ use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
 use mod_bookit\local\entity\resource\bookit_resource_category;
 use mod_bookit\local\entity\resource\bookit_resource;
+use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\resource_manager;
 use mod_bookit\local\manager\weekplan_manager;
 use mod_bookit\local\persistent\room;
@@ -97,6 +98,143 @@ class install_helper {
 
         if (get_config('mod_bookit', self::CONFIG_CHECKLIST_ENABLED) === false) {
             set_config(self::CONFIG_CHECKLIST_ENABLED, $defaultvalue, 'mod_bookit');
+        }
+    }
+
+    /**
+     * Return shared metadata for booking-status notifications keyed by expressive status names.
+     *
+     * @return array<string, array{id:int,key:string,enabledconfig:string,subjectconfig:string,bodyconfig:string,
+     *     enabledstring:string,subjectstring:string,bodystring:string}>
+     */
+    public static function get_booking_status_notification_statuses(): array {
+        return [
+            'new' => [
+                'id' => event_access_manager::BOOKINGSTATUS_NEW,
+                'key' => 'new',
+                'enabledconfig' => 'bookingstatus_enabled_new',
+                'subjectconfig' => 'bookingstatus_subject_new',
+                'bodyconfig' => 'bookingstatus_body_new',
+                'enabledstring' => 'bookingstatus_enabled_new',
+                'subjectstring' => 'bookingstatus_subject_new',
+                'bodystring' => 'bookingstatus_body_new',
+            ],
+            'inprogress' => [
+                'id' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                'key' => 'inprogress',
+                'enabledconfig' => 'bookingstatus_enabled_inprogress',
+                'subjectconfig' => 'bookingstatus_subject_inprogress',
+                'bodyconfig' => 'bookingstatus_body_inprogress',
+                'enabledstring' => 'bookingstatus_enabled_inprogress',
+                'subjectstring' => 'bookingstatus_subject_inprogress',
+                'bodystring' => 'bookingstatus_body_inprogress',
+            ],
+            'accepted' => [
+                'id' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+                'key' => 'accepted',
+                'enabledconfig' => 'bookingstatus_enabled_accepted',
+                'subjectconfig' => 'bookingstatus_subject_accepted',
+                'bodyconfig' => 'bookingstatus_body_accepted',
+                'enabledstring' => 'bookingstatus_enabled_accepted',
+                'subjectstring' => 'bookingstatus_subject_accepted',
+                'bodystring' => 'bookingstatus_body_accepted',
+            ],
+            'canceled' => [
+                'id' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'key' => 'canceled',
+                'enabledconfig' => 'bookingstatus_enabled_canceled',
+                'subjectconfig' => 'bookingstatus_subject_canceled',
+                'bodyconfig' => 'bookingstatus_body_canceled',
+                'enabledstring' => 'bookingstatus_enabled_canceled',
+                'subjectstring' => 'bookingstatus_subject_canceled',
+                'bodystring' => 'bookingstatus_body_canceled',
+            ],
+            'rejected' => [
+                'id' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'key' => 'rejected',
+                'enabledconfig' => 'bookingstatus_enabled_rejected',
+                'subjectconfig' => 'bookingstatus_subject_rejected',
+                'bodyconfig' => 'bookingstatus_body_rejected',
+                'enabledstring' => 'bookingstatus_enabled_rejected',
+                'subjectstring' => 'bookingstatus_subject_rejected',
+                'bodystring' => 'bookingstatus_body_rejected',
+            ],
+        ];
+    }
+
+    /**
+     * Resolve booking-status notification metadata from a runtime status ID.
+     *
+     * @param int $statusid
+     * @return array{id:int,key:string,enabledconfig:string,subjectconfig:string,bodyconfig:string,
+     *     enabledstring:string,subjectstring:string,bodystring:string}|null
+     */
+    public static function get_booking_status_notification_status_by_id(int $statusid): ?array {
+        foreach (self::get_booking_status_notification_statuses() as $statusdata) {
+            if ((int)$statusdata['id'] === $statusid) {
+                return $statusdata;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the explicit default subject template for one expressive booking-status key.
+     *
+     * @param string $statuskey
+     * @return string
+     */
+    public static function get_booking_status_notification_default_subject(string $statuskey): string {
+        $statuses = self::get_booking_status_notification_statuses();
+        if (!isset($statuses[$statuskey])) {
+            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
+        }
+
+        return get_string('bookingstatus_subject_default_' . $statuskey, 'mod_bookit');
+    }
+
+    /**
+     * Get the explicit default body template for one expressive booking-status key.
+     *
+     * @param string $statuskey
+     * @return string
+     */
+    public static function get_booking_status_notification_default_body(string $statuskey): string {
+        $statuses = self::get_booking_status_notification_statuses();
+        if (!isset($statuses[$statuskey])) {
+            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
+        }
+
+        return get_string('bookingstatus_body_default_' . $statuskey, 'mod_bookit');
+    }
+
+    /**
+     * Ensure expressive booking-status notification defaults exist for fresh installs.
+     *
+     * @return void
+     */
+    public static function ensure_booking_status_notification_defaults(): void {
+        foreach (self::get_booking_status_notification_statuses() as $statuskey => $statusdata) {
+            if (get_config('mod_bookit', $statusdata['enabledconfig']) === false) {
+                set_config($statusdata['enabledconfig'], 1, 'mod_bookit');
+            }
+
+            if (get_config('mod_bookit', $statusdata['subjectconfig']) === false) {
+                set_config(
+                    $statusdata['subjectconfig'],
+                    self::get_booking_status_notification_default_subject($statuskey),
+                    'mod_bookit'
+                );
+            }
+
+            if (get_config('mod_bookit', $statusdata['bodyconfig']) === false) {
+                set_config(
+                    $statusdata['bodyconfig'],
+                    self::get_booking_status_notification_default_body($statuskey),
+                    'mod_bookit'
+                );
+            }
         }
     }
 

@@ -54,10 +54,20 @@ $string['bookingstatus_action_reactivate'] = 'Als neue Anfrage reaktivieren';
 $string['bookingstatus_action_reject'] = 'Ablehnen';
 $string['bookingstatus_body_accepted'] = 'Nachrichtentext für Akzeptiert';
 $string['bookingstatus_body_canceled'] = 'Nachrichtentext für Storniert';
-$string['bookingstatus_body_desc'] = 'Leer lassen, um die Standardnachricht zu verwenden. Die dokumentierten Platzhalter können verwendet werden.';
+$string['bookingstatus_body_default_accepted'] = 'Die Buchungsanfrage "###EVENTNAME###" wurde akzeptiert. Buchung oeffnen: ###EVENTURL###';
+$string['bookingstatus_body_default_canceled'] = 'Die Buchungsanfrage "###EVENTNAME###" wurde storniert. Buchung oeffnen: ###EVENTURL###';
+$string['bookingstatus_body_default_inprogress'] = 'Die Buchungsanfrage "###EVENTNAME###" ist jetzt in Bearbeitung. Buchung oeffnen: ###EVENTURL###';
+$string['bookingstatus_body_default_new'] = 'Eine neue Buchungsanfrage "###EVENTNAME###" wurde eingereicht. Buchung oeffnen: ###EVENTURL###';
+$string['bookingstatus_body_default_rejected'] = 'Die Buchungsanfrage "###EVENTNAME###" wurde abgelehnt. Buchung oeffnen: ###EVENTURL###';
+$string['bookingstatus_body_desc'] = 'Unterstuetzte Platzhalter: ###EVENTNAME###, ###BOOKINGSTATUS###, ###OLDBOOKINGSTATUS###, ###EVENTURL###, ###ROOM###, ###STARTTIME###, ###ENDTIME###, ###BOOKINGPERSON###, ###PERSONINCHARGE###, ###OTHEREXAMINERS###.';
 $string['bookingstatus_body_inprogress'] = 'Nachrichtentext für In Bearbeitung';
 $string['bookingstatus_body_new'] = 'Nachrichtentext für Neu';
 $string['bookingstatus_body_rejected'] = 'Nachrichtentext für Abgelehnt';
+$string['bookingstatus_enabled_accepted'] = 'Nachricht fuer Akzeptiert senden';
+$string['bookingstatus_enabled_canceled'] = 'Nachricht fuer Storniert senden';
+$string['bookingstatus_enabled_inprogress'] = 'Nachricht fuer In Bearbeitung senden';
+$string['bookingstatus_enabled_new'] = 'Nachricht fuer Neu senden';
+$string['bookingstatus_enabled_rejected'] = 'Nachricht fuer Abgelehnt senden';
 $string['bookingstatus_notification_body_default'] = 'Die Buchungsanfrage "###EVENTNAME###" wurde auf "###BOOKINGSTATUS###" gesetzt.'
     . "\n\n"
     . 'Raum: ###ROOM###'
@@ -74,7 +84,7 @@ $string['bookingstatus_notification_body_default'] = 'Die Buchungsanfrage "###EV
     . "\n\n"
     . 'Buchung öffnen: ###EVENTURL###';
 $string['bookingstatus_notification_subject_default'] = 'Buchungsstatus aktualisiert: {$a->eventname} ({$a->bookingstatus})';
-$string['bookingstatus_notifications_desc'] = 'Konfiguration der Empfänger und Nachrichtenvorlagen für Änderungen am Buchungsstatus. Unterstützte Platzhalter: ###EVENTNAME###, ###BOOKINGSTATUS###, ###OLDBOOKINGSTATUS###, ###EVENTURL###, ###ROOM###, ###STARTTIME###, ###ENDTIME###, ###BOOKINGPERSON###, ###PERSONINCHARGE###, ###OTHEREXAMINERS###.';
+$string['bookingstatus_notifications_desc'] = 'Empfaenger und Nachrichtenvorlagen fuer Aenderungen am Buchungsstatus konfigurieren.';
 $string['bookingstatus_notifications_heading'] = 'Benachrichtigungen zum Buchungsstatus';
 $string['bookingstatus_notify_bookingperson'] = 'Buchende Person benachrichtigen';
 $string['bookingstatus_notify_bookingperson_desc'] = 'Sendet Statusänderungen an die Person, die die Buchungsanfrage erstellt hat.';
@@ -88,7 +98,12 @@ $string['bookingstatus_service_recipient_firstname'] = 'Universität';
 $string['bookingstatus_service_recipient_lastname'] = 'Service';
 $string['bookingstatus_subject_accepted'] = 'Betreff für Akzeptiert';
 $string['bookingstatus_subject_canceled'] = 'Betreff für Storniert';
-$string['bookingstatus_subject_desc'] = 'Leer lassen, um den Standardbetreff zu verwenden.';
+$string['bookingstatus_subject_default_accepted'] = 'Buchungsanfrage akzeptiert: ###EVENTNAME###';
+$string['bookingstatus_subject_default_canceled'] = 'Buchungsanfrage storniert: ###EVENTNAME###';
+$string['bookingstatus_subject_default_inprogress'] = 'Buchungsanfrage in Bearbeitung: ###EVENTNAME###';
+$string['bookingstatus_subject_default_new'] = 'Neue Buchungsanfrage: ###EVENTNAME###';
+$string['bookingstatus_subject_default_rejected'] = 'Buchungsanfrage abgelehnt: ###EVENTNAME###';
+$string['bookingstatus_subject_desc'] = 'Unterstuetzte Platzhalter: ###EVENTNAME###, ###BOOKINGSTATUS###, ###OLDBOOKINGSTATUS###, ###EVENTURL###, ###ROOM###, ###STARTTIME###, ###ENDTIME###, ###BOOKINGPERSON###, ###PERSONINCHARGE###, ###OTHEREXAMINERS###.';
 $string['bookingstatus_subject_inprogress'] = 'Betreff für In Bearbeitung';
 $string['bookingstatus_subject_new'] = 'Betreff für Neu';
 $string['bookingstatus_subject_rejected'] = 'Betreff für Abgelehnt';

@@ -55,10 +55,20 @@ $string['bookingstatus_action_reactivate'] = 'Reactivate as new request';
 $string['bookingstatus_action_reject'] = 'Reject';
 $string['bookingstatus_body_accepted'] = 'Message body for Accepted';
 $string['bookingstatus_body_canceled'] = 'Message body for Canceled';
-$string['bookingstatus_body_desc'] = 'Leave empty to use the default message. You can use placeholders documented above.';
+$string['bookingstatus_body_default_accepted'] = 'The booking request "###EVENTNAME###" was accepted. Open booking: ###EVENTURL###';
+$string['bookingstatus_body_default_canceled'] = 'The booking request "###EVENTNAME###" was canceled. Open booking: ###EVENTURL###';
+$string['bookingstatus_body_default_inprogress'] = 'The booking request "###EVENTNAME###" is now in progress. Open booking: ###EVENTURL###';
+$string['bookingstatus_body_default_new'] = 'A new booking request "###EVENTNAME###" was submitted. Open booking: ###EVENTURL###';
+$string['bookingstatus_body_default_rejected'] = 'The booking request "###EVENTNAME###" was rejected. Open booking: ###EVENTURL###';
+$string['bookingstatus_body_desc'] = 'Supported placeholders: ###EVENTNAME###, ###BOOKINGSTATUS###, ###OLDBOOKINGSTATUS###, ###EVENTURL###, ###ROOM###, ###STARTTIME###, ###ENDTIME###, ###BOOKINGPERSON###, ###PERSONINCHARGE###, ###OTHEREXAMINERS###.';
 $string['bookingstatus_body_inprogress'] = 'Message body for In Progress';
 $string['bookingstatus_body_new'] = 'Message body for New';
 $string['bookingstatus_body_rejected'] = 'Message body for Rejected';
+$string['bookingstatus_enabled_accepted'] = 'Send message for Accepted';
+$string['bookingstatus_enabled_canceled'] = 'Send message for Canceled';
+$string['bookingstatus_enabled_inprogress'] = 'Send message for In Progress';
+$string['bookingstatus_enabled_new'] = 'Send message for New';
+$string['bookingstatus_enabled_rejected'] = 'Send message for Rejected';
 $string['bookingstatus_notification_body_default'] = 'The booking request "###EVENTNAME###" has been updated to "###BOOKINGSTATUS###".'
     . "\n\n"
     . 'Room: ###ROOM###'
@@ -75,7 +85,7 @@ $string['bookingstatus_notification_body_default'] = 'The booking request "###EV
     . "\n\n"
     . 'Open booking: ###EVENTURL###';
 $string['bookingstatus_notification_subject_default'] = 'Booking status updated: {$a->eventname} ({$a->bookingstatus})';
-$string['bookingstatus_notifications_desc'] = 'Configure recipients and message templates for booking-status changes. Supported placeholders: ###EVENTNAME###, ###BOOKINGSTATUS###, ###OLDBOOKINGSTATUS###, ###EVENTURL###, ###ROOM###, ###STARTTIME###, ###ENDTIME###, ###BOOKINGPERSON###, ###PERSONINCHARGE###, ###OTHEREXAMINERS###.';
+$string['bookingstatus_notifications_desc'] = 'Configure recipients and message templates for booking-status changes.';
 $string['bookingstatus_notifications_heading'] = 'Booking status notifications';
 $string['bookingstatus_notify_bookingperson'] = 'Notify booking person';
 $string['bookingstatus_notify_bookingperson_desc'] = 'Send booking-status messages to the user who created the booking request.';
@@ -89,7 +99,12 @@ $string['bookingstatus_service_recipient_firstname'] = 'University';
 $string['bookingstatus_service_recipient_lastname'] = 'Service';
 $string['bookingstatus_subject_accepted'] = 'Message subject for Accepted';
 $string['bookingstatus_subject_canceled'] = 'Message subject for Canceled';
-$string['bookingstatus_subject_desc'] = 'Leave empty to use the default subject.';
+$string['bookingstatus_subject_default_accepted'] = 'Booking request accepted: ###EVENTNAME###';
+$string['bookingstatus_subject_default_canceled'] = 'Booking request canceled: ###EVENTNAME###';
+$string['bookingstatus_subject_default_inprogress'] = 'Booking request in progress: ###EVENTNAME###';
+$string['bookingstatus_subject_default_new'] = 'New booking request: ###EVENTNAME###';
+$string['bookingstatus_subject_default_rejected'] = 'Booking request rejected: ###EVENTNAME###';
+$string['bookingstatus_subject_desc'] = 'Supported placeholders: ###EVENTNAME###, ###BOOKINGSTATUS###, ###OLDBOOKINGSTATUS###, ###EVENTURL###, ###ROOM###, ###STARTTIME###, ###ENDTIME###, ###BOOKINGPERSON###, ###PERSONINCHARGE###, ###OTHEREXAMINERS###.';
 $string['bookingstatus_subject_inprogress'] = 'Message subject for In Progress';
 $string['bookingstatus_subject_new'] = 'Message subject for New';
 $string['bookingstatus_subject_rejected'] = 'Message subject for Rejected';

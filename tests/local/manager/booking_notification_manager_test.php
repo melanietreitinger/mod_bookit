@@ -27,6 +27,7 @@
 namespace mod_bookit\local\manager;
 
 use advanced_testcase;
+use mod_bookit\local\install_helper;
 
 /**
  * Unit tests for booking notifications.
@@ -44,6 +45,7 @@ final class booking_notification_manager_test extends advanced_testcase {
         parent::setUp();
         $this->resetAfterTest(true);
         message_update_providers('mod_bookit');
+        install_helper::ensure_booking_status_notification_defaults();
         set_config('bookingstatus_notify_bookingperson', 1, 'mod_bookit');
         set_config('bookingstatus_notify_personincharge', 1, 'mod_bookit');
         set_config('bookingstatus_notify_otherexaminers', 1, 'mod_bookit');
@@ -136,13 +138,13 @@ final class booking_notification_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_notify_status_changed_uses_configured_templates(): void {
+    public function test_notify_status_changed_uses_expressive_configured_templates(): void {
         $booker = $this->getDataGenerator()->create_user();
         $eventid = $this->create_test_event($booker->id, null, null, 'Configured Exam');
 
-        set_config('bookingstatus_subject_' . event_access_manager::BOOKINGSTATUS_ACCEPTED, 'Custom ###EVENTNAME###', 'mod_bookit');
+        set_config('bookingstatus_subject_accepted', 'Custom ###EVENTNAME###', 'mod_bookit');
         set_config(
-            'bookingstatus_body_' . event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus_body_accepted',
             'Status ###BOOKINGSTATUS### by ###BOOKINGPERSON###',
             'mod_bookit'
         );
@@ -160,6 +162,35 @@ final class booking_notification_manager_test extends advanced_testcase {
         $this->assertCount(1, $messages);
         $this->assertSame('Custom Configured Exam', $messages[0]->subject);
         $this->assertStringContainsString('Status Accepted by', $messages[0]->fullmessage);
+    }
+
+    /**
+     * Test that a disabled status type suppresses all sends.
+     *
+     * @return void
+     */
+    public function test_notify_status_changed_suppresses_disabled_status(): void {
+        $booker = $this->getDataGenerator()->create_user();
+        $eventid = $this->create_test_event($booker->id);
+
+        set_config('bookingstatus_enabled_accepted', 0, 'mod_bookit');
+
+        $messagesink = $this->redirectMessages();
+        $emailsink = $this->redirectEmails();
+        $sent = booking_notification_manager::notify_status_changed(
+            $this->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        );
+        $messages = $messagesink->get_messages();
+        $emails = $emailsink->get_messages();
+        $emailsink->close();
+        $messagesink->close();
+
+        $this->assertSame(0, $sent);
+        $this->assertCount(0, $messages);
+        $this->assertCount(0, $emails);
     }
 
     /**
@@ -194,6 +225,36 @@ final class booking_notification_manager_test extends advanced_testcase {
         $this->assertSame(4, $sent);
         $this->assertCount(2, $messages);
         $this->assertCount(2, $emails);
+    }
+
+    /**
+     * Test that empty service addresses skip only email delivery while user recipients still receive messages.
+     *
+     * @return void
+     */
+    public function test_notify_status_changed_skips_empty_service_addresses_only(): void {
+        $booker = $this->getDataGenerator()->create_user();
+        $personincharge = $this->getDataGenerator()->create_user();
+        $eventid = $this->create_test_event($booker->id, $personincharge->id);
+
+        set_config('bookingstatus_service_addresses', '', 'mod_bookit');
+
+        $messagesink = $this->redirectMessages();
+        $emailsink = $this->redirectEmails();
+        $sent = booking_notification_manager::notify_status_changed(
+            $this->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        );
+        $messages = $messagesink->get_messages();
+        $emails = $emailsink->get_messages();
+        $emailsink->close();
+        $messagesink->close();
+
+        $this->assertSame(2, $sent);
+        $this->assertCount(2, $messages);
+        $this->assertCount(0, $emails);
     }
 
     /**

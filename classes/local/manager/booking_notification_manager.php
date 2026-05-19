@@ -28,6 +28,7 @@ namespace mod_bookit\local\manager;
 use core_user;
 use dml_exception;
 use moodle_url;
+use mod_bookit\local\install_helper;
 use stdClass;
 
 /**
@@ -52,8 +53,13 @@ class booking_notification_manager {
             return 0;
         }
 
+        $notificationstatus = install_helper::get_booking_status_notification_status_by_id($newstatus);
+        if ($notificationstatus === null || !self::is_notification_enabled($notificationstatus)) {
+            return 0;
+        }
+
         $recipientids = self::collect_recipient_ids($event);
-        $template = self::get_template_data($event, $cmid, $oldstatus, $newstatus);
+        $template = self::get_template_data($event, $cmid, $oldstatus, $newstatus, $notificationstatus);
         $sent = 0;
 
         if (!empty($recipientids)) {
@@ -120,9 +126,17 @@ class booking_notification_manager {
      * @param int $cmid
      * @param int $oldstatus
      * @param int $newstatus
+     * @param array{id:int,key:string,enabledconfig:string,subjectconfig:string,bodyconfig:string,
+     *     enabledstring:string,subjectstring:string,bodystring:string} $notificationstatus
      * @return stdClass
      */
-    private static function get_template_data(stdClass $event, int $cmid, int $oldstatus, int $newstatus): stdClass {
+    private static function get_template_data(
+        stdClass $event,
+        int $cmid,
+        int $oldstatus,
+        int $newstatus,
+        array $notificationstatus
+    ): stdClass {
         $url = new moodle_url('/mod/bookit/view.php', ['id' => $cmid, 'eventid' => $event->id]);
 
         $data = new stdClass();
@@ -136,10 +150,23 @@ class booking_notification_manager {
         $data->otherexaminers = self::get_user_names_csv((string)($event->otherexaminers ?? ''));
         $data->newstatus = $newstatus;
         $data->oldstatus = $oldstatus;
-        $data->configuredsubject = trim((string)get_config('mod_bookit', 'bookingstatus_subject_' . $newstatus));
-        $data->configuredbody = trim((string)get_config('mod_bookit', 'bookingstatus_body_' . $newstatus));
+        $data->statuskey = $notificationstatus['key'];
+        $data->configuredsubject = trim((string)get_config('mod_bookit', $notificationstatus['subjectconfig']));
+        $data->configuredbody = trim((string)get_config('mod_bookit', $notificationstatus['bodyconfig']));
 
         return self::localize_template_data($data);
+    }
+
+    /**
+     * Check whether the resolved expressive status type is enabled.
+     *
+     * @param array{id:int,key:string,enabledconfig:string,subjectconfig:string,bodyconfig:string,
+     *     enabledstring:string,subjectstring:string,bodystring:string} $notificationstatus
+     * @return bool
+     */
+    private static function is_notification_enabled(array $notificationstatus): bool {
+        $enabled = get_config('mod_bookit', $notificationstatus['enabledconfig']);
+        return $enabled === false ? true : (int)$enabled === 1;
     }
 
     /**
@@ -270,11 +297,9 @@ class booking_notification_manager {
             return $configured;
         }
 
-        $stringkey = $field === 'subject'
-            ? 'bookingstatus_notification_subject_default'
-            : 'bookingstatus_notification_body_default';
-
-        return get_string($stringkey, 'mod_bookit', $data);
+        return $field === 'subject'
+            ? install_helper::get_booking_status_notification_default_subject((string)$data->statuskey)
+            : install_helper::get_booking_status_notification_default_body((string)$data->statuskey);
     }
 
     /**
