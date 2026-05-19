@@ -808,6 +808,7 @@ class edit_event_form extends dynamic_form {
         $caneditinternal = has_capability('mod/bookit:editinternal', $context);
         $caneditinternalnotes = $caneditinternal;
         $caneditbookingstatus = $caneditinternal;
+        $canmanagepastbookings = event_access_manager::can_manage_past_bookings($context);
         $bookingstatustransition = null;
         $statusonlyselfcancel = false;
         $resourcesenabled = event_access_manager::is_resources_enabled();
@@ -869,11 +870,14 @@ class edit_event_form extends dynamic_form {
             $resolvedduration = $submittedduration ?? ($formdata->duration ?? null) ?? $currentevent?->duration;
 
             if ($resolvedstarttime === null || $resolvedduration === null) {
+                if (!$canmanagepastbookings) {
+                    throw new moodle_exception('event_error_mintime', 'mod_bookit');
+                }
                 throw new moodle_exception('missingrequiredfield', 'error');
             }
 
             if (
-                !event_access_manager::can_manage_past_bookings($context)
+                !$canmanagepastbookings
                 && get_possible_starttimes::is_starttime_in_past((int)$resolvedstarttime)
             ) {
                 throw new moodle_exception('event_error_mintime', 'mod_bookit');
@@ -1174,6 +1178,7 @@ class edit_event_form extends dynamic_form {
     public function validation($data, $files): array {
         global $USER;
         $context = $this->get_context_for_dynamic_submission();
+        $canmanagepastbookings = event_access_manager::can_manage_past_bookings($context);
         $existingevent = null;
         $submittedstarttime = $this->_ajaxformdata['starttime'] ?? null;
         $resourcesenabled = event_access_manager::is_resources_enabled();
@@ -1238,7 +1243,11 @@ class edit_event_form extends dynamic_form {
         $participantsamount = $data['participantsamount'] ?? $existingevent->participantsamount ?? null;
         $room = !empty($roomid) ? room::get_record(['id' => $roomid], IGNORE_MISSING) : null;
         $starttime = $submittedstarttime ?? ($data['starttime'] ?? null);
-        if ($starttime !== null && get_possible_starttimes::is_starttime_in_past((int)$starttime)) {
+        if (
+            !$canmanagepastbookings
+            && $starttime !== null
+            && get_possible_starttimes::is_starttime_in_past((int)$starttime)
+        ) {
             $errors['starttime'] = get_string('event_error_mintime', 'mod_bookit');
         }
         if ($room && $participantsamount !== null && $room->get('seats') != 0 && $room->get('seats') < $participantsamount) {

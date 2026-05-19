@@ -416,6 +416,43 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Only service-team style capabilities may expose the request-management navigation.
+     *
+     * @return void
+     */
+    public function test_can_manage_open_requests_requires_service_capabilities(): void {
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Bookit request tab test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        $participantrole = \create_role('Bookit overview only', 'bookitoverviewonly', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+
+        $servicerole = \create_role('Bookit request manager', 'bookitrequestmanager', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $servicerole, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $participant = $this->getDataGenerator()->create_user();
+        $serviceuser = $this->getDataGenerator()->create_user();
+        \role_assign($participantrole, $participant->id, $context->id);
+        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($participant);
+        $this->assertFalse(event_access_manager::can_manage_open_requests($context));
+
+        $this->setUser($serviceuser);
+        $this->assertTrue(event_access_manager::can_manage_open_requests($context));
+    }
+
+    /**
      * Event checklist and resources pages must disappear completely when the optional module parts are disabled.
      *
      * @return void

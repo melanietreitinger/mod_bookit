@@ -39,7 +39,7 @@ $functions = [
     ],
     'mod_bookit_update_event_booking_status' => [
         'classname'   => 'mod_bookit\external\update_event_booking_status',
-        'description' => 'Updates the booking status of an event using the configured workflow transitions.',
+        'description' => 'Updates an event booking status and keeps the current overview request queue active.',
         'type'        => 'write',
         'ajax'        => true,
     ],

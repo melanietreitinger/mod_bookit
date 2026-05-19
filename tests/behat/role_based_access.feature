@@ -108,6 +108,15 @@ Feature: Enforce role-based visibility and editing for booking requests
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview should not expose a detail link for event "Reserved"
 
+  Scenario: Observer export route shows a clear denied outcome
+    Given the following "mod_bookit > events" exist:
+      | name                  | username    | startdate                         | enddate                              | bookingstatus | institution |
+      | Observer export exam  | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
+    When I log in as "observeruser"
+    And I open the Bookit export endpoint for "My BookIt Activity"
+    Then I should see "Event export is not available for your role."
+    And I should not see "Debug info"
+
   Scenario: Observer overview has no personal navigation and shows the restricted empty state
     When I log in as "observeruser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"

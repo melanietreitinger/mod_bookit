@@ -378,6 +378,64 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Reactivated requests move from the rejected queue back to the open queue counts.
+     *
+     * @return void
+     */
+    public function test_reactivating_rejected_request_updates_queue_counts(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Bookit queue test']);
+        $context = context_module::instance($bookit->cmid);
+        $referencetime = strtotime('2026-05-07 10:00:00');
+
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Reactivatable request',
+            'semester' => 20261,
+            'institutionid' => null,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->assertSame(0, event_manager::count_open_requests($referencetime));
+        $this->assertSame(1, event_manager::count_rejected_requests($referencetime));
+
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            (int)$user->id,
+            $context
+        );
+
+        $this->assertSame(1, event_manager::count_open_requests($referencetime));
+        $this->assertSame(0, event_manager::count_rejected_requests($referencetime));
+    }
+
+    /**
      * Status transitions keep workflow history and audit events aligned.
      *
      * @return void

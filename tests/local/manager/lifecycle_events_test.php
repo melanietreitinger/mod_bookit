@@ -28,6 +28,7 @@ namespace mod_bookit\local\manager;
 
 use advanced_testcase;
 use context_module;
+use mod_bookit\event\booking_reactivated;
 use mod_bookit\event\booking_status_changed;
 use mod_bookit\local\entity\bookit_event;
 
@@ -186,6 +187,76 @@ final class lifecycle_events_test extends advanced_testcase {
         $this->assertInstanceOf(booking_status_changed::class, $events[0]);
         $this->assertSame('updated', $events[0]->other['action']);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$events[0]->other['oldstatus']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$events[0]->other['newstatus']);
+    }
+
+    /**
+     * Transitioning a booking into the workflow must emit the representative status-change audit event.
+     *
+     * @return void
+     */
+    public function test_transition_booking_status_triggers_in_progress_audit_event(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_event($roomid, (int)$user->id, ['name' => 'Lifecycle transition event']);
+        $event->save((int)$user->id);
+
+        $record = event_manager::get_event((int)$event->id);
+
+        $sink = $this->redirectEvents();
+        event_manager::transition_booking_status(
+            $record,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            (int)$user->id,
+            $context
+        );
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(booking_status_changed::class, $events[0]);
+        $this->assertSame('moved_to_in_progress', $events[0]->other['action']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$events[0]->other['oldstatus']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_IN_PROGRESS, (int)$events[0]->other['newstatus']);
+    }
+
+    /**
+     * Re-activating a rejected request must emit the dedicated reactivation audit event.
+     *
+     * @return void
+     */
+    public function test_transition_booking_status_triggers_reactivated_audit_event(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_event($roomid, (int)$user->id, [
+            'name' => 'Lifecycle reactivation event',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+        ]);
+        $event->save((int)$user->id);
+
+        $record = event_manager::get_event((int)$event->id);
+
+        $sink = $this->redirectEvents();
+        event_manager::transition_booking_status(
+            $record,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            (int)$user->id,
+            $context
+        );
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(booking_reactivated::class, $events[0]);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_REJECTED, (int)$events[0]->other['oldstatus']);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$events[0]->other['newstatus']);
     }
 }

@@ -99,14 +99,6 @@
                 </a>
             </li>
             {{/showopenrequestsnav}}
-            {{#showrejectedrequestsnav}}
-            <li class="nav-item">
-                <a class="nav-link {{#rejectedrequestsactive}}active{{/rejectedrequestsactive}}" href="{{rejectedrequestsurl}}">
-                    {{rejectedrequeststitle}}
-                    <span class="badge badge-pill badge-danger ml-1">{{rejectedrequestcount}}</span>
-                </a>
-            </li>
-            {{/showrejectedrequestsnav}}
         </ul>
     </div>
 
@@ -315,15 +307,39 @@
     {{/hasevents}}
     {{/showmyeventssection}}
 
-    {{#showopenrequestssection}}
+    {{#showrequestworkspacesection}}
     <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
         <div>
-            <h3 class="h5 mb-1">{{openrequeststitle}}</h3>
-            <div class="text-muted small">{{openrequestshelp}}</div>
+            <h3 class="h5 mb-1">{{requestworkspacetitle}}</h3>
+            <div class="text-muted small">{{requestworkspacehelp}}</div>
         </div>
-        <div class="mod-bookit-open-requests-count badge badge-warning badge-pill p-2">
-            {{openrequestcounttext}}
+        <div class="badge badge-pill p-2 {{requestqueuebadgeclass}}">
+            {{requestqueuecounttext}}
         </div>
+    </div>
+
+    {{#showrequestworkspaceswitch}}
+    <div class="mb-3">
+        <div class="text-muted small mb-2">{{requestqueueswitchhelp}}</div>
+        <div class="btn-group mod-bookit-request-workspace-switch" role="group" aria-label="{{requestqueueswitchlabel}}">
+            <a class="btn {{#requestworkspaceopenactive}}btn-warning active{{/requestworkspaceopenactive}}{{^requestworkspaceopenactive}}btn-outline-warning{{/requestworkspaceopenactive}}"
+               href="{{openrequestsurl}}">
+                {{openrequeststitle}}
+                <span class="badge badge-pill badge-light ml-1">{{openrequestcount}}</span>
+            </a>
+            <a class="btn {{#requestworkspacerejectedactive}}btn-danger active{{/requestworkspacerejectedactive}}{{^requestworkspacerejectedactive}}btn-outline-danger{{/requestworkspacerejectedactive}}"
+               href="{{rejectedrequestsurl}}">
+                {{rejectedrequeststitle}}
+                <span class="badge badge-pill badge-light ml-1">{{rejectedrequestcount}}</span>
+            </a>
+        </div>
+    </div>
+    {{/showrequestworkspaceswitch}}
+
+    {{#requestworkspaceopenactive}}
+    <div class="mb-3">
+        <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
+        <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
     </div>
 
     {{#hasopenrequests}}
@@ -404,6 +420,7 @@
                                 data-action="set-booking-status"
                                 data-eventid="{{eventid}}"
                                 data-cmid="{{cmid}}"
+                                data-tab="{{tab}}"
                                 data-status="{{value}}">
                             {{label}}
                         </button>
@@ -421,16 +438,13 @@
         {{openrequestsempty}}
     </div>
     {{/hasopenrequests}}
-    {{/showopenrequestssection}}
+    {{/requestworkspaceopenactive}}
 
-    {{#showrejectedrequestssection}}
-    <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
+    {{#requestworkspacerejectedactive}}
+    <div class="mb-3">
         <div>
-            <h3 class="h5 mb-1">{{rejectedrequeststitle}}</h3>
-            <div class="text-muted small">{{rejectedrequestshelp}}</div>
-        </div>
-        <div class="mod-bookit-rejected-requests-count badge badge-danger badge-pill p-2">
-            {{rejectedrequestcounttext}}
+            <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
+            <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
         </div>
     </div>
 
@@ -512,6 +526,7 @@
                                 data-action="set-booking-status"
                                 data-eventid="{{eventid}}"
                                 data-cmid="{{cmid}}"
+                                data-tab="{{tab}}"
                                 data-status="{{value}}">
                             {{label}}
                         </button>
@@ -529,5 +544,6 @@
         {{rejectedrequestsempty}}
     </div>
     {{/hasrejectedrequests}}
-    {{/showrejectedrequestssection}}
+    {{/requestworkspacerejectedactive}}
+    {{/showrequestworkspacesection}}
 </div>

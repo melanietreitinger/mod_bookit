@@ -146,7 +146,12 @@ $context = context_module::instance($cm->id);
 
 require_login($course, false, $cm);
 if (event_access_manager::is_observer_restricted_mode($context)) {
-    throw new moodle_exception('observer_no_detail_access', 'mod_bookit');
+    redirect(
+        new moodle_url('/mod/bookit/view.php', ['id' => $cmid]),
+        get_string('observer_export_denied', 'mod_bookit'),
+        null,
+        \core\output\notification::NOTIFY_WARNING
+    );
 }
 require_capability('mod/bookit:viewownoverview', $context);
 

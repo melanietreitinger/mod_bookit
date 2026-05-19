@@ -31,6 +31,22 @@ const SELECTOR = 'select[data-action="update-booking-status"]';
 const BUTTON_SELECTOR = 'button[data-action="set-booking-status"]';
 
 /**
+ * Resolve the overview tab that should remain active after a workflow action.
+ *
+ * @param {HTMLElement} element
+ * @returns {string}
+ */
+const resolveActiveTab = (element) => {
+    const datasetTab = element.dataset.tab;
+    if (datasetTab) {
+        return datasetTab;
+    }
+
+    const url = new URL(window.location.href);
+    return url.searchParams.get('tab') || 'myevents';
+};
+
+/**
  * Apply status colour to a select element by reading data attributes from the selected option.
  *
  * @param {HTMLSelectElement} select
@@ -65,16 +81,17 @@ export const init = () => {
         const cmid = parseInt(select.dataset.cmid, 10);
         const eventid = parseInt(select.dataset.eventid, 10);
         const status = parseInt(select.value, 10);
+        const tab = resolveActiveTab(select);
 
         select.disabled = true;
 
         Ajax.call([{
             methodname: 'mod_bookit_update_event_booking_status',
-            args: {cmid, eventid, status},
+            args: {cmid, eventid, status, tab},
         }])[0]
-        .then(() => {
+        .then((response) => {
             applyColor(select);
-            window.location.reload();
+            window.location.assign(response.redirecturl || window.location.href);
             return null;
         })
         .catch((err) => {
@@ -92,15 +109,16 @@ export const init = () => {
         const cmid = parseInt(button.dataset.cmid, 10);
         const eventid = parseInt(button.dataset.eventid, 10);
         const status = parseInt(button.dataset.status, 10);
+        const tab = resolveActiveTab(button);
 
         button.disabled = true;
 
         Ajax.call([{
             methodname: 'mod_bookit_update_event_booking_status',
-            args: {cmid, eventid, status},
+            args: {cmid, eventid, status, tab},
         }])[0]
-        .then(() => {
-            window.location.reload();
+        .then((response) => {
+            window.location.assign(response.redirecturl || window.location.href);
             return null;
         })
         .catch((err) => {

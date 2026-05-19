@@ -58,6 +58,103 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Opens the direct event-export endpoint for the named activity.
+     *
+     * @When I open the Bookit export endpoint for :activity
+     * @param string $activity
+     * @return void
+     */
+    public function i_open_the_bookit_export_endpoint_for(string $activity): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $url = new moodle_url('/mod/bookit/export_events.php', ['id' => $cm->id]);
+        $this->getSession()->visit($this->locate_path($url->out_as_local_url(false)));
+    }
+
+    /**
+     * Assert that the main Bookit activity tab row contains the given text.
+     *
+     * @Then the Bookit main tabs should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_main_tabs_should_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            '.mod_bookit-overview-examiner_overview ul.nav.nav-tabs',
+            $text,
+            true,
+            'Bookit main tabs'
+        );
+    }
+
+    /**
+     * Assert that the main Bookit activity tab row does not contain the given text.
+     *
+     * @Then the Bookit main tabs should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_main_tabs_should_not_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            '.mod_bookit-overview-examiner_overview ul.nav.nav-tabs',
+            $text,
+            false,
+            'Bookit main tabs'
+        );
+    }
+
+    /**
+     * Assert that the request-workspace queue switch contains the given text.
+     *
+     * @Then the Bookit request workspace switch should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_switch_should_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            '.mod-bookit-request-workspace-switch',
+            $text,
+            true,
+            'Bookit request workspace switch'
+        );
+    }
+
+    /**
+     * Assert that the request-workspace queue switch does not contain the given text.
+     *
+     * @Then the Bookit request workspace switch should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_switch_should_not_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            '.mod-bookit-request-workspace-switch',
+            $text,
+            false,
+            'Bookit request workspace switch'
+        );
+    }
+
+    /**
+     * Assert how many activity tab rows are visible in the overview.
+     *
+     * @Then the Bookit overview should show :count activity tab row(s)
+     * @param int $count
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_activity_tab_rows(int $count): void {
+        $rows = $this->getSession()->getPage()->findAll('css', '.mod_bookit-overview-examiner_overview ul.nav.nav-tabs');
+        if (count($rows) !== $count) {
+            throw new ExpectationException(
+                "Expected $count Bookit activity tab row(s), found " . count($rows) . '.',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
      * Opens the Bookit overview with explicit personal filter parameters.
      *
      * @When I open the filtered Bookit overview :tab for :activity with status :status faculty :faculty and semesters :semesters
@@ -162,6 +259,46 @@ class behat_mod_bookit extends behat_base {
         }
 
         return date('Y-m-d', $timestamp);
+    }
+
+    /**
+     * Assert whether the given selector contains a text fragment.
+     *
+     * @param string $selector
+     * @param string $text
+     * @param bool $expected
+     * @param string $description
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_selector_contains_text(
+        string $selector,
+        string $text,
+        bool $expected,
+        string $description
+    ): void {
+        $node = $this->getSession()->getPage()->find('css', $selector);
+        if (!$node) {
+            if ($expected) {
+                throw new ExpectationException("Could not find $description.", $this->getSession());
+            }
+            return;
+        }
+
+        $contains = mb_strpos($node->getText(), $text) !== false;
+        if ($expected && !$contains) {
+            throw new ExpectationException(
+                "$description did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+
+        if (!$expected && $contains) {
+            throw new ExpectationException(
+                "$description unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
     }
 
     /**

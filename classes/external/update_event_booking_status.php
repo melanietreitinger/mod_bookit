@@ -55,6 +55,12 @@ class update_event_booking_status extends external_api {
             'cmid'    => new external_value(PARAM_INT, 'Course module ID'),
             'eventid' => new external_value(PARAM_INT, 'Event ID'),
             'status'  => new external_value(PARAM_INT, 'New booking status value (0-4)'),
+            'tab' => new external_value(
+                PARAM_ALPHA,
+                'Overview tab to return to after the status update.',
+                VALUE_DEFAULT,
+                'myevents'
+            ),
         ]);
     }
 
@@ -64,15 +70,17 @@ class update_event_booking_status extends external_api {
      * @param int $cmid Course module ID
      * @param int $eventid Event ID
      * @param int $status New booking status
+     * @param string $tab Overview tab to return to
      * @return array
      */
-    public static function execute(int $cmid, int $eventid, int $status): array {
+    public static function execute(int $cmid, int $eventid, int $status, string $tab = 'myevents'): array {
         global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid'    => $cmid,
             'eventid' => $eventid,
             'status'  => $status,
+            'tab' => $tab,
         ]);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
@@ -121,7 +129,22 @@ class update_event_booking_status extends external_api {
 
         event_manager::transition_booking_status($event, $effectivestatus, (int)$USER->id, $context, (int)$params['cmid']);
 
-        return ['status' => $effectivestatus];
+        $redirecttab = match (true) {
+            in_array($params['tab'], ['openrequests', 'rejectedrequests'], true)
+                && event_access_manager::can_manage_open_requests($context) => $params['tab'],
+            $params['tab'] === 'history' => 'history',
+            default => 'myevents',
+        };
+        $redirecturl = (new \moodle_url('/mod/bookit/overview.php', [
+            'id' => $cm->id,
+            'tab' => $redirecttab,
+        ]))->out(false);
+
+        return [
+            'status' => $effectivestatus,
+            'tab' => $redirecttab,
+            'redirecturl' => $redirecturl,
+        ];
     }
 
     /**
@@ -132,6 +155,8 @@ class update_event_booking_status extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'status' => new external_value(PARAM_INT, 'Updated booking status value'),
+            'tab' => new external_value(PARAM_ALPHA, 'Overview tab to reopen after the workflow action'),
+            'redirecturl' => new external_value(PARAM_URL, 'Redirect URL that preserves the active overview queue'),
         ]);
     }
 }

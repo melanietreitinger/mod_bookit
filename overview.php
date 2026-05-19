@@ -53,16 +53,17 @@ $resourcesenabled = event_access_manager::is_resources_enabled();
 $selectedstatus = optional_param('bookingstatusfilter', -1, PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
+$isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'rejectedrequests'], true);
+$requestworkspacemode = $tab === 'rejectedrequests' ? 'rejectedrequests' : 'openrequests';
 $currenttab = match (true) {
     $isobserverrestricted => 'myevents',
-    $tab === 'openrequests' && $canmanageopenrequests => 'openrequests',
-    $tab === 'rejectedrequests' && $canmanageopenrequests => 'rejectedrequests',
+    $isinrequestworkspace => 'openrequests',
     $tab === 'history' => 'history',
     default => 'myevents',
 };
-$tableid = match ($currenttab) {
-    'openrequests' => 'open-requests-table',
-    'rejectedrequests' => 'rejected-requests-table',
+$tableid = match (true) {
+    $isinrequestworkspace && $requestworkspacemode === 'rejectedrequests' => 'rejected-requests-table',
+    $isinrequestworkspace => 'open-requests-table',
     default => 'overview-table',
 };
 
@@ -240,15 +241,15 @@ $templatecontext = [
     'showidcolumn' => $canmanageopenrequests,
     'showmyeventsnav' => !$isobserverrestricted,
     'showopenrequestsnav' => $canmanageopenrequests,
-    'showrejectedrequestsnav' => $canmanageopenrequests,
     'showhistorynav' => !$isobserverrestricted,
-    'showmyeventssection' => !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
-    'showopenrequestssection' => $currenttab === 'openrequests',
-    'showrejectedrequestssection' => $currenttab === 'rejectedrequests',
+    'showmyeventssection' => $currenttab !== 'openrequests',
+    'showrequestworkspacesection' => $currenttab === 'openrequests',
+    'showrequestworkspaceswitch' => $canmanageopenrequests,
     'myeventsactive' => $currenttab === 'myevents',
     'historyactive' => $currenttab === 'history',
     'openrequestsactive' => $currenttab === 'openrequests',
-    'rejectedrequestsactive' => $currenttab === 'rejectedrequests',
+    'requestworkspaceopenactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
+    'requestworkspacerejectedactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
     'myeventsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'myevents']))->out(false),
     'historyurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'history']))->out(false),
     'openrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'openrequests']))->out(false),
@@ -260,6 +261,10 @@ $templatecontext = [
         ? get_string('overview_all_events', 'mod_bookit')
         : get_string('overview_my_events', 'mod_bookit'),
     'historytitle' => get_string('overview_history', 'mod_bookit'),
+    'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
+    'requestworkspacehelp' => get_string('overview_request_workspace_help', 'mod_bookit'),
+    'requestqueueswitchlabel' => get_string('overview_request_workspace_switch', 'mod_bookit'),
+    'requestqueueswitchhelp' => get_string('overview_request_workspace_switch_help', 'mod_bookit'),
     'sectiontitle' => $currenttab === 'history'
         ? get_string('overview_history', 'mod_bookit')
         : ($showreportfilters ? get_string('overview_all_events', 'mod_bookit') : get_string('overview_my_events', 'mod_bookit')),
@@ -273,8 +278,20 @@ $templatecontext = [
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
     'rejectedrequestcount' => $rejectedrequestcount,
     'rejectedrequestcounttext' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
-    'showoverviewfilters' => !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
-    'showreportfilters' => $showreportfilters && !in_array($currenttab, ['openrequests', 'rejectedrequests'], true),
+    'requestqueuecurrenttitle' => $requestworkspacemode === 'rejectedrequests'
+        ? get_string('overview_rejected_requests', 'mod_bookit')
+        : get_string('overview_open_requests', 'mod_bookit'),
+    'requestqueuecurrenthelp' => $requestworkspacemode === 'rejectedrequests'
+        ? get_string('overview_rejected_requests_help', 'mod_bookit')
+        : get_string('overview_open_requests_help', 'mod_bookit'),
+    'requestqueuecounttext' => $requestworkspacemode === 'rejectedrequests'
+        ? get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount)
+        : get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
+    'requestqueuebadgeclass' => $requestworkspacemode === 'rejectedrequests'
+        ? 'badge-danger'
+        : 'badge-warning',
+    'showoverviewfilters' => $currenttab !== 'openrequests',
+    'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
     'showprogresscolumn' => $checklistenabled || $resourcesenabled,
     'showchecklistcolumn' => $checklistenabled,
     'showresourcescolumn' => $resourcesenabled,
@@ -392,7 +409,8 @@ $buildhistorydetails = static function (int $eventid) use ($resolvehistoryfieldl
 
 $prepareeventrow = function (
     stdClass $ev,
-    bool $isopenrequest = false
+    bool $isrequestworkspaceitem = false,
+    string $requesttab = 'openrequests'
 ) use (
     $USER,
     $context,
@@ -459,7 +477,7 @@ $prepareeventrow = function (
     }
 
     $actions = [];
-    if ($isopenrequest) {
+    if ($isrequestworkspaceitem) {
         foreach (event_manager::get_booking_status_transition_options((int)($ev->bookingstatus ?? 0)) as $option) {
             $btnclass = 'btn-outline-secondary';
             if ((int)$option['value'] === event_access_manager::BOOKINGSTATUS_IN_PROGRESS) {
@@ -476,6 +494,7 @@ $prepareeventrow = function (
                 'value' => (int)$option['value'],
                 'eventid' => (int)$ev->id,
                 'cmid' => (int)$cm->id,
+                'tab' => $requesttab,
                 'label' => match ((int)$option['value']) {
                     event_access_manager::BOOKINGSTATUS_NEW
                         => ((int)($ev->bookingstatus ?? 0) === event_access_manager::BOOKINGSTATUS_REJECTED)
@@ -491,7 +510,6 @@ $prepareeventrow = function (
             ];
         }
     }
-
     $caneventdetails = !$isreservedprojection
         && event_access_manager::can_user_view_event_details($ev, $context, (int)$USER->id);
     $latesthistory = $latesthistorymap[(int)$ev->id] ?? null;
@@ -505,7 +523,7 @@ $prepareeventrow = function (
             $latesthistorysummary .= ' · ' . $actorname;
         }
     }
-    $historydetails = $isopenrequest ? $buildhistorydetails((int)$ev->id) : [];
+    $historydetails = $isrequestworkspaceitem ? $buildhistorydetails((int)$ev->id) : [];
 
     return [
         'id' => (string)$ev->id,
@@ -550,7 +568,7 @@ $prepareeventrow = function (
         'resourcesprogress_available' => $resourcesenabled && (($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0),
         'haslatesthistorysummary' => !$isreservedprojection && $latesthistorysummary !== '',
         'latesthistorysummary' => s($latesthistorysummary),
-        'showhistorydetails' => !$isreservedprojection && $isopenrequest,
+        'showhistorydetails' => !$isreservedprojection && $isrequestworkspaceitem,
         'historydetailslabel' => get_string('overview_workflow_history', 'mod_bookit'),
         'historydetailsempty' => get_string('overview_workflow_history_empty', 'mod_bookit'),
         'hashistoryentries' => !$isreservedprojection && !empty($historydetails),
@@ -571,11 +589,11 @@ $templatecontext['hasevents'] = !empty($templatecontext['events']);
 $templatecontext['eventcounttext'] = get_string('overview_count', 'mod_bookit', count($templatecontext['events']));
 
 foreach ($openrequests as $ev) {
-    $templatecontext['openrequests'][] = $prepareeventrow($ev, true);
+    $templatecontext['openrequests'][] = $prepareeventrow($ev, true, 'openrequests');
 }
 
 foreach ($rejectedrequests as $ev) {
-    $templatecontext['rejectedrequests'][] = $prepareeventrow($ev, true);
+    $templatecontext['rejectedrequests'][] = $prepareeventrow($ev, true, 'rejectedrequests');
 }
 
 // Render Mustache.
