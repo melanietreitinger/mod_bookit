@@ -1066,7 +1066,7 @@ class install_helper {
     private static function backfill_default_institution(bool $verbose = false): array {
         global $DB;
 
-        $existing = $DB->get_record('bookit_institution', ['name' => self::DEFAULT_INSTITUTION_NAME]);
+        $existing = self::find_record_by_text_field('bookit_institution', 'name', self::DEFAULT_INSTITUTION_NAME);
         if ($existing) {
             return self::sync_default_institution((int)$existing->id, $verbose);
         }
@@ -1087,7 +1087,7 @@ class install_helper {
     private static function backfill_default_room(bool $verbose = false): array {
         global $DB;
 
-        $existing = $DB->get_record('bookit_room', ['name' => self::DEFAULT_ROOM_NAME]);
+        $existing = self::find_record_by_text_field('bookit_room', 'name', self::DEFAULT_ROOM_NAME);
         if ($existing) {
             return self::sync_default_room((int)$existing->id, $verbose);
         }
@@ -1113,7 +1113,7 @@ class install_helper {
             return ['status' => 'skipped', 'id' => null, 'message' => null];
         }
 
-        $existing = $DB->get_record('bookit_weekplan', ['name' => self::DEFAULT_WEEKPLAN_NAME]);
+        $existing = self::find_record_by_text_field('bookit_weekplan', 'name', self::DEFAULT_WEEKPLAN_NAME);
         if ($existing) {
             return self::sync_default_weekplan((int)$existing->id, $roomid, $verbose);
         }
@@ -1123,6 +1123,24 @@ class install_helper {
         }
 
         return ['status' => 'skipped', 'id' => null, 'message' => null];
+    }
+
+    /**
+     * Look up a single record by a text field using Moodle's text comparison helper.
+     *
+     * @param string $table
+     * @param string $field
+     * @param string $value
+     * @return object|false
+     */
+    private static function find_record_by_text_field(string $table, string $field, string $value) {
+        global $DB;
+
+        $sql = "SELECT *
+                  FROM {" . $table . "}
+                 WHERE " . $DB->sql_compare_text($field) . " = " . $DB->sql_compare_text(':value');
+
+        return $DB->get_record_sql($sql, ['value' => $value]);
     }
 
     /**
