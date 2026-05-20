@@ -100,6 +100,28 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Create a Bookit module context with a service-team role.
+     *
+     * @param string $roleshortname
+     * @return context_module
+     */
+    private function create_bookit_context_with_service_role(string $roleshortname = 'bookitservice'): context_module {
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Bookit service test']);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit service team', $roleshortname, 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        return $context;
+    }
+
+    /**
      * Assign a role by shortname to the given user.
      *
      * @param context_module $context
@@ -169,18 +191,22 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Rejected requests remain visible until their requested slot is over.
+     * Rejected-request trash membership is status-based and does not expire by end time.
      *
      * @return void
      */
-    public function test_is_rejected_request_uses_requested_end_time(): void {
-        $event = (object)[
+    public function test_is_rejected_request_is_status_based(): void {
+        $rejected = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'endtime' => strtotime('2026-05-07 12:00:00'),
+            'endtime' => strtotime('2026-05-01 12:00:00'),
+        ];
+        $accepted = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'endtime' => strtotime('2026-06-01 12:00:00'),
         ];
 
-        $this->assertTrue(event_access_manager::is_rejected_request($event, strtotime('2026-05-07 11:59:59')));
-        $this->assertFalse(event_access_manager::is_rejected_request($event, strtotime('2026-05-07 12:00:01')));
+        $this->assertTrue(event_access_manager::is_rejected_request($rejected, strtotime('2026-06-07 12:00:01')));
+        $this->assertFalse(event_access_manager::is_rejected_request($accepted, strtotime('2026-05-07 12:00:01')));
     }
 
     /**
@@ -460,6 +486,38 @@ final class event_access_manager_test extends advanced_testcase {
 
         $this->setUser($basicserviceuser);
         $this->assertTrue(event_access_manager::can_manage_open_requests($context));
+    }
+
+    /**
+     * Rejected requests leave active views but remain reactivatable for service-team users.
+     *
+     * @return void
+     */
+    public function test_rejected_requests_are_hidden_from_active_views_but_reactivatable_for_service_team(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role();
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $serviceuser->id, 'bookitservice');
+        $this->setUser($serviceuser);
+
+        $rejected = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'endtime' => strtotime('2026-05-01 12:00:00'),
+            'personinchargeid' => 0,
+            'usermodified' => 0,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $openrequest = clone $rejected;
+        $openrequest->bookingstatus = event_access_manager::BOOKINGSTATUS_NEW;
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($rejected, $context, $serviceuser->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($rejected, $context, $serviceuser->id));
+        $this->assertTrue(event_access_manager::can_reactivate_rejected_request($rejected, $context));
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($openrequest, $context, $serviceuser->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($openrequest, $context, $serviceuser->id));
+        $this->assertFalse(event_access_manager::can_reactivate_rejected_request($openrequest, $context));
     }
 
     /**

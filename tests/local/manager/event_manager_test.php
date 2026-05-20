@@ -520,11 +520,11 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Rejected requests stay discoverable only until the requested slot has passed.
+     * Rejected requests remain in the trash queue regardless of whether the requested slot is past or future.
      *
      * @return void
      */
-    public function test_get_rejected_requests_excludes_past_items(): void {
+    public function test_get_rejected_requests_keeps_past_and_future_items(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -557,7 +557,7 @@ final class event_manager_test extends advanced_testcase {
             'endtime' => strtotime('2026-05-08 11:00:00'),
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
         ]));
-        $DB->insert_record('bookit_event', (object)($common + [
+        $pastid = $DB->insert_record('bookit_event', (object)($common + [
             'name' => 'Past rejected',
             'starttime' => strtotime('2026-05-01 09:00:00'),
             'endtime' => strtotime('2026-05-01 11:00:00'),
@@ -565,9 +565,40 @@ final class event_manager_test extends advanced_testcase {
         ]));
 
         $rejected = array_values(event_manager::get_rejected_requests(strtotime('2026-05-07 10:00:00')));
-        $this->assertCount(1, $rejected);
-        $this->assertSame($futureid, (int)$rejected[0]->id);
-        $this->assertSame(1, event_manager::count_rejected_requests(strtotime('2026-05-07 10:00:00')));
+        $this->assertCount(2, $rejected);
+        $this->assertSame([$pastid, $futureid], array_map(static fn($event): int => (int)$event->id, $rejected));
+        $this->assertSame(2, event_manager::count_rejected_requests(strtotime('2026-05-07 10:00:00')));
+    }
+
+    /**
+     * Rejected requests must leave active overview projections immediately.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_hides_rejected_requests_from_active_projection(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $accepted = (object)[
+            'id' => 101,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+        ];
+        $rejected = (object)[
+            'id' => 102,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'starttime' => strtotime('2026-05-08 12:00:00'),
+            'endtime' => strtotime('2026-05-08 14:00:00'),
+        ];
+
+        $active = event_manager::filter_overview_events([$accepted, $rejected], [], false, $referencetime);
+
+        $this->assertCount(1, $active);
+        $this->assertSame(101, (int)$active[0]->id);
+        $this->assertTrue(event_manager::is_hidden_from_active_overview($rejected));
     }
 
     /**

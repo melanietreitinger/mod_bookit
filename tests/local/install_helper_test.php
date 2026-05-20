@@ -154,18 +154,78 @@ final class install_helper_test extends advanced_testcase {
 
         foreach (install_helper::get_booking_status_notification_statuses() as $statuskey => $statusdata) {
             $this->assertSame(1, (int)get_config('mod_bookit', $statusdata['enabledconfig']));
-            $this->assertSame(
-                install_helper::get_booking_status_notification_default_subject($statuskey),
-                get_config('mod_bookit', $statusdata['subjectconfig'])
-            );
-            $this->assertSame(
-                install_helper::get_booking_status_notification_default_body($statuskey),
-                get_config('mod_bookit', $statusdata['bodyconfig'])
-            );
+            $this->assertFalse(get_config('mod_bookit', $statusdata['subjectconfig']));
+            $this->assertFalse(get_config('mod_bookit', $statusdata['bodyconfig']));
         }
 
-        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_subject_0'));
-        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_body_0'));
-        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_enabled_0'));
+        $this->assertEmpty(get_config('mod_bookit', 'bookingstatus_subject_0'));
+        $this->assertEmpty(get_config('mod_bookit', 'bookingstatus_body_0'));
+        $this->assertEmpty(get_config('mod_bookit', 'bookingstatus_enabled_0'));
+    }
+
+    /**
+     * Shared and legacy config-key helpers must point to the expected storage shapes.
+     *
+     * @return void
+     */
+    public function test_booking_status_notification_config_key_helpers_use_shared_and_legacy_shapes(): void {
+        $this->assertSame(
+            'bookingstatus_subject_accepted',
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject')
+        );
+        $this->assertSame(
+            'bookingstatus_body_accepted',
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'body')
+        );
+        $this->assertSame(
+            'bookingstatus_subject_accepted_de',
+            install_helper::get_booking_status_notification_legacy_config_key('accepted', 'subject', 'de')
+        );
+        $this->assertSame(
+            'bookingstatus_body_accepted_en',
+            install_helper::get_booking_status_notification_legacy_config_key('accepted', 'body', 'en_US')
+        );
+    }
+
+    /**
+     * Migration must backfill one shared field from the best non-empty legacy value and clear empty shared values.
+     *
+     * @return void
+     */
+    public function test_ensure_booking_status_notification_defaults_backfills_non_empty_legacy_values(): void {
+        $this->resetAfterTest(true);
+
+        set_config('bookingstatus_subject_accepted', '', 'mod_bookit');
+        set_config('bookingstatus_body_accepted', '', 'mod_bookit');
+        set_config('bookingstatus_subject_accepted_de', '', 'mod_bookit');
+        set_config('bookingstatus_subject_accepted_en', 'EN legacy subject', 'mod_bookit');
+        set_config('bookingstatus_body_accepted_de', '', 'mod_bookit');
+        set_config('bookingstatus_body_accepted_en', 'EN legacy body', 'mod_bookit');
+
+        install_helper::ensure_booking_status_notification_defaults();
+
+        $this->assertSame('EN legacy subject', get_config('mod_bookit', 'bookingstatus_subject_accepted'));
+        $this->assertSame('EN legacy body', get_config('mod_bookit', 'bookingstatus_body_accepted'));
+    }
+
+    /**
+     * Empty shared values without usable legacy content must be cleared so the shipped defaults stay visible.
+     *
+     * @return void
+     */
+    public function test_ensure_booking_status_notification_defaults_clears_empty_shared_values_without_legacy_backfill(): void {
+        $this->resetAfterTest(true);
+
+        set_config('bookingstatus_subject_rejected', '', 'mod_bookit');
+        set_config('bookingstatus_body_rejected', " \n ", 'mod_bookit');
+        set_config('bookingstatus_subject_rejected_de', '', 'mod_bookit');
+        set_config('bookingstatus_subject_rejected_en', '', 'mod_bookit');
+        set_config('bookingstatus_body_rejected_de', '', 'mod_bookit');
+        set_config('bookingstatus_body_rejected_en', '', 'mod_bookit');
+
+        install_helper::ensure_booking_status_notification_defaults();
+
+        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_subject_rejected'));
+        $this->assertFalse(get_config('mod_bookit', 'bookingstatus_body_rejected'));
     }
 }

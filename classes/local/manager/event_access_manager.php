@@ -127,18 +127,14 @@ class event_access_manager {
     }
 
     /**
-     * Check whether the event is a rejected request that may still be re-opened operationally.
+     * Check whether the event currently belongs to the rejected-request trash workflow.
      *
      * @param stdClass $event
-     * @param int|null $referencetime
+     * @param int|null $referencetime Deprecated compatibility parameter, ignored.
      * @return bool
      */
     public static function is_rejected_request(stdClass $event, ?int $referencetime = null): bool {
-        if ((int)($event->bookingstatus ?? -1) !== self::BOOKINGSTATUS_REJECTED) {
-            return false;
-        }
-
-        return (int)($event->endtime ?? 0) >= ($referencetime ?? time());
+        return (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_REJECTED;
     }
 
     /**
@@ -321,6 +317,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_overview(stdClass $event, context_module $context, int $userid): bool {
+        if (self::is_rejected_request($event)) {
+            return false;
+        }
+
         if (self::is_observer_restricted_mode($context)) {
             return self::is_booking_confirmed($event);
         }
@@ -345,6 +345,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_calendar(stdClass $event, context_module $context, int $userid): bool {
+        if (self::is_rejected_request($event)) {
+            return false;
+        }
+
         if (self::is_observer_restricted_mode($context)) {
             return self::is_booking_confirmed($event);
         }

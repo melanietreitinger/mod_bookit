@@ -545,9 +545,9 @@ class event_manager {
     }
 
     /**
-     * Return all rejected requests that are still operationally visible until the requested slot is over.
+     * Return all rejected requests in the dedicated service-team trash queue.
      *
-     * @param int|null $referencetime
+     * @param int|null $referencetime Deprecated compatibility parameter, ignored.
      * @return array
      * @throws dml_exception
      */
@@ -569,29 +569,26 @@ class event_manager {
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             WHERE e.bookingstatus = :status
-              AND e.endtime >= :referencetime
             ORDER BY e.starttime ASC
         ";
 
         return $DB->get_records_sql($sql, [
             'status' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'referencetime' => $referencetime ?? time(),
         ]);
     }
 
     /**
-     * Return the number of currently visible rejected requests.
+     * Return the number of rejected requests in the dedicated trash queue.
      *
-     * @param int|null $referencetime
+     * @param int|null $referencetime Deprecated compatibility parameter, ignored.
      * @return int
      * @throws dml_exception
      */
     public static function count_rejected_requests(?int $referencetime = null): int {
         global $DB;
 
-        return (int)$DB->count_records_select('bookit_event', 'bookingstatus = :status AND endtime >= :referencetime', [
+        return (int)$DB->count_records_select('bookit_event', 'bookingstatus = :status', [
             'status' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'referencetime' => $referencetime ?? time(),
         ]);
     }
 
@@ -884,14 +881,18 @@ class event_manager {
     /**
      * Check whether the event should stay hidden from active participant overviews.
      *
-     * This is currently used for self-cancelled New requests, which remain auditable via the
-     * append-only history but should leave active operational views immediately.
+     * This is currently used for rejected requests and self-cancelled New requests, which remain
+     * auditable via the append-only history but should leave active operational views immediately.
      *
      * @param stdClass $event
      * @return bool
      * @throws dml_exception
      */
     public static function is_hidden_from_active_overview(stdClass $event): bool {
+        if ((int)($event->bookingstatus ?? -1) === event_access_manager::BOOKINGSTATUS_REJECTED) {
+            return true;
+        }
+
         if ((int)($event->bookingstatus ?? -1) !== event_access_manager::BOOKINGSTATUS_CANCELED) {
             return false;
         }

@@ -383,16 +383,17 @@ class booking_notification_manager {
         $language = install_helper::normalize_booking_status_notification_language($lang);
         $configured = trim((string)get_config(
             'mod_bookit',
-            install_helper::get_booking_status_notification_template_config_key($statuskey, $field, $language)
+            install_helper::get_booking_status_notification_template_config_key($statuskey, $field)
         ));
         if ($configured !== '') {
             return $configured;
         }
 
-        $legacyconfigured = trim((string)get_config(
-            'mod_bookit',
-            install_helper::get_booking_status_notification_legacy_config_key($statuskey, $field)
-        ));
+        $legacyconfigured = install_helper::get_booking_status_notification_legacy_value_for_language(
+            $statuskey,
+            $field,
+            $language
+        );
         if ($legacyconfigured !== '') {
             return $legacyconfigured;
         }

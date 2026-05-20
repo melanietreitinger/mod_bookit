@@ -66,7 +66,7 @@ class install_helper {
     /** Config key for the optional checklist module state. */
     public const CONFIG_CHECKLIST_ENABLED = 'checklistenabled';
 
-    /** Supported admin-managed notification languages. */
+    /** Supported shipped notification languages. */
     private const BOOKING_STATUS_NOTIFICATION_LANGUAGES = ['de', 'en'];
 
     /**
@@ -208,14 +208,38 @@ class install_helper {
     }
 
     /**
-     * Resolve the language-specific config key for a booking-status template.
+     * Resolve the canonical shared config key for a booking-status template.
+     *
+     * @param string $statuskey
+     * @param string $field
+     * @return string
+     */
+    public static function get_booking_status_notification_template_config_key(string $statuskey, string $field): string {
+        $statuses = self::get_booking_status_notification_statuses();
+        if (!isset($statuses[$statuskey])) {
+            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
+        }
+
+        if ($field === 'subject') {
+            return (string)$statuses[$statuskey]['subjectconfig'];
+        }
+
+        if ($field === 'body') {
+            return (string)$statuses[$statuskey]['bodyconfig'];
+        }
+
+        throw new \coding_exception('Unknown booking-status template field: ' . $field);
+    }
+
+    /**
+     * Resolve the language-specific legacy config key for a booking-status template.
      *
      * @param string $statuskey
      * @param string $field
      * @param string $lang
      * @return string
      */
-    public static function get_booking_status_notification_template_config_key(
+    public static function get_booking_status_notification_legacy_config_key(
         string $statuskey,
         string $field,
         string $lang
@@ -234,27 +258,22 @@ class install_helper {
     }
 
     /**
-     * Resolve the legacy shared config key for a booking-status template.
+     * Resolve one language-specific legacy value for a booking-status template.
      *
      * @param string $statuskey
      * @param string $field
+     * @param string $lang
      * @return string
      */
-    public static function get_booking_status_notification_legacy_config_key(string $statuskey, string $field): string {
-        $statuses = self::get_booking_status_notification_statuses();
-        if (!isset($statuses[$statuskey])) {
-            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
-        }
-
-        if ($field === 'subject') {
-            return (string)$statuses[$statuskey]['subjectconfig'];
-        }
-
-        if ($field === 'body') {
-            return (string)$statuses[$statuskey]['bodyconfig'];
-        }
-
-        throw new \coding_exception('Unknown booking-status template field: ' . $field);
+    public static function get_booking_status_notification_legacy_value_for_language(
+        string $statuskey,
+        string $field,
+        string $lang
+    ): string {
+        return trim((string)get_config(
+            'mod_bookit',
+            self::get_booking_status_notification_legacy_config_key($statuskey, $field, $lang)
+        ));
     }
 
     /**
@@ -301,52 +320,59 @@ class install_helper {
                 set_config($statusdata['enabledconfig'], 1, 'mod_bookit');
             }
 
-            if (get_config('mod_bookit', $statusdata['subjectconfig']) === false) {
-                set_config(
-                    $statusdata['subjectconfig'],
-                    self::get_booking_status_notification_default_subject($statuskey),
-                    'mod_bookit'
-                );
-            }
+            self::normalize_booking_status_notification_shared_template($statuskey, 'subject');
+            self::normalize_booking_status_notification_shared_template($statuskey, 'body');
+        }
+    }
 
-            if (get_config('mod_bookit', $statusdata['bodyconfig']) === false) {
-                set_config(
-                    $statusdata['bodyconfig'],
-                    self::get_booking_status_notification_default_body($statuskey),
-                    'mod_bookit'
-                );
-            }
+    /**
+     * Ensure one shared notification template field is usable without persisting blank values.
+     *
+     * @param string $statuskey
+     * @param string $field
+     * @return void
+     */
+    private static function normalize_booking_status_notification_shared_template(string $statuskey, string $field): void {
+        $configkey = self::get_booking_status_notification_template_config_key($statuskey, $field);
+        $currentvalue = get_config('mod_bookit', $configkey);
 
-            foreach (self::get_booking_status_notification_languages() as $lang) {
-                $subjectconfig = self::get_booking_status_notification_template_config_key($statuskey, 'subject', $lang);
-                if (get_config('mod_bookit', $subjectconfig) === false) {
-                    $legacysubject = trim((string)get_config(
-                        'mod_bookit',
-                        self::get_booking_status_notification_legacy_config_key($statuskey, 'subject')
-                    ));
-                    set_config(
-                        $subjectconfig,
-                        $legacysubject !== ''
-                            ? $legacysubject
-                            : self::get_booking_status_notification_default_subject($statuskey, $lang),
-                        'mod_bookit'
-                    );
-                }
+        if ($currentvalue !== false && trim((string)$currentvalue) !== '') {
+            return;
+        }
 
-                $bodyconfig = self::get_booking_status_notification_template_config_key($statuskey, 'body', $lang);
-                if (get_config('mod_bookit', $bodyconfig) === false) {
-                    $legacybody = trim((string)get_config(
-                        'mod_bookit',
-                        self::get_booking_status_notification_legacy_config_key($statuskey, 'body')
-                    ));
-                    set_config(
-                        $bodyconfig,
-                        $legacybody !== '' ? $legacybody : self::get_booking_status_notification_default_body($statuskey, $lang),
-                        'mod_bookit'
-                    );
-                }
+        $legacyvalue = self::get_booking_status_notification_legacy_backfill_value($statuskey, $field);
+        if ($legacyvalue !== '') {
+            set_config($configkey, $legacyvalue, 'mod_bookit');
+            return;
+        }
+
+        if ($currentvalue !== false) {
+            unset_config($configkey, 'mod_bookit');
+        }
+    }
+
+    /**
+     * Resolve the best non-empty legacy value for backfilling a shared admin field.
+     *
+     * @param string $statuskey
+     * @param string $field
+     * @return string
+     */
+    private static function get_booking_status_notification_legacy_backfill_value(string $statuskey, string $field): string {
+        $preferredlanguage = self::normalize_booking_status_notification_language(current_language());
+        $languages = array_values(array_unique(array_merge(
+            [$preferredlanguage],
+            self::get_booking_status_notification_languages()
+        )));
+
+        foreach ($languages as $language) {
+            $legacyvalue = self::get_booking_status_notification_legacy_value_for_language($statuskey, $field, $language);
+            if ($legacyvalue !== '') {
+                return $legacyvalue;
             }
         }
+
+        return '';
     }
 
     /**

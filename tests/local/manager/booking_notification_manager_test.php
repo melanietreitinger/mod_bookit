@@ -153,32 +153,31 @@ final class booking_notification_manager_test extends advanced_testcase {
     }
 
     /**
-     * Legacy shared template settings must still work while replacing supported placeholders.
+     * One shared override must apply consistently for recipients in different languages.
      *
      * @return void
      */
-    public function test_notify_status_changed_uses_legacy_configured_templates_as_fallback(): void {
-        $booker = $this->getDataGenerator()->create_user();
-        $eventid = $this->create_test_event($booker->id, null, null, 'Configured Exam');
+    public function test_notify_status_changed_uses_shared_configured_templates_for_all_recipient_languages(): void {
+        global $DB;
 
-        foreach (install_helper::get_booking_status_notification_languages() as $lang) {
-            set_config(
-                install_helper::get_booking_status_notification_template_config_key('accepted', 'subject', $lang),
-                '',
-                'mod_bookit'
-            );
-            set_config(
-                install_helper::get_booking_status_notification_template_config_key('accepted', 'body', $lang),
-                '',
-                'mod_bookit'
-            );
-        }
-        set_config('bookingstatus_subject_accepted', 'Legacy ###EVENTNAME###', 'mod_bookit');
+        $booker = $this->getDataGenerator()->create_user();
+        $personincharge = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'lang', 'de', ['id' => $booker->id]);
+        $DB->set_field('user', 'lang', 'en', ['id' => $personincharge->id]);
+        $eventid = $this->create_test_event($booker->id, $personincharge->id, null, 'Configured Exam');
+
         set_config(
-            'bookingstatus_body_accepted',
-            'Status ###BOOKINGSTATUS### by ###BOOKINGPERSON###',
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject'),
+            'Shared accepted ###EVENTNAME###',
             'mod_bookit'
         );
+        set_config(
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'body'),
+            'Shared body ###EVENTNAME### ###BOOKINGDATE###',
+            'mod_bookit'
+        );
+        set_config('bookingstatus_subject_accepted_de', 'DE legacy ###EVENTNAME###', 'mod_bookit');
+        set_config('bookingstatus_subject_accepted_en', 'EN legacy ###EVENTNAME###', 'mod_bookit');
 
         $sink = $this->redirectMessages();
         booking_notification_manager::notify_status_changed(
@@ -190,18 +189,25 @@ final class booking_notification_manager_test extends advanced_testcase {
         $messages = $sink->get_messages();
         $sink->close();
 
-        $this->assertCount(1, $messages);
-        $this->assertSame('Legacy Configured Exam', $messages[0]->subject);
-        $this->assertStringContainsString('Status Accepted by', $messages[0]->fullmessage);
-        $this->assertStringNotContainsString('###BOOKINGPERSON###', $messages[0]->fullmessage);
+        $this->assertCount(2, $messages);
+
+        $bookermessage = $this->get_message_for_user($messages, $booker->id);
+        $examinermessage = $this->get_message_for_user($messages, $personincharge->id);
+
+        $this->assertSame('Shared accepted Configured Exam', $bookermessage->subject);
+        $this->assertSame('Shared accepted Configured Exam', $examinermessage->subject);
+        $this->assertStringStartsWith('Shared body Configured Exam ', $bookermessage->fullmessage);
+        $this->assertStringStartsWith('Shared body Configured Exam ', $examinermessage->fullmessage);
+        $this->assertStringNotContainsString('###BOOKINGDATE###', $bookermessage->fullmessage);
+        $this->assertStringNotContainsString('###BOOKINGDATE###', $examinermessage->fullmessage);
     }
 
     /**
-     * Language-specific template overrides must be resolved per recipient language.
+     * Non-empty legacy language values must remain a runtime fallback until a shared override exists.
      *
      * @return void
      */
-    public function test_notify_status_changed_uses_language_specific_configured_templates(): void {
+    public function test_notify_status_changed_uses_legacy_language_templates_as_fallback(): void {
         global $DB;
 
         $booker = $this->getDataGenerator()->create_user();
@@ -210,23 +216,25 @@ final class booking_notification_manager_test extends advanced_testcase {
         $DB->set_field('user', 'lang', 'en', ['id' => $personincharge->id]);
         $eventid = $this->create_test_event($booker->id, $personincharge->id, null, 'Configured Exam');
 
+        unset_config('bookingstatus_subject_accepted', 'mod_bookit');
+        unset_config('bookingstatus_body_accepted', 'mod_bookit');
         set_config(
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject', 'de'),
+            install_helper::get_booking_status_notification_legacy_config_key('accepted', 'subject', 'de'),
             'DE accepted ###EVENTNAME### ###BOOKINGDATE###',
             'mod_bookit'
         );
         set_config(
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'body', 'de'),
+            install_helper::get_booking_status_notification_legacy_config_key('accepted', 'body', 'de'),
             'DE body ###EVENTNAME### ###BOOKINGDATE###',
             'mod_bookit'
         );
         set_config(
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject', 'en'),
+            install_helper::get_booking_status_notification_legacy_config_key('accepted', 'subject', 'en'),
             'EN accepted ###EVENTNAME### ###BOOKINGDATE###',
             'mod_bookit'
         );
         set_config(
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'body', 'en'),
+            install_helper::get_booking_status_notification_legacy_config_key('accepted', 'body', 'en'),
             'EN body ###EVENTNAME### ###BOOKINGDATE###',
             'mod_bookit'
         );
@@ -253,6 +261,43 @@ final class booking_notification_manager_test extends advanced_testcase {
         $this->assertStringStartsWith('EN accepted Configured Exam', $examinermessage->subject);
         $this->assertStringStartsWith('EN body Configured Exam', $examinermessage->fullmessage);
         $this->assertStringNotContainsString('###BOOKINGDATE###', $examinermessage->fullmessage);
+    }
+
+    /**
+     * Empty legacy values must not suppress the shipped defaults when no shared override exists.
+     *
+     * @return void
+     */
+    public function test_notify_status_changed_ignores_empty_legacy_values_and_uses_shipped_defaults(): void {
+        global $DB;
+
+        $booker = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'lang', 'en', ['id' => $booker->id]);
+        $eventid = $this->create_test_event($booker->id, null, null, 'Configured Exam');
+
+        unset_config('bookingstatus_subject_accepted', 'mod_bookit');
+        unset_config('bookingstatus_body_accepted', 'mod_bookit');
+        set_config('bookingstatus_subject_accepted_de', '', 'mod_bookit');
+        set_config('bookingstatus_subject_accepted_en', '', 'mod_bookit');
+        set_config('bookingstatus_body_accepted_de', '', 'mod_bookit');
+        set_config('bookingstatus_body_accepted_en', '', 'mod_bookit');
+
+        $sink = $this->redirectMessages();
+        booking_notification_manager::notify_status_changed(
+            $this->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        );
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $this->assertStringStartsWith('Booking request accepted: Configured Exam on ', $messages[0]->subject);
+        $this->assertStringStartsWith(
+            'Thank you for your request "Configured Exam" for ',
+            $messages[0]->fullmessage
+        );
     }
 
     /**
