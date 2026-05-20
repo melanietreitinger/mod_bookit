@@ -37,6 +37,24 @@ $functions = [
         'type'        => 'read',
         'ajax'        => true,
     ],
+    'mod_bookit_get_calendar_events' => [
+        'classname'   => 'mod_bookit\external\get_calendar_events',
+        'description' => 'Returns governed calendar and export read-model events.',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
+    'mod_bookit_get_room_availability' => [
+        'classname'   => 'mod_bookit\external\get_room_availability',
+        'description' => 'Returns governed room availability read-model entries.',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
+    'mod_bookit_get_overview_queue' => [
+        'classname'   => 'mod_bookit\external\get_overview_queue',
+        'description' => 'Returns governed overview queue read-model items.',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
     'mod_bookit_update_event_booking_status' => [
         'classname'   => 'mod_bookit\external\update_event_booking_status',
         'description' => 'Updates an event booking status and keeps the current overview request queue active.',

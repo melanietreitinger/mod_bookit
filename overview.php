@@ -157,6 +157,18 @@ $PAGE->requires->js_init_code("
 /* ----- inline ModalForm handler -------------------------------------- */
 $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
+$PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode([
+    'methodname' => 'mod_bookit_get_overview_queue',
+    'cmid' => (int)$cm->id,
+    'workspace' => $currenttab === 'openrequests' ? $requestworkspacemode : $currenttab,
+    'bookingstatuses' => $overviewfilters['bookingstatuses'],
+    'facultyids' => $overviewfilters['facultyids'],
+    'semesterids' => $overviewfilters['semesterids'],
+    'reportstart' => $reportstartvalue,
+    'reportend' => $reportendvalue,
+    'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
+    'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
+]));
 
 
 /* =======================================================================

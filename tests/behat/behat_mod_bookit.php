@@ -80,6 +80,26 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Opens the room-availability admin view for the named room.
+     *
+     * @Given I open the Bookit room availability for :roomname
+     * @param string $roomname
+     */
+    public function i_open_the_bookit_room_availability_for(string $roomname): void {
+        global $DB;
+
+        $roomid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_room}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => $roomname],
+            MUST_EXIST
+        );
+        $url = new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $roomid]);
+        $this->getSession()->visit($this->locate_path($url->out_as_local_url(false)));
+    }
+
+    /**
      * Assert that the main Bookit activity tab row contains the given text.
      *
      * @Then the Bookit main tabs should contain :text
@@ -140,6 +160,31 @@ class behat_mod_bookit extends behat_base {
             $text,
             false,
             'Bookit request workspace switch'
+        );
+    }
+
+    /**
+     * Assert that the export modal asynchronously loads the given booking text.
+     *
+     * @Then the Bookit export modal should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_export_modal_should_contain(string $text): void {
+        $endtime = microtime(true) + 5;
+        do {
+            $node = $this->getSession()->getPage()->find('css', '#bookit-export-list');
+            if ($node && mb_strpos($node->getText(), $text) !== false) {
+                return;
+            }
+            usleep(250000);
+        } while (microtime(true) < $endtime);
+
+        $currenttext = $node ? trim($node->getText()) : '[missing export list]';
+
+        throw new ExpectationException(
+            "Bookit export modal did not contain \"$text\". Current text: \"$currenttext\".",
+            $this->getSession()
         );
     }
 
@@ -417,6 +462,56 @@ class behat_mod_bookit extends behat_base {
         if (mb_strpos($content, $text) !== false) {
             throw new ExpectationException(
                 "The calendar projection unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the governed room-availability projection contains an entry.
+     *
+     * @Then the Bookit room availability projection for room :roomname from :start to :end should contain :text
+     * @param string $roomname
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_room_availability_projection_should_contain(
+        string $roomname,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_room_availability_projection_content($roomname, $start, $end);
+        if (mb_strpos($content, $text) === false) {
+            throw new ExpectationException(
+                "The room-availability projection did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the governed room-availability projection hides an entry.
+     *
+     * @Then the Bookit room availability projection for room :roomname from :start to :end should not contain :text
+     * @param string $roomname
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_room_availability_projection_should_not_contain(
+        string $roomname,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_room_availability_projection_content($roomname, $start, $end);
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                "The room-availability projection unexpectedly contained \"$text\".",
                 $this->getSession()
             );
         }
@@ -1244,6 +1339,33 @@ class behat_mod_bookit extends behat_base {
         load_all_capabilities();
 
         return json_encode($events);
+    }
+
+    /**
+     * Build the raw room-availability projection string for a given room and range.
+     *
+     * @param string $roomname
+     * @param string $start
+     * @param string $end
+     * @return string
+     */
+    private function get_room_availability_projection_content(string $roomname, string $start, string $end): string {
+        global $DB;
+
+        $roomid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_room}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => $roomname],
+            MUST_EXIST
+        );
+        $entries = \mod_bookit\external\get_room_availability::execute(
+            $roomid,
+            $this->resolve_datetime_value($start),
+            $this->resolve_datetime_value($end)
+        );
+
+        return json_encode($entries);
     }
 
     /**

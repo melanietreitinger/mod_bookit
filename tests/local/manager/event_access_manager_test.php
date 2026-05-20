@@ -191,6 +191,43 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Governed read filters and response helpers must stay stable for all read contracts.
+     *
+     * @return void
+     */
+    public function test_governed_read_filter_helpers_normalise_and_shape_payloads(): void {
+        $filters = event_access_manager::normalise_governed_read_filters([
+            'start' => '2026-05-20T10:15:00',
+            'end' => '2026-05-21T12:30:00',
+            'roomids' => '1,2,2',
+            'facultyids' => ['3', '4'],
+            'bookingstatuses' => ['0', '2'],
+            'search' => '  Physics  ',
+            'workspace' => ' openrequests ',
+            'exportmode' => 1,
+        ]);
+
+        $this->assertSame('2026-05-20 10:15', $filters['start']);
+        $this->assertSame('2026-05-21 12:30', $filters['end']);
+        $this->assertSame([1, 2], $filters['roomids']);
+        $this->assertSame([3, 4], $filters['facultyids']);
+        $this->assertSame([0, 2], $filters['bookingstatuses']);
+        $this->assertSame('Physics', $filters['search']);
+        $this->assertSame('openrequests', $filters['workspace']);
+        $this->assertTrue($filters['exportmode']);
+
+        $empty = event_access_manager::build_governed_empty_response('calendar', $filters);
+        $denied = event_access_manager::build_governed_denied_response('calendar', $filters);
+
+        $this->assertSame('ok', $empty['status']);
+        $this->assertFalse($empty['denied']);
+        $this->assertSame('no_matches', $empty['emptyreason']);
+        $this->assertSame('denied', $denied['status']);
+        $this->assertTrue($denied['denied']);
+        $this->assertSame('access_denied', $denied['emptyreason']);
+    }
+
+    /**
      * Rejected-request trash membership is status-based and does not expire by end time.
      *
      * @return void
@@ -489,7 +526,8 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Rejected requests leave active views but remain reactivatable for service-team users.
+     * Rejected requests leave active views, and unrelated open requests stay in the service queue instead
+     * of leaking into the service-team calendar.
      *
      * @return void
      */
@@ -516,7 +554,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_reactivate_rejected_request($rejected, $context));
 
         $this->assertTrue(event_access_manager::can_user_view_event_in_overview($openrequest, $context, $serviceuser->id));
-        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($openrequest, $context, $serviceuser->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($openrequest, $context, $serviceuser->id));
         $this->assertFalse(event_access_manager::can_reactivate_rejected_request($openrequest, $context));
     }
 

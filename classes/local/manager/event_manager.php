@@ -26,11 +26,15 @@ namespace mod_bookit\local\manager;
 
 use coding_exception;
 use context_module;
+use core_text;
 use DateTime;
 use dml_exception;
 use mod_bookit\event\booking_reactivated;
 use mod_bookit\event\booking_status_changed;
 use mod_bookit\local\entity\bookit_event;
+use mod_bookit\local\read\calendar_event_read_mapper;
+use mod_bookit\local\read\overview_queue_read_mapper;
+use mod_bookit\local\read\room_availability_read_mapper;
 use stdClass;
 
 /**
@@ -153,6 +157,8 @@ class event_manager {
                     'is_reserved_projection' => $observerrestricted,
                     'bookingstatus' => (int)$record->bookingstatus,
                     'roomname' => $record->roomname,
+                    'location' => (string)($record->location ?? ''),
+                    'shortname' => (string)($record->shortname ?? ''),
                 ],
                 'classNames' => [
                     'hide-event-time',
@@ -161,6 +167,73 @@ class event_manager {
             ];
         }
         return $events;
+    }
+
+    /**
+     * Return the governed calendar/export read payload for the given user and filter set.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @param string $starttime
+     * @param string $endtime
+     * @param array $filters
+     * @return array
+     * @throws dml_exception|coding_exception
+     */
+    public static function get_governed_calendar_events(
+        context_module $context,
+        int $userid,
+        string $starttime,
+        string $endtime,
+        array $filters = []
+    ): array {
+        $filters = event_access_manager::normalise_governed_read_filters(array_merge($filters, [
+            'start' => $starttime,
+            'end' => $endtime,
+        ]));
+
+        $events = self::get_events_in_timerange(
+            $filters['start'] ?? $starttime,
+            $filters['end'] ?? $endtime,
+            (int)$context->instanceid
+        );
+        $facultylabels = self::get_faculties();
+        $needle = core_text::strtolower($filters['search']);
+
+        $events = array_values(array_filter($events, static function (array $event) use ($filters, $facultylabels, $needle): bool {
+            if (!empty($filters['roomids']) && !in_array((int)($event['roomid'] ?? 0), $filters['roomids'], true)) {
+                return false;
+            }
+
+            if (!empty($filters['facultyids']) && !in_array((int)($event['institutionid'] ?? 0), $filters['facultyids'], true)) {
+                return false;
+            }
+
+            if (
+                !empty($filters['bookingstatuses']) &&
+                !in_array((int)($event['bookingstatus'] ?? -1), $filters['bookingstatuses'], true)
+            ) {
+                return false;
+            }
+
+            if ($needle === '') {
+                return true;
+            }
+
+            $facultylabel = $facultylabels[(int)($event['institutionid'] ?? 0)] ?? '';
+            $haystack = core_text::strtolower(trim(implode(' ', [
+                (string)($event['title'] ?? ''),
+                (string)($event['roomname'] ?? ''),
+                (string)$facultylabel,
+            ])));
+
+            return core_text::strpos($haystack, $needle) !== false;
+        }));
+
+        return array_map(
+            static fn(array $event): array => calendar_event_read_mapper::map($event, $facultylabels),
+            $events
+        );
     }
 
     /**
@@ -222,6 +295,89 @@ class event_manager {
         ];
 
         return $DB->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Return the governed overview queue payload for the given workspace.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @param string $workspace
+     * @param array $filters
+     * @param int|null $reportstart
+     * @param int|null $reportend
+     * @return array
+     * @throws dml_exception
+     */
+    public static function get_governed_overview_queue(
+        context_module $context,
+        int $userid,
+        string $workspace,
+        array $filters = [],
+        ?int $reportstart = null,
+        ?int $reportend = null
+    ): array {
+        $filters = event_access_manager::normalise_governed_read_filters(array_merge($filters, [
+            'workspace' => $workspace,
+        ]));
+        $workspace = $filters['workspace'] ?: $workspace;
+
+        $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
+        $observerrestricted = event_access_manager::is_observer_restricted_mode($context);
+        $showreportfilters = $canmanageopenrequests || $observerrestricted;
+
+        if ($workspace === 'openrequests') {
+            $events = $canmanageopenrequests ? self::get_open_requests() : [];
+        } else if ($workspace === 'rejectedrequests') {
+            $events = $canmanageopenrequests ? self::get_rejected_requests() : [];
+        } else {
+            [$defaultstart, $defaultend] = self::get_reporting_default_range();
+            $reportstart ??= $defaultstart;
+            $reportend ??= $defaultend;
+            $semesterids = $filters['semesterids'];
+            if ($showreportfilters) {
+                $semesterids = self::resolve_effective_semester_filter_ids($semesterids, !empty($filters['semesterids']));
+                $events = self::get_events_for_reporting($context, $userid, $reportstart, $reportend, $semesterids);
+            } else {
+                $events = self::get_events_for_examiner($userid);
+            }
+            $filters['semesterids'] = $semesterids;
+            $events = self::filter_overview_events(
+                $events,
+                [
+                    'bookingstatuses' => $filters['bookingstatuses'],
+                    'facultyids' => $filters['facultyids'],
+                    'semesterids' => $filters['semesterids'],
+                ],
+                $workspace === 'history'
+            );
+        }
+
+        $historyentries = self::get_latest_booking_history_entries(array_map(
+            static fn($event): int => (int)($event->id ?? 0),
+            $events
+        ));
+        $statuscolors = self::get_booking_status_colors();
+
+        return [
+            'workspace' => $workspace,
+            'filters' => $filters,
+            'items' => array_map(
+                static fn(stdClass $event): array => overview_queue_read_mapper::map(
+                    $event,
+                    $context,
+                    $userid,
+                    $statuscolors,
+                    $historyentries[(int)$event->id] ?? null
+                ),
+                array_values($events)
+            ),
+            'summary' => [
+                'count' => count($events),
+                'openrequestcount' => $canmanageopenrequests ? self::count_open_requests() : 0,
+                'rejectedrequestcount' => $canmanageopenrequests ? self::count_rejected_requests() : 0,
+            ],
+        ];
     }
 
     /**
@@ -996,6 +1152,21 @@ class event_manager {
             }
         }
         return $events;
+    }
+
+    /**
+     * Return the governed room-availability read payload.
+     *
+     * @param int $starttime
+     * @param int $endtime
+     * @param int $roomid
+     * @return array
+     */
+    public static function get_governed_room_availability(int $starttime, int $endtime, int $roomid): array {
+        return array_map(
+            static fn(array $entry): array => room_availability_read_mapper::map($entry, $roomid),
+            self::get_slots_in_timerange($starttime, $endtime, $roomid)
+        );
     }
 
     /**

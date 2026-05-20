@@ -79,11 +79,24 @@ Feature: Process open booking requests
     When I click the open request action "Reactivate as new request" for event "Rejected oral exam"
     When I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
     Then I should not see "Rejected oral exam"
-    And I should see "There are currently no rejected booking requests that can still be reviewed."
+    And I should see "There are currently no rejected booking requests in the trash queue."
     And the Bookit request workspace switch should contain "Rejected requests"
     When I open the Bookit overview "openrequests" for "My BookIt Activity"
     Then I should see "Rejected oral exam"
     And I should see "Reactivated as new request"
+
+  Scenario: Service team rejects an open request and the governed workspace refresh moves it to rejected requests
+    Given the following "mod_bookit > events" exist:
+      | name               | startdate                         | enddate                              | bookingstatus | institution |
+      | Reject me directly | ##today noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | 0             | 1           |
+    When I log in as "susiservice"
+    And I open the Bookit overview "openrequests" for "My BookIt Activity"
+    And I click the open request action "Reject" for event "Reject me directly"
+    Then I should see "There are currently no open booking requests."
+    And the Bookit main tabs should contain "Open requests (0)"
+    When I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
+    Then I should see "Reject me directly"
+    And I should see "Rejected"
 
   Scenario: Non-service-team users do not see request navigation even on direct request routes
     Given the following "mod_bookit > events" exist:

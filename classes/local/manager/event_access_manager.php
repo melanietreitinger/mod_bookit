@@ -353,6 +353,10 @@ class event_access_manager {
             return self::is_booking_confirmed($event);
         }
 
+        if (self::is_open_request($event) && self::can_manage_open_requests($context)) {
+            return self::user_has_participant_visibility($event, $userid);
+        }
+
         return self::can_user_view_event_in_overview($event, $context, $userid);
     }
 
@@ -608,6 +612,137 @@ class event_access_manager {
 
         $itemroleids = array_map('intval', $itemroleids);
         return !empty(array_intersect($itemroleids, $userroleids));
+    }
+
+    /**
+     * Normalise a read-filter payload so read contracts can share one input shape.
+     *
+     * @param array $filters
+     * @return array
+     */
+    public static function normalise_governed_read_filters(array $filters): array {
+        return [
+            'start' => self::normalise_governed_datetime_filter($filters['start'] ?? null),
+            'end' => self::normalise_governed_datetime_filter($filters['end'] ?? null),
+            'roomids' => self::normalise_governed_filter_ids($filters['roomids'] ?? []),
+            'facultyids' => self::normalise_governed_filter_ids($filters['facultyids'] ?? []),
+            'bookingstatuses' => self::normalise_governed_filter_ids($filters['bookingstatuses'] ?? []),
+            'semesterids' => self::normalise_governed_filter_ids($filters['semesterids'] ?? []),
+            'search' => self::normalise_governed_text_filter($filters['search'] ?? null),
+            'workspace' => self::normalise_governed_text_filter($filters['workspace'] ?? null),
+            'exportmode' => !empty($filters['exportmode']),
+        ];
+    }
+
+    /**
+     * Normalise integer-id filters from request payloads or comma-separated legacy values.
+     *
+     * @param mixed $values
+     * @return int[]
+     */
+    public static function normalise_governed_filter_ids(mixed $values): array {
+        if (is_string($values)) {
+            $values = $values === '' ? [] : explode(',', $values);
+        } else if (!is_array($values)) {
+            $values = [$values];
+        }
+
+        return array_values(array_unique(array_map('intval', array_filter(
+            $values,
+            static fn(mixed $value): bool => $value !== '' && $value !== null
+        ))));
+    }
+
+    /**
+     * Normalise free-text search values used by governed reads.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public static function normalise_governed_text_filter(mixed $value): string {
+        if ($value === null) {
+            return '';
+        }
+
+        return trim((string)$value);
+    }
+
+    /**
+     * Normalise incoming datetimes to the legacy manager format.
+     *
+     * @param mixed $value
+     * @return string|null
+     */
+    public static function normalise_governed_datetime_filter(mixed $value): ?string {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $text = trim((string)$value);
+        if ($text === '') {
+            return null;
+        }
+
+        try {
+            return (new \DateTime($text))->format('Y-m-d H:i');
+        } catch (\Exception $exception) {
+            throw new \invalid_parameter_exception('Invalid datetime filter: ' . $text);
+        }
+    }
+
+    /**
+     * Build a shared empty-state payload for governed read contracts.
+     *
+     * @param string $scope
+     * @param array $filters
+     * @param string $emptyreason
+     * @return array
+     */
+    public static function build_governed_empty_response(
+        string $scope,
+        array $filters = [],
+        string $emptyreason = 'no_matches'
+    ): array {
+        $filters = self::normalise_governed_read_filters($filters);
+        if ($filters['start'] === null) {
+            unset($filters['start']);
+        }
+        if ($filters['end'] === null) {
+            unset($filters['end']);
+        }
+
+        return [
+            'scope' => $scope,
+            'status' => 'ok',
+            'denied' => false,
+            'emptyreason' => $emptyreason,
+            'filters' => $filters,
+        ];
+    }
+
+    /**
+     * Build a shared denied-state payload for governed read contracts.
+     *
+     * @param string $scope
+     * @param array $filters
+     * @return array
+     */
+    public static function build_governed_denied_response(string $scope, array $filters = []): array {
+        $filters = self::normalise_governed_read_filters($filters);
+        if ($filters['start'] === null) {
+            unset($filters['start']);
+        }
+        if ($filters['end'] === null) {
+            unset($filters['end']);
+        }
+
+        return [
+            'scope' => $scope,
+            'status' => 'denied',
+            'denied' => true,
+            'emptyreason' => 'access_denied',
+            'filters' => $filters,
+        ];
     }
 
     /**

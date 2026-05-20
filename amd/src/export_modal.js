@@ -1,6 +1,8 @@
-define(['jquery', 'core/notification', 'core/str'], function($, Notification, str) {
+define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Ajax, Notification, str) {
     return {
-        init: function(cmId) {
+        init: function(readConfig) {
+            const cmId = Number(readConfig.cmid || 0);
+            const methodName = readConfig.methodname || 'mod_bookit_get_calendar_events';
 
             const stringKeys = [
                 {key: 'noevents', component: 'mod_bookit'},
@@ -147,7 +149,20 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, st
                     const list = $('#bookit-export-list');
                     list.html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin"></i></div>');
 
-                    $.getJSON(M.cfg.wwwroot + '/mod/bookit/events.php', qs, function(data) {
+                    Ajax.call([{
+                        methodname: methodName,
+                        args: {
+                            cmid: cmId,
+                            start: qs.start + ':00',
+                            end: qs.end + ':00',
+                            roomids: (qs.room || '').split(',').filter(Boolean).map(Number),
+                            facultyids: (qs.faculty || '').split(',').filter(Boolean).map(Number),
+                            bookingstatuses: (qs.status || '').split(',').filter(Boolean).map(Number),
+                            search: qs.search || '',
+                            exportmode: true
+                        }
+                    }])[0].then(function(response) {
+                        let data = response.events || [];
                         list.empty();
 
                         data = (data || []).filter(e => !(e.extendedProps &&
@@ -155,11 +170,16 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, st
 
                         if (!data.length) {
                             list.append('<div class="text-muted">' + noEventsStr + '</div>');
-                            return;
+                            return null;
                         }
 
                         data.forEach(function(e) {
-                            const roomTxt = (e.location || e.room || e.roomname || '').trim();
+                            const roomTxt = String(
+                                e.location ||
+                                (e.room && e.room.roomname) ||
+                                e.roomname ||
+                                ''
+                            ).trim();
                             const faculty = (e.department || e.faculty || '').trim();
                             const statusTxt = statusMap[String(e.bookingstatus ?? '')] || '';
                             const startStr = (e.start || '');
@@ -173,7 +193,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, st
                             }
                             const metaLine = metaParts.filter(Boolean).join(' | ');
 
-                            const checkbox = '<input class="form-check-input mt-1" type="checkbox" value="' + e.id + '">';
+                            const checkbox = '<input class="form-check-input mt-1" type="checkbox" value="' +
+                                (e.eventid || e.id) + '">';
                             const statusBadge = statusTxt
                                 ? '<span class="badge badge-light border ml-2">' + statusTxt + '</span>'
                                 : '';
@@ -198,9 +219,11 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, st
 
                         filterExportList();
                         updateSelectionState();
-                    }).fail(function(xhr) {
+                        return null;
+                    }).catch(function(xhr) {
                         list.empty();
-                        list.append('<div class="text-danger">events.php failed: ' + (xhr.responseText || xhr.status) + '</div>');
+                        list.append('<div class="text-danger">calendar read failed: ' +
+                            (xhr.message || xhr.responseText || xhr.status || '') + '</div>');
                         updateSelectionState();
                     });
                 }

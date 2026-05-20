@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * The endpoint for the event source request of the admin slot/blocker calendar.
+ * Adapter-mode room availability feed that delegates to the governed read-model implementation.
  *
  * @package     mod_bookit
- * @copyright   2025 Justus Dieckmann RUB
+ * @copyright   2026 ssystems GmbH <oss@ssystems.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,21 +29,22 @@ use mod_bookit\local\manager\event_manager;
 require_login();
 
 $context = context_system::instance();
-require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
+header('Content-Type: application/json; charset=utf-8');
 
-$roomid = optional_param('roomid', 0, PARAM_INT);
+if (!has_capability('mod/bookit:managebasics', $context)) {
+    echo json_encode([]);
+    exit;
+}
+
+$roomid = required_param('roomid', PARAM_INT);
 $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
 $end = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
 
-$room = null;
-if ($roomid) {
-    $room = \mod_bookit\local\persistent\room::get_record(['id' => $roomid], MUST_EXIST);
-}
+$starttimestamp = (new DateTime($start))->getTimestamp();
+$endtimestamp = (new DateTime($end))->getTimestamp();
 
-$start = new DateTime($start);
-
-$end = new DateTime($end);
-
-$events = event_manager::get_slots_in_timerange($start->getTimestamp(), $end->getTimestamp(), $roomid);
-header('Content-Type: application/json');
-echo json_encode($events);
+echo json_encode(
+    event_manager::get_governed_room_availability($starttimestamp, $endtimestamp, $roomid),
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+);
+exit;

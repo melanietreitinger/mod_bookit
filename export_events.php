@@ -139,6 +139,13 @@ $ids     = optional_param_array('ids', [], PARAM_INT); /* ids[]=1 & ids[]=2…  
 $room    = optional_param('room', 0, PARAM_INT);
 $faculty = optional_param('faculty', '', PARAM_TEXT);
 $status  = optional_param('status', -1, PARAM_INT);
+$readfilters = event_access_manager::normalise_governed_read_filters([
+    'start' => optional_param('start', '1970-01-01T00:00', PARAM_TEXT),
+    'end' => optional_param('end', '2100-01-01T00:00', PARAM_TEXT),
+    'roomids' => $room ? [$room] : [],
+    'facultyids' => $faculty === '' ? [] : $faculty,
+    'bookingstatuses' => $status >= 0 ? [$status] : [],
+]);
 
 $cm      = get_coursemodule_from_id('bookit', $cmid, 0, false, MUST_EXIST);
 $course  = get_course($cm->course);
@@ -192,58 +199,50 @@ if (!empty($ids)) {
         $events = [];
     }
 } else {
-    // Time-range export, capability-safe.
-    $start = optional_param('start', '1970-01-01T00:00', PARAM_TEXT);
-    $end   = optional_param('end', '2100-01-01T00:00', PARAM_TEXT);
+    // Time-range export stays aligned with the governed calendar read contract.
+    $candidateevents = event_manager::get_governed_calendar_events(
+        $context,
+        (int)$USER->id,
+        $readfilters['start'] ?? '1970-01-01 00:00',
+        $readfilters['end'] ?? '2100-01-01 00:00',
+        $readfilters
+    );
+    $candidateids = array_values(array_unique(array_map(
+        static fn(array $event): int => (int)$event['eventid'],
+        $candidateevents
+    )));
 
-    $startts = (new DateTime(str_replace('T', ' ', $start)))->getTimestamp();
-    $endts   = (new DateTime(str_replace('T', ' ', $end)))->getTimestamp();
-
-    if ($viewalldetailsofevent) {
-        $sql = "SELECT *
-                    FROM {bookit_event}
-                WHERE endtime >= :starttime
-                    AND starttime <= :endtime";
-        $params = ['starttime' => $startts, 'endtime' => $endts];
-        $events = $DB->get_records_sql($sql, $params);
-    } else if ($viewalldetailsofownevent) {
-        $like = $DB->sql_like('otherexaminers', ':otherex');
-        $sql  = "SELECT *
-                    FROM {bookit_event}
-                    WHERE endtime >= :starttime
-                    AND starttime <= :endtime
-                    AND (
-                        usermodified = :uid
-                        OR personinchargeid = :uid2
-                        OR $like
-                    )";
-        $params = [
-            'starttime' => $startts,
-            'endtime'   => $endts,
-            'uid'       => $USER->id,
-            'uid2'      => $USER->id,
-            'otherex'   => $USER->id,
-        ];
-        $events = $DB->get_records_sql($sql, $params);
-    } else {
-        // No details capability: nothing exportable.
+    if (empty($candidateids)) {
         $events = [];
+    } else {
+        [$idinsql, $idparams] = $DB->get_in_or_equal($candidateids, SQL_PARAMS_NAMED, 'g');
+
+        if ($viewalldetailsofevent) {
+            $sql = "SELECT *
+                      FROM {bookit_event}
+                     WHERE id $idinsql";
+            $events = $DB->get_records_sql($sql, $idparams);
+        } else if ($viewalldetailsofownevent) {
+            $like = $DB->sql_like('otherexaminers', ':otherex');
+            $sql  = "SELECT *
+                        FROM {bookit_event}
+                       WHERE id $idinsql
+                         AND (
+                             usermodified = :uid
+                             OR personinchargeid = :uid2
+                             OR $like
+                         )";
+            $params = $idparams + [
+                'uid' => $USER->id,
+                'uid2' => $USER->id,
+                'otherex' => $USER->id,
+            ];
+            $events = $DB->get_records_sql($sql, $params);
+        } else {
+            $events = [];
+        }
     }
 }
-
-/* additional UI filters ------------------------------------------------ */
-$events = array_filter($events, static function ($e) use ($room, $faculty, $status): bool {
-    // Note: Room is not applied here yet, that doesnt work.
-    if ($faculty && $faculty !== ($e->institutionid ?? '')) {
-        return false;
-    }
-
-    if ($status >= 0 && $status !== (int) ($e->bookingstatus ?? -1)) {
-        return false;
-    }
-
-    return true;
-});
 
 if (!$events) {
     throw new moodle_exception('noevents', 'mod_bookit');
@@ -280,13 +279,6 @@ if ($events) {
             $events[$rec->eventid]->room = $rec->room ?? '';
         }
     }
-}
-
-// Apply room filter after enrichment.
-if ($room) {
-    $events = array_filter($events, static function ($ev) use ($room): bool {
-        return (int)($ev->roomid ?? 0) === (int)$room;
-    });
 }
 
 $alluserids = [];

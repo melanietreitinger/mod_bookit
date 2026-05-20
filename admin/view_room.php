@@ -57,12 +57,15 @@ $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 $PAGE->requires->js(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.js'), true);
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/event-calendar.min.css'));
 $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/custom-calendar.min.css'));
-$eventsource = (new moodle_url('/mod/bookit/events_available.php', ['roomid' => $room->get('id')]))->out(false);
+$roomreadconfig = [
+    'methodname' => 'mod_bookit_get_room_availability',
+    'roomid' => (int)$room->get('id'),
+];
 $PAGE->requires->js_call_amd(
     'mod_bookit/available_calendar',
     'init',
     [
-        $eventsource,
+        $roomreadconfig,
         [],
         current_language(),
     ]

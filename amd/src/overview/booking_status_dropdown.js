@@ -31,6 +31,23 @@ const SELECTOR = 'select[data-action="update-booking-status"]';
 const BUTTON_SELECTOR = 'button[data-action="set-booking-status"]';
 
 /**
+ * Resolve the optional governed read config injected by overview.php.
+ *
+ * @param {string} workspace
+ * @returns {?Object}
+ */
+const getReadConfig = (workspace) => {
+    if (!window.bookitOverviewReadConfig || !window.bookitOverviewReadConfig.methodname) {
+        return null;
+    }
+
+    return {
+        ...window.bookitOverviewReadConfig,
+        workspace: workspace,
+    };
+};
+
+/**
  * Resolve the overview tab that should remain active after a workflow action.
  *
  * @param {HTMLElement} element
@@ -64,6 +81,83 @@ const applyColor = (select) => {
 };
 
 /**
+ * Update overview queue counters and remove outdated request rows after a workflow action.
+ *
+ * @param {Object} readConfig
+ * @param {HTMLElement} trigger
+ * @param {string} redirectUrl
+ * @returns {Promise<void>}
+ */
+const refreshQueueFromGovernedRead = (readConfig, trigger, redirectUrl) => {
+    if (!readConfig || !['openrequests', 'rejectedrequests'].includes(readConfig.workspace)) {
+        window.location.assign(redirectUrl || window.location.href);
+        return Promise.resolve();
+    }
+
+    return Ajax.call([{
+        methodname: readConfig.methodname,
+        args: {
+            cmid: readConfig.cmid,
+            workspace: readConfig.workspace,
+            bookingstatuses: readConfig.bookingstatuses || [],
+            facultyids: readConfig.facultyids || [],
+            semesterids: readConfig.semesterids || [],
+            reportstart: readConfig.reportstart || '',
+            reportend: readConfig.reportend || '',
+        },
+    }])[0].then((queueResponse) => {
+        const openCount = queueResponse.summary ? queueResponse.summary.openrequestcount : 0;
+        const rejectedCount = queueResponse.summary ? queueResponse.summary.rejectedrequestcount : 0;
+
+        document.querySelectorAll('.mod-bookit-request-workspace-switch a').forEach((link) => {
+            if (link.href.includes('tab=openrequests')) {
+                const badge = link.querySelector('.badge');
+                if (badge) {
+                    badge.textContent = String(openCount);
+                }
+            }
+            if (link.href.includes('tab=rejectedrequests')) {
+                const badge = link.querySelector('.badge');
+                if (badge) {
+                    badge.textContent = String(rejectedCount);
+                }
+            }
+        });
+
+        document.querySelectorAll('.secondary-navigation .navigation a').forEach((link) => {
+            if (link.textContent.includes('Open requests')) {
+                link.textContent = link.textContent.replace(/\(\d+\)/, '(' + String(openCount) + ')');
+            }
+        });
+
+        const row = trigger.closest('tr');
+        const eventid = Number(trigger.dataset.eventid || 0);
+        const rowStillVisible = (queueResponse.items || []).some((item) => Number(item.eventid) === eventid);
+        if (row && !rowStillVisible) {
+            row.remove();
+        }
+
+        const table = document.querySelector(
+            readConfig.workspace === 'rejectedrequests' ? '#rejected-requests-table' : '#open-requests-table'
+        );
+        const tbody = table ? table.querySelector('tbody') : null;
+        if (tbody && tbody.children.length === 0) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-info';
+            alert.textContent = readConfig.workspace === 'rejectedrequests'
+                ? (readConfig.rejectedrequestsempty || '')
+                : (readConfig.openrequestsempty || '');
+            table.replaceWith(alert);
+        }
+
+        return null;
+    }).catch(() => {
+        window.location.assign(redirectUrl || window.location.href);
+        return null;
+    });
+};
+
+/**
  * Initialise the dropdown listener on the overview table.
  */
 export const init = () => {
@@ -91,8 +185,7 @@ export const init = () => {
         }])[0]
         .then((response) => {
             applyColor(select);
-            window.location.assign(response.redirecturl || window.location.href);
-            return null;
+            return refreshQueueFromGovernedRead(getReadConfig(tab), select, response.redirecturl || window.location.href);
         })
         .catch((err) => {
             select.disabled = false;
@@ -118,8 +211,7 @@ export const init = () => {
             args: {cmid, eventid, status, tab},
         }])[0]
         .then((response) => {
-            window.location.assign(response.redirecturl || window.location.href);
-            return null;
+            return refreshQueueFromGovernedRead(getReadConfig(tab), button, response.redirecturl || window.location.href);
         })
         .catch((err) => {
             button.disabled = false;

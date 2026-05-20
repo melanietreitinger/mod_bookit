@@ -268,6 +268,73 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Governed calendar reads must keep legacy-compatible fields while applying the canonical filters.
+     *
+     * @return void
+     */
+    public function test_get_governed_calendar_events_applies_filters_and_maps_payload(): void {
+        $this->resetAfterTest(true);
+
+        $teacher = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Governed calendar']);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit reader', 'bookitreader', 'teacher');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $teacher->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($teacher);
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Governed room',
+            'shortname' => 'GR-1',
+            'location' => 'Campus A',
+        ]);
+
+        $visibleid = $this->create_event_record([
+            'name' => 'Governed Physics',
+            'institutionid' => 1,
+            'roomid' => $roomid,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+        ]);
+        $this->create_event_record([
+            'name' => 'Governed Hidden',
+            'institutionid' => 1,
+            'roomid' => $roomid,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('2026-05-20 13:00:00'),
+            'endtime' => strtotime('2026-05-20 14:00:00'),
+        ]);
+
+        $events = event_manager::get_governed_calendar_events(
+            $context,
+            (int)$teacher->id,
+            '2026-05-20 00:00',
+            '2026-05-20 23:59',
+            [
+                'roomids' => [$roomid],
+                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_ACCEPTED],
+                'search' => 'Physics',
+            ]
+        );
+
+        $this->assertCount(1, $events);
+        $this->assertSame($visibleid, (int)$events[0]['eventid']);
+        $this->assertSame($visibleid, (int)$events[0]['id']);
+        $this->assertSame('full', $events[0]['visibilitymode']);
+        $this->assertArrayHasKey('titleHTML', $events[0]);
+        $this->assertArrayHasKey('extendedProps', $events[0]);
+    }
+
+    /**
      * Semester filtering must exclude legacy semester bookings unless the explicit legacy option is selected.
      *
      * @return void

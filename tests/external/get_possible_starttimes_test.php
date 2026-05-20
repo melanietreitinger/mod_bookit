@@ -92,4 +92,52 @@ final class get_possible_starttimes_test extends advanced_testcase {
         $this->assertNotEmpty($allowedslots);
         $this->assertNull($allowedstatus);
     }
+
+    /**
+     * Governed room reads must coexist with legacy starttime lookups during rollout.
+     *
+     * @runInSeparateProcess
+     * @return void
+     * @throws \dml_exception
+     */
+    public function test_execute_coexists_with_governed_room_availability_reads(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        install_helper::ensure_fresh_install_baseline();
+
+        $roomid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_room}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => install_helper::DEFAULT_ROOM_NAME],
+            MUST_EXIST
+        );
+        $DB->set_field('bookit_weekplan_room', 'starttime', 0, ['roomid' => $roomid]);
+
+        $date = new \DateTimeImmutable('next monday');
+        $daystart = $date->setTime(0, 0);
+        $dayend = $date->setTime(23, 59, 59);
+
+        $roomresponse = get_room_availability::execute(
+            $roomid,
+            $daystart->format('Y-m-d\TH:i:s'),
+            $dayend->format('Y-m-d\TH:i:s')
+        );
+
+        [$slots, $status] = get_possible_starttimes::list_possible_starttimes(
+            \DateTime::createFromImmutable($date->setTime(0, 0)),
+            60,
+            $roomid,
+            null,
+            true
+        );
+
+        $this->assertSame('ok', $roomresponse['status']);
+        $this->assertFalse($roomresponse['denied']);
+        $this->assertNotEmpty($roomresponse['entries']);
+        $this->assertNotEmpty($slots);
+        $this->assertNull($status);
+    }
 }

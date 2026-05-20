@@ -248,6 +248,36 @@ class mod_bookit_generator extends testing_module_generator {
     }
 
     /**
+     * Create a blocker for testing.
+     *
+     * @param array $blockerdata
+     * @return int
+     */
+    final public function create_blocker(array $blockerdata): int {
+        global $DB;
+
+        $roomid = null;
+        if (!empty($blockerdata['room'])) {
+            $roomid = (int)$DB->get_field_sql(
+                'SELECT id
+                   FROM {bookit_room}
+                  WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+                ['name' => $blockerdata['room']],
+                MUST_EXIST
+            );
+        } else if (array_key_exists('roomid', $blockerdata) && $blockerdata['roomid'] !== '') {
+            $roomid = (int)$blockerdata['roomid'];
+        }
+
+        return (int)$DB->insert_record('bookit_blocker', (object)[
+            'name' => $blockerdata['name'] ?? null,
+            'starttime' => strtotime($blockerdata['startdate']),
+            'endtime' => strtotime($blockerdata['enddate']),
+            'roomid' => $roomid,
+        ]);
+    }
+
+    /**
      * Create the agreed fresh-install baseline for tests.
      *
      * @return array
