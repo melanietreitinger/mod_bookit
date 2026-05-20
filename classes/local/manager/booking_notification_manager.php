@@ -25,6 +25,7 @@
 
 namespace mod_bookit\local\manager;
 
+use context_module;
 use core_user;
 use dml_exception;
 use moodle_url;
@@ -58,7 +59,7 @@ class booking_notification_manager {
             return 0;
         }
 
-        $recipientids = self::collect_recipient_ids($event);
+        $recipientids = self::collect_recipient_ids($event, $cmid);
         $template = self::get_template_data($event, $cmid, $oldstatus, $newstatus, $notificationstatus);
         $sent = 0;
 
@@ -78,13 +79,30 @@ class booking_notification_manager {
      * Collect all configured user recipients from the event.
      *
      * @param stdClass $event
+     * @param int $cmid
      * @return int[]
      */
-    private static function collect_recipient_ids(stdClass $event): array {
-        $recipientids = [];
+    private static function collect_recipient_ids(stdClass $event, int $cmid): array {
+        $recipientids = array_merge(
+            self::collect_participant_recipient_ids($event),
+            self::collect_service_team_recipient_ids($cmid)
+        );
 
-        if ((int)get_config('mod_bookit', 'bookingstatus_notify_bookingperson') !== 0 && !empty($event->usermodified)) {
-            $recipientids[] = (int)$event->usermodified;
+        return array_values(array_unique(array_filter(array_map('intval', $recipientids))));
+    }
+
+    /**
+     * Collect all participant-based user recipients from the event.
+     *
+     * @param stdClass $event
+     * @return int[]
+     */
+    private static function collect_participant_recipient_ids(stdClass $event): array {
+        $recipientids = [];
+        $requesterid = self::resolve_requester_id($event);
+
+        if ((int)get_config('mod_bookit', 'bookingstatus_notify_bookingperson') !== 0 && $requesterid > 0) {
+            $recipientids[] = $requesterid;
         }
 
         if ((int)get_config('mod_bookit', 'bookingstatus_notify_personincharge') !== 0 && !empty($event->personinchargeid)) {
@@ -100,7 +118,78 @@ class booking_notification_manager {
             }
         }
 
-        return array_values(array_unique($recipientids));
+        return $recipientids;
+    }
+
+    /**
+     * Collect service-team users resolved from the module context capability.
+     *
+     * @param int $cmid
+     * @return int[]
+     */
+    private static function collect_service_team_recipient_ids(int $cmid): array {
+        if ((int)get_config('mod_bookit', 'bookingstatus_notify_serviceteam') !== 1) {
+            return [];
+        }
+
+        $context = context_module::instance($cmid, IGNORE_MISSING);
+        if (!$context) {
+            return [];
+        }
+
+        $users = get_users_by_capability(
+            $context,
+            'mod/bookit:managebasics',
+            'u.id',
+            '',
+            '',
+            '',
+            '',
+            '',
+            false
+        );
+
+        return array_map(static fn(stdClass $user): int => (int)$user->id, array_values($users));
+    }
+
+    /**
+     * Resolve the stable requester for a booking request.
+     *
+     * @param stdClass $event
+     * @return int
+     * @throws dml_exception
+     */
+    private static function resolve_requester_id(stdClass $event): int {
+        global $DB;
+
+        $requesterid = $DB->get_field_sql(
+            "SELECT usermodified
+               FROM {bookit_event_history}
+              WHERE eventid = :eventid
+                AND action = :action
+                AND usermodified IS NOT NULL
+           ORDER BY timecreated ASC, id ASC",
+            ['eventid' => (int)$event->id, 'action' => 'created'],
+            IGNORE_MULTIPLE
+        );
+        if (!empty($requesterid)) {
+            return (int)$requesterid;
+        }
+
+        $earliesteditor = $DB->get_field_sql(
+            "SELECT usermodified
+               FROM {bookit_event_history}
+              WHERE eventid = :eventid
+                AND usermodified IS NOT NULL
+           ORDER BY timecreated ASC, id ASC",
+            ['eventid' => (int)$event->id],
+            IGNORE_MULTIPLE
+        );
+        if (!empty($earliesteditor)) {
+            return (int)$earliesteditor;
+        }
+
+        return (int)($event->usermodified ?? 0);
     }
 
     /**
@@ -126,8 +215,7 @@ class booking_notification_manager {
      * @param int $cmid
      * @param int $oldstatus
      * @param int $newstatus
-     * @param array{id:int,key:string,enabledconfig:string,subjectconfig:string,bodyconfig:string,
-     *     enabledstring:string,subjectstring:string,bodystring:string} $notificationstatus
+     * @param array $notificationstatus Resolved expressive status metadata.
      * @return stdClass
      */
     private static function get_template_data(
@@ -145,14 +233,12 @@ class booking_notification_manager {
         $data->room = self::get_room_name((int)($event->roomid ?? 0));
         $data->starttimestamp = (int)($event->starttime ?? 0);
         $data->endtimestamp = (int)($event->endtime ?? 0);
-        $data->bookingperson = self::get_user_name((int)($event->usermodified ?? 0));
+        $data->bookingperson = self::get_user_name(self::resolve_requester_id($event));
         $data->personincharge = self::get_user_name((int)($event->personinchargeid ?? 0));
         $data->otherexaminers = self::get_user_names_csv((string)($event->otherexaminers ?? ''));
         $data->newstatus = $newstatus;
         $data->oldstatus = $oldstatus;
         $data->statuskey = $notificationstatus['key'];
-        $data->configuredsubject = trim((string)get_config('mod_bookit', $notificationstatus['subjectconfig']));
-        $data->configuredbody = trim((string)get_config('mod_bookit', $notificationstatus['bodyconfig']));
 
         return self::localize_template_data($data);
     }
@@ -160,8 +246,7 @@ class booking_notification_manager {
     /**
      * Check whether the resolved expressive status type is enabled.
      *
-     * @param array{id:int,key:string,enabledconfig:string,subjectconfig:string,bodyconfig:string,
-     *     enabledstring:string,subjectstring:string,bodystring:string} $notificationstatus
+     * @param array $notificationstatus Resolved expressive status metadata.
      * @return bool
      */
     private static function is_notification_enabled(array $notificationstatus): bool {
@@ -187,17 +272,16 @@ class booking_notification_manager {
                 continue;
             }
 
-            $oldlang = force_current_language($userto->lang);
-            $localizedtemplate = self::localize_template_data($template);
+            $recipientlang = install_helper::normalize_booking_status_notification_language((string)($userto->lang ?? ''));
+            $localizedtemplate = self::localize_template_data($template, $recipientlang);
             $subject = self::replace_placeholders(
-                self::resolve_template_text($localizedtemplate, 'subject'),
+                self::resolve_template_text($localizedtemplate, 'subject', $recipientlang),
                 $localizedtemplate
             );
             $body = self::replace_placeholders(
-                self::resolve_template_text($localizedtemplate, 'body'),
+                self::resolve_template_text($localizedtemplate, 'body', $recipientlang),
                 $localizedtemplate
             );
-            force_current_language($oldlang);
 
             $message = new \core\message\message();
             $message->component = 'mod_bookit';
@@ -230,13 +314,14 @@ class booking_notification_manager {
      */
     private static function send_service_notifications(array $serviceaddresses, stdClass $template): int {
         $userfrom = core_user::get_noreply_user();
-        $localizedtemplate = self::localize_template_data($template);
+        $recipientlang = install_helper::normalize_booking_status_notification_language(current_language());
+        $localizedtemplate = self::localize_template_data($template, $recipientlang);
         $subject = self::replace_placeholders(
-            self::resolve_template_text($localizedtemplate, 'subject'),
+            self::resolve_template_text($localizedtemplate, 'subject', $recipientlang),
             $localizedtemplate
         );
         $body = self::replace_placeholders(
-            self::resolve_template_text($localizedtemplate, 'body'),
+            self::resolve_template_text($localizedtemplate, 'body', $recipientlang),
             $localizedtemplate
         );
         $sent = 0;
@@ -270,6 +355,7 @@ class booking_notification_manager {
     private static function replace_placeholders(string $template, stdClass $data): string {
         $replacements = [
             '###EVENTNAME###' => $data->eventname,
+            '###BOOKINGDATE###' => $data->bookingdate,
             '###BOOKINGSTATUS###' => $data->bookingstatus,
             '###OLDBOOKINGSTATUS###' => $data->oldbookingstatus,
             '###EVENTURL###' => $data->eventurl,
@@ -289,31 +375,56 @@ class booking_notification_manager {
      *
      * @param stdClass $data
      * @param string $field
+     * @param string $lang
      * @return string
      */
-    private static function resolve_template_text(stdClass $data, string $field): string {
-        $configured = trim((string)($field === 'subject' ? ($data->configuredsubject ?? '') : ($data->configuredbody ?? '')));
+    private static function resolve_template_text(stdClass $data, string $field, string $lang): string {
+        $statuskey = (string)$data->statuskey;
+        $language = install_helper::normalize_booking_status_notification_language($lang);
+        $configured = trim((string)get_config(
+            'mod_bookit',
+            install_helper::get_booking_status_notification_template_config_key($statuskey, $field, $language)
+        ));
         if ($configured !== '') {
             return $configured;
         }
 
+        $legacyconfigured = trim((string)get_config(
+            'mod_bookit',
+            install_helper::get_booking_status_notification_legacy_config_key($statuskey, $field)
+        ));
+        if ($legacyconfigured !== '') {
+            return $legacyconfigured;
+        }
+
         return $field === 'subject'
-            ? install_helper::get_booking_status_notification_default_subject((string)$data->statuskey)
-            : install_helper::get_booking_status_notification_default_body((string)$data->statuskey);
+            ? install_helper::get_booking_status_notification_default_subject($statuskey, $language)
+            : install_helper::get_booking_status_notification_default_body($statuskey, $language);
     }
 
     /**
      * Refresh language-sensitive template fields in the current language context.
      *
      * @param stdClass $template
+     * @param string|null $lang
      * @return stdClass
      */
-    private static function localize_template_data(stdClass $template): stdClass {
+    private static function localize_template_data(stdClass $template, ?string $lang = null): stdClass {
+        $oldlang = null;
+        if ($lang !== null) {
+            $oldlang = force_current_language(install_helper::normalize_booking_status_notification_language($lang));
+        }
+
         $localized = clone $template;
         $localized->bookingstatus = get_string('event_bookingstatus_' . (int)$template->newstatus, 'mod_bookit');
         $localized->oldbookingstatus = get_string('event_bookingstatus_' . (int)$template->oldstatus, 'mod_bookit');
+        $localized->bookingdate = userdate((int)($template->starttimestamp ?? 0), get_string('strftimedate', 'langconfig'));
         $localized->starttime = userdate((int)($template->starttimestamp ?? 0));
         $localized->endtime = userdate((int)($template->endtimestamp ?? 0));
+
+        if ($lang !== null) {
+            force_current_language($oldlang);
+        }
 
         return $localized;
     }

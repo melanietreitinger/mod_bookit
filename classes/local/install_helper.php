@@ -25,6 +25,7 @@
 
 namespace mod_bookit\local;
 
+use core_text;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
@@ -64,6 +65,9 @@ class install_helper {
 
     /** Config key for the optional checklist module state. */
     public const CONFIG_CHECKLIST_ENABLED = 'checklistenabled';
+
+    /** Supported admin-managed notification languages. */
+    private const BOOKING_STATUS_NOTIFICATION_LANGUAGES = ['de', 'en'];
 
     /**
      * Check whether the optional resources module is enabled.
@@ -180,18 +184,87 @@ class install_helper {
     }
 
     /**
-     * Get the explicit default subject template for one expressive booking-status key.
+     * Return supported admin-managed notification languages.
      *
-     * @param string $statuskey
+     * @return string[]
+     */
+    public static function get_booking_status_notification_languages(): array {
+        return self::BOOKING_STATUS_NOTIFICATION_LANGUAGES;
+    }
+
+    /**
+     * Normalize a runtime language into the supported template language set.
+     *
+     * @param string|null $lang
      * @return string
      */
-    public static function get_booking_status_notification_default_subject(string $statuskey): string {
+    public static function normalize_booking_status_notification_language(?string $lang): string {
+        $lang = core_text::strtolower(trim((string)$lang));
+        if ($lang !== '' && str_starts_with($lang, 'de')) {
+            return 'de';
+        }
+
+        return 'en';
+    }
+
+    /**
+     * Resolve the language-specific config key for a booking-status template.
+     *
+     * @param string $statuskey
+     * @param string $field
+     * @param string $lang
+     * @return string
+     */
+    public static function get_booking_status_notification_template_config_key(
+        string $statuskey,
+        string $field,
+        string $lang
+    ): string {
         $statuses = self::get_booking_status_notification_statuses();
         if (!isset($statuses[$statuskey])) {
             throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
         }
 
-        return get_string('bookingstatus_subject_default_' . $statuskey, 'mod_bookit');
+        if (!in_array($field, ['subject', 'body'], true)) {
+            throw new \coding_exception('Unknown booking-status template field: ' . $field);
+        }
+
+        $language = self::normalize_booking_status_notification_language($lang);
+        return 'bookingstatus_' . $field . '_' . $statuskey . '_' . $language;
+    }
+
+    /**
+     * Resolve the legacy shared config key for a booking-status template.
+     *
+     * @param string $statuskey
+     * @param string $field
+     * @return string
+     */
+    public static function get_booking_status_notification_legacy_config_key(string $statuskey, string $field): string {
+        $statuses = self::get_booking_status_notification_statuses();
+        if (!isset($statuses[$statuskey])) {
+            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
+        }
+
+        if ($field === 'subject') {
+            return (string)$statuses[$statuskey]['subjectconfig'];
+        }
+
+        if ($field === 'body') {
+            return (string)$statuses[$statuskey]['bodyconfig'];
+        }
+
+        throw new \coding_exception('Unknown booking-status template field: ' . $field);
+    }
+
+    /**
+     * Get the explicit default subject template for one expressive booking-status key.
+     *
+     * @param string $statuskey
+     * @return string
+     */
+    public static function get_booking_status_notification_default_subject(string $statuskey, ?string $lang = null): string {
+        return self::get_booking_status_notification_default_text($statuskey, 'subject', $lang);
     }
 
     /**
@@ -200,13 +273,8 @@ class install_helper {
      * @param string $statuskey
      * @return string
      */
-    public static function get_booking_status_notification_default_body(string $statuskey): string {
-        $statuses = self::get_booking_status_notification_statuses();
-        if (!isset($statuses[$statuskey])) {
-            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
-        }
-
-        return get_string('bookingstatus_body_default_' . $statuskey, 'mod_bookit');
+    public static function get_booking_status_notification_default_body(string $statuskey, ?string $lang = null): string {
+        return self::get_booking_status_notification_default_text($statuskey, 'body', $lang);
     }
 
     /**
@@ -215,6 +283,19 @@ class install_helper {
      * @return void
      */
     public static function ensure_booking_status_notification_defaults(): void {
+        $recipientdefaults = [
+            'bookingstatus_notify_serviceteam' => 1,
+            'bookingstatus_notify_bookingperson' => 1,
+            'bookingstatus_notify_personincharge' => 1,
+            'bookingstatus_notify_otherexaminers' => 1,
+            'bookingstatus_service_addresses' => '',
+        ];
+        foreach ($recipientdefaults as $configkey => $defaultvalue) {
+            if (get_config('mod_bookit', $configkey) === false) {
+                set_config($configkey, $defaultvalue, 'mod_bookit');
+            }
+        }
+
         foreach (self::get_booking_status_notification_statuses() as $statuskey => $statusdata) {
             if (get_config('mod_bookit', $statusdata['enabledconfig']) === false) {
                 set_config($statusdata['enabledconfig'], 1, 'mod_bookit');
@@ -235,7 +316,71 @@ class install_helper {
                     'mod_bookit'
                 );
             }
+
+            foreach (self::get_booking_status_notification_languages() as $lang) {
+                $subjectconfig = self::get_booking_status_notification_template_config_key($statuskey, 'subject', $lang);
+                if (get_config('mod_bookit', $subjectconfig) === false) {
+                    $legacysubject = trim((string)get_config(
+                        'mod_bookit',
+                        self::get_booking_status_notification_legacy_config_key($statuskey, 'subject')
+                    ));
+                    set_config(
+                        $subjectconfig,
+                        $legacysubject !== ''
+                            ? $legacysubject
+                            : self::get_booking_status_notification_default_subject($statuskey, $lang),
+                        'mod_bookit'
+                    );
+                }
+
+                $bodyconfig = self::get_booking_status_notification_template_config_key($statuskey, 'body', $lang);
+                if (get_config('mod_bookit', $bodyconfig) === false) {
+                    $legacybody = trim((string)get_config(
+                        'mod_bookit',
+                        self::get_booking_status_notification_legacy_config_key($statuskey, 'body')
+                    ));
+                    set_config(
+                        $bodyconfig,
+                        $legacybody !== '' ? $legacybody : self::get_booking_status_notification_default_body($statuskey, $lang),
+                        'mod_bookit'
+                    );
+                }
+            }
         }
+    }
+
+    /**
+     * Resolve a localized shipped default notification text.
+     *
+     * @param string $statuskey
+     * @param string $field
+     * @param string|null $lang
+     * @return string
+     */
+    private static function get_booking_status_notification_default_text(
+        string $statuskey,
+        string $field,
+        ?string $lang = null
+    ): string {
+        $statuses = self::get_booking_status_notification_statuses();
+        if (!isset($statuses[$statuskey])) {
+            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
+        }
+
+        if (!in_array($field, ['subject', 'body'], true)) {
+            throw new \coding_exception('Unknown booking-status template field: ' . $field);
+        }
+
+        $stringkey = 'bookingstatus_' . $field . '_default_' . $statuskey;
+        if ($lang === null) {
+            return get_string($stringkey, 'mod_bookit');
+        }
+
+        $oldlang = force_current_language(self::normalize_booking_status_notification_language($lang));
+        $text = get_string($stringkey, 'mod_bookit');
+        force_current_language($oldlang);
+
+        return $text;
     }
 
     /**

@@ -770,6 +770,9 @@ class event_manager {
 
         if ($previousevent === null) {
             self::record_booking_history((int)$persistedrecord->id, 'created', $userid, null, $newstatus);
+            if ($cmid !== null) {
+                booking_notification_manager::notify_status_changed($cmid, (int)$persistedrecord->id, $newstatus, $newstatus);
+            }
             self::trigger_booking_lifecycle_audit(
                 $persistedrecord,
                 $context,

@@ -28,6 +28,8 @@ namespace mod_bookit\local\manager;
 
 use advanced_testcase;
 use context_module;
+use mod_bookit\local\entity\bookit_event;
+use mod_bookit\local\install_helper;
 
 /**
  * Unit tests for event_manager helper methods.
@@ -43,6 +45,89 @@ use context_module;
  */
 final class event_manager_test extends advanced_testcase {
 // phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+    /**
+     * Set up the message providers and default notification configuration for workflow tests.
+     *
+     * @return void
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest(true);
+        message_update_providers('mod_bookit');
+        install_helper::ensure_booking_status_notification_defaults();
+        set_config('bookingstatus_notify_serviceteam', 1, 'mod_bookit');
+        set_config('bookingstatus_notify_bookingperson', 1, 'mod_bookit');
+        set_config('bookingstatus_notify_personincharge', 1, 'mod_bookit');
+        set_config('bookingstatus_notify_otherexaminers', 1, 'mod_bookit');
+        set_config('bookingstatus_service_addresses', '', 'mod_bookit');
+    }
+
+    /**
+     * Create a Bookit module context for lifecycle notification tests.
+     *
+     * @return context_module
+     */
+    private function create_bookit_context(): context_module {
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Lifecycle notifications',
+        ]);
+        return context_module::instance($bookit->cmid);
+    }
+
+    /**
+     * Create a room for event persistence tests.
+     *
+     * @return int
+     */
+    private function create_room(): int {
+        /** @var \mod_bookit_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        return $generator->create_room([
+            'name' => 'Lifecycle notification room',
+            'shortname' => 'NTF001',
+        ]);
+    }
+
+    /**
+     * Build a test event entity for lifecycle notification scenarios.
+     *
+     * @param int $roomid
+     * @param int $userid
+     * @param array $overrides
+     * @return bookit_event
+     */
+    private function build_bookit_event(int $roomid, int $userid, array $overrides = []): bookit_event {
+        return new bookit_event(
+            0,
+            $overrides['name'] ?? 'Lifecycle notification event',
+            $overrides['semester'] ?? 20261,
+            $overrides['institutionid'] ?? 1,
+            $overrides['starttime'] ?? strtotime('2026-05-08 09:00:00'),
+            $overrides['endtime'] ?? strtotime('2026-05-08 11:00:00'),
+            $overrides['duration'] ?? 120,
+            $overrides['roomid'] ?? $roomid,
+            $overrides['participantsamount'] ?? 10,
+            $overrides['timecompensation'] ?? 0,
+            $overrides['compensationfordisadvantages'] ?? '',
+            $overrides['bookingstatus'] ?? event_access_manager::BOOKINGSTATUS_NEW,
+            $overrides['personinchargeid'] ?? null,
+            $overrides['otherexaminers'] ?? '',
+            $overrides['coursetemplate'] ?? 0,
+            $overrides['notes'] ?? 'External note',
+            $overrides['internalnotes'] ?? 'Internal note',
+            $overrides['supportpersons'] ?? '',
+            $overrides['extratimebefore'] ?? 0,
+            $overrides['extratimeafter'] ?? 0,
+            $overrides['refcourseid'] ?? null,
+            $userid,
+            time(),
+            time(),
+            $overrides['resources'] ?? [],
+        );
+    }
+
     /**
      * Create a Bookit module context with an observer role assigned to the provided user.
      *
@@ -324,6 +409,114 @@ final class event_manager_test extends advanced_testcase {
             ['bookingstatus' => ['from' => 1, 'to' => 4]],
             json_decode($history[0]->changedfields, true)
         );
+    }
+
+    /**
+     * Creating a booking through the lifecycle path must send the initial New notification.
+     *
+     * @return void
+     */
+    public function test_save_event_with_lifecycle_tracking_sends_notification_for_initial_creation(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_bookit_event($roomid, (int)$user->id, ['name' => 'Created notification']);
+
+        $sink = $this->redirectMessages();
+        event_manager::save_event_with_lifecycle_tracking(
+            $event,
+            null,
+            (int)$user->id,
+            $context,
+            (int)$context->instanceid
+        );
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $this->assertSame((string)$user->id, $messages[0]->useridto);
+        $this->assertStringContainsString('Created notification', $messages[0]->subject);
+    }
+
+    /**
+     * Reactivating a canceled request back to New through the lifecycle path must send a notification.
+     *
+     * @return void
+     */
+    public function test_save_event_with_lifecycle_tracking_notifies_on_reactivation_to_new(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_bookit_event($roomid, (int)$user->id, [
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'name' => 'Reactivated notification',
+        ]);
+
+        $saved = event_manager::save_event_with_lifecycle_tracking($event, null, (int)$user->id, $context);
+
+        $beforecancel = bookit_event::from_database($saved->id);
+        $canceled = bookit_event::from_database($saved->id);
+        $canceled->bookingstatus = event_access_manager::BOOKINGSTATUS_CANCELED;
+        event_manager::save_event_with_lifecycle_tracking($canceled, $beforecancel, (int)$user->id, $context);
+
+        $beforerestore = bookit_event::from_database($saved->id);
+        $reactivated = bookit_event::from_database($saved->id);
+        $reactivated->bookingstatus = event_access_manager::BOOKINGSTATUS_NEW;
+
+        $sink = $this->redirectMessages();
+        event_manager::save_event_with_lifecycle_tracking(
+            $reactivated,
+            $beforerestore,
+            (int)$user->id,
+            $context,
+            (int)$context->instanceid
+        );
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $history = array_values(event_manager::get_booking_history($saved->id));
+
+        $this->assertCount(1, $messages);
+        $this->assertSame((string)$user->id, $messages[0]->useridto);
+        $this->assertSame('restored', $history[0]->action);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$history[0]->newstatus);
+    }
+
+    /**
+     * An empty optional service-team group must not block status delivery to the remaining recipients.
+     *
+     * @return void
+     */
+    public function test_transition_booking_status_keeps_delivery_when_service_team_group_is_empty(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_bookit_event($roomid, (int)$user->id, ['name' => 'No service team available']);
+        $saved = event_manager::save_event_with_lifecycle_tracking($event, null, (int)$user->id, $context);
+        $record = event_manager::get_event((int)$saved->id);
+
+        $sink = $this->redirectMessages();
+        event_manager::transition_booking_status(
+            $record,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            (int)$user->id,
+            $context,
+            (int)$context->instanceid
+        );
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $this->assertSame((string)$user->id, $messages[0]->useridto);
     }
 
     /**

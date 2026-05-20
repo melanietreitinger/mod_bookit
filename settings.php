@@ -92,6 +92,13 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_configcheckbox(
+        'mod_bookit/bookingstatus_notify_serviceteam',
+        get_string('bookingstatus_notify_serviceteam', 'mod_bookit'),
+        get_string('bookingstatus_notify_serviceteam_desc', 'mod_bookit'),
+        1
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
         'mod_bookit/bookingstatus_notify_bookingperson',
         get_string('bookingstatus_notify_bookingperson', 'mod_bookit'),
         get_string('bookingstatus_notify_bookingperson_desc', 'mod_bookit'),
@@ -113,6 +120,12 @@ if ($hassiteconfig) {
     ));
 
     foreach (install_helper::get_booking_status_notification_statuses() as $statuskey => $statusdata) {
+        $settings->add(new admin_setting_heading(
+            'mod_bookit_bookingstatus_heading_' . $statuskey,
+            get_string('event_bookingstatus_' . $statusdata['id'], 'mod_bookit'),
+            ''
+        ));
+
         $enabledsetting = new admin_setting_configcheckbox(
             'mod_bookit/' . $statusdata['enabledconfig'],
             get_string($statusdata['enabledstring'], 'mod_bookit'),
@@ -121,31 +134,33 @@ if ($hassiteconfig) {
         );
         $settings->add($enabledsetting);
 
-        $subjectsetting = new admin_setting_configtext(
-            'mod_bookit/' . $statusdata['subjectconfig'],
-            get_string($statusdata['subjectstring'], 'mod_bookit'),
-            get_string('bookingstatus_subject_desc', 'mod_bookit'),
-            install_helper::get_booking_status_notification_default_subject($statuskey),
-            PARAM_TEXT
-        );
-        $subjectsetting->add_dependent_on(
-            'mod_bookit/' . $statusdata['enabledconfig'],
-            '1'
-        );
-        $settings->add($subjectsetting);
+        foreach (install_helper::get_booking_status_notification_languages() as $lang) {
+            $subjectsetting = new admin_setting_configtext(
+                'mod_bookit/' . install_helper::get_booking_status_notification_template_config_key($statuskey, 'subject', $lang),
+                get_string('bookingstatus_subject_language_' . $lang, 'mod_bookit'),
+                get_string('bookingstatus_subject_desc', 'mod_bookit'),
+                install_helper::get_booking_status_notification_default_subject($statuskey, $lang),
+                PARAM_TEXT
+            );
+            $subjectsetting->add_dependent_on(
+                'mod_bookit/' . $statusdata['enabledconfig'],
+                '1'
+            );
+            $settings->add($subjectsetting);
 
-        $bodysetting = new admin_setting_configtextarea(
-            'mod_bookit/' . $statusdata['bodyconfig'],
-            get_string($statusdata['bodystring'], 'mod_bookit'),
-            get_string('bookingstatus_body_desc', 'mod_bookit'),
-            install_helper::get_booking_status_notification_default_body($statuskey),
-            PARAM_RAW
-        );
-        $bodysetting->add_dependent_on(
-            'mod_bookit/' . $statusdata['enabledconfig'],
-            '1'
-        );
-        $settings->add($bodysetting);
+            $bodysetting = new admin_setting_configtextarea(
+                'mod_bookit/' . install_helper::get_booking_status_notification_template_config_key($statuskey, 'body', $lang),
+                get_string('bookingstatus_body_language_' . $lang, 'mod_bookit'),
+                get_string('bookingstatus_body_desc', 'mod_bookit'),
+                install_helper::get_booking_status_notification_default_body($statuskey, $lang),
+                PARAM_RAW
+            );
+            $bodysetting->add_dependent_on(
+                'mod_bookit/' . $statusdata['enabledconfig'],
+                '1'
+            );
+            $settings->add($bodysetting);
+        }
     }
 
     $settings->add(new admin_setting_heading(

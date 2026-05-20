@@ -27,6 +27,7 @@
 namespace mod_bookit\local\manager;
 
 use advanced_testcase;
+use context_module;
 use mod_bookit\local\install_helper;
 
 /**
@@ -35,25 +36,40 @@ use mod_bookit\local\install_helper;
  * @covers \mod_bookit\local\manager\booking_notification_manager
  */
 final class booking_notification_manager_test extends advanced_testcase {
-    /** @var int Fake course-module ID used in notification tests. */
-    private int $cmid = 42;
+    /** @var int Real course-module ID used in notification tests. */
+    private int $cmid = 0;
+
+    /** @var context_module Real module context used for capability-based recipient resolution. */
+    private context_module $context;
 
     /**
-     * Set up message providers.
+     * Set up message providers, defaults, and a real BookIt context.
+     *
+     * @return void
      */
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
+
         message_update_providers('mod_bookit');
         install_helper::ensure_booking_status_notification_defaults();
+        set_config('bookingstatus_notify_serviceteam', 1, 'mod_bookit');
         set_config('bookingstatus_notify_bookingperson', 1, 'mod_bookit');
         set_config('bookingstatus_notify_personincharge', 1, 'mod_bookit');
         set_config('bookingstatus_notify_otherexaminers', 1, 'mod_bookit');
         set_config('bookingstatus_service_addresses', '', 'mod_bookit');
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Booking notification test',
+        ]);
+        $this->cmid = (int)$bookit->cmid;
+        $this->context = context_module::instance($this->cmid);
     }
 
     /**
-     * Test that all configured user recipients receive the booking notification.
+     * All configured booking participants must receive the status notification.
      *
      * @return void
      */
@@ -75,12 +91,13 @@ final class booking_notification_manager_test extends advanced_testcase {
 
         $this->assertSame(3, $sent);
         $this->assertCount(3, $messages);
+        $this->assert_message_recipients($messages, [$booker->id, $personincharge->id, $otherexaminer->id]);
         $this->assertSame('mod_bookit', $messages[0]->component);
         $this->assertSame('bookit_booking_status_changed', $messages[0]->eventtype);
     }
 
     /**
-     * Test that disabled recipient toggles reduce the sent messages.
+     * Disabled recipient toggles must reduce the recipient set without affecting others.
      *
      * @return void
      */
@@ -107,42 +124,56 @@ final class booking_notification_manager_test extends advanced_testcase {
     }
 
     /**
-     * Test that default templates localize status placeholders for each recipient language.
+     * Localized template data must refresh derived placeholders for status and date output.
      *
      * @return void
      */
-    public function test_localize_template_data_refreshes_status_and_time_placeholders(): void {
+    public function test_localize_template_data_refreshes_status_time_and_bookingdate_placeholders(): void {
         $template = (object)[
             'newstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
             'oldstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'starttimestamp' => time() + 3600,
-            'endtimestamp' => time() + 7200,
+            'starttimestamp' => strtotime('2026-05-08 09:00:00'),
+            'endtimestamp' => strtotime('2026-05-08 11:00:00'),
             'bookingstatus' => 'STALE-STATUS',
             'oldbookingstatus' => 'STALE-OLD-STATUS',
+            'bookingdate' => 'STALE-DATE',
             'starttime' => 'STALE-START',
             'endtime' => 'STALE-END',
         ];
 
         $reflection = new \ReflectionMethod(booking_notification_manager::class, 'localize_template_data');
         $reflection->setAccessible(true);
-        $localized = $reflection->invoke(null, $template);
+        $localized = $reflection->invoke(null, $template, 'en');
 
         $this->assertSame(get_string('event_bookingstatus_2', 'mod_bookit'), $localized->bookingstatus);
         $this->assertSame(get_string('event_bookingstatus_0', 'mod_bookit'), $localized->oldbookingstatus);
+        $this->assertNotSame('STALE-DATE', $localized->bookingdate);
         $this->assertNotSame('STALE-START', $localized->starttime);
         $this->assertNotSame('STALE-END', $localized->endtime);
     }
 
     /**
-     * Test that configured templates override defaults and still replace placeholders.
+     * Legacy shared template settings must still work while replacing supported placeholders.
      *
      * @return void
      */
-    public function test_notify_status_changed_uses_expressive_configured_templates(): void {
+    public function test_notify_status_changed_uses_legacy_configured_templates_as_fallback(): void {
         $booker = $this->getDataGenerator()->create_user();
         $eventid = $this->create_test_event($booker->id, null, null, 'Configured Exam');
 
-        set_config('bookingstatus_subject_accepted', 'Custom ###EVENTNAME###', 'mod_bookit');
+        foreach (install_helper::get_booking_status_notification_languages() as $lang) {
+            set_config(
+                install_helper::get_booking_status_notification_template_config_key('accepted', 'subject', $lang),
+                '',
+                'mod_bookit'
+            );
+            set_config(
+                install_helper::get_booking_status_notification_template_config_key('accepted', 'body', $lang),
+                '',
+                'mod_bookit'
+            );
+        }
+        set_config('bookingstatus_subject_accepted', 'Legacy ###EVENTNAME###', 'mod_bookit');
         set_config(
             'bookingstatus_body_accepted',
             'Status ###BOOKINGSTATUS### by ###BOOKINGPERSON###',
@@ -160,12 +191,72 @@ final class booking_notification_manager_test extends advanced_testcase {
         $sink->close();
 
         $this->assertCount(1, $messages);
-        $this->assertSame('Custom Configured Exam', $messages[0]->subject);
+        $this->assertSame('Legacy Configured Exam', $messages[0]->subject);
         $this->assertStringContainsString('Status Accepted by', $messages[0]->fullmessage);
+        $this->assertStringNotContainsString('###BOOKINGPERSON###', $messages[0]->fullmessage);
     }
 
     /**
-     * Test that a disabled status type suppresses all sends.
+     * Language-specific template overrides must be resolved per recipient language.
+     *
+     * @return void
+     */
+    public function test_notify_status_changed_uses_language_specific_configured_templates(): void {
+        global $DB;
+
+        $booker = $this->getDataGenerator()->create_user();
+        $personincharge = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'lang', 'de', ['id' => $booker->id]);
+        $DB->set_field('user', 'lang', 'en', ['id' => $personincharge->id]);
+        $eventid = $this->create_test_event($booker->id, $personincharge->id, null, 'Configured Exam');
+
+        set_config(
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject', 'de'),
+            'DE accepted ###EVENTNAME### ###BOOKINGDATE###',
+            'mod_bookit'
+        );
+        set_config(
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'body', 'de'),
+            'DE body ###EVENTNAME### ###BOOKINGDATE###',
+            'mod_bookit'
+        );
+        set_config(
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject', 'en'),
+            'EN accepted ###EVENTNAME### ###BOOKINGDATE###',
+            'mod_bookit'
+        );
+        set_config(
+            install_helper::get_booking_status_notification_template_config_key('accepted', 'body', 'en'),
+            'EN body ###EVENTNAME### ###BOOKINGDATE###',
+            'mod_bookit'
+        );
+
+        $sink = $this->redirectMessages();
+        booking_notification_manager::notify_status_changed(
+            $this->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        );
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(2, $messages);
+
+        $bookermessage = $this->get_message_for_user($messages, $booker->id);
+        $examinermessage = $this->get_message_for_user($messages, $personincharge->id);
+
+        $this->assertStringStartsWith('DE accepted Configured Exam', $bookermessage->subject);
+        $this->assertStringStartsWith('DE body Configured Exam', $bookermessage->fullmessage);
+        $this->assertStringNotContainsString('###BOOKINGDATE###', $bookermessage->fullmessage);
+
+        $this->assertStringStartsWith('EN accepted Configured Exam', $examinermessage->subject);
+        $this->assertStringStartsWith('EN body Configured Exam', $examinermessage->fullmessage);
+        $this->assertStringNotContainsString('###BOOKINGDATE###', $examinermessage->fullmessage);
+    }
+
+    /**
+     * Disabled status types must suppress all message and email delivery.
      *
      * @return void
      */
@@ -194,14 +285,15 @@ final class booking_notification_manager_test extends advanced_testcase {
     }
 
     /**
-     * Test that only valid service addresses are used and user recipients stay unchanged.
+     * Service-team users and shared service addresses must both receive delivery when configured.
      *
      * @return void
      */
-    public function test_notify_status_changed_ignores_invalid_service_addresses(): void {
+    public function test_notify_status_changed_includes_service_team_users_and_shared_addresses(): void {
         $booker = $this->getDataGenerator()->create_user();
-        $personincharge = $this->getDataGenerator()->create_user();
-        $eventid = $this->create_test_event($booker->id, $personincharge->id);
+        $serviceteamuser = $this->getDataGenerator()->create_user();
+        $this->assign_service_team_user($serviceteamuser->id);
+        $eventid = $this->create_test_event($booker->id);
 
         set_config(
             'bookingstatus_service_addresses',
@@ -225,67 +317,145 @@ final class booking_notification_manager_test extends advanced_testcase {
         $this->assertSame(4, $sent);
         $this->assertCount(2, $messages);
         $this->assertCount(2, $emails);
+        $this->assert_message_recipients($messages, [$booker->id, $serviceteamuser->id]);
     }
 
     /**
-     * Test that empty service addresses skip only email delivery while user recipients still receive messages.
+     * One user who appears in multiple recipient roles must only receive one notification.
      *
      * @return void
      */
-    public function test_notify_status_changed_skips_empty_service_addresses_only(): void {
+    public function test_notify_status_changed_deduplicates_overlapping_service_team_roles(): void {
         $booker = $this->getDataGenerator()->create_user();
-        $personincharge = $this->getDataGenerator()->create_user();
-        $eventid = $this->create_test_event($booker->id, $personincharge->id);
+        $serviceteamuser = $this->getDataGenerator()->create_user();
+        $this->assign_service_team_user($serviceteamuser->id);
+        $eventid = $this->create_test_event(
+            $booker->id,
+            $serviceteamuser->id,
+            $serviceteamuser->id . ',' . $serviceteamuser->id
+        );
 
-        set_config('bookingstatus_service_addresses', '', 'mod_bookit');
-
-        $messagesink = $this->redirectMessages();
-        $emailsink = $this->redirectEmails();
+        $sink = $this->redirectMessages();
         $sent = booking_notification_manager::notify_status_changed(
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_ACCEPTED
         );
-        $messages = $messagesink->get_messages();
-        $emails = $emailsink->get_messages();
-        $emailsink->close();
-        $messagesink->close();
+        $messages = $sink->get_messages();
+        $sink->close();
 
         $this->assertSame(2, $sent);
         $this->assertCount(2, $messages);
-        $this->assertCount(0, $emails);
+        $this->assert_message_recipients($messages, [$booker->id, $serviceteamuser->id]);
     }
 
     /**
-     * Insert a minimal test event.
+     * Later edits by a different user must not overwrite the original requester recipient.
      *
-     * @param int $usermodified
+     * @return void
+     */
+    public function test_notify_status_changed_uses_stable_requester_after_later_edits(): void {
+        $requester = $this->getDataGenerator()->create_user();
+        $editor = $this->getDataGenerator()->create_user();
+        $eventid = $this->create_test_event($requester->id, null, null, 'Stable requester', $editor->id);
+
+        $sink = $this->redirectMessages();
+        $sent = booking_notification_manager::notify_status_changed(
+            $this->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        );
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertSame(1, $sent);
+        $this->assertCount(1, $messages);
+        $this->assertSame((string)$requester->id, $messages[0]->useridto);
+        $this->assertNotSame((string)$editor->id, $messages[0]->useridto);
+    }
+
+    /**
+     * Assign a module-local service-team role to the given user.
+     *
+     * @param int $userid
+     * @return void
+     */
+    private function assign_service_team_user(int $userid): void {
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('BookIt service team', 'bookitserviceteamtest', 'Service team test role');
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $this->context->id, true);
+        \role_assign($roleid, $userid, $this->context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+    }
+
+    /**
+     * Assert that the collected message recipients match the expected user IDs.
+     *
+     * @param array $messages
+     * @param int[] $expecteduserids
+     * @return void
+     */
+    private function assert_message_recipients(array $messages, array $expecteduserids): void {
+        $actual = array_map(static fn($message): int => (int)$message->useridto, $messages);
+        $expecteduserids = array_map('intval', $expecteduserids);
+        sort($actual);
+        sort($expecteduserids);
+        $this->assertSame($expecteduserids, $actual);
+    }
+
+    /**
+     * Return one captured message for the provided recipient.
+     *
+     * @param array $messages
+     * @param int $userid
+     * @return \stdClass
+     */
+    private function get_message_for_user(array $messages, int $userid): \stdClass {
+        foreach ($messages as $message) {
+            if ((int)$message->useridto === $userid) {
+                return $message;
+            }
+        }
+
+        $this->fail('No message captured for user ' . $userid);
+    }
+
+    /**
+     * Insert a minimal test event and seed the stable requester history entry.
+     *
+     * @param int $requesterid
      * @param int|null $personinchargeid
      * @param string|null $otherexaminers
      * @param string $name
+     * @param int|null $usermodified
+     * @param int $bookingstatus
      * @return int
      */
     private function create_test_event(
-        int $usermodified,
+        int $requesterid,
         ?int $personinchargeid = null,
         ?string $otherexaminers = null,
-        string $name = 'Booking Notification Event'
+        string $name = 'Booking Notification Event',
+        ?int $usermodified = null,
+        int $bookingstatus = event_access_manager::BOOKINGSTATUS_NEW
     ): int {
         global $DB;
 
-        return $DB->insert_record('bookit_event', (object)[
+        $now = time();
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
             'name' => $name,
             'semester' => 20261,
             'institutionid' => 0,
-            'starttime' => time() + 3600,
-            'endtime' => time() + 7200,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
             'duration' => 60,
             'roomid' => 0,
             'participantsamount' => null,
             'timecompensation' => null,
             'compensationfordisadvantages' => null,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'bookingstatus' => $bookingstatus,
             'personinchargeid' => $personinchargeid,
             'otherexaminers' => $otherexaminers,
             'coursetemplate' => null,
@@ -295,9 +465,22 @@ final class booking_notification_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
-            'usermodified' => $usermodified,
-            'timecreated' => time(),
-            'timemodified' => time(),
+            'usermodified' => $usermodified ?? $requesterid,
+            'timecreated' => $now,
+            'timemodified' => $now,
         ]);
+
+        $DB->insert_record('bookit_event_history', (object)[
+            'eventid' => $eventid,
+            'action' => 'created',
+            'oldstatus' => null,
+            'newstatus' => $bookingstatus,
+            'changedfields' => null,
+            'recoverymarker' => 0,
+            'usermodified' => $requesterid,
+            'timecreated' => $now - 60,
+        ]);
+
+        return $eventid;
     }
 }
