@@ -416,7 +416,7 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Only service-team style capabilities may expose the request-management navigation.
+     * Open-request navigation is available through either service-team owner capability.
      *
      * @return void
      */
@@ -433,22 +433,32 @@ final class event_access_manager_test extends advanced_testcase {
         \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
         \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
 
-        $servicerole = \create_role('Bookit request manager', 'bookitrequestmanager', 'manager');
-        \assign_capability('mod/bookit:view', CAP_ALLOW, $servicerole, $context->id, true);
-        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $servicerole, $context->id, true);
-        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $servicerole, $context->id, true);
+        $detailservicerole = \create_role('Bookit detail manager', 'bookitdetailmanager', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $detailservicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $detailservicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $detailservicerole, $context->id, true);
+
+        $basicservicerole = \create_role('Bookit basic manager', 'bookitbasicmanager', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $basicservicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $basicservicerole, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $basicservicerole, $context->id, true);
         \accesslib_clear_all_caches_for_unit_testing();
 
         $participant = $this->getDataGenerator()->create_user();
-        $serviceuser = $this->getDataGenerator()->create_user();
+        $detailserviceuser = $this->getDataGenerator()->create_user();
+        $basicserviceuser = $this->getDataGenerator()->create_user();
         \role_assign($participantrole, $participant->id, $context->id);
-        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \role_assign($detailservicerole, $detailserviceuser->id, $context->id);
+        \role_assign($basicservicerole, $basicserviceuser->id, $context->id);
         \accesslib_clear_all_caches_for_unit_testing();
 
         $this->setUser($participant);
         $this->assertFalse(event_access_manager::can_manage_open_requests($context));
 
-        $this->setUser($serviceuser);
+        $this->setUser($detailserviceuser);
+        $this->assertTrue(event_access_manager::can_manage_open_requests($context));
+
+        $this->setUser($basicserviceuser);
         $this->assertTrue(event_access_manager::can_manage_open_requests($context));
     }
 

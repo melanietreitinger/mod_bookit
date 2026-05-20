@@ -432,6 +432,7 @@ $string['overview_open_request_count'] = '{$a} offene Anfragen';
 $string['overview_open_requests'] = 'Offene Anfragen';
 $string['overview_open_requests_empty'] = 'Aktuell liegen keine offenen Buchungsanfragen vor.';
 $string['overview_open_requests_help'] = 'Haupt-Activity-Tab für alle Buchungsanfragen mit Status Neu oder In Bearbeitung.';
+$string['overview_open_requests_with_count'] = '{$a->title} ({$a->count})';
 $string['overview_rejected_request_count'] = '{$a} abgelehnte Anfragen';
 $string['overview_rejected_requests'] = 'Abgelehnte Anfragen';
 $string['overview_rejected_requests_empty'] = 'Aktuell liegen keine weiterhin prüfbaren abgelehnten Buchungsanfragen vor.';

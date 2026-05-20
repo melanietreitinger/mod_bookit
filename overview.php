@@ -165,6 +165,11 @@ $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'ini
 $PAGE->set_url('/mod/bookit/overview.php', ['id' => $cm->id]);
 $PAGE->set_title(get_string('overview', 'mod_bookit'));
 $PAGE->set_heading($course->fullname);
+if ($currenttab === 'openrequests') {
+    $PAGE->set_secondary_active_tab('bookitopenrequests');
+} else {
+    $PAGE->set_secondary_active_tab('bookitoverview');
+}
 
 echo $OUTPUT->header();
 
@@ -239,28 +244,17 @@ $templatecontext = [
     'tableid' => (string)$tableid,
     'canmanage' => $canmanage,
     'showidcolumn' => $canmanageopenrequests,
-    'showmyeventsnav' => !$isobserverrestricted,
-    'showopenrequestsnav' => $canmanageopenrequests,
-    'showhistorynav' => !$isobserverrestricted,
     'showmyeventssection' => $currenttab !== 'openrequests',
     'showrequestworkspacesection' => $currenttab === 'openrequests',
     'showrequestworkspaceswitch' => $canmanageopenrequests,
-    'myeventsactive' => $currenttab === 'myevents',
     'historyactive' => $currenttab === 'history',
-    'openrequestsactive' => $currenttab === 'openrequests',
     'requestworkspaceopenactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
     'requestworkspacerejectedactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
-    'myeventsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'myevents']))->out(false),
-    'historyurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'history']))->out(false),
     'openrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'openrequests']))->out(false),
     'rejectedrequestsurl' => (new moodle_url(
         '/mod/bookit/overview.php',
         ['id' => $cm->id, 'tab' => 'rejectedrequests']
     ))->out(false),
-    'myeventstitle' => $isobserverrestricted
-        ? get_string('overview_all_events', 'mod_bookit')
-        : get_string('overview_my_events', 'mod_bookit'),
-    'historytitle' => get_string('overview_history', 'mod_bookit'),
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
     'requestworkspacehelp' => get_string('overview_request_workspace_help', 'mod_bookit'),
     'requestqueueswitchlabel' => get_string('overview_request_workspace_switch', 'mod_bookit'),

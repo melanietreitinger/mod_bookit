@@ -433,6 +433,14 @@ final class event_manager_test extends advanced_testcase {
 
         $this->assertSame(1, event_manager::count_open_requests($referencetime));
         $this->assertSame(0, event_manager::count_rejected_requests($referencetime));
+
+        $DB->set_field(
+            'bookit_event',
+            'bookingstatus',
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            ['id' => $eventid]
+        );
+        $this->assertSame(1, event_manager::count_open_requests($referencetime));
     }
 
     /**

@@ -76,33 +76,6 @@
 
 <div class="mod_bookit-overview-examiner_overview">
     <div class="mb-3">
-        <ul class="nav nav-tabs">
-            {{#showmyeventsnav}}
-            <li class="nav-item">
-                <a class="nav-link {{#myeventsactive}}active{{/myeventsactive}}" href="{{myeventsurl}}">
-                    {{myeventstitle}}
-                </a>
-            </li>
-            {{/showmyeventsnav}}
-            {{#showhistorynav}}
-            <li class="nav-item">
-                <a class="nav-link {{#historyactive}}active{{/historyactive}}" href="{{historyurl}}">
-                    {{historytitle}}
-                </a>
-            </li>
-            {{/showhistorynav}}
-            {{#showopenrequestsnav}}
-            <li class="nav-item">
-                <a class="nav-link {{#openrequestsactive}}active{{/openrequestsactive}}" href="{{openrequestsurl}}">
-                    {{openrequeststitle}}
-                    <span class="badge badge-pill badge-warning ml-1">{{openrequestcount}}</span>
-                </a>
-            </li>
-            {{/showopenrequestsnav}}
-        </ul>
-    </div>
-
-    <div class="mb-3">
         <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
         <input type="text" id="bookit-filter" class="form-control w-auto d-inline">
     </div>

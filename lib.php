@@ -115,11 +115,15 @@ function bookit_extend_settings_navigation(
     }
 
     $context = $PAGE->cm->context;
+    $pageisoverview = $PAGE->url->compare(new moodle_url('/mod/bookit/overview.php'), URL_MATCH_BASE);
+    $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
+    $isinrequestworkspace = $pageisoverview && in_array($tab, ['openrequests', 'rejectedrequests'], true);
+
     if (has_capability('mod/bookit:viewownoverview', $context)) {
-        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id]);
+        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'myevents']);
 
         // THIS is the line that puts the entry under the current Bookit node.
-        $modnode->add(
+        $overviewnode = $modnode->add(
             get_string('overview', 'bookit'),
             $url,
             navigation_node::TYPE_SETTING,
@@ -127,6 +131,32 @@ function bookit_extend_settings_navigation(
             'bookitoverview',
             new pix_icon('i/calendar', '')
         );
+
+        if ($pageisoverview && !$isinrequestworkspace) {
+            $PAGE->set_secondary_active_tab('bookitoverview');
+            $overviewnode->make_active();
+        }
+    }
+
+    if (\mod_bookit\local\manager\event_access_manager::can_manage_open_requests($context)) {
+        $label = get_string('overview_open_requests_with_count', 'mod_bookit', (object)[
+            'title' => get_string('overview_open_requests', 'mod_bookit'),
+            'count' => \mod_bookit\local\manager\event_manager::count_open_requests(),
+        ]);
+        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'openrequests']);
+        $openrequestsnode = $modnode->add(
+            $label,
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'bookitopenrequests',
+            new pix_icon('i/report', '')
+        );
+
+        if ($isinrequestworkspace) {
+            $PAGE->set_secondary_active_tab('bookitopenrequests');
+            $openrequestsnode->make_active();
+        }
     }
 }
 

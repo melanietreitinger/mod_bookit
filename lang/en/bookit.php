@@ -439,6 +439,7 @@ $string['overview_open_request_count'] = '{$a} open requests';
 $string['overview_open_requests'] = 'Open requests';
 $string['overview_open_requests_empty'] = 'There are currently no open booking requests.';
 $string['overview_open_requests_help'] = 'Main activity tab for all booking requests with status New or In Progress.';
+$string['overview_open_requests_with_count'] = '{$a->title} ({$a->count})';
 $string['overview_rejected_request_count'] = '{$a} rejected requests';
 $string['overview_rejected_requests'] = 'Rejected requests';
 $string['overview_rejected_requests_empty'] = 'There are currently no rejected booking requests that can still be reviewed.';

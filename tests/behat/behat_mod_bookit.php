@@ -41,6 +41,12 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
  */
 class behat_mod_bookit extends behat_base {
 // phpcs:enable moodle.Commenting.ValidTags.Invalid
+    /** @var string CSS selector for the real Moodle secondary activity navigation. */
+    private const MAIN_TABS_SELECTOR = '.secondary-navigation .moremenu.navigation';
+
+    /** @var string CSS selector for the obsolete duplicate in-page Bookit top tab row. */
+    private const LEGACY_TOP_TABS_SELECTOR = '.mod_bookit-overview-examiner_overview > .mb-3 > ul.nav.nav-tabs';
+
     /**
      * Opens the Bookit overview for the named activity and tab.
      *
@@ -82,7 +88,7 @@ class behat_mod_bookit extends behat_base {
      */
     public function the_bookit_main_tabs_should_contain(string $text): void {
         $this->assert_selector_contains_text(
-            '.mod_bookit-overview-examiner_overview ul.nav.nav-tabs',
+            self::MAIN_TABS_SELECTOR,
             $text,
             true,
             'Bookit main tabs'
@@ -98,7 +104,7 @@ class behat_mod_bookit extends behat_base {
      */
     public function the_bookit_main_tabs_should_not_contain(string $text): void {
         $this->assert_selector_contains_text(
-            '.mod_bookit-overview-examiner_overview ul.nav.nav-tabs',
+            self::MAIN_TABS_SELECTOR,
             $text,
             false,
             'Bookit main tabs'
@@ -145,10 +151,12 @@ class behat_mod_bookit extends behat_base {
      * @throws ExpectationException
      */
     public function the_bookit_overview_should_show_activity_tab_rows(int $count): void {
-        $rows = $this->getSession()->getPage()->findAll('css', '.mod_bookit-overview-examiner_overview ul.nav.nav-tabs');
-        if (count($rows) !== $count) {
+        $secondaryrows = $this->getSession()->getPage()->findAll('css', self::MAIN_TABS_SELECTOR);
+        $legacyrows = $this->getSession()->getPage()->findAll('css', self::LEGACY_TOP_TABS_SELECTOR);
+        $visiblecount = count($secondaryrows) + count($legacyrows);
+        if ($visiblecount !== $count) {
             throw new ExpectationException(
-                "Expected $count Bookit activity tab row(s), found " . count($rows) . '.',
+                "Expected $count Bookit activity tab row(s), found $visiblecount.",
                 $this->getSession()
             );
         }
