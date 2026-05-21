@@ -18,6 +18,11 @@ namespace mod_bookit\external;
 
 use advanced_testcase;
 use mod_bookit\local\install_helper;
+use mod_bookit\tests\read_contract_assertions_trait;
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/read_contract_assertions_trait.php');
 
 /**
  * External contract tests for the governed room-availability read.
@@ -28,6 +33,8 @@ use mod_bookit\local\install_helper;
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class get_room_availability_test extends advanced_testcase {
+    use read_contract_assertions_trait;
+
     /**
      * Room availability must expose slot/blocker entries for the requested room and time range.
      *
@@ -57,7 +64,8 @@ final class get_room_availability_test extends advanced_testcase {
         $this->assertSame('ok', $response['status']);
         $this->assertFalse($response['denied']);
         $this->assertNotEmpty($response['entries']);
-        $this->assertContains($response['entries'][0]['type'], ['slot', 'blocker', 'reservation']);
         $this->assertSame($roomid, (int)$response['resourceid']);
+        $this->assert_is_canonical_room_availability_entry($response['entries'][0]);
+        $this->assertArrayNotHasKey('resourceid', $response['entries'][0]);
     }
 }

@@ -17,7 +17,7 @@
 namespace mod_bookit\local\read;
 
 /**
- * Maps legacy calendar event arrays to the governed read-model shape.
+ * Maps calendar event arrays to the canonical read-model shape.
  *
  * @package mod_bookit
  * @copyright 2026 ssystems GmbH <oss@ssystems.de>
@@ -25,55 +25,63 @@ namespace mod_bookit\local\read;
  */
 class calendar_event_read_mapper {
     /**
-     * Map a legacy calendar event array to the governed read model while keeping compatibility keys.
+     * Map a calendar event array to the canonical read model.
      *
      * @param array $event
      * @param array $facultylabels
      * @return array
      */
     public static function map(array $event, array $facultylabels = []): array {
-        $eventid = (int)($event['id'] ?? 0);
-        $roomid = (int)($event['roomid'] ?? 0);
-        $roomname = (string)($event['roomname'] ?? '');
-        $facultyid = (int)($event['institutionid'] ?? 0);
-        $faculty = (string)($facultylabels[$facultyid] ?? '');
-        $extendedprops = (array)($event['extendedProps'] ?? []);
-        $reserved = !empty($extendedprops['reserved']) || !empty($extendedprops['is_reserved_projection']);
+        $id = (int)($event['id'] ?? $event['eventid'] ?? 0);
+        $extendedprops = (array)($event['extendedProps'] ?? $event['extendedprops'] ?? []);
+        $room = (array)($extendedprops['room'] ?? $event['room'] ?? []);
+        $roomid = (int)($room['roomid'] ?? $event['roomid'] ?? 0);
+        $roomname = (string)($room['roomname'] ?? $event['roomname'] ?? '');
+        $location = (string)($room['location'] ?? $event['location'] ?? '');
+        $shortname = (string)($room['shortname'] ?? $event['shortname'] ?? '');
 
-        return [
-            'eventid' => $eventid,
-            'id' => $eventid,
-            'title' => (string)($event['title'] ?? ''),
-            'titlehtml' => (string)($event['titleHTML'] ?? ''),
-            'titleHTML' => (string)($event['titleHTML'] ?? ''),
-            'start' => self::normalise_datetime((string)($event['start'] ?? '')),
-            'end' => self::normalise_datetime((string)($event['end'] ?? '')),
-            'bookingstatus' => (int)($event['bookingstatus'] ?? -1),
-            'semesterid' => (int)($event['semester'] ?? 0),
-            'visibilitymode' => $reserved ? 'reserved_projection' : 'full',
+        $faculty = (array)($extendedprops['faculty'] ?? []);
+        $facultyid = (int)($faculty['facultyid'] ?? $event['facultyid'] ?? $event['institutionid'] ?? 0);
+        $facultylabel = (string)($faculty['label']
+            ?? $event['faculty']
+            ?? $event['department']
+            ?? ($facultylabels[$facultyid] ?? ''));
+
+        $visibilitymode = (string)($extendedprops['visibilitymode'] ?? '');
+        if ($visibilitymode === '') {
+            $reserved = !empty($extendedprops['reserved']) || !empty($extendedprops['is_reserved_projection']);
+            $visibilitymode = $reserved ? 'reserved_projection' : 'full';
+        }
+
+        $mappedextendedprops = [
+            'titlehtml' => (string)($extendedprops['titlehtml'] ?? $event['titlehtml'] ?? $event['titleHTML'] ?? ''),
+            'bookingstatus' => (int)($extendedprops['bookingstatus'] ?? $event['bookingstatus'] ?? -1),
+            'semesterid' => (int)($extendedprops['semesterid'] ?? $event['semesterid'] ?? $event['semester'] ?? 0),
+            'visibilitymode' => $visibilitymode,
             'room' => [
                 'roomid' => $roomid,
                 'roomname' => $roomname,
-                'location' => (string)($extendedprops['location'] ?? ''),
-                'shortname' => (string)($extendedprops['shortname'] ?? ''),
+                'location' => $location,
+                'shortname' => $shortname,
             ],
-            'roomid' => $roomid,
-            'roomname' => $roomname,
-            'location' => (string)($extendedprops['location'] ?? ''),
-            'shortname' => (string)($extendedprops['shortname'] ?? ''),
-            'facultyid' => $facultyid,
-            'faculty' => $faculty,
-            'department' => $faculty,
-            'style' => [
-                'backgroundcolor' => (string)($event['backgroundColor'] ?? ''),
-                'textcolor' => (string)($event['textColor'] ?? ''),
-                'classnames' => array_values($event['classNames'] ?? []),
-            ],
+        ];
+
+        if ($facultyid > 0 || $facultylabel !== '') {
+            $mappedextendedprops['faculty'] = [
+                'facultyid' => $facultyid,
+                'label' => $facultylabel,
+            ];
+        }
+
+        return [
+            'id' => $id,
+            'title' => (string)($event['title'] ?? ''),
+            'start' => self::normalise_datetime((string)($event['start'] ?? '')),
+            'end' => self::normalise_datetime((string)($event['end'] ?? '')),
             'backgroundColor' => (string)($event['backgroundColor'] ?? ''),
             'textColor' => (string)($event['textColor'] ?? ''),
             'classNames' => array_values($event['classNames'] ?? []),
-            'extendedprops' => $extendedprops,
-            'extendedProps' => $extendedprops,
+            'extendedProps' => $mappedextendedprops,
         ];
     }
 

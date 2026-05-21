@@ -227,7 +227,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         /* Event click (edit) */
         eventClick: function(info) {
             let id = info.event.id;
-            if (info.event.extendedProps.reserved) {
+            if (info.event.extendedProps.visibilitymode === 'reserved_projection') {
                 return;
             }
 

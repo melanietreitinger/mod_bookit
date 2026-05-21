@@ -123,6 +123,76 @@ final class install_helper_test extends advanced_testcase {
     }
 
     /**
+     * Force re-imports must deduplicate self-assign links so later presets still get imported.
+     *
+     * @return void
+     */
+    public function test_import_default_roles_with_report_force_reimport_is_self_assign_safe(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        install_helper::import_default_roles_with_report();
+        $forced = install_helper::import_default_roles_with_report(true);
+
+        $this->assertSame('success', $forced['status']);
+        $this->assertSame([], $forced['errors']);
+        $this->assertCount(5, $forced['imported']);
+        $this->assertContains('bookit_supportonsite', $forced['imported']);
+
+        $serviceteamrole = $DB->get_record('role', ['shortname' => 'bookit_serviceteam'], 'id', MUST_EXIST);
+        $this->assertSame(0, $DB->count_records('role_allow_assign', [
+            'roleid' => $serviceteamrole->id,
+            'allowassign' => $serviceteamrole->id,
+        ]));
+    }
+
+    /**
+     * The demo course setup must enrol every shipped QA demo user into the seeded course context.
+     *
+     * @return void
+     */
+    public function test_create_default_course_and_activity_enrols_all_demo_users(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        install_helper::import_default_roles_with_report();
+        install_helper::import_default_users();
+
+        $created = install_helper::create_default_course_and_activity();
+
+        $this->assertTrue($created);
+
+        $course = $DB->get_record('course', ['shortname' => 'BOOKIT-DEMO'], 'id', MUST_EXIST);
+        $bookit = $DB->get_record('bookit', ['course' => $course->id], 'id,name', MUST_EXIST);
+        $this->assertSame('BookIt Demo', $bookit->name);
+
+        foreach (
+            [
+                'eva.examiner',
+                'bob.booker',
+                'susi.serviceteam',
+                'steven.support',
+                'olaf.observer',
+            ] as $username
+        ) {
+            $userid = $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+            $this->assertTrue(
+                $DB->record_exists_sql(
+                    'SELECT 1
+                       FROM {user_enrolments} ue
+                       JOIN {enrol} e ON e.id = ue.enrolid
+                      WHERE ue.userid = :userid
+                        AND e.courseid = :courseid',
+                    ['userid' => $userid, 'courseid' => $course->id]
+                ),
+                'Expected demo user to be enrolled: ' . $username
+            );
+        }
+    }
+
+    /**
      * Fresh installs must keep optional resources and checklist parts disabled until the admin enables them.
      *
      * @return void

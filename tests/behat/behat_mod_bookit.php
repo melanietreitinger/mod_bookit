@@ -387,30 +387,19 @@ class behat_mod_bookit extends behat_base {
 
         $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
         $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
-        $url = (new moodle_url('/mod/bookit/events.php', [
-            'id' => $cm->id,
-            'start' => $this->resolve_datetime_value($start),
-            'end' => $this->resolve_datetime_value($end),
-            'export' => 1,
-        ]))->out(false);
-
-        $js = <<<JS
-            (function(targetUrl) {
-                var request = new XMLHttpRequest();
-                request.open('GET', targetUrl, false);
-                request.send(null);
-                window.bookitLastFeedResponse = request.responseText;
-                return request.status;
-            })('$url');
-        JS;
-
-        $status = $this->getSession()->evaluateScript($js);
-        if ((int)$status !== 200) {
-            throw new ExpectationException(
-                "Could not fetch the calendar feed. HTTP status: $status",
-                $this->getSession()
-            );
-        }
+        $response = \mod_bookit\external\get_calendar_events::execute(
+            (int)$cm->id,
+            $this->resolve_datetime_value($start),
+            $this->resolve_datetime_value($end),
+            [],
+            [],
+            [],
+            '',
+            true
+        );
+        $content = json_encode($response['events'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $quotedcontent = json_encode($content);
+        $this->getSession()->evaluateScript("window.bookitLastFeedResponse = $quotedcontent;");
     }
 
     /**

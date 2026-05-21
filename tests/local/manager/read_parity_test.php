@@ -18,9 +18,14 @@ namespace mod_bookit\local\manager;
 
 use advanced_testcase;
 use context_module;
+use mod_bookit\tests\read_contract_assertions_trait;
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../../external/read_contract_assertions_trait.php');
 
 /**
- * Parity checks for legacy-vs-governed read payloads.
+ * Guardrail checks for canonical governed read payloads.
  *
  * @covers \mod_bookit\local\manager\event_manager
  * @covers \mod_bookit\local\manager\event_access_manager
@@ -29,12 +34,14 @@ use context_module;
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class read_parity_test extends advanced_testcase {
+    use read_contract_assertions_trait;
+
     /**
-     * The governed calendar read must preserve the visible event ids of the legacy manager projection.
+     * Governed reads must stay canonical without reviving forbidden legacy aliases.
      *
      * @return void
      */
-    public function test_governed_calendar_read_preserves_legacy_event_ids(): void {
+    public function test_governed_calendar_read_stays_canonical(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -100,7 +107,6 @@ final class read_parity_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $legacy = event_manager::get_events_in_timerange('2026-05-20 00:00', '2026-05-20 23:59', (int)$context->instanceid);
         $governed = event_manager::get_governed_calendar_events(
             $context,
             (int)get_admin()->id,
@@ -109,10 +115,9 @@ final class read_parity_test extends advanced_testcase {
             []
         );
 
-        $legacyids = array_map(static fn(array $event): int => (int)$event['id'], $legacy);
-        $governedids = array_map(static fn(array $event): int => (int)$event['eventid'], $governed);
-
-        $this->assertSame([$firstid, $secondid], $legacyids);
-        $this->assertSame($legacyids, $governedids);
+        $this->assertCount(2, $governed);
+        $this->assert_is_canonical_calendar_event($governed[0]);
+        $this->assert_is_canonical_calendar_event($governed[1]);
+        $this->assertSame([$firstid, $secondid], array_map(static fn(array $event): int => (int)$event['id'], $governed));
     }
 }

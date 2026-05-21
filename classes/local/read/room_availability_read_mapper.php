@@ -17,7 +17,7 @@
 namespace mod_bookit\local\read;
 
 /**
- * Maps room availability entries to the governed read-model shape.
+ * Maps room availability entries to the canonical read-model shape.
  *
  * @package mod_bookit
  * @copyright 2026 ssystems GmbH <oss@ssystems.de>
@@ -25,28 +25,27 @@ namespace mod_bookit\local\read;
  */
 class room_availability_read_mapper {
     /**
-     * Map a legacy room-availability entry to the governed contract format.
+     * Map a room-availability entry to the canonical contract format.
      *
      * @param array $entry
      * @param int $roomid
      * @return array
      */
     public static function map(array $entry, int $roomid): array {
-        $meta = (array)($entry['extendedProps'] ?? []);
-        $type = (string)($meta['type'] ?? 'reservation');
-        $color = (string)($entry['backgroundColor'] ?? '');
+        $extendedprops = (array)($entry['extendedProps'] ?? $entry['meta'] ?? []);
+        $type = (string)($extendedprops['type'] ?? $entry['type'] ?? 'reservation');
+        $mappedroomid = (int)($extendedprops['roomid'] ?? $entry['resourceid'] ?? $roomid);
 
         return [
-            'type' => $type,
             'id' => (string)($entry['id'] ?? ''),
             'title' => (string)($entry['title'] ?? ''),
             'start' => self::normalise_datetime((string)($entry['start'] ?? '')),
             'end' => self::normalise_datetime((string)($entry['end'] ?? '')),
-            'color' => $color,
-            'resourceid' => $roomid,
-            'meta' => $meta + ['roomid' => $roomid],
-            'backgroundColor' => $color,
-            'extendedProps' => $meta + ['roomid' => $roomid],
+            'backgroundColor' => (string)($entry['backgroundColor'] ?? $entry['color'] ?? ''),
+            'extendedProps' => [
+                'type' => $type,
+                'roomid' => $mappedroomid,
+            ],
         ];
     }
 

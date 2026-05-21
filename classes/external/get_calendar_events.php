@@ -24,10 +24,6 @@ use core_external\external_value;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 
-defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->libdir . '/externallib.php');
-
 /**
  * External API for the governed calendar/export read contract.
  *
@@ -145,52 +141,28 @@ class get_calendar_events extends external_api {
                 'exportmode' => new external_value(PARAM_BOOL, 'Export mode'),
             ]),
             'events' => new external_multiple_structure(new external_single_structure([
-                'eventid' => new external_value(PARAM_INT, 'Event id'),
-                'id' => new external_value(PARAM_INT, 'Compatibility event id'),
+                'id' => new external_value(PARAM_INT, 'Event id'),
                 'title' => new external_value(PARAM_RAW, 'Event title'),
-                'titlehtml' => new external_value(PARAM_RAW, 'Rendered event title html'),
-                'titleHTML' => new external_value(PARAM_RAW, 'Compatibility rendered event title html'),
                 'start' => new external_value(PARAM_TEXT, 'Event start'),
                 'end' => new external_value(PARAM_TEXT, 'Event end'),
-                'bookingstatus' => new external_value(PARAM_INT, 'Booking status'),
-                'semesterid' => new external_value(PARAM_INT, 'Semester id'),
-                'visibilitymode' => new external_value(PARAM_ALPHAEXT, 'Visibility mode'),
-                'room' => new external_single_structure([
-                    'roomid' => new external_value(PARAM_INT, 'Room id'),
-                    'roomname' => new external_value(PARAM_RAW, 'Room name'),
-                    'location' => new external_value(PARAM_RAW, 'Room location'),
-                    'shortname' => new external_value(PARAM_RAW, 'Room shortname'),
-                ]),
-                'roomid' => new external_value(PARAM_INT, 'Compatibility room id'),
-                'roomname' => new external_value(PARAM_RAW, 'Compatibility room name'),
-                'location' => new external_value(PARAM_RAW, 'Compatibility room location'),
-                'shortname' => new external_value(PARAM_RAW, 'Compatibility room shortname'),
-                'facultyid' => new external_value(PARAM_INT, 'Faculty id'),
-                'faculty' => new external_value(PARAM_RAW, 'Faculty label'),
-                'department' => new external_value(PARAM_RAW, 'Compatibility faculty label'),
-                'style' => new external_single_structure([
-                    'backgroundcolor' => new external_value(PARAM_RAW, 'Background color'),
-                    'textcolor' => new external_value(PARAM_RAW, 'Text color'),
-                    'classnames' => new external_multiple_structure(new external_value(PARAM_RAW)),
-                ]),
-                'backgroundColor' => new external_value(PARAM_RAW, 'Compatibility background color'),
-                'textColor' => new external_value(PARAM_RAW, 'Compatibility text color'),
+                'backgroundColor' => new external_value(PARAM_RAW, 'Background color'),
+                'textColor' => new external_value(PARAM_RAW, 'Text color'),
                 'classNames' => new external_multiple_structure(new external_value(PARAM_RAW)),
-                'extendedprops' => new external_single_structure([
-                    'reserved' => new external_value(PARAM_BOOL, 'Reserved projection flag', VALUE_OPTIONAL),
-                    'is_reserved_projection' => new external_value(PARAM_BOOL, 'Reserved projection flag', VALUE_OPTIONAL),
-                    'bookingstatus' => new external_value(PARAM_INT, 'Booking status', VALUE_OPTIONAL),
-                    'roomname' => new external_value(PARAM_RAW, 'Room name', VALUE_OPTIONAL),
-                    'location' => new external_value(PARAM_RAW, 'Room location', VALUE_OPTIONAL),
-                    'shortname' => new external_value(PARAM_RAW, 'Room shortname', VALUE_OPTIONAL),
-                ]),
                 'extendedProps' => new external_single_structure([
-                    'reserved' => new external_value(PARAM_BOOL, 'Reserved projection flag', VALUE_OPTIONAL),
-                    'is_reserved_projection' => new external_value(PARAM_BOOL, 'Reserved projection flag', VALUE_OPTIONAL),
-                    'bookingstatus' => new external_value(PARAM_INT, 'Booking status', VALUE_OPTIONAL),
-                    'roomname' => new external_value(PARAM_RAW, 'Room name', VALUE_OPTIONAL),
-                    'location' => new external_value(PARAM_RAW, 'Room location', VALUE_OPTIONAL),
-                    'shortname' => new external_value(PARAM_RAW, 'Room shortname', VALUE_OPTIONAL),
+                    'titlehtml' => new external_value(PARAM_RAW, 'Rendered event title html'),
+                    'bookingstatus' => new external_value(PARAM_INT, 'Booking status'),
+                    'semesterid' => new external_value(PARAM_INT, 'Semester id'),
+                    'visibilitymode' => new external_value(PARAM_ALPHAEXT, 'Visibility mode'),
+                    'room' => new external_single_structure([
+                        'roomid' => new external_value(PARAM_INT, 'Room id'),
+                        'roomname' => new external_value(PARAM_RAW, 'Room name'),
+                        'location' => new external_value(PARAM_RAW, 'Room location'),
+                        'shortname' => new external_value(PARAM_RAW, 'Room shortname'),
+                    ]),
+                    'faculty' => new external_single_structure([
+                        'facultyid' => new external_value(PARAM_INT, 'Faculty id'),
+                        'label' => new external_value(PARAM_RAW, 'Faculty label'),
+                    ], 'Faculty metadata', VALUE_OPTIONAL),
                 ]),
             ])),
         ]);

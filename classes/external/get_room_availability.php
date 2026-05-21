@@ -114,18 +114,11 @@ class get_room_availability extends external_api {
             ]),
             'resourceid' => new external_value(PARAM_INT, 'Room id'),
             'entries' => new external_multiple_structure(new external_single_structure([
-                'type' => new external_value(PARAM_ALPHA, 'Entry type'),
                 'id' => new external_value(PARAM_RAW, 'Entry id'),
                 'title' => new external_value(PARAM_RAW, 'Entry title'),
                 'start' => new external_value(PARAM_TEXT, 'Entry start'),
                 'end' => new external_value(PARAM_TEXT, 'Entry end'),
-                'color' => new external_value(PARAM_RAW, 'Entry color'),
-                'resourceid' => new external_value(PARAM_INT, 'Room id'),
-                'meta' => new external_single_structure([
-                    'type' => new external_value(PARAM_ALPHA, 'Entry type'),
-                    'roomid' => new external_value(PARAM_INT, 'Room id'),
-                ], 'Meta data', VALUE_OPTIONAL),
-                'backgroundColor' => new external_value(PARAM_RAW, 'Compatibility background color'),
+                'backgroundColor' => new external_value(PARAM_RAW, 'Entry color'),
                 'extendedProps' => new external_single_structure([
                     'type' => new external_value(PARAM_ALPHA, 'Entry type'),
                     'roomid' => new external_value(PARAM_INT, 'Room id'),

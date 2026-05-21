@@ -208,7 +208,7 @@ if (!empty($ids)) {
         $readfilters
     );
     $candidateids = array_values(array_unique(array_map(
-        static fn(array $event): int => (int)$event['eventid'],
+        static fn(array $event): int => (int)$event['id'],
         $candidateevents
     )));
 

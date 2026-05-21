@@ -91,6 +91,7 @@ class event_manager {
         $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
         $context = context_module::instance($instanceid);
         $observerrestricted = event_access_manager::is_observer_restricted_mode($context);
+        $facultylabels = self::get_faculties();
         $sql = 'SELECT e.id, e.name, e.semester, e.institutionid, e.roomid, e.bookingstatus, e.starttime, e.endtime,
                     e.extratimebefore, e.extratimeafter, e.personinchargeid, e.otherexaminers, e.supportpersons,
                     e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
@@ -112,59 +113,7 @@ class event_manager {
                 continue;
             }
 
-            $roominfo = $record->roomname ?? get_string('resources:all_rooms', 'mod_bookit');
-            $addinfos = [];
-            if ($record->shortname) {
-                $addinfos[] = $record->shortname;
-            }
-            if ($record->location) {
-                $addinfos[] = $record->location;
-            }
-            if ($addinfos) {
-                $roominfo .= ': ' . implode(', ', $addinfos);
-            }
-
-            $eventcolor = trim((string)($record->eventcolor ?? '')) !== '' ? $record->eventcolor : '#3a87ad';
-            $displaytitle = $observerrestricted
-                ? get_string('event_reserved', 'mod_bookit')
-                : $record->name . " ($roominfo)";
-            $displaytitlehtml = $observerrestricted
-                ? '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
-                    date('H:i', $record->endtime) . '</h6>' . get_string('event_reserved', 'mod_bookit')
-                : '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
-                    date('H:i', $record->endtime) . '</h6>' .
-                    $record->name . " ($roominfo)";
-
-            $events[] = [
-                'id' => $record->id,
-                'title' => $displaytitle,
-                'titleHTML' => $displaytitlehtml,
-                'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
-                'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
-                'backgroundColor' => $eventcolor,
-                'textColor' => color_manager::get_textcolor_for_background($eventcolor),
-                'bookingstatus' => (int)$record->bookingstatus,
-                'institutionid' => (int)($record->institutionid ?? 0),
-                'semester' => (int)($record->semester ?? 0),
-                'roomid' => (int)($record->roomid ?? 0),
-                'roomname' => $record->roomname,
-                'personinchargeid' => (int)($record->personinchargeid ?? 0),
-                'otherexaminers' => (string)($record->otherexaminers ?? ''),
-                'supportpersons' => (string)($record->supportpersons ?? ''),
-                'usermodified' => (int)($record->usermodified ?? 0),
-                'extendedProps' => (object) [
-                    'reserved' => $observerrestricted,
-                    'is_reserved_projection' => $observerrestricted,
-                    'bookingstatus' => (int)$record->bookingstatus,
-                    'roomname' => $record->roomname,
-                    'location' => (string)($record->location ?? ''),
-                    'shortname' => (string)($record->shortname ?? ''),
-                ],
-                'classNames' => [
-                    'hide-event-time',
-                    self::get_booking_status_class((int)$record->bookingstatus),
-                ],
-            ];
+            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels);
         }
         return $events;
     }
@@ -197,21 +146,24 @@ class event_manager {
             $filters['end'] ?? $endtime,
             (int)$context->instanceid
         );
-        $facultylabels = self::get_faculties();
         $needle = core_text::strtolower($filters['search']);
 
-        $events = array_values(array_filter($events, static function (array $event) use ($filters, $facultylabels, $needle): bool {
-            if (!empty($filters['roomids']) && !in_array((int)($event['roomid'] ?? 0), $filters['roomids'], true)) {
+        $events = array_values(array_filter($events, static function (array $event) use ($filters, $needle): bool {
+            $extendedprops = (array)($event['extendedProps'] ?? []);
+            $room = (array)($extendedprops['room'] ?? []);
+            $faculty = (array)($extendedprops['faculty'] ?? []);
+
+            if (!empty($filters['roomids']) && !in_array((int)($room['roomid'] ?? 0), $filters['roomids'], true)) {
                 return false;
             }
 
-            if (!empty($filters['facultyids']) && !in_array((int)($event['institutionid'] ?? 0), $filters['facultyids'], true)) {
+            if (!empty($filters['facultyids']) && !in_array((int)($faculty['facultyid'] ?? 0), $filters['facultyids'], true)) {
                 return false;
             }
 
             if (
                 !empty($filters['bookingstatuses']) &&
-                !in_array((int)($event['bookingstatus'] ?? -1), $filters['bookingstatuses'], true)
+                !in_array((int)($extendedprops['bookingstatus'] ?? -1), $filters['bookingstatuses'], true)
             ) {
                 return false;
             }
@@ -220,20 +172,16 @@ class event_manager {
                 return true;
             }
 
-            $facultylabel = $facultylabels[(int)($event['institutionid'] ?? 0)] ?? '';
             $haystack = core_text::strtolower(trim(implode(' ', [
                 (string)($event['title'] ?? ''),
-                (string)($event['roomname'] ?? ''),
-                (string)$facultylabel,
+                (string)($room['roomname'] ?? ''),
+                (string)($faculty['label'] ?? ''),
             ])));
 
             return core_text::strpos($haystack, $needle) !== false;
         }));
 
-        return array_map(
-            static fn(array $event): array => calendar_event_read_mapper::map($event, $facultylabels),
-            $events
-        );
+        return $events;
     }
 
     /**
@@ -1101,12 +1049,15 @@ class event_manager {
         );
         foreach ($blockers as $blocker) {
             $events[] = [
-                    'id' => $blocker->id,
+                    'id' => 'blocker-' . $blocker->id,
                     'title' => $blocker->name ?? '',
                     'start' => date('Y-m-d H:i', $blocker->starttime),
                     'end' => date('Y-m-d H:i', $blocker->endtime),
-                    'extendedProps' => (object) ['type' => 'blocker'],
                     'backgroundColor' => ($blocker->roomid ?? false) ? '#c78316' : '#a33',
+                    'extendedProps' => [
+                        'type' => 'blocker',
+                        'roomid' => $roomid,
+                    ],
             ];
         }
 
@@ -1140,11 +1091,15 @@ class event_manager {
 
                 if ($eventstart < $weekplanend && $eventend > $weekplanstart) {
                     $events[] = [
-                            'id' => 0,
+                            'id' => 'slot-' . $record->id . '-' . $eventstart,
                             'title' => '',
                             'start' => date('Y-m-d H:i', $eventstart),
                             'end' => date('Y-m-d H:i', $eventend),
-                            'extendedProps' => (object) ['type' => 'slot'],
+                            'backgroundColor' => '',
+                            'extendedProps' => [
+                                'type' => 'slot',
+                                'roomid' => $roomid,
+                            ],
                     ];
                 }
 
@@ -1167,6 +1122,72 @@ class event_manager {
             static fn(array $entry): array => room_availability_read_mapper::map($entry, $roomid),
             self::get_slots_in_timerange($starttime, $endtime, $roomid)
         );
+    }
+
+    /**
+     * Build a canonical calendar event payload from a DB record.
+     *
+     * @param stdClass $record
+     * @param bool $observerrestricted
+     * @param array $facultylabels
+     * @return array
+     */
+    private static function build_calendar_read_event(stdClass $record, bool $observerrestricted, array $facultylabels): array {
+        $roomname = trim((string)($record->roomname ?? ''));
+        if ($roomname === '') {
+            $roomname = get_string('resources:all_rooms', 'mod_bookit');
+        }
+
+        $location = (string)($record->location ?? '');
+        $shortname = (string)($record->shortname ?? '');
+        $roominfo = $roomname;
+        $addinfos = [];
+        if ($shortname !== '') {
+            $addinfos[] = $shortname;
+        }
+        if ($location !== '') {
+            $addinfos[] = $location;
+        }
+        if ($addinfos) {
+            $roominfo .= ': ' . implode(', ', $addinfos);
+        }
+
+        $title = $observerrestricted
+            ? get_string('event_reserved', 'mod_bookit')
+            : $record->name . " ($roominfo)";
+        $titlehtml = '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
+            date('H:i', $record->endtime) . '</h6>' . $title;
+        $eventcolor = trim((string)($record->eventcolor ?? '')) !== '' ? $record->eventcolor : '#3a87ad';
+        $facultyid = (int)($record->institutionid ?? 0);
+
+        return calendar_event_read_mapper::map([
+            'id' => (int)$record->id,
+            'title' => $title,
+            'start' => date('Y-m-d H:i', $record->starttime - $record->extratimebefore * 60),
+            'end' => date('Y-m-d H:i', $record->endtime + $record->extratimeafter * 60),
+            'backgroundColor' => $eventcolor,
+            'textColor' => color_manager::get_textcolor_for_background($eventcolor),
+            'classNames' => [
+                'hide-event-time',
+                self::get_booking_status_class((int)$record->bookingstatus),
+            ],
+            'extendedProps' => [
+                'titlehtml' => $titlehtml,
+                'bookingstatus' => (int)$record->bookingstatus,
+                'semesterid' => (int)($record->semester ?? 0),
+                'visibilitymode' => $observerrestricted ? 'reserved_projection' : 'full',
+                'room' => [
+                    'roomid' => (int)($record->roomid ?? 0),
+                    'roomname' => $roomname,
+                    'location' => $location,
+                    'shortname' => $shortname,
+                ],
+                'faculty' => [
+                    'facultyid' => $facultyid,
+                    'label' => (string)($facultylabels[$facultyid] ?? ''),
+                ],
+            ],
+        ], $facultylabels);
     }
 
     /**

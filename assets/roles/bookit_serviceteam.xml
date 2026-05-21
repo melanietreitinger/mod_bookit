@@ -10,7 +10,6 @@
 		<level>system</level>
 	</contextlevels>
 	<allowassign>
-		<shortname>bookit_serviceteam</shortname>
 		<shortname>bookit_bookingperson</shortname>
 		<shortname>bookit_examiner</shortname>
 		<shortname>bookit_supportonsite</shortname>

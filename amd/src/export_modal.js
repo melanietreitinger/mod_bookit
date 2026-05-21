@@ -165,23 +165,22 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         let data = response.events || [];
                         list.empty();
 
-                        data = (data || []).filter(e => !(e.extendedProps &&
-                            (e.extendedProps.reserved === true || e.extendedProps.reserved === 1)));
+                        data = (data || []).filter(function(e) {
+                            return e.extendedProps && e.extendedProps.visibilitymode !== 'reserved_projection';
+                        });
 
                         if (!data.length) {
                             list.append('<div class="text-muted">' + noEventsStr + '</div>');
                             return null;
                         }
-
                         data.forEach(function(e) {
-                            const roomTxt = String(
-                                e.location ||
-                                (e.room && e.room.roomname) ||
-                                e.roomname ||
-                                ''
-                            ).trim();
-                            const faculty = (e.department || e.faculty || '').trim();
-                            const statusTxt = statusMap[String(e.bookingstatus ?? '')] || '';
+                            const room = e.extendedProps?.room || {};
+                            const roomTxt = [room.roomname || '', room.location || '']
+                                .filter(Boolean)
+                                .join(' | ')
+                                .trim();
+                            const faculty = String(e.extendedProps?.faculty?.label || '').trim();
+                            const statusTxt = statusMap[String(e.extendedProps?.bookingstatus ?? '')] || '';
                             const startStr = (e.start || '');
                             const dateTxt = startStr ? String(startStr).substr(0, 16).replace('T', ' ') : '';
                             const metaParts = [dateTxt];
@@ -194,7 +193,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                             const metaLine = metaParts.filter(Boolean).join(' | ');
 
                             const checkbox = '<input class="form-check-input mt-1" type="checkbox" value="' +
-                                (e.eventid || e.id) + '">';
+                                e.id + '">';
                             const statusBadge = statusTxt
                                 ? '<span class="badge badge-light border ml-2">' + statusTxt + '</span>'
                                 : '';
@@ -207,7 +206,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                                     checkbox +
                                     '<span class="bookit-export-item-text">' +
                                         '<span class="bookit-export-item-title">' +
-                                            (e.titleHTML || e.title?.html || e.title || '') +
+                                            (e.extendedProps?.titlehtml || e.title || '') +
                                             statusBadge +
                                         '</span>' +
                                         '<small class="text-muted d-block">' + metaLine + '</small>' +

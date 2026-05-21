@@ -223,6 +223,7 @@ class install_helper {
      * Get the explicit default subject template for one expressive booking-status key.
      *
      * @param string $statuskey
+     * @param string|null $lang
      * @return string
      */
     public static function get_booking_status_notification_default_subject(string $statuskey, ?string $lang = null): string {
@@ -233,6 +234,7 @@ class install_helper {
      * Get the explicit default body template for one expressive booking-status key.
      *
      * @param string $statuskey
+     * @param string|null $lang
      * @return string
      */
     public static function get_booking_status_notification_default_body(string $statuskey, ?string $lang = null): string {
@@ -463,10 +465,11 @@ class install_helper {
                     continue;
                 }
                 $DB->delete_records('role_allow_' . $type, ['roleid' => $roleid]);
-                foreach ($roleinfo['allow' . $type] as $allowid) {
+                $allowtargets = self::normalise_role_relation_targets($roleinfo['allow' . $type], $roleid);
+                foreach ($allowtargets as $allowid) {
                     $DB->insert_record('role_allow_' . $type, [
                         'roleid' => $roleid,
-                        'allow' . $type => $allowid == -1 ? $roleid : $allowid,
+                        'allow' . $type => $allowid,
                     ]);
                 }
             }
@@ -485,6 +488,33 @@ class install_helper {
             'skipped' => array_values(array_unique($skipped)),
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Normalise role-relation targets so self-links and resolved role IDs stay idempotent on re-import.
+     *
+     * Moodle role presets may encode "self" as -1 while also resolving the current role shortname to the
+     * concrete role ID on force re-import. Collapse both representations to one unique target ID before
+     * writing the role_allow_* tables.
+     *
+     * @param array $targets
+     * @param int $roleid
+     * @return int[]
+     */
+    private static function normalise_role_relation_targets(array $targets, int $roleid): array {
+        $normalised = [];
+        foreach ($targets as $target) {
+            $targetid = (int)$target;
+            if ($targetid === -1) {
+                $targetid = $roleid;
+            }
+            if ($targetid <= 0) {
+                continue;
+            }
+            $normalised[] = $targetid;
+        }
+
+        return array_values(array_unique($normalised));
     }
 
     /**
@@ -1734,7 +1764,13 @@ class install_helper {
         $enrolinstance = $DB->get_record('enrol', ['enrol' => 'manual', 'courseid' => $course->id]);
         $enrolplugin = enrol_get_plugin('manual');
         $studentroleid = $DB->get_field('role', 'id', ['shortname' => 'student']);
-        $demonames = ['eva.examiner', 'bob.booker', 'susi.serviceteam'];
+        $demonames = [
+            'eva.examiner',
+            'bob.booker',
+            'susi.serviceteam',
+            'steven.support',
+            'olaf.observer',
+        ];
         foreach ($demonames as $username) {
             $user = $DB->get_record('user', ['username' => $username]);
             if ($user && $enrolinstance && $studentroleid) {

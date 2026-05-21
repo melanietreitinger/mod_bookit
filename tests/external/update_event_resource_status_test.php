@@ -100,7 +100,7 @@ final class update_event_resource_status_test extends advanced_testcase {
             []
         );
         $this->assertCount(1, $governedbefore);
-        $this->assertSame($eventid, (int)$governedbefore[0]['eventid']);
+        $this->assertSame($eventid, (int)$governedbefore[0]['id']);
 
         $response = update_event_resource_status::execute(
             $bookit->cmid,
@@ -125,6 +125,6 @@ final class update_event_resource_status_test extends advanced_testcase {
             []
         );
         $this->assertCount(1, $governedafter);
-        $this->assertSame($eventid, (int)$governedafter[0]['eventid']);
+        $this->assertSame($eventid, (int)$governedafter[0]['id']);
     }
 }

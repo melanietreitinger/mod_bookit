@@ -30,6 +30,11 @@ use advanced_testcase;
 use context_module;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\install_helper;
+use mod_bookit\tests\read_contract_assertions_trait;
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../../external/read_contract_assertions_trait.php');
 
 /**
  * Unit tests for event_manager helper methods.
@@ -44,6 +49,8 @@ use mod_bookit\local\install_helper;
  * @SuppressWarnings(PHPMD)
  */
 final class event_manager_test extends advanced_testcase {
+    use read_contract_assertions_trait;
+
 // phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Set up the message providers and default notification configuration for workflow tests.
@@ -262,13 +269,14 @@ final class event_manager_test extends advanced_testcase {
         $events = event_manager::get_events_in_timerange('2026-05-08 00:00', '2026-05-08 23:59', (int)$context->instanceid);
 
         $this->assertCount(1, $events);
+        $this->assert_is_canonical_calendar_event($events[0]);
         $this->assertSame($acceptedid, (int)$events[0]['id']);
         $this->assertSame('Reserved', $events[0]['title']);
-        $this->assertTrue((bool)$events[0]['extendedProps']->reserved);
+        $this->assertSame('reserved_projection', $events[0]['extendedProps']['visibilitymode']);
     }
 
     /**
-     * Governed calendar reads must keep legacy-compatible fields while applying the canonical filters.
+     * Governed calendar reads must apply canonical filters and return only the final contract shape.
      *
      * @return void
      */
@@ -327,11 +335,10 @@ final class event_manager_test extends advanced_testcase {
         );
 
         $this->assertCount(1, $events);
-        $this->assertSame($visibleid, (int)$events[0]['eventid']);
+        $this->assert_is_canonical_calendar_event($events[0]);
         $this->assertSame($visibleid, (int)$events[0]['id']);
-        $this->assertSame('full', $events[0]['visibilitymode']);
-        $this->assertArrayHasKey('titleHTML', $events[0]);
-        $this->assertArrayHasKey('extendedProps', $events[0]);
+        $this->assertSame('full', $events[0]['extendedProps']['visibilitymode']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $events[0]['extendedProps']['bookingstatus']);
     }
 
     /**

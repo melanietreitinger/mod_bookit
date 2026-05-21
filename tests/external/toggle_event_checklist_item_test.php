@@ -111,7 +111,7 @@ final class toggle_event_checklist_item_test extends advanced_testcase {
             []
         );
         $this->assertCount(1, $governedbefore);
-        $this->assertSame($eventid, (int)$governedbefore[0]['eventid']);
+        $this->assertSame($eventid, (int)$governedbefore[0]['id']);
 
         $response = toggle_event_checklist_item::execute($bookit->cmid, $eventid, $itemid, true);
 
@@ -132,6 +132,6 @@ final class toggle_event_checklist_item_test extends advanced_testcase {
             []
         );
         $this->assertCount(1, $governedafter);
-        $this->assertSame($eventid, (int)$governedafter[0]['eventid']);
+        $this->assertSame($eventid, (int)$governedafter[0]['id']);
     }
 }

@@ -18,11 +18,13 @@ namespace mod_bookit\external;
 
 use externallib_advanced_testcase;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\tests\read_contract_assertions_trait;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/webservice/tests/helpers.php');
+require_once(__DIR__ . '/read_contract_assertions_trait.php');
 
 /**
  * External contract tests for the governed calendar read.
@@ -33,10 +35,11 @@ require_once($CFG->dirroot . '/webservice/tests/helpers.php');
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class get_calendar_events_test extends externallib_advanced_testcase {
+    use read_contract_assertions_trait;
+
     /**
      * The governed calendar read must return the filtered event set consumed by calendar/export clients.
      *
-     * @runInSeparateProcess
      * @return void
      */
     public function test_execute_returns_filtered_calendar_events(): void {
@@ -119,7 +122,10 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $this->assertSame('ok', $response['status']);
         $this->assertFalse($response['denied']);
         $this->assertCount(1, $response['events']);
-        $this->assertSame($visibleid, (int)$response['events'][0]['eventid']);
-        $this->assertSame('Calendar export parity', $response['events'][0]['title']);
+        $this->assert_is_canonical_calendar_event($response['events'][0]);
+        $this->assertSame($visibleid, (int)$response['events'][0]['id']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $response['events'][0]['extendedProps']['bookingstatus']);
+        $this->assertSame('reserved_projection', $response['events'][0]['extendedProps']['visibilitymode']);
+        $this->assertSame('Reserved', $response['events'][0]['title']);
     }
 }
