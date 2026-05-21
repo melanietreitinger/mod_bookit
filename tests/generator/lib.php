@@ -286,6 +286,8 @@ class mod_bookit_generator extends testing_module_generator {
         global $DB;
 
         install_helper::ensure_fresh_install_baseline();
+        install_helper::ensure_optional_part_defaults(false);
+        install_helper::ensure_booking_status_notification_defaults();
 
         return [
             'roomid' => (int)$DB->get_field_sql(

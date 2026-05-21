@@ -371,7 +371,7 @@ class booking_notification_manager {
     }
 
     /**
-     * Resolve configured or language-default template text.
+     * Resolve configured or shipped-default template text.
      *
      * @param stdClass $data
      * @param string $field
@@ -387,15 +387,6 @@ class booking_notification_manager {
         ));
         if ($configured !== '') {
             return $configured;
-        }
-
-        $legacyconfigured = install_helper::get_booking_status_notification_legacy_value_for_language(
-            $statuskey,
-            $field,
-            $language
-        );
-        if ($legacyconfigured !== '') {
-            return $legacyconfigured;
         }
 
         return $field === 'subject'

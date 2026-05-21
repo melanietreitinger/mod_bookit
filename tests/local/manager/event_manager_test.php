@@ -369,6 +369,13 @@ final class event_manager_test extends advanced_testcase {
         ]);
 
         $this->assertCount(2, $filteredwithlegacy);
+
+        $legacyonly = event_manager::filter_overview_events([$activeevent, $legacyevent], [
+            'semesterids' => [0],
+        ]);
+
+        $this->assertCount(1, $legacyonly);
+        $this->assertSame(2, (int)$legacyonly[0]->id);
     }
 
     /**

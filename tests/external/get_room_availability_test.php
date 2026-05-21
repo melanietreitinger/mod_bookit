@@ -40,6 +40,8 @@ final class get_room_availability_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
         install_helper::ensure_fresh_install_baseline();
+        install_helper::ensure_optional_part_defaults(false);
+        install_helper::ensure_booking_status_notification_defaults();
 
         $roomid = (int)$DB->get_field_sql(
             'SELECT id

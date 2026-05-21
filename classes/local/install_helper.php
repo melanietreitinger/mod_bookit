@@ -66,9 +66,6 @@ class install_helper {
     /** Config key for the optional checklist module state. */
     public const CONFIG_CHECKLIST_ENABLED = 'checklistenabled';
 
-    /** Supported shipped notification languages. */
-    private const BOOKING_STATUS_NOTIFICATION_LANGUAGES = ['de', 'en'];
-
     /**
      * Check whether the optional resources module is enabled.
      *
@@ -184,15 +181,6 @@ class install_helper {
     }
 
     /**
-     * Return supported admin-managed notification languages.
-     *
-     * @return string[]
-     */
-    public static function get_booking_status_notification_languages(): array {
-        return self::BOOKING_STATUS_NOTIFICATION_LANGUAGES;
-    }
-
-    /**
      * Normalize a runtime language into the supported template language set.
      *
      * @param string|null $lang
@@ -229,51 +217,6 @@ class install_helper {
         }
 
         throw new \coding_exception('Unknown booking-status template field: ' . $field);
-    }
-
-    /**
-     * Resolve the language-specific legacy config key for a booking-status template.
-     *
-     * @param string $statuskey
-     * @param string $field
-     * @param string $lang
-     * @return string
-     */
-    public static function get_booking_status_notification_legacy_config_key(
-        string $statuskey,
-        string $field,
-        string $lang
-    ): string {
-        $statuses = self::get_booking_status_notification_statuses();
-        if (!isset($statuses[$statuskey])) {
-            throw new \coding_exception('Unknown booking-status notification key: ' . $statuskey);
-        }
-
-        if (!in_array($field, ['subject', 'body'], true)) {
-            throw new \coding_exception('Unknown booking-status template field: ' . $field);
-        }
-
-        $language = self::normalize_booking_status_notification_language($lang);
-        return 'bookingstatus_' . $field . '_' . $statuskey . '_' . $language;
-    }
-
-    /**
-     * Resolve one language-specific legacy value for a booking-status template.
-     *
-     * @param string $statuskey
-     * @param string $field
-     * @param string $lang
-     * @return string
-     */
-    public static function get_booking_status_notification_legacy_value_for_language(
-        string $statuskey,
-        string $field,
-        string $lang
-    ): string {
-        return trim((string)get_config(
-            'mod_bookit',
-            self::get_booking_status_notification_legacy_config_key($statuskey, $field, $lang)
-        ));
     }
 
     /**
@@ -326,7 +269,7 @@ class install_helper {
     }
 
     /**
-     * Ensure one shared notification template field is usable without persisting blank values.
+     * Ensure one shared notification template field does not persist blank overrides.
      *
      * @param string $statuskey
      * @param string $field
@@ -340,39 +283,9 @@ class install_helper {
             return;
         }
 
-        $legacyvalue = self::get_booking_status_notification_legacy_backfill_value($statuskey, $field);
-        if ($legacyvalue !== '') {
-            set_config($configkey, $legacyvalue, 'mod_bookit');
-            return;
-        }
-
         if ($currentvalue !== false) {
             unset_config($configkey, 'mod_bookit');
         }
-    }
-
-    /**
-     * Resolve the best non-empty legacy value for backfilling a shared admin field.
-     *
-     * @param string $statuskey
-     * @param string $field
-     * @return string
-     */
-    private static function get_booking_status_notification_legacy_backfill_value(string $statuskey, string $field): string {
-        $preferredlanguage = self::normalize_booking_status_notification_language(current_language());
-        $languages = array_values(array_unique(array_merge(
-            [$preferredlanguage],
-            self::get_booking_status_notification_languages()
-        )));
-
-        foreach ($languages as $language) {
-            $legacyvalue = self::get_booking_status_notification_legacy_value_for_language($statuskey, $field, $language);
-            if ($legacyvalue !== '') {
-                return $legacyvalue;
-            }
-        }
-
-        return '';
     }
 
     /**
@@ -440,33 +353,6 @@ class install_helper {
         $errors = [];
         foreach ($operations as $operation) {
             if (!empty($operation['message']) && in_array($operation['status'], ['failed', 'partial'], true)) {
-                $errors[] = $operation['message'];
-            }
-        }
-
-        return [
-            'status' => self::resolve_report_status(array_column($operations, 'status'), $errors),
-            'operations' => $operations,
-            'errors' => $errors,
-        ];
-    }
-
-    /**
-     * Backfill only missing baseline records for legacy installs without changing existing setups.
-     *
-     * @param bool $verbose
-     * @return array{status:string,operations:array<string,array>,errors:string[]}
-     */
-    public static function ensure_upgrade_baseline_backfill(bool $verbose = false): array {
-        $operations = [
-            'institution' => self::backfill_default_institution($verbose),
-            'room' => self::backfill_default_room($verbose),
-        ];
-        $operations['weekplan'] = self::backfill_default_weekplan((int)($operations['room']['id'] ?? 0), $verbose);
-
-        $errors = [];
-        foreach ($operations as $operation) {
-            if (!empty($operation['message']) && ($operation['status'] ?? '') === 'failed') {
                 $errors[] = $operation['message'];
             }
         }
@@ -1364,74 +1250,6 @@ class install_helper {
             'message' => 'Fresh-install baseline requires exactly one weekplan named "' .
                 self::DEFAULT_WEEKPLAN_NAME . '" with Monday-Friday 09:00-17:00 slots.',
         ];
-    }
-
-    /**
-     * Backfill the default institution only when legacy installs are still missing one entirely.
-     *
-     * @param bool $verbose
-     * @return array{status:string,id:int|null,message:string|null}
-     */
-    private static function backfill_default_institution(bool $verbose = false): array {
-        global $DB;
-
-        $existing = self::find_record_by_text_field('bookit_institution', 'name', self::DEFAULT_INSTITUTION_NAME);
-        if ($existing) {
-            return self::sync_default_institution((int)$existing->id, $verbose);
-        }
-
-        if (!$DB->record_exists('bookit_institution', [])) {
-            return self::create_default_institution($verbose);
-        }
-
-        return ['status' => 'skipped', 'id' => null, 'message' => null];
-    }
-
-    /**
-     * Backfill the default room only when legacy installs are still missing one entirely.
-     *
-     * @param bool $verbose
-     * @return array{status:string,id:int|null,message:string|null}
-     */
-    private static function backfill_default_room(bool $verbose = false): array {
-        global $DB;
-
-        $existing = self::find_record_by_text_field('bookit_room', 'name', self::DEFAULT_ROOM_NAME);
-        if ($existing) {
-            return self::sync_default_room((int)$existing->id, $verbose);
-        }
-
-        if (!$DB->record_exists('bookit_room', [])) {
-            return self::create_default_room($verbose);
-        }
-
-        return ['status' => 'skipped', 'id' => null, 'message' => null];
-    }
-
-    /**
-     * Backfill the default weekplan only when legacy installs are still missing one entirely.
-     *
-     * @param int $roomid
-     * @param bool $verbose
-     * @return array{status:string,id:int|null,message:string|null}
-     */
-    private static function backfill_default_weekplan(int $roomid, bool $verbose = false): array {
-        global $DB;
-
-        if ($roomid <= 0) {
-            return ['status' => 'skipped', 'id' => null, 'message' => null];
-        }
-
-        $existing = self::find_record_by_text_field('bookit_weekplan', 'name', self::DEFAULT_WEEKPLAN_NAME);
-        if ($existing) {
-            return self::sync_default_weekplan((int)$existing->id, $roomid, $verbose);
-        }
-
-        if (!$DB->record_exists('bookit_weekplan', [])) {
-            return self::create_default_weekplan_baseline($roomid, $verbose);
-        }
-
-        return ['status' => 'skipped', 'id' => null, 'message' => null];
     }
 
     /**
