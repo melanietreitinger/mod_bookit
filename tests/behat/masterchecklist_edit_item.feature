@@ -11,7 +11,11 @@ Feature: Edit master checklist item
       | serviceteam1 | Service   | Team     | serviceteam@example.com |
     And I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable checklist module"
+    And I press "Save changes"
     And I click on "Run install helper" "link"
+    And the Bookit default checklist data exists
+    And the Bookit legacy test rooms exist
     And the following "role assigns" exist:
       | user         | role               | contextlevel | reference |
       | serviceteam1 | bookit_serviceteam | System       |           |
@@ -50,7 +54,7 @@ Feature: Edit master checklist item
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
     And I click on "button[name='before_due_reset']" "css_element"
     And I wait "1" seconds
-    And I click on "Reset" "button"
+    And I confirm the visible Bookit reset dialog
     And I wait "1" seconds
     Then the Bookit editor field "before_due_messagetext[text]" should not equal "This is my behat notification edit test message. Cool."
 
@@ -87,6 +91,6 @@ Feature: Edit master checklist item
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
     And I click on "button[name='before_due_reset']" "css_element"
     And I wait "1" seconds
-    And I click on "Reset" "button"
+    And I confirm the visible Bookit reset dialog
     And I wait "1" seconds
     Then the Bookit editor field "before_due_messagetext[text]" should not equal "This is my behat notification edit test message. Cool."

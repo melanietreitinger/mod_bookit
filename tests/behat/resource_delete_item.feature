@@ -7,7 +7,10 @@ Feature: Delete resource item
   Background:
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable resources module"
+    And I press "Save changes"
     And I click on "Run install helper" "link"
+    And the Bookit default resource data exists
     And I log out
 
   Scenario: Admin can delete a resource item

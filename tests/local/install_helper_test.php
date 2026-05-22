@@ -170,11 +170,11 @@ final class install_helper_test extends advanced_testcase {
 
         foreach (
             [
-                'eva.examiner',
-                'bob.booker',
-                'susi.serviceteam',
-                'steven.support',
-                'olaf.observer',
+            'eva.examiner',
+            'bob.booker',
+            'susi.serviceteam',
+            'steven.support',
+            'olaf.observer',
             ] as $username
         ) {
             $userid = $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);

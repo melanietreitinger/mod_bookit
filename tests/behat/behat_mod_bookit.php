@@ -1073,10 +1073,152 @@ class behat_mod_bookit extends behat_base {
      * @throws ExpectationException
      */
     public function the_bookit_editor_field_should_not_equal(string $field, string $value): void {
+        $value = str_replace('""', '"', $value);
         $actual = $this->get_named_form_control_value($field);
         if ($actual === $value) {
             throw new ExpectationException(
                 "The Bookit editor field \"$field\" unexpectedly matched \"$value\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that a named Bookit editor field equals a value, even when hidden by rich editors.
+     *
+     * @Then /^the Bookit editor field "([^"]+)" should equal "(.*)"$/
+     * @param string $field
+     * @param string $value
+     * @throws ExpectationException
+     */
+    public function the_bookit_editor_field_should_equal(string $field, string $value): void {
+        $value = str_replace('""', '"', $value);
+        $actual = $this->get_bookit_form_control_value($field);
+        if ($actual !== $value) {
+            throw new ExpectationException(
+                "The Bookit editor field \"$field\" did not match \"$value\". Got \"$actual\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Check a checkbox-style field.
+     *
+     * Moodle 4.5 dropped the simple "I check" alias from the available step catalogue in this stack,
+     * so Bookit keeps a thin compatibility wrapper for existing scenarios.
+     *
+     * @When /^I check "([^"]+)"$/
+     * @param string $field
+     * @throws ExpectationException
+     */
+    public function i_check(string $field): void {
+        $this->set_checkbox_field_state($field, true);
+    }
+
+    /**
+     * Uncheck a checkbox-style field.
+     *
+     * @When /^I uncheck "([^"]+)"$/
+     * @param string $field
+     * @throws ExpectationException
+     */
+    public function i_uncheck(string $field): void {
+        $this->set_checkbox_field_state($field, false);
+    }
+
+    /**
+     * Seed the shipped default checklist dataset when a scenario relies on it.
+     *
+     * @Given the Bookit default checklist data exists
+     * @return void
+     */
+    public function the_bookit_default_checklist_data_exists(): void {
+        \mod_bookit\local\install_helper::create_default_checklists(false, false);
+    }
+
+    /**
+     * Seed the shipped default resource dataset when a scenario relies on it.
+     *
+     * @Given the Bookit default resource data exists
+     * @return void
+     */
+    public function the_bookit_default_resource_data_exists(): void {
+        \mod_bookit\local\install_helper::create_default_resources(false, false);
+    }
+
+    /**
+     * Seed the legacy multi-room test fixtures used by older checklist scenarios.
+     *
+     * @Given the Bookit legacy test rooms exist
+     * @return void
+     */
+    public function the_bookit_legacy_test_rooms_exist(): void {
+        global $DB;
+
+        $rooms = [
+            ['name' => 'Lecture Hall A', 'shortname' => 'LH-A', 'eventcolor' => '#3a87ad'],
+            ['name' => 'Seminar Room B', 'shortname' => 'SR-B', 'eventcolor' => '#4caf50'],
+            ['name' => 'Computer Lab', 'shortname' => 'CL', 'eventcolor' => '#ff9800'],
+        ];
+
+        foreach ($rooms as $room) {
+            $exists = $DB->record_exists_sql(
+                'SELECT 1
+                   FROM {bookit_room}
+                  WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+                ['name' => $room['name']]
+            );
+            if ($exists) {
+                continue;
+            }
+
+            $record = (object)[
+                'name' => $room['name'],
+                'shortname' => $room['shortname'],
+                'description' => '',
+                'location' => '',
+                'eventcolor' => $room['eventcolor'],
+                'active' => 1,
+                'roommode' => 0,
+                'seats' => 10,
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'preventoverlap' => 0,
+                'usermodified' => 2,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ];
+            $DB->insert_record('bookit_room', $record);
+        }
+    }
+
+    /**
+     * Confirm the top-most reset confirmation dialog opened from the checklist editor.
+     *
+     * @When I confirm the visible Bookit reset dialog
+     * @return void
+     * @throws ExpectationException
+     */
+    public function i_confirm_the_visible_bookit_reset_dialog(): void {
+        $script = <<<'JS'
+            (function() {
+                const modals = Array.from(document.querySelectorAll('.modal.show'));
+                for (let i = modals.length - 1; i >= 0; i--) {
+                    const buttons = Array.from(modals[i].querySelectorAll('button'));
+                    const button = buttons.find((candidate) => candidate.textContent.trim() === 'Reset');
+                    if (button) {
+                        button.click();
+                        return true;
+                    }
+                }
+                return false;
+            })();
+        JS;
+
+        if (!$this->getSession()->evaluateScript($script)) {
+            throw new ExpectationException(
+                'The visible Bookit reset confirmation dialog could not be confirmed.',
                 $this->getSession()
             );
         }
@@ -1391,6 +1533,82 @@ class behat_mod_bookit extends behat_base {
         }
 
         return (string)$value;
+    }
+
+    /**
+     * Resolve a form control value by visible field identifier or exact raw input name.
+     *
+     * @param string $identifier
+     * @return string
+     * @throws ExpectationException
+     */
+    private function get_bookit_form_control_value(string $identifier): string {
+        try {
+            return $this->get_named_form_control_value($identifier);
+        } catch (ExpectationException $e) {
+            $field = $this->find_field($identifier);
+            if (!$field) {
+                throw $e;
+            }
+
+            if ($field->getTagName() === 'textarea' && $field->getAttribute('id')) {
+                $script = <<<JS
+                    (function(fieldId) {
+                        var field = document.getElementById(fieldId);
+                        if (!field) {
+                            return null;
+                        }
+                        if (window.tinymce) {
+                            var editor = window.tinymce.get(fieldId);
+                            if (editor) {
+                                editor.save();
+                            }
+                        }
+                        return field.value;
+                    })(%s);
+                JS;
+                $value = $this->getSession()->evaluateScript(sprintf($script, json_encode($field->getAttribute('id'))));
+                if ($value !== null) {
+                    return (string)$value;
+                }
+            }
+
+            return (string)$field->getValue();
+        }
+    }
+
+    /**
+     * Toggle a checkbox field by label, id or name.
+     *
+     * @param string $identifier
+     * @param bool $checked
+     * @return void
+     * @throws ExpectationException
+     */
+    private function set_checkbox_field_state(string $identifier, bool $checked): void {
+        $field = $this->find_field($identifier);
+        if (!$field) {
+            throw new ExpectationException(
+                "The checkbox field \"$identifier\" was not found.",
+                $this->getSession()
+            );
+        }
+
+        $tagname = $field->getTagName();
+        $type = $field->getAttribute('type');
+        if ($tagname !== 'input' || $type !== 'checkbox') {
+            throw new ExpectationException(
+                "The field \"$identifier\" is not a checkbox field.",
+                $this->getSession()
+            );
+        }
+
+        if ($checked) {
+            $field->check();
+            return;
+        }
+
+        $field->uncheck();
     }
 
     /**

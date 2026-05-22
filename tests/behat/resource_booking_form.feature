@@ -51,6 +51,11 @@ Feature: Resource integration in the BookIt booking workflow
     And the following "mod_bookit > rooms" exist:
       | name         | shortname | seats |
       | Default room | DEF       | 0     |
+    And I log in as "admin"
+    And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable resources module"
+    And I press "Save changes"
+    And I log out
 
   # The booking form is a JavaScript modal opened from the calendar.
   # Direct calendar interaction is not reliably testable in Behat

@@ -7,6 +7,8 @@ Feature: Manage resource settings in the admin area
   Background:
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable resources module"
+    And I press "Save changes"
     And I log out
 
   Scenario: Admin can open the resource settings modal

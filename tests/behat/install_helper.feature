@@ -7,12 +7,12 @@ Feature: Fresh-install baseline and role preset setup
   Scenario: Admin can open the standalone setup section and trigger it once
     Given I log in as "admin"
     When I navigate to "Plugins > Activity modules > BookIt" in site administration
-    Then I should see "Fresh-install baseline & role presets"
-    And I should see "Apply fresh-install baseline and import roles"
+    Then I should see "Role presets"
+    And I should see "Run install helper"
     And I should see "bookit_bookingperson.xml"
     And I should see "bookit_examiner.xml"
     And I should see "bookit_observer.xml"
     And I should see "bookit_serviceteam.xml"
     And I should see "bookit_supportonsite.xml"
-    When I click on "Apply fresh-install baseline and import roles" "link"
-    Then I should see "Fresh-install setup"
+    When I click on "Run install helper" "link"
+    Then I should see "Install helper completed successfully."
