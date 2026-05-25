@@ -265,14 +265,6 @@ class edit_event_form extends dynamic_form {
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
 
-        // Add the coursetemplate field.
-        // ...@TODO: Implement course template administration in admin settings and query them here.
-        $coursetemplates = [0 => get_string('default')];
-        $mform->addElement('select', 'coursetemplate', get_string('select_coursetemplate', 'mod_bookit'), $coursetemplates);
-        $mform->disabledIf('coursetemplate', 'editevent', 'neq');
-        $mform->addRule('coursetemplate', null, 'required', null, 'client');
-        $mform->addHelpButton('coursetemplate', 'select_coursetemplate', 'mod_bookit');
-
         // Add the "timecompensation" field.
         $mform->addElement(
             'advcheckbox',
@@ -300,10 +292,11 @@ class edit_event_form extends dynamic_form {
 
         // Add the "notes" field.
         $mform->addElement(
-            'textarea',
+            'editor',
             'notes',
             get_string("event_notes", "mod_bookit"),
-            'wrap="virtual" rows="5" cols="50"'
+            ['rows' => 5],
+            ['maxfiles' => 0, 'noclean' => false]
         );
         $mform->disabledIf('notes', 'editevent', 'neq');
         $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
@@ -386,10 +379,11 @@ class edit_event_form extends dynamic_form {
 
         // Add the "internalnotes" field.
         $mform->addElement(
-            'textarea',
+            'editor',
             'internalnotes',
             get_string("event_internalnotes", "mod_bookit"),
-            'wrap="virtual" rows="5" cols="50"'
+            ['rows' => 5],
+            ['maxfiles' => 0, 'noclean' => false]
         );
         $mform->hideIf('internalnotes', 'editinternal', 'neq');
         $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
@@ -419,6 +413,18 @@ class edit_event_form extends dynamic_form {
                     $selectedtime = $possiblestarttime;
                 }
             }
+            // For non-service-team users, skip past slots and default to the next future one.
+            if (!$caneditinternal && $selectedtime !== null && $selectedtime < time()) {
+                $now = time();
+                $selectedtime = null;
+                foreach ($possiblestarttimes as $ts => $str) {
+                    if ($ts >= $now) {
+                        $selectedtime = $ts;
+                        break;
+                    }
+                }
+            }
+
         }
 
         // Check if booking is completed (status >= 2: Accepted/Canceled/Rejected).
@@ -442,6 +448,16 @@ class edit_event_form extends dynamic_form {
         $starttimeel = $mform->getElement('starttime');
         $starttimeel->removeOptions();
         $starttimeel->loadArray($possiblestarttimes);
+        // Default to next future slot for non-service-team users.
+        if (!$caneditinternal) {
+            $now = time();
+            foreach ($possiblestarttimes as $ts => $str) {
+                if ($ts >= $now) {
+                    $mform->setDefault('starttime', $ts);
+                    break;
+                }
+            }
+        }
         $mform->setDefault('starttime', $selectedtime);
 
         // Get active resources grouped by category for booking form.
@@ -540,23 +556,34 @@ class edit_event_form extends dynamic_form {
         );
 
         // Quick client-side alert (does not block submission).
-        $allowed = implode(',', bookit_allowed_weekdays());
-        if ($allowed !== '') {
-            $PAGE->requires->js_init_code("
-                require(['jquery'], function($) {
-                    const allowed = [$allowed];
-                    $('#id_starttime_day, #id_starttime_month, #id_starttime_year').on('change', function () {
-                        const d = new Date(
-                            $('#id_starttime_year').val(),
-                            $('#id_starttime_month').val() - 1,
-                            $('#id_starttime_day').val()
-                        );
-                        if (!allowed.includes(d.getDay())) {
-                            alert('" . get_string('invalidweekday', 'mod_bookit') . "');
-                        }
+            $allowed = implode(',', bookit_allowed_weekdays());
+            if ($allowed !== '') {
+                $PAGE->requires->js_init_code("
+                    require(['jquery'], function($) {
+                        const allowed = [$allowed];
+                        $('#id_starttime_day, #id_starttime_month, #id_starttime_year').on('change', function () {
+                            const d = new Date(
+                                $('#id_starttime_year').val(),
+                                $('#id_starttime_month').val() - 1,
+                                $('#id_starttime_day').val()
+                            );
+                            if (!allowed.includes(d.getDay())) {
+                                alert('" . get_string('invalidweekday', 'mod_bookit') . "');
+                            }
+                        });
                     });
-                });
-            ");
+                ");
+                // ADD after the closing brace of: if ($allowed !== '') { ... }
+
+            // Client-side past-time validation (non-service-team only).
+           if (!$caneditinternal) {
+                $PAGE->requires->js_call_amd(
+                    'mod_bookit/past_time_check',
+                    'init',
+                    [get_string('error_starttime_in_past', 'mod_bookit')]
+                );
+            }
+
             if (!$caneditinternal) {
                 if ($this->event) {
                     $mform->setConstant('extratimebefore', $this->event->extratimebefore);
@@ -597,6 +624,10 @@ class edit_event_form extends dynamic_form {
             $this->event = $e;
         }
         $e->cmid = $this->optional_param('cmid', null, PARAM_INT);
+
+        // Wrap plain-text values for editor elements.
+        $e->notes = ['text' => $e->notes ?? '', 'format' => FORMAT_HTML];
+        $e->internalnotes = ['text' => $e->internalnotes ?? '', 'format' => FORMAT_HTML];
 
         $this->set_data($e);
     }
@@ -676,6 +707,20 @@ class edit_event_form extends dynamic_form {
 
         if (!is_int($formdata->extratimeafter)) {
             $formdata->extratimeafter = null;
+        }
+        // Extract text from editor fields before persisting.
+        if (is_array($formdata->notes)) {
+            $formdata->notes = $formdata->notes['text'] ?? '';
+        }
+        if (is_array($formdata->internalnotes)) {
+            $formdata->internalnotes = $formdata->internalnotes['text'] ?? '';
+        }
+        // Hard guard: reject past start times for non-service-team users.
+        $context = $this->get_context_for_dynamic_submission();
+        if (!has_capability('mod/bookit:editinternal', $context)) {
+            if ((int)$formdata->starttime < time()) {
+                throw new \moodle_exception('error_starttime_in_past', 'mod_bookit');
+            }
         }
 
         $event = bookit_event::from_record($formdata);
@@ -875,8 +920,12 @@ class edit_event_form extends dynamic_form {
     public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
         // Past-time check: prevent creating new events in the past.
+        // Past-time check: Service-Team (editinternal) may always save dates in the past.
         $starttime = (int)($data['starttime'] ?? 0);
-        if ($starttime > 0) {
+        $context = $this->get_context_for_dynamic_submission();
+        $caneditinternal =  has_capability('mod/bookit:editinternal', $context);
+
+        if ($starttime > 0 && !$caneditinternal) {
             $now = time();
             $eventid = (int)($data['id'] ?? 0);
 
