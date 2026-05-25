@@ -556,26 +556,26 @@ class edit_event_form extends dynamic_form {
         );
 
         // Quick client-side alert (does not block submission).
-            $allowed = implode(',', bookit_allowed_weekdays());
-            if ($allowed !== '') {
-                $PAGE->requires->js_init_code("
-                    require(['jquery'], function($) {
-                        const allowed = [$allowed];
-                        $('#id_starttime_day, #id_starttime_month, #id_starttime_year').on('change', function () {
-                            const d = new Date(
-                                $('#id_starttime_year').val(),
-                                $('#id_starttime_month').val() - 1,
-                                $('#id_starttime_day').val()
-                            );
-                            if (!allowed.includes(d.getDay())) {
-                                alert('" . get_string('invalidweekday', 'mod_bookit') . "');
-                            }
-                        });
+        $allowed = implode(',', bookit_allowed_weekdays());
+        if ($allowed !== '') {
+            $PAGE->requires->js_init_code("
+                require(['jquery'], function($) {
+                    const allowed = [$allowed];
+                    $('#id_starttime_day, #id_starttime_month, #id_starttime_year').on('change', function () {
+                        const d = new Date(
+                            $('#id_starttime_year').val(),
+                            $('#id_starttime_month').val() - 1,
+                            $('#id_starttime_day').val()
+                        );
+                        if (!allowed.includes(d.getDay())) {
+                            alert('" . get_string('invalidweekday', 'mod_bookit') . "');
+                        }
                     });
-                ");
-                // ADD after the closing brace of: if ($allowed !== '') { ... }
+                });
+            ");
 
-            // Client-side past-time validation (non-service-team only).
+           //$caneditinternal = false; 
+           // Client-side past-time validation (non-service-team only).
            if (!$caneditinternal) {
                 $PAGE->requires->js_call_amd(
                     'mod_bookit/past_time_check',

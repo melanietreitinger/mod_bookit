@@ -12,11 +12,10 @@ define(['jquery'], function($) {
 
                 $('#' + ERR_ID).remove();
                 if (isPast) {
-                    sel.closest('.form-group, .fitem')
+                    sel.closest('.felement, .col-md-9')
                         .append('<div id="' + ERR_ID
                         + '" class="text-danger small mt-1 mb-0">' + errorMessage + '</div>');
                 }
-
                 var modal = sel.closest('.modal');
                 var form  = sel.closest('form');
                 var btns  = modal.find('.modal-footer [data-action="save"]')
