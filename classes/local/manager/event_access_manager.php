@@ -26,6 +26,7 @@
 namespace mod_bookit\local\manager;
 
 use context_module;
+use mod_bookit\external\get_possible_starttimes;
 use mod_bookit\local\install_helper;
 use stdClass;
 
@@ -263,6 +264,26 @@ class event_access_manager {
 
         $roles = self::get_user_roles_for_event($event, $userid);
         return !empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']));
+    }
+
+    /**
+     * Check whether a participant-owned New booking must be blocked because it already lies in the past.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function should_block_participant_past_edit(stdClass $event, context_module $context, int $userid): bool {
+        if (self::can_manage_past_bookings($context)) {
+            return false;
+        }
+
+        if (!self::can_participant_edit_event($event, $userid)) {
+            return false;
+        }
+
+        return get_possible_starttimes::is_starttime_in_past((int)($event->starttime ?? 0));
     }
 
     /**

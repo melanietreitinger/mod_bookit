@@ -14,12 +14,18 @@ define(['jquery', 'core_form/modalform'], function($, ModalForm) {
 
                 const cmid = link.dataset.cmid;
                 const event = link.dataset.eventid;
+                const saveButtonText = link.dataset.saveButtonText;
 
-                const modal = new ModalForm({
+                const modalConfig = {
                     formClass: 'mod_bookit\\form\\edit_event_form',
                     args: {cmid: cmid, id: event, readonly: 1},
                     modalConfig: {title: link.textContent.trim()}
-                });
+                };
+                if (saveButtonText) {
+                    modalConfig.saveButtonText = saveButtonText;
+                }
+
+                const modal = new ModalForm(modalConfig);
 
                 modal.addEventListener(modal.events.FORM_SUBMITTED, function() {
                     window.location.reload();

@@ -176,6 +176,7 @@
                            class="bookit-event-link"
                            data-eventid="{{id}}"
                            data-cmid="{{cmid}}"
+                           {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}
                            data-is-reserved-projection="{{#is_reserved_projection}}1{{/is_reserved_projection}}{{^is_reserved_projection}}0{{/is_reserved_projection}}">
                             {{name}}
                         </a>
@@ -338,7 +339,8 @@
                     <a href="#"
                        class="bookit-event-link"
                        data-eventid="{{id}}"
-                       data-cmid="{{cmid}}">
+                       data-cmid="{{cmid}}"
+                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}>
                         {{name}}
                     </a>
                     {{/caneventdetails}}
@@ -444,7 +446,8 @@
                     <a href="#"
                        class="bookit-event-link"
                        data-eventid="{{id}}"
-                       data-cmid="{{cmid}}">
+                       data-cmid="{{cmid}}"
+                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}>
                         {{name}}
                     </a>
                     {{/caneventdetails}}

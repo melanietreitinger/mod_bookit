@@ -85,7 +85,35 @@ Feature: Filter reporting data and block past-date saves
     When I log in as "susiservice"
     And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     And I open the Bookit event details for "Future service exam"
+    Then the Bookit event details control "name" should be enabled
+    And the Bookit event details control "starttime" should be enabled
+    And I close the currently open dialog
+    And I open the Bookit event details for "Future service exam"
     And I set the Bookit event details control "starttime" to a past timestamp
     And I submit the Bookit event details modal
     And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     Then I should see "Future service exam"
+
+  Scenario: Booking person sees a blocked historical modal instead of a free edit path
+    Given the following "mod_bookit > events" exist:
+      | name                 | username    | personincharge_username | startdate                      | enddate                        | bookingstatus | institution |
+      | Historical booking   | bookinguser | bookinguser             | ##-1 day 09:00##%Y-%m-%dT%H:%M:%S## | ##-1 day 11:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
+    When I log in as "bookinguser"
+    And I open the Bookit overview "history" for "My BookIt Activity"
+    And I open the Bookit event details for "Historical booking"
+    Then the Bookit event details control "name" should be disabled
+    And the Bookit event details control "starttime" should be disabled
+    And the Bookit event details primary action should be "Close"
+    And I should see "This booking already started and can no longer be changed by participants."
+
+  Scenario: Examiner sees the same historical blocked state as the booking person
+    Given the following "mod_bookit > events" exist:
+      | name                    | username    | otherexaminer_usernames | startdate                      | enddate                        | bookingstatus | institution |
+      | Historical examiner exam | bookinguser | examineruser            | ##-1 day 09:00##%Y-%m-%dT%H:%M:%S## | ##-1 day 11:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
+    When I log in as "examineruser"
+    And I open the Bookit overview "history" for "My BookIt Activity"
+    And I open the Bookit event details for "Historical examiner exam"
+    Then the Bookit event details control "name" should be disabled
+    And the Bookit event details control "starttime" should be disabled
+    And the Bookit event details primary action should be "Close"
+    And I should see "This booking already started and can no longer be changed by participants."

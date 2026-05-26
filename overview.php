@@ -547,6 +547,13 @@ $prepareeventrow = function (
         'statusgroupkey' => $statusgroupkey,
         'statusgrouptext' => s($statusgrouptext),
         'bookingstatus' => (int)($ev->bookingstatus ?? 0),
+        'savebuttontext' => event_access_manager::should_block_participant_past_edit($ev, $context, (int)$USER->id)
+            ? get_string('event_past_participant_close', 'mod_bookit')
+            : (
+                event_access_manager::can_participant_cancel_only($ev, $context, (int)$USER->id)
+                    ? get_string('bookingstatus_action_cancel', 'mod_bookit')
+                    : ''
+            ),
         'canmanage'     => $canmanage,
         'statusoptions' => $canmanage
             ? event_manager::get_booking_status_options((int)($ev->bookingstatus ?? 0))

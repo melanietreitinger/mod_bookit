@@ -725,6 +725,47 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Assert the text of the primary action in the currently visible event details modal.
+     *
+     * @Then the Bookit event details primary action should be :label
+     * @param string $label
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_primary_action_should_be(string $label): void {
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return JSON.stringify({status: 'modal-not-found'});
+                }
+                var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
+                if (!button) {
+                    return JSON.stringify({status: 'save-not-found'});
+                }
+                return JSON.stringify({
+                    status: 'ok',
+                    text: (button.textContent || '').replace(/\s+/g, ' ').trim()
+                });
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect the event details primary action. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+        if (($result['text'] ?? '') !== $label) {
+            throw new ExpectationException(
+                'Expected the event details primary action to be "' . $label . '" but found "'
+                    . ($result['text'] ?? '') . '".',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
      * Submit the currently visible event details modal.
      *
      * @When I submit the Bookit event details modal

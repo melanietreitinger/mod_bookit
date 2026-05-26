@@ -292,6 +292,59 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Historical New requests are blocked only for participant edit paths, not for service-team overrides.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_should_block_participant_past_edit(): void {
+        $this->resetAfterTest(true);
+
+        $participantcontext = $this->create_bookit_context_with_participant_role();
+        $participant = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($participantcontext, $participant->id);
+        $this->setUser($participant);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => time() - 3600,
+            'personinchargeid' => $participant->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::should_block_participant_past_edit($event, $participantcontext, $participant->id));
+
+        $event->starttime = time() + 3600;
+        $this->assertFalse(event_access_manager::should_block_participant_past_edit($event, $participantcontext, $participant->id));
+
+        $event->starttime = time() - 3600;
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $this->assertFalse(event_access_manager::should_block_participant_past_edit($event, $participantcontext, $participant->id));
+
+        $servicecontext = $this->create_bookit_context_with_service_role('bookitservicepastedit');
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($servicecontext, $serviceuser->id, 'bookitservicepastedit');
+        $this->setUser($serviceuser);
+
+        $serviceevent = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => time() - 3600,
+            'personinchargeid' => $serviceuser->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::should_block_participant_past_edit(
+            $serviceevent,
+            $servicecontext,
+            $serviceuser->id
+        ));
+    }
+
+    /**
      * Support persons may only see accepted bookings unless another participant role also applies.
      *
      * @return void

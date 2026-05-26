@@ -81,9 +81,14 @@ class edit_event_form extends dynamic_form {
         $caneditinternal = has_capability('mod/bookit:editinternal', $context);
         $eventid = $this->optional_param('id', null, PARAM_INT);
         $existingevent = !empty($eventid) ? event_manager::get_event($eventid) : null;
+        $participantpastreadonly = $existingevent
+            && event_access_manager::should_block_participant_past_edit($existingevent, $context, (int)$USER->id);
         $caneditevent = has_capability('mod/bookit:editevent', $context)
             || empty($eventid)
             || ($existingevent && event_access_manager::can_participant_edit_event($existingevent, (int)$USER->id));
+        if ($participantpastreadonly) {
+            $caneditevent = false;
+        }
         $canviewrestrictedfields = $caneditinternal
             || ($existingevent && event_access_manager::can_supportperson_view_internal_fields(
                 $existingevent,
@@ -96,9 +101,9 @@ class edit_event_form extends dynamic_form {
                 $context,
                 (int)$USER->id
             ));
-        $canselfcancelnew = $existingevent
+        $canselfcancelnew = !$participantpastreadonly && $existingevent
             && event_access_manager::can_self_cancel_new_request($existingevent, $context, (int)$USER->id);
-        $cancancelonly = $existingevent
+        $cancancelonly = !$participantpastreadonly && $existingevent
             && event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
         $showbookingstatus = $caneditinternal || $canviewrestrictedfields || $cancancelonly || $canselfcancelnew;
         $requirepublicfields = $caneditevent && !$canselfcancelnew;
@@ -226,6 +231,8 @@ class edit_event_form extends dynamic_form {
         // Set time restrictions based on "editinternal" capability.
         if ($caneditinternal) {
             $starttimearray['startyear'] = $config->eventminyear ?? (date("Y") - 1);
+        } else if ($participantpastreadonly && !empty($existingevent->starttime)) {
+            $starttimearray['startyear'] = min((int)date("Y"), (int)date("Y", (int)$existingevent->starttime));
         } else {
             $starttimearray['startyear'] = date("Y");
         }
@@ -458,7 +465,14 @@ class edit_event_form extends dynamic_form {
         }
 
         // Add the "bookingstatus" field.
-        if ($showbookingstatus) {
+        if ($participantpastreadonly) {
+            $mform->addElement(
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+            );
+        } else if ($showbookingstatus && !$cancancelonly) {
             $mform->addElement(
                 'select',
                 'bookingstatus',
@@ -467,12 +481,28 @@ class edit_event_form extends dynamic_form {
             );
             $mform->disabledIf('bookingstatus', 'editbookingstatus', 'neq', 1);
             $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
+        } else if ($cancancelonly) {
+            $mform->addElement(
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+            );
+            $mform->addElement('hidden', 'bookingstatus');
+            $mform->setType('bookingstatus', PARAM_INT);
         } else {
             $mform->addElement('hidden', 'bookingstatus');
             $mform->setType('bookingstatus', PARAM_INT);
         }
 
-        if ($cancancelonly) {
+        if ($participantpastreadonly) {
+            $mform->addElement(
+                'static',
+                'pastparticipantnotice',
+                '',
+                get_string('event_past_participant_notice', 'mod_bookit')
+            );
+        } else if ($cancancelonly) {
             $mform->addElement(
                 'static',
                 'cancelonlynotice',
@@ -519,7 +549,7 @@ class edit_event_form extends dynamic_form {
                 $eventdefaultduration,
                 array_key_first($roomoptions),
                 null,
-                event_access_manager::can_manage_past_bookings($context),
+                $participantpastreadonly || event_access_manager::can_manage_past_bookings($context),
             );
 
             $smallestdiff = 1e9;
@@ -575,8 +605,13 @@ class edit_event_form extends dynamic_form {
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
         $caneditinternal = (bool)($mform->getElementValue('editinternal')[0] ?? 0);
+        $cancancelonly = (bool)($mform->getElementValue('cancelonly')[0] ?? 0);
 
         $context = $this->get_context_for_dynamic_submission();
+        $currenteventid = (int)($data->id ?? $this->event->id ?? 0);
+        $existingevent = $currenteventid > 0 ? event_manager::get_event($currenteventid) : null;
+        $participantpastreadonly = $existingevent
+            && event_access_manager::should_block_participant_past_edit($existingevent, $context, (int)$USER->id);
         $creatorid = $this->_form->getElementValue('usermodified');
         $user = $DB->get_record('user', ['id' => $creatorid]);
         $mform->getElement('usermodified')->setValue(
@@ -660,12 +695,22 @@ class edit_event_form extends dynamic_form {
                     $selectedduration,
                     $selectedroomid,
                     $excepteventid,
-                    event_access_manager::can_manage_past_bookings($context)
+                    $participantpastreadonly || event_access_manager::can_manage_past_bookings($context)
                 );
                 $starttimeel->loadArray($possiblestarttimes);
                 $currentstarttime = (int)($data->starttime ?? 0);
                 if ($currentstarttime > 0) {
                     $starttimeel->updateAttributes(['data-current-starttime' => (string)$currentstarttime]);
+                }
+                if (
+                    $participantpastreadonly
+                    && $currentstarttime > 0
+                    && !array_key_exists($currentstarttime, $possiblestarttimes)
+                ) {
+                    $possiblestarttimes = [
+                        $currentstarttime => (new \DateTime())->setTimestamp($currentstarttime)->format('H:i'),
+                    ] + $possiblestarttimes;
+                    $starttimeel->loadArray($possiblestarttimes);
                 }
                 if ($currentstarttime > 0 && array_key_exists($currentstarttime, $possiblestarttimes)) {
                     $starttimeel->setSelected((string)$currentstarttime);
@@ -673,6 +718,11 @@ class edit_event_form extends dynamic_form {
                     $mform->setDefault('starttime', $currentstarttime);
                 }
             }
+        }
+
+        if ($cancancelonly) {
+            $mform->getElement('bookingstatus')->setValue((string)event_access_manager::BOOKINGSTATUS_CANCELED);
+            $mform->setConstant('bookingstatus', event_access_manager::BOOKINGSTATUS_CANCELED);
         }
     }
 
@@ -810,23 +860,53 @@ class edit_event_form extends dynamic_form {
         $caneditbookingstatus = $caneditinternal;
         $canmanagepastbookings = event_access_manager::can_manage_past_bookings($context);
         $bookingstatustransition = null;
+        $cancancelonly = false;
         $statusonlyselfcancel = false;
         $resourcesenabled = event_access_manager::is_resources_enabled();
 
         if (!empty($formdata->id)) {
             $currentevent = bookit_event::from_database((int)$formdata->id);
             $currentrecord = event_manager::get_event((int)$formdata->id);
+            $participantpastreadonly = event_access_manager::should_block_participant_past_edit(
+                $currentrecord,
+                $context,
+                (int)$USER->id
+            );
             $caneditpublic = $caneditpublic
                 || event_access_manager::can_participant_edit_event($currentrecord, (int)$USER->id);
+            if ($participantpastreadonly) {
+                $caneditpublic = false;
+            }
             $caneditinternalnotes = $caneditinternal
                 || event_access_manager::can_supportperson_edit_internal_notes($currentrecord, $context, (int)$USER->id);
-            $canselfcancelnew = event_access_manager::can_self_cancel_new_request($currentrecord, $context, (int)$USER->id);
+            $cancancelonly = !$participantpastreadonly
+                && event_access_manager::can_participant_cancel_only($currentrecord, $context, (int)$USER->id);
+            $canselfcancelnew = !$participantpastreadonly
+                && event_access_manager::can_self_cancel_new_request($currentrecord, $context, (int)$USER->id);
             $caneditbookingstatus = $caneditinternal
-                || event_access_manager::can_participant_cancel_only($currentrecord, $context, (int)$USER->id)
+                || $cancancelonly
                 || $canselfcancelnew;
             $requestedstatus = (int)($formdata->bookingstatus ?? $currentrecord->bookingstatus);
             $statusonlyselfcancel = $canselfcancelnew
                 && $requestedstatus === event_access_manager::BOOKINGSTATUS_CANCELED;
+
+            if ($participantpastreadonly) {
+                if ($this->has_past_participant_mutation_attempt($currentrecord, $formdata)) {
+                    throw new moodle_exception('event_past_participant_notice', 'mod_bookit');
+                }
+                return [];
+            }
+
+            if (
+                $cancancelonly
+                && !in_array(
+                    $requestedstatus,
+                    [(int)$currentrecord->bookingstatus, event_access_manager::BOOKINGSTATUS_CANCELED],
+                    true
+                )
+            ) {
+                throw new moodle_exception('event_cancel_only_notice', 'mod_bookit');
+            }
 
             if (!$caneditpublic && !$caneditinternalnotes && !$caneditbookingstatus) {
                 throw new moodle_exception('nopermissions', 'error', '', 'update event');
@@ -936,6 +1016,10 @@ class edit_event_form extends dynamic_form {
 
         if ($currentevent && !$caneditinternalnotes) {
             $formdata->internalnotes = $currentevent->internalnotes;
+        }
+
+        if ($cancancelonly) {
+            $formdata->bookingstatus = event_access_manager::BOOKINGSTATUS_CANCELED;
         }
 
         if ($currentevent && $caneditbookingstatus && !$caneditinternal) {
@@ -1184,13 +1268,33 @@ class edit_event_form extends dynamic_form {
         $resourcesenabled = event_access_manager::is_resources_enabled();
         if (!empty($data['id'])) {
             $existingevent = event_manager::get_event((int)$data['id']);
+            $participantpastreadonly = event_access_manager::should_block_participant_past_edit(
+                $existingevent,
+                $context,
+                (int)$USER->id
+            );
             $caneditpublic = has_capability('mod/bookit:editevent', $context)
                 || event_access_manager::can_participant_edit_event($existingevent, (int)$USER->id);
+            if ($participantpastreadonly) {
+                $caneditpublic = false;
+            }
             $caneditinternal = has_capability('mod/bookit:editinternal', $context);
             $caneditinternalnotes = $caneditinternal
                 || event_access_manager::can_supportperson_edit_internal_notes($existingevent, $context, (int)$USER->id);
-            $cancancelonly = event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
-            $canselfcancelnew = event_access_manager::can_self_cancel_new_request($existingevent, $context, (int)$USER->id);
+            $cancancelonly = !$participantpastreadonly
+                && event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
+            $canselfcancelnew = !$participantpastreadonly
+                && event_access_manager::can_self_cancel_new_request($existingevent, $context, (int)$USER->id);
+
+            if ($participantpastreadonly && $this->has_past_participant_mutation_attempt($existingevent, (object)$data)) {
+                $errors = parent::validation($data, $files);
+                $errors['name'] = get_string('event_past_participant_notice', 'mod_bookit');
+                return $errors;
+            }
+
+            if ($participantpastreadonly) {
+                return parent::validation($data, $files);
+            }
 
             if (!$caneditpublic && !$caneditinternalnotes && !$cancancelonly && !$canselfcancelnew) {
                 $errors = parent::validation($data, $files);
@@ -1227,13 +1331,10 @@ class edit_event_form extends dynamic_form {
         if ($existingevent !== null) {
             if (!$caneditpublic && ($cancancelonly || $canselfcancelnew)) {
                 $requestedstatus = (int)($data['bookingstatus'] ?? $existingevent->bookingstatus);
-                if (
-                    !in_array(
-                        $requestedstatus,
-                        [(int)$existingevent->bookingstatus, event_access_manager::BOOKINGSTATUS_CANCELED],
-                        true
-                    )
-                ) {
+                $allowedstatuses = $cancancelonly
+                    ? [(int)$existingevent->bookingstatus, event_access_manager::BOOKINGSTATUS_CANCELED]
+                    : [(int)$existingevent->bookingstatus, event_access_manager::BOOKINGSTATUS_CANCELED];
+                if (!in_array($requestedstatus, $allowedstatuses, true)) {
                     $errors['bookingstatus'] = get_string('event_cancel_only_notice', 'mod_bookit');
                 }
             }
@@ -1280,5 +1381,89 @@ class edit_event_form extends dynamic_form {
         }
 
         return $errors;
+    }
+
+    /**
+     * Check whether a blocked participant submission still tries to mutate historical booking fields.
+     *
+     * @param stdClass $currentevent
+     * @param stdClass $formdata
+     * @return bool
+     */
+    private function has_past_participant_mutation_attempt(stdClass $currentevent, stdClass $formdata): bool {
+        $currentstate = [
+            'name' => (string)($currentevent->name ?? ''),
+            'semester' => (string)($currentevent->semester ?? ''),
+            'institutionid' => (string)($currentevent->institutionid ?? ''),
+            'roomid' => (string)($currentevent->roomid ?? ''),
+            'starttime' => (string)($currentevent->starttime ?? ''),
+            'duration' => (string)($currentevent->duration ?? ''),
+            'participantsamount' => (string)($currentevent->participantsamount ?? ''),
+            'personinchargeid' => (string)($currentevent->personinchargeid ?? ''),
+            'otherexaminers' => $this->normalise_comma_separated_ids($currentevent->otherexaminers ?? ''),
+            'coursetemplate' => (string)($currentevent->coursetemplate ?? ''),
+            'timecompensation' => (string)($currentevent->timecompensation ?? ''),
+            'compensationfordisadvantages' => (string)($currentevent->compensationfordisadvantages ?? ''),
+            'notes' => (string)($currentevent->notes ?? ''),
+            'refcourseid' => (string)($currentevent->refcourseid ?? ''),
+            'bookingstatus' => (string)($currentevent->bookingstatus ?? ''),
+        ];
+
+        $submittedstate = [
+            'name' => (string)($formdata->name ?? $currentevent->name ?? ''),
+            'semester' => (string)($formdata->semester ?? $currentevent->semester ?? ''),
+            'institutionid' => (string)($formdata->institutionid ?? $currentevent->institutionid ?? ''),
+            'roomid' => (string)($formdata->roomid ?? ($formdata->room ?? $currentevent->roomid ?? '')),
+            'starttime' => (string)($this->_ajaxformdata['starttime'] ?? ($formdata->starttime ?? $currentevent->starttime ?? '')),
+            'duration' => (string)($this->_ajaxformdata['duration'] ?? ($formdata->duration ?? $currentevent->duration ?? '')),
+            'participantsamount' => (string)($formdata->participantsamount ?? $currentevent->participantsamount ?? ''),
+            'personinchargeid' => (string)($formdata->personinchargeid ?? $currentevent->personinchargeid ?? ''),
+            'otherexaminers' => $this->normalise_comma_separated_ids(
+                $formdata->otherexaminers ?? $currentevent->otherexaminers ?? ''
+            ),
+            'coursetemplate' => (string)($formdata->coursetemplate ?? $currentevent->coursetemplate ?? ''),
+            'timecompensation' => (string)($formdata->timecompensation ?? $currentevent->timecompensation ?? ''),
+            'compensationfordisadvantages' => (string)(
+                $formdata->compensationfordisadvantages ?? $currentevent->compensationfordisadvantages ?? ''
+            ),
+            'notes' => (string)($formdata->notes ?? $currentevent->notes ?? ''),
+            'refcourseid' => (string)($formdata->refcourseid ?? $currentevent->refcourseid ?? ''),
+            'bookingstatus' => (string)($formdata->bookingstatus ?? $currentevent->bookingstatus ?? ''),
+        ];
+
+        foreach ($currentstate as $field => $value) {
+            if ($submittedstate[$field] !== $value) {
+                return true;
+            }
+        }
+
+        foreach (array_keys((array)($this->_ajaxformdata ?? [])) as $fieldname) {
+            if (str_starts_with($fieldname, 'checkbox_') || str_starts_with($fieldname, 'resource_')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Normalise comma separated ids or id arrays for stable comparisons.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    private function normalise_comma_separated_ids(mixed $value): string {
+        if (is_array($value)) {
+            $value = implode(',', $value);
+        }
+
+        $ids = array_values(array_filter(
+            array_map('trim', explode(',', (string)$value)),
+            static fn(string $id): bool => $id !== ''
+        ));
+        $ids = array_map('intval', $ids);
+        sort($ids);
+
+        return implode(',', $ids);
     }
 }
