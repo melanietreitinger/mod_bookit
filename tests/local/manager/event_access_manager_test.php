@@ -640,7 +640,7 @@ final class event_access_manager_test extends advanced_testcase {
             'supportpersons' => '',
         ];
 
-        $this->assertTrue(event_access_manager::is_observer_restricted_mode($context));
+        $this->assertFalse(event_access_manager::is_observer_restricted_mode($context));
         $this->assertTrue(event_access_manager::can_user_view_event_details($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));

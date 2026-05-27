@@ -342,6 +342,43 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Mixed observer/detail assignments must keep the calendar feed on the full
+     * projection so privileged users do not receive reserved placeholders.
+     *
+     * @return void
+     */
+    public function test_get_events_in_timerange_keeps_full_projection_for_mixed_detail_roles(): void {
+        $this->resetAfterTest(true);
+
+        $user = $this->getDataGenerator()->create_user();
+        $context = $this->create_observer_context_for_user($user->id);
+
+        $detailrole = \create_role('Bookit detail service', 'bookitdetailservicefeed', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $detailrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $detailrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $detailrole, $context->id, true);
+        \role_assign($detailrole, $user->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($user);
+
+        $visibleid = $this->create_event_record([
+            'name' => 'Admin visible booking',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'starttime' => strtotime('2026-05-09 10:00:00'),
+            'endtime' => strtotime('2026-05-09 11:00:00'),
+        ]);
+
+        $events = event_manager::get_events_in_timerange('2026-05-09 00:00', '2026-05-09 23:59', (int)$context->instanceid);
+
+        $this->assertCount(1, $events);
+        $this->assert_is_canonical_calendar_event($events[0]);
+        $this->assertSame($visibleid, (int)$events[0]['id']);
+        $this->assertStringContainsString('Admin visible booking', $events[0]['title']);
+        $this->assertSame('full', $events[0]['extendedProps']['visibilitymode']);
+    }
+
+    /**
      * Semester filtering must exclude legacy semester bookings unless the explicit legacy option is selected.
      *
      * @return void

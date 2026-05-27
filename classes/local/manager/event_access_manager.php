@@ -218,7 +218,18 @@ class event_access_manager {
             return false;
         }
 
-        return has_capability('mod/bookit:viewrestrictedobserver', $context);
+        if (!has_capability('mod/bookit:viewrestrictedobserver', $context)) {
+            return false;
+        }
+
+        // Mixed-role users with service/detail access must never fall back to the
+        // neutral observer projection because the calendar/export feed reads this
+        // decision before the per-event visibility checks run.
+        if (self::can_manage_open_requests($context)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
