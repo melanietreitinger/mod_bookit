@@ -277,39 +277,68 @@ class edit_event_form extends dynamic_form {
                 'userfields' => implode(',', fields::get_identity_fields($contextcourse, true)),
         ];
         $examinerlist = $this->build_examiner_pool($config);
-        $mform->addElement(
-            'autocomplete',
-            'personinchargeid',
-            get_string(
-                'event_personincharge',
-                'mod_bookit'
-            ),
-            $examinerlist,
-            $userselectoroptions
-        );
-        $mform->disabledIf('personinchargeid', 'editevent', 'neq');
-        $mform->setType('personinchargeid', PARAM_TEXT);
-        $mform->setDefault('personinchargeid', '');
+        $personinchargeelementname = 'personinchargeid';
+        if (!$caneditevent && $existingevent) {
+            $personinchargeelementname = 'personinchargeid_readonly';
+            $mform->addElement(
+                'static',
+                $personinchargeelementname,
+                get_string('event_personincharge', 'mod_bookit'),
+                s($this->format_selector_display($existingevent->personinchargeid ?? '', $examinerlist))
+            );
+            $mform->addElement('hidden', 'personinchargeid');
+            $mform->setType('personinchargeid', PARAM_TEXT);
+        } else {
+            $mform->addElement(
+                'autocomplete',
+                'personinchargeid',
+                get_string(
+                    'event_personincharge',
+                    'mod_bookit'
+                ),
+                $examinerlist,
+                $userselectoroptions
+            );
+            $mform->disabledIf('personinchargeid', 'editevent', 'neq');
+            $mform->setType('personinchargeid', PARAM_TEXT);
+            $mform->setDefault('personinchargeid', '');
+        }
         if ($requirepublicfields) {
             $mform->addRule('personinchargeid', null, 'required', null, 'client');
         }
-        $mform->addHelpButton('personinchargeid', 'event_personincharge', 'mod_bookit');
+        $mform->addHelpButton($personinchargeelementname, 'event_personincharge', 'mod_bookit');
 
         // Add the "otherexaminers" field.
         $userselectoroptions['multiple'] = true;
-        $mform->addElement(
-            'autocomplete',
-            'otherexaminers',
-            get_string(
-                'event_otherexaminers',
-                'mod_bookit'
-            ),
-            $examinerlist,
-            $userselectoroptions
-        );
-        $mform->disabledIf('otherexaminers', 'editevent', 'neq');
-        $mform->setType('otherexaminers', PARAM_TEXT);
-        $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
+        $otherexaminerselementname = 'otherexaminers';
+        if (!$caneditevent && $existingevent) {
+            $otherexaminerselementname = 'otherexaminers_readonly';
+            $mform->addElement(
+                'static',
+                $otherexaminerselementname,
+                get_string(
+                    'event_otherexaminers',
+                    'mod_bookit'
+                ),
+                s($this->format_selector_display($existingevent->otherexaminers ?? '', $examinerlist))
+            );
+            $mform->addElement('hidden', 'otherexaminers');
+            $mform->setType('otherexaminers', PARAM_TEXT);
+        } else {
+            $mform->addElement(
+                'autocomplete',
+                'otherexaminers',
+                get_string(
+                    'event_otherexaminers',
+                    'mod_bookit'
+                ),
+                $examinerlist,
+                $userselectoroptions
+            );
+            $mform->disabledIf('otherexaminers', 'editevent', 'neq');
+            $mform->setType('otherexaminers', PARAM_TEXT);
+        }
+        $mform->addHelpButton($otherexaminerselementname, 'event_otherexaminers', 'mod_bookit');
 
         if ($this->is_optional_field_enabled($config, 'coursetemplate')) {
             // Add the coursetemplate field.
@@ -408,19 +437,35 @@ class edit_event_form extends dynamic_form {
             foreach ($users as $id => $user) {
                 $supportpersons[$id] = fullname($user);
             }
-            $mform->addElement(
-                'autocomplete',
-                'supportpersons',
-                get_string(
-                    'event_supportperson',
-                    'mod_bookit'
-                ),
-                $supportpersons,
-                $userselectoroptions
-            );
-            $mform->setType('supportpersons', PARAM_TEXT);
-            $mform->addHelpButton('supportpersons', 'event_supportperson', 'mod_bookit');
-            $mform->disabledIf('supportpersons', 'editinternal', 'neq', 1);
+            $supportpersonselementname = 'supportpersons';
+            if (!$caneditinternal && $existingevent) {
+                $supportpersonselementname = 'supportpersons_readonly';
+                $mform->addElement(
+                    'static',
+                    $supportpersonselementname,
+                    get_string(
+                        'event_supportperson',
+                        'mod_bookit'
+                    ),
+                    s($this->format_selector_display($existingevent->supportpersons ?? '', $supportpersons))
+                );
+                $mform->addElement('hidden', 'supportpersons');
+                $mform->setType('supportpersons', PARAM_TEXT);
+            } else {
+                $mform->addElement(
+                    'autocomplete',
+                    'supportpersons',
+                    get_string(
+                        'event_supportperson',
+                        'mod_bookit'
+                    ),
+                    $supportpersons,
+                    $userselectoroptions
+                );
+                $mform->setType('supportpersons', PARAM_TEXT);
+                $mform->disabledIf('supportpersons', 'editinternal', 'neq', 1);
+            }
+            $mform->addHelpButton($supportpersonselementname, 'event_supportperson', 'mod_bookit');
         } else {
             $mform->addElement('hidden', 'supportpersons');
             $mform->setType('supportpersons', PARAM_TEXT);
@@ -1465,5 +1510,27 @@ class edit_event_form extends dynamic_form {
         sort($ids);
 
         return implode(',', $ids);
+    }
+
+    /**
+     * Format one or more selected user ids for readonly selector output.
+     *
+     * @param mixed $value
+     * @param array $options
+     * @return string
+     */
+    private function format_selector_display(mixed $value, array $options): string {
+        $ids = explode(',', $this->normalise_comma_separated_ids($value));
+        $labels = [];
+
+        foreach ($ids as $id) {
+            if ($id === '') {
+                continue;
+            }
+
+            $labels[] = $options[(int)$id] ?? ('#' . $id);
+        }
+
+        return $labels ? implode(', ', $labels) : '-';
     }
 }

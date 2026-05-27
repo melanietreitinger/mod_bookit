@@ -140,10 +140,16 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,
+        displayEventEnd: true,
         eventTextColor: textcolor,
         eventBackgroundColor: '#035AA3',
         eventStartEditable: false,
         eventDurationEditable: false,
+        eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        },
         buttonText: function(text) {
             text.today = strToday;
             text.dayGridMonth = strMonth;

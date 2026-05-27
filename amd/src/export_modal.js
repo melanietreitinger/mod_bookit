@@ -66,30 +66,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 }
 
                 /**
-                 * Get the currently visible calendar date range from the global Bookit calendar.
+                 * Get the current calendar year as a local `YYYY-MM-DD` range.
                  *
-                 * If the calendar instance is not available, returns a wide fallback range so
-                 * the export modal can still function (and the backend can apply its own limits).
-                 *
-                 * Notes:
-                 * - `activeStart` is inclusive.
-                 * - `activeEnd` is typically exclusive, so we convert it to an inclusive end date
-                 *   by subtracting 1ms.
-                 *
-                 * @returns {{startDate: string, endDate: string}} Object with `YYYY-MM-DD` start and end dates.
+                 * @returns {{startDate: string, endDate: string}}
                  */
-                function getCalendarDateRangeOrFallback() {
-                    if (window.bookitCalendar && window.bookitCalendar.view) {
-                        const view = window.bookitCalendar.view;
+                function getCurrentCalendarYearRange() {
+                    const now = new Date();
+                    const year = now.getFullYear();
 
-                        const startDate = toLocalDateValue(view.activeStart);
-
-                        const endInclusive = new Date(view.activeEnd.getTime() - 1);
-                        const endDate = toLocalDateValue(endInclusive);
-
-                        return {startDate, endDate};
-                    }
-                    return {startDate: '1970-01-01', endDate: '2100-01-01'};
+                    return {
+                        startDate: toLocalDateValue(new Date(year, 0, 1)),
+                        endDate: toLocalDateValue(new Date(year, 11, 31))
+                    };
                 }
 
                 /**
@@ -118,7 +106,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 /**
                  * Fetch events for the export modal and render them as a checkbox list.
                  *
-                 * Uses the modal date range if set, otherwise falls back to the current calendar view range.
+                 * Uses the modal date range if set, otherwise falls back to the current calendar year.
                  * Merges `window.currentFilterParams` except `start`/`end` (modal range wins).
                  *
                  * @returns {void}
@@ -128,7 +116,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
                     const startDate = ($('#bookit-export-start').val() || '').trim();
                     const endDate = ($('#bookit-export-end').val() || '').trim();
-                    const fallback = getCalendarDateRangeOrFallback();
+                    const fallback = getCurrentCalendarYearRange();
 
                     const s = startDate || fallback.startDate;
                     const e = endDate || fallback.endDate;
@@ -192,14 +180,16 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                             }
                             const metaLine = metaParts.filter(Boolean).join(' | ');
 
-                            const checkbox = '<input class="form-check-input mt-1" type="checkbox" value="' +
-                                e.id + '">';
+                            const checkbox = '<span class="bookit-export-item-checkbox pr-2">' +
+                                '<input class="form-check-input mt-1" type="checkbox" value="' +
+                                e.id + '">' +
+                                '</span>';
                             const statusBadge = statusTxt
                                 ? '<span class="badge badge-light border ml-2">' + statusTxt + '</span>'
                                 : '';
 
                             const row = $(
-                                '<label class="list-group-item d-flex gap-2 align-items-start bookit-export-item" ' +
+                                '<label class="list-group-item d-flex align-items-start bookit-export-item px-3 py-2" ' +
                                 ' data-room="' + roomTxt.toLowerCase() + '" ' +
                                 ' data-faculty="' + faculty.toLowerCase() + '" ' +
                                 ' data-status="' + statusTxt.toLowerCase() + '">' +
@@ -227,10 +217,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     });
                 }
                 /**
-                 * Open the export modal and load the initial list for the current calendar range.
+                 * Open the export modal and load the initial list for the current calendar year.
                  */
                 $(document).on('click', '#bookit-export', function() {
-                    const r = getCalendarDateRangeOrFallback();
+                    const r = getCurrentCalendarYearRange();
                     $('#bookit-export-start').val(r.startDate);
                     $('#bookit-export-end').val(r.endDate);
 
@@ -248,10 +238,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 });
 
                 /**
-                 * Reset modal date range to the current calendar view and refresh list.
+                 * Reset modal date range to the current calendar year and refresh list.
                  */
                 $(document).on('click', '#bookit-export-reset-range', function() {
-                    const r = getCalendarDateRangeOrFallback();
+                    const r = getCurrentCalendarYearRange();
                     $('#bookit-export-start').val(r.startDate);
                     $('#bookit-export-end').val(r.endDate);
                     fetchExportList();

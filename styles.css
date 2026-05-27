@@ -1,7 +1,3 @@
-.ec .hide-event-time .ec-event-time {
-    display: none;
-}
-
 /* BookIT filter dropdown (frontend-only UI). */
 .mod_bookit-view-calendar_view .bookit-filters {
     display: flex;
@@ -93,6 +89,10 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
+}
+
+.mod_bookit-overview-examiner_overview .mod-bookit-overview-tabs .nav-link {
+    font-weight: 600;
     border: 1px solid rgba(0, 0, 0, .15);
     border-radius: 999px;
     padding: .15rem .45rem;
@@ -233,7 +233,9 @@
 }
 
 .mod-bookit-open-request-actions {
-    gap: 0.35rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(8.5rem, 1fr));
+    gap: 0.5rem;
 }
 
 .mod-bookit-open-requests-table tr.mod-bookit-open-request-row td {
@@ -245,10 +247,11 @@
 }
 
 .mod-bookit-status-chip {
-    display: inline-flex;
+    display: flex;
     flex-direction: column;
     gap: 0.1rem;
     min-width: 8.5rem;
+    width: 100%;
     padding: 0.45rem 0.65rem;
     border: 1px solid transparent;
     border-radius: 0.5rem;
@@ -344,8 +347,31 @@
     overflow: hidden;
 }
 
+.ec-day-grid .ec-event .ec-event-body,
+.ec-list .ec-event .ec-event-body {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ec-day-grid .ec-event .ec-event-time,
+.ec-list .ec-event .ec-event-time {
+    margin: 0 0 0.2rem;
+    max-inline-size: none;
+    font-weight: 700;
+}
+
+.ec-list .ec-event .ec-event-title,
+.ec-day-grid .ec-event .ec-event-title {
+    white-space: normal;
+    text-overflow: initial;
+}
+
 .bookit-export-toolbar .form-control[type="date"] {
     min-width: 11rem;
+}
+
+.bookit-export-search {
+    max-width: 22rem;
 }
 
 .bookit-export-item {
@@ -354,6 +380,12 @@
 
 .bookit-export-item .form-check-input {
     margin-top: 0.25rem;
+}
+
+.bookit-export-item-checkbox {
+    display: flex;
+    align-items: flex-start;
+    padding-left: 0.25rem;
 }
 
 .bookit-export-item-text {
@@ -367,4 +399,36 @@
     align-items: center;
     gap: 0.35rem;
     font-weight: 600;
+}
+.ec .bookit-bookingstatus-2 {
+    border: 2px solid rgba(40, 167, 69, 0.65);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.ec .bookit-bookingstatus-2 .ec-event-time {
+    font-weight: 600;
+}
+
+.mod-bookit-request-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.mod-bookit-request-pagination-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .mod-bookit-open-request-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .mod-bookit-request-pagination {
+        align-items: stretch;
+    }
 }

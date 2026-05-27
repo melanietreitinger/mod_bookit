@@ -53,6 +53,12 @@ $resourcesenabled = event_access_manager::is_resources_enabled();
 $selectedstatus = optional_param('bookingstatusfilter', -1, PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
+$queuepage = max(1, optional_param('queuepage', 1, PARAM_INT));
+$queueperpage = optional_param('queueperpage', 25, PARAM_INT);
+$allowedqueueperpage = [10, 25, 50, 100];
+if (!in_array($queueperpage, $allowedqueueperpage, true)) {
+    $queueperpage = 25;
+}
 $isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'rejectedrequests'], true);
 $requestworkspacemode = $tab === 'rejectedrequests' ? 'rejectedrequests' : 'openrequests';
 $currenttab = match (true) {
@@ -206,6 +212,14 @@ $openrequests = $canmanageopenrequests ? event_manager::get_open_requests() : []
 $openrequestcount = $canmanageopenrequests ? event_manager::count_open_requests() : 0;
 $rejectedrequests = $canmanageopenrequests ? event_manager::get_rejected_requests() : [];
 $rejectedrequestcount = $canmanageopenrequests ? event_manager::count_rejected_requests() : 0;
+$requestqueuecount = $requestworkspacemode === 'rejectedrequests' ? $rejectedrequestcount : $openrequestcount;
+$requesttotalpages = max(1, (int)ceil($requestqueuecount / $queueperpage));
+$queuepage = min($queuepage, $requesttotalpages);
+if ($requestworkspacemode === 'rejectedrequests') {
+    $rejectedrequests = array_values(array_slice($rejectedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
+} else {
+    $openrequests = array_values(array_slice($openrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
+}
 $semesteroptions = [];
 foreach (event_manager::get_semester_filter_options() as $value => $label) {
     $semesteroptions[] = [
@@ -257,6 +271,10 @@ $templatecontext = [
     'canmanage' => $canmanage,
     'showidcolumn' => $canmanageopenrequests,
     'showmyeventssection' => $currenttab !== 'openrequests',
+    'showhistorytab' => !$isobserverrestricted,
+    'myeventsactive' => $currenttab !== 'history',
+    'myeventsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'myevents']))->out(false),
+    'historyurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'history']))->out(false),
     'showrequestworkspacesection' => $currenttab === 'openrequests',
     'showrequestworkspaceswitch' => $canmanageopenrequests,
     'historyactive' => $currenttab === 'history',
@@ -269,6 +287,7 @@ $templatecontext = [
     ))->out(false),
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
     'requestworkspacehelp' => get_string('overview_request_workspace_help', 'mod_bookit'),
+    'requestworkspaceactivetab' => $requestworkspacemode,
     'requestqueueswitchlabel' => get_string('overview_request_workspace_switch', 'mod_bookit'),
     'requestqueueswitchhelp' => get_string('overview_request_workspace_switch_help', 'mod_bookit'),
     'sectiontitle' => $currenttab === 'history'
@@ -296,6 +315,38 @@ $templatecontext = [
     'requestqueuebadgeclass' => $requestworkspacemode === 'rejectedrequests'
         ? 'badge-danger'
         : 'badge-warning',
+    'showrequestpagination' => $isinrequestworkspace && $requestqueuecount > 0,
+    'requestpaginationlabel' => get_string('overview_request_workspace_switch', 'mod_bookit'),
+    'requestperpagelabel' => get_string('overview_request_per_page', 'mod_bookit'),
+    'requestpageinfo' => get_string('overview_request_pageinfo', 'mod_bookit', (object)[
+        'page' => $queuepage,
+        'pages' => $requesttotalpages,
+        'count' => $requestqueuecount,
+    ]),
+    'requestprevlabel' => get_string('previous'),
+    'requestnextlabel' => get_string('next'),
+    'hasrequestprev' => $queuepage > 1,
+    'hasrequestnext' => $queuepage < $requesttotalpages,
+    'requestprevurl' => (new moodle_url('/mod/bookit/overview.php', [
+        'id' => $cm->id,
+        'tab' => $requestworkspacemode,
+        'queuepage' => max(1, $queuepage - 1),
+        'queueperpage' => $queueperpage,
+    ]))->out(false),
+    'requestnexturl' => (new moodle_url('/mod/bookit/overview.php', [
+        'id' => $cm->id,
+        'tab' => $requestworkspacemode,
+        'queuepage' => min($requesttotalpages, $queuepage + 1),
+        'queueperpage' => $queueperpage,
+    ]))->out(false),
+    'requestperpageoptions' => array_map(
+        static fn(int $value): array => [
+            'value' => (string)$value,
+            'label' => (string)$value,
+            'selected' => $value === $queueperpage,
+        ],
+        $allowedqueueperpage
+    ),
     'showoverviewfilters' => $currenttab !== 'openrequests',
     'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
     'showprogresscolumn' => $checklistenabled || $resourcesenabled,
@@ -551,9 +602,12 @@ $prepareeventrow = function (
             ? get_string('event_past_participant_close', 'mod_bookit')
             : (
                 event_access_manager::can_participant_cancel_only($ev, $context, (int)$USER->id)
-                    ? get_string('bookingstatus_action_cancel', 'mod_bookit')
+                    ? get_string('event_status_action_cancel_only', 'mod_bookit')
                     : ''
             ),
+        'cancelbuttontext' => event_access_manager::can_participant_cancel_only($ev, $context, (int)$USER->id)
+            ? get_string('event_status_action_close_modal', 'mod_bookit')
+            : '',
         'canmanage'     => $canmanage,
         'statusoptions' => $canmanage
             ? event_manager::get_booking_status_options((int)($ev->bookingstatus ?? 0))

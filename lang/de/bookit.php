@@ -83,6 +83,8 @@ $string['bookingstatus_notification_body_default'] = 'Die Buchungsanfrage "###EV
     . 'Weitere Prüfende: ###OTHEREXAMINERS###'
     . "\n\n"
     . 'Buchung öffnen: ###EVENTURL###';
+$string['bookingstatus_notification_closing'] = "Freundliche Gruesse\nIhr BookIt-Team";
+$string['bookingstatus_notification_greeting'] = 'Guten Tag,';
 $string['bookingstatus_notification_subject_default'] = 'Buchungsstatus aktualisiert: {$a->eventname} ({$a->bookingstatus})';
 $string['bookingstatus_notifications_desc'] = 'Empfaenger und Nachrichtenvorlagen fuer Aenderungen am Buchungsstatus konfigurieren.';
 $string['bookingstatus_notifications_heading'] = 'Benachrichtigungen zum Buchungsstatus';
@@ -289,6 +291,8 @@ $string['event_room'] = 'Raum';
 $string['event_room_help'] = 'Wählen Sie einen Raum für der Termin.';
 $string['event_start'] = 'Beginn';
 $string['event_start_help'] = 'Wählen Sie das Startdatum und -uhrzeit des Termins.';
+$string['event_status_action_cancel_only'] = 'Stornierung senden';
+$string['event_status_action_close_modal'] = 'Modal schließen';
 $string['event_students'] = 'Anzahl der Teilnehmenden';
 $string['event_students_help'] = 'Tragen Sie die erwartete Anzahl der Teilnehmenden ein.';
 $string['event_supportperson'] = 'Support persons';
@@ -446,6 +450,8 @@ $string['overview_rejected_requests'] = 'Abgelehnte Anfragen';
 $string['overview_rejected_requests_empty'] = 'Aktuell liegen keine abgelehnten Buchungsanfragen in der Papierkorb-Queue vor.';
 $string['overview_rejected_requests_help'] = 'Zeigt den Papierkorb für abgelehnte Buchungsanfragen, bis eine Anfrage wieder aktiviert wird.';
 $string['overview_reporting_help'] = 'Zeigt alle Buchungen im gewählten Zeitraum und Semester.';
+$string['overview_request_pageinfo'] = 'Seite {$a->page} von {$a->pages} ({$a->count} Anfragen insgesamt)';
+$string['overview_request_per_page'] = 'Anfragen pro Seite';
 $string['overview_request_workspace'] = 'Anfragen-Workspace';
 $string['overview_request_workspace_help'] = 'Verwaltet offene Buchungsanfragen und den Papierkorb für abgelehnte Anfragen in einem gemeinsamen BookIt-Workspace, ohne den Activity-Kontext zu verlassen.';
 $string['overview_request_workspace_switch'] = 'Anfrage-Queues';

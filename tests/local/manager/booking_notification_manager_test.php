@@ -193,10 +193,12 @@ final class booking_notification_manager_test extends advanced_testcase {
 
         $this->assertSame('Shared accepted Configured Exam', $bookermessage->subject);
         $this->assertSame('Shared accepted Configured Exam', $examinermessage->subject);
-        $this->assertStringStartsWith('Shared body Configured Exam ', $bookermessage->fullmessage);
-        $this->assertStringStartsWith('Shared body Configured Exam ', $examinermessage->fullmessage);
+        $this->assertStringStartsWith("Hello,\n\nShared body Configured Exam ", $bookermessage->fullmessage);
+        $this->assertStringStartsWith("Hello,\n\nShared body Configured Exam ", $examinermessage->fullmessage);
         $this->assertStringNotContainsString('###BOOKINGDATE###', $bookermessage->fullmessage);
         $this->assertStringNotContainsString('###BOOKINGDATE###', $examinermessage->fullmessage);
+        $this->assertStringContainsString("\n\nRoom: ", $bookermessage->fullmessage);
+        $this->assertStringContainsString("\n\nKind regards,\nYour BookIt team", $bookermessage->fullmessage);
     }
 
     /**
@@ -227,9 +229,11 @@ final class booking_notification_manager_test extends advanced_testcase {
         $this->assertCount(1, $messages);
         $this->assertStringStartsWith('Booking request accepted: Configured Exam on ', $messages[0]->subject);
         $this->assertStringStartsWith(
-            'Thank you for your request "Configured Exam" for ',
+            "Hello,\n\nThank you for your request \"Configured Exam\" for ",
             $messages[0]->fullmessage
         );
+        $this->assertStringContainsString("\n\nOpen booking: ", $messages[0]->fullmessage);
+        $this->assertStringEndsWith("Kind regards,\nYour BookIt team", $messages[0]->fullmessage);
     }
 
     /**

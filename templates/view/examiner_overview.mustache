@@ -81,6 +81,22 @@
     </div>
 
     {{#showmyeventssection}}
+    {{#showhistorytab}}
+    <nav class="mb-3" aria-label="{{#str}}overview, mod_bookit{{/str}}">
+        <ul class="nav nav-tabs mod-bookit-overview-tabs">
+            <li class="nav-item">
+                <a class="nav-link {{#myeventsactive}}active{{/myeventsactive}}" href="{{myeventsurl}}">
+                    {{#str}}overview_my_events, mod_bookit{{/str}}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{#historyactive}}active{{/historyactive}}" href="{{historyurl}}">
+                    {{#str}}overview_history, mod_bookit{{/str}}
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {{/showhistorytab}}
     <div class="mb-3">
         <h3 class="h5 mb-0">{{sectiontitle}}</h3>
         {{#showoverviewfilters}}
@@ -177,8 +193,9 @@
                            data-eventid="{{id}}"
                            data-cmid="{{cmid}}"
                            {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}
+                           {{#cancelbuttontext}}data-cancel-button-text="{{cancelbuttontext}}"{{/cancelbuttontext}}
                            data-is-reserved-projection="{{#is_reserved_projection}}1{{/is_reserved_projection}}{{^is_reserved_projection}}0{{/is_reserved_projection}}">
-                            {{name}}
+                           {{name}}
                         </a>
                         {{/caneventdetails}}
                         {{^caneventdetails}}{{name}}{{/caneventdetails}}
@@ -340,7 +357,8 @@
                        class="bookit-event-link"
                        data-eventid="{{id}}"
                        data-cmid="{{cmid}}"
-                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}>
+                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}
+                       {{#cancelbuttontext}}data-cancel-button-text="{{cancelbuttontext}}"{{/cancelbuttontext}}>
                         {{name}}
                     </a>
                     {{/caneventdetails}}
@@ -388,7 +406,7 @@
                 </td>
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
                 <td class="align-middle">
-                    <div class="d-flex flex-wrap justify-content-center mod-bookit-open-request-actions">
+                    <div class="mod-bookit-open-request-actions">
                         {{#actions}}
                         <button type="button"
                                 class="btn btn-sm {{btnclass}}"
@@ -495,7 +513,7 @@
                 </td>
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
                 <td class="align-middle">
-                    <div class="d-flex flex-wrap justify-content-center mod-bookit-open-request-actions">
+                    <div class="mod-bookit-open-request-actions">
                         {{#actions}}
                         <button type="button"
                                 class="btn btn-sm {{btnclass}}"
@@ -521,5 +539,36 @@
     </div>
     {{/hasrejectedrequests}}
     {{/requestworkspacerejectedactive}}
+
+    {{#showrequestpagination}}
+    <div class="mod-bookit-request-pagination mt-3">
+        <form method="get" class="form-inline mod-bookit-request-pagination-form">
+            <input type="hidden" name="id" value="{{cmid}}">
+            <input type="hidden" name="tab" value="{{requestworkspaceactivetab}}">
+            <input type="hidden" name="queuepage" value="1">
+            <label for="bookit-request-queueperpage" class="mr-2 mb-0">{{requestperpagelabel}}</label>
+            <select id="bookit-request-queueperpage" name="queueperpage" class="custom-select custom-select-sm mr-3">
+                {{#requestperpageoptions}}
+                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                {{/requestperpageoptions}}
+            </select>
+        </form>
+        <div class="small text-muted">{{requestpageinfo}}</div>
+        <div class="btn-group" role="group" aria-label="{{requestpaginationlabel}}">
+            {{#hasrequestprev}}
+            <a class="btn btn-sm btn-outline-secondary" href="{{requestprevurl}}">{{requestprevlabel}}</a>
+            {{/hasrequestprev}}
+            {{^hasrequestprev}}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>{{requestprevlabel}}</button>
+            {{/hasrequestprev}}
+            {{#hasrequestnext}}
+            <a class="btn btn-sm btn-outline-secondary" href="{{requestnexturl}}">{{requestnextlabel}}</a>
+            {{/hasrequestnext}}
+            {{^hasrequestnext}}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>{{requestnextlabel}}</button>
+            {{/hasrequestnext}}
+        </div>
+    </div>
+    {{/showrequestpagination}}
     {{/showrequestworkspacesection}}
 </div>

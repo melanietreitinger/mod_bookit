@@ -314,12 +314,12 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_details(stdClass $event, context_module $context, int $userid): bool {
-        if (self::is_observer_restricted_mode($context)) {
-            return false;
-        }
-
         if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
             return true;
+        }
+
+        if (self::is_observer_restricted_mode($context)) {
+            return false;
         }
 
         if (!has_capability('mod/bookit:viewalldetailsofownevent', $context)) {
@@ -342,12 +342,12 @@ class event_access_manager {
             return false;
         }
 
-        if (self::is_observer_restricted_mode($context)) {
-            return self::is_booking_confirmed($event);
-        }
-
         if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
             return true;
+        }
+
+        if (self::is_observer_restricted_mode($context)) {
+            return self::is_booking_confirmed($event);
         }
 
         if (!has_capability('mod/bookit:viewownoverview', $context)) {
@@ -370,12 +370,12 @@ class event_access_manager {
             return false;
         }
 
-        if (self::is_observer_restricted_mode($context)) {
-            return self::is_booking_confirmed($event);
+        if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
+            return true;
         }
 
-        if (self::is_open_request($event) && self::can_manage_open_requests($context)) {
-            return self::user_has_participant_visibility($event, $userid);
+        if (self::is_observer_restricted_mode($context)) {
+            return self::is_booking_confirmed($event);
         }
 
         return self::can_user_view_event_in_overview($event, $context, $userid);
@@ -393,6 +393,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_history(stdClass $event, context_module $context, int $userid): bool {
+        if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
+            return true;
+        }
+
         if (self::is_observer_restricted_mode($context)) {
             return false;
         }

@@ -607,8 +607,44 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_reactivate_rejected_request($rejected, $context));
 
         $this->assertTrue(event_access_manager::can_user_view_event_in_overview($openrequest, $context, $serviceuser->id));
-        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($openrequest, $context, $serviceuser->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($openrequest, $context, $serviceuser->id));
         $this->assertFalse(event_access_manager::can_reactivate_rejected_request($openrequest, $context));
+    }
+
+    /**
+     * A full-detail role must still win over observer restrictions in mixed-role assignments.
+     *
+     * @return void
+     */
+    public function test_full_detail_role_overrides_observer_restriction_in_mixed_assignments(): void {
+        $this->resetAfterTest(true);
+
+        $context = $this->create_bookit_context_with_observer_role();
+        $detailrole = \create_role('Bookit detail service', 'bookitdetailservice', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $detailrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $detailrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $detailrole, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitobserver');
+        \role_assign($detailrole, $user->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'usermodified' => 0,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::is_observer_restricted_mode($context));
+        $this->assertTrue(event_access_manager::can_user_view_event_details($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
     }
 
     /**

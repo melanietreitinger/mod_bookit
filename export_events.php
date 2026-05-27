@@ -358,16 +358,7 @@ $institutionnames = export_events_institution_names($allinstitutionids);
             'LOCATION:' . $loc,
         ];
 
-        if ($descrrows) {
-            /* first row starts the DESCRIPTION property */
-            $evlines[] = 'DESCRIPTION:' . ics_escape(array_shift($descrrows));
-            /* continuation lines: leading space = folded line */
-            foreach ($descrrows as $row) {
-                $evlines[] = ' ' . ics_escape($row);
-            }
-        } else {
-            $evlines[] = 'DESCRIPTION:';
-        }
+        $evlines[] = 'DESCRIPTION:' . ics_escape($descrrows ? implode("\n\n", $descrrows) : '');
 
         $evlines[] = 'END:VEVENT';
 

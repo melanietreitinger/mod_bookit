@@ -282,6 +282,7 @@ class booking_notification_manager {
                 self::resolve_template_text($localizedtemplate, 'body', $recipientlang),
                 $localizedtemplate
             );
+            $body = self::format_message_body($body, $localizedtemplate, $recipientlang);
 
             $message = new \core\message\message();
             $message->component = 'mod_bookit';
@@ -324,6 +325,7 @@ class booking_notification_manager {
             self::resolve_template_text($localizedtemplate, 'body', $recipientlang),
             $localizedtemplate
         );
+        $body = self::format_message_body($body, $localizedtemplate, $recipientlang);
         $sent = 0;
 
         foreach ($serviceaddresses as $address) {
@@ -368,6 +370,40 @@ class booking_notification_manager {
         ];
 
         return strtr($template, $replacements);
+    }
+
+    /**
+     * Wrap the resolved notification body in a shared greeting, detail block and closing.
+     *
+     * @param string $body
+     * @param stdClass $data
+     * @param string $lang
+     * @return string
+     */
+    private static function format_message_body(string $body, stdClass $data, string $lang): string {
+        $sections = array_filter([
+            trim(install_helper::get_booking_status_notification_greeting($lang)),
+            trim($body),
+            trim(self::build_booking_details_block($data, $lang)),
+            trim(install_helper::get_booking_status_notification_closing($lang)),
+        ], static fn(string $section): bool => $section !== '');
+
+        return implode("\n\n", $sections);
+    }
+
+    /**
+     * Build a consistent plain-text detail block for booking notifications.
+     *
+     * @param stdClass $data
+     * @param string $lang
+     * @return string
+     */
+    private static function build_booking_details_block(stdClass $data, string $lang): string {
+        $oldlang = force_current_language(install_helper::normalize_booking_status_notification_language($lang));
+        $template = get_string('bookingstatus_notification_body_default', 'mod_bookit');
+        force_current_language($oldlang);
+
+        return self::replace_placeholders($template, $data);
     }
 
     /**

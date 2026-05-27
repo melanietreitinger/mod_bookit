@@ -84,6 +84,8 @@ $string['bookingstatus_notification_body_default'] = 'The booking request "###EV
     . 'Other examiners: ###OTHEREXAMINERS###'
     . "\n\n"
     . 'Open booking: ###EVENTURL###';
+$string['bookingstatus_notification_closing'] = "Kind regards,\nYour BookIt team";
+$string['bookingstatus_notification_greeting'] = 'Hello,';
 $string['bookingstatus_notification_subject_default'] = 'Booking status updated: {$a->eventname} ({$a->bookingstatus})';
 $string['bookingstatus_notifications_desc'] = 'Configure recipients and message templates for booking-status changes.';
 $string['bookingstatus_notifications_heading'] = 'Booking status notifications';
@@ -294,6 +296,8 @@ $string['event_room'] = 'Room';
 $string['event_room_help'] = 'Select the room for your event.';
 $string['event_start'] = 'Event start';
 $string['event_start_help'] = 'Please enter here the start date and time for your event.';
+$string['event_status_action_cancel_only'] = 'Send cancellation';
+$string['event_status_action_close_modal'] = 'Close modal';
 $string['event_students'] = 'Amount of participants';
 $string['event_students_help'] = 'Enter amount of participants as a number.';
 $string['event_supportperson'] = 'Support persons';
@@ -453,6 +457,8 @@ $string['overview_rejected_requests'] = 'Rejected requests';
 $string['overview_rejected_requests_empty'] = 'There are currently no rejected booking requests in the trash queue.';
 $string['overview_rejected_requests_help'] = 'Shows the rejected-request trash for service-team follow-up until a request is reactivated.';
 $string['overview_reporting_help'] = 'Shows all bookings in the selected period and semester.';
+$string['overview_request_pageinfo'] = 'Page {$a->page} of {$a->pages} ({$a->count} total requests)';
+$string['overview_request_per_page'] = 'Requests per page';
 $string['overview_request_workspace'] = 'Request workspace';
 $string['overview_request_workspace_help'] = 'Manage open booking requests and the rejected-request trash inside one shared BookIt workspace without leaving the activity context.';
 $string['overview_request_workspace_switch'] = 'Request queues';

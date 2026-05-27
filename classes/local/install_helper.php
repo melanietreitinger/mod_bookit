@@ -242,6 +242,26 @@ class install_helper {
     }
 
     /**
+     * Get the shared localized greeting for booking-status notifications.
+     *
+     * @param string|null $lang
+     * @return string
+     */
+    public static function get_booking_status_notification_greeting(?string $lang = null): string {
+        return self::get_notification_shared_string('bookingstatus_notification_greeting', $lang);
+    }
+
+    /**
+     * Get the shared localized closing for booking-status notifications.
+     *
+     * @param string|null $lang
+     * @return string
+     */
+    public static function get_booking_status_notification_closing(?string $lang = null): string {
+        return self::get_notification_shared_string('bookingstatus_notification_closing', $lang);
+    }
+
+    /**
      * Ensure expressive booking-status notification defaults exist for fresh installs.
      *
      * @return void
@@ -313,6 +333,25 @@ class install_helper {
         }
 
         $stringkey = 'bookingstatus_' . $field . '_default_' . $statuskey;
+        if ($lang === null) {
+            return get_string($stringkey, 'mod_bookit');
+        }
+
+        $oldlang = force_current_language(self::normalize_booking_status_notification_language($lang));
+        $text = get_string($stringkey, 'mod_bookit');
+        force_current_language($oldlang);
+
+        return $text;
+    }
+
+    /**
+     * Resolve one shared localized notification string.
+     *
+     * @param string $stringkey
+     * @param string|null $lang
+     * @return string
+     */
+    private static function get_notification_shared_string(string $stringkey, ?string $lang = null): string {
         if ($lang === null) {
             return get_string($stringkey, 'mod_bookit');
         }

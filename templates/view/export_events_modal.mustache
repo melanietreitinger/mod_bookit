@@ -57,37 +57,45 @@
             <div class="modal-body">
                 <p class="text-muted small mb-3">{{#str}}selectevents, mod_bookit{{/str}}</p>
 
-                <div class="mb-3 d-flex gap-2 align-items-center flex-wrap bookit-export-toolbar">
-                    <label for="bookit-modal-search" class="mb-0 font-weight-bold">
+                <div class="mb-3 bookit-export-toolbar">
+                    <label for="bookit-modal-search" class="mb-1 font-weight-bold">
                         {{#str}}search, core{{/str}}:
                     </label>
                     <input
                         type="text"
                         id="bookit-modal-search"
-                        class="form-control w-auto d-inline"
+                        class="form-control bookit-export-search"
                         placeholder="{{#str}}search, core{{/str}}">
                 </div>
 
-                <div class="mb-3 d-flex gap-2 align-items-center flex-wrap bookit-export-toolbar">
-                    <label for="bookit-export-start" class="mb-0 font-weight-bold">
+                <div class="mb-3 bookit-export-toolbar">
+                    <div class="form-row align-items-end">
+                        <div class="form-group col-md-4 mb-2">
+                            <label for="bookit-export-start" class="mb-1 font-weight-bold">
                         {{#str}}exportevents_from, mod_bookit{{/str}}
-                    </label>
-                    <input type="date" id="bookit-export-start" class="form-control w-auto d-inline">
-
-                    <label for="bookit-export-end" class="mb-0 font-weight-bold">
+                            </label>
+                            <input type="date" id="bookit-export-start" class="form-control">
+                        </div>
+                        <div class="form-group col-md-4 mb-2">
+                            <label for="bookit-export-end" class="mb-1 font-weight-bold">
                         {{#str}}exportevents_to, mod_bookit{{/str}}
-                    </label>
-                    <input type="date" id="bookit-export-end" class="form-control w-auto d-inline">
-
-                    <button type="button" class="btn btn-sm btn-light" id="bookit-export-reset-range">
-                        {{#str}}exportevents_reset_range, mod_bookit{{/str}}
-                    </button>
+                            </label>
+                            <input type="date" id="bookit-export-end" class="form-control">
+                        </div>
+                        <div class="form-group col-md-4 mb-2">
+                            <button type="button" class="btn btn-sm btn-light" id="bookit-export-reset-range">
+                                {{#str}}exportevents_reset_range, mod_bookit{{/str}}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="mb-2">
                     <div id="bookit-export-selection-count" class="badge badge-light" aria-live="polite">
                         {{#str}}exportevents_selectedcount, mod_bookit, 0{{/str}}
                     </div>
+                </div>
+                <div class="mb-3 d-flex flex-wrap gap-2">
                     <button type="button" class="btn btn-sm btn-light mr-1" id="bookit-check-all">
                         {{#str}}selectall, core{{/str}}
                     </button>
@@ -96,7 +104,7 @@
                     </button>
                 </div>
 
-                <div id="bookit-export-list" class="list-group small"></div>
+                <div id="bookit-export-list" class="list-group small bookit-export-list"></div>
             </div>
 
             <div class="modal-footer">
