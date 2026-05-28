@@ -41,7 +41,7 @@ Feature: Process open booking requests
       | Exam Physics II | ##today noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
     When I log in as "susiservice"
     And I open the Bookit overview "openrequests" for "My BookIt Activity"
-    Then the Bookit main tabs should contain "Open requests (1)"
+    Then the Bookit main tabs should contain "Open requests"
     And the Bookit main tabs should not contain "Rejected requests"
     And the Bookit overview should show 1 activity tab row
     And the Bookit request workspace switch should contain "Open requests"
@@ -57,7 +57,7 @@ Feature: Process open booking requests
     And I open the Bookit overview "openrequests" for "My BookIt Activity"
     And I click the open request action "Accept" for event "Exam Chemistry I"
     Then I should see "There are currently no open booking requests."
-    And the Bookit main tabs should contain "Open requests (0)"
+    And the Bookit main tabs should contain "Open requests"
     And the Bookit overview should show 1 activity tab row
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Exam Chemistry I"
@@ -69,7 +69,7 @@ Feature: Process open booking requests
       | Rejected oral exam | ##today noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | 4 | 1 |
     When I log in as "susiservice"
     And I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
-    Then the Bookit main tabs should contain "Open requests (0)"
+    Then the Bookit main tabs should contain "Open requests"
     And the Bookit main tabs should not contain "Rejected requests"
     And the Bookit overview should show 1 activity tab row
     And the Bookit request workspace switch should contain "Open requests"
@@ -93,7 +93,7 @@ Feature: Process open booking requests
     And I open the Bookit overview "openrequests" for "My BookIt Activity"
     And I click the open request action "Reject" for event "Reject me directly"
     Then I should see "There are currently no open booking requests."
-    And the Bookit main tabs should contain "Open requests (0)"
+    And the Bookit main tabs should contain "Open requests"
     When I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
     Then I should see "Reject me directly"
     And I should see "Rejected"

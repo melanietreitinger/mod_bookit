@@ -69,7 +69,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $before = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], '', '');
+        $before = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
         $this->assertSame(1, (int)$before['summary']['openrequestcount']);
         $this->assertSame($eventid, (int)$before['items'][0]['eventid']);
 
@@ -77,13 +77,17 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_ACCEPTED,
-            'openrequests'
+            'openrequests',
+            1
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$response['status']);
         $this->assertSame('openrequests', $response['tab']);
+        $this->assertNotEmpty($response['queue']);
+        $this->assertSame(0, (int)$response['queue']['summary']['openrequestcount']);
+        $this->assertSame([], $response['queue']['items']);
 
-        $after = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], '', '');
+        $after = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
         $this->assertSame(0, (int)$after['summary']['openrequestcount']);
         $this->assertSame([], $after['items']);
 

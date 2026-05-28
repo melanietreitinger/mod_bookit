@@ -17,6 +17,7 @@
 namespace mod_bookit\local\read;
 
 use context_module;
+use core_user;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 use stdClass;
@@ -51,6 +52,63 @@ class overview_queue_read_mapper {
             ? 'history'
             : (event_manager::is_hidden_from_active_overview($event) ? 'hidden_from_active' : 'active');
         $statusstyle = $statuscolors[$bookingstatus] ?? ['bg' => '#ffffff', 'fg' => '#000000'];
+        $statusgroupkey = match ($bookingstatus) {
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
+            event_access_manager::BOOKINGSTATUS_ACCEPTED => 'confirmed',
+            default => 'closed',
+        };
+        $roles = [];
+        foreach (event_access_manager::get_user_roles_for_event($event, $userid) as $role) {
+            if ($role === 'personincharge') {
+                $roles[] = get_string('overview_role_personincharge', 'mod_bookit');
+            } else if ($role === 'bookingperson') {
+                $roles[] = get_string('overview_role_bookingperson', 'mod_bookit');
+            } else if ($role === 'otherexaminer') {
+                $roles[] = get_string('overview_role_otherexaminer', 'mod_bookit');
+            } else if ($role === 'supportperson') {
+                $roles[] = get_string('overview_role_supportperson', 'mod_bookit');
+            }
+        }
+
+        $personincharge = '-';
+        if (!empty($event->personinchargeid)) {
+            $user = core_user::get_user((int)$event->personinchargeid);
+            if ($user) {
+                $personincharge = fullname($user);
+            }
+        }
+
+        $transitionactions = [];
+        foreach (event_manager::get_booking_status_transition_options($bookingstatus) as $option) {
+            $value = (int)$option['value'];
+            $btnclass = 'btn-outline-secondary';
+            if ($value === event_access_manager::BOOKINGSTATUS_IN_PROGRESS) {
+                $btnclass = 'btn-warning';
+            } else if ($value === event_access_manager::BOOKINGSTATUS_ACCEPTED) {
+                $btnclass = 'btn-success';
+            } else if ($value === event_access_manager::BOOKINGSTATUS_CANCELED) {
+                $btnclass = 'btn-dark';
+            } else if ($value === event_access_manager::BOOKINGSTATUS_REJECTED) {
+                $btnclass = 'btn-danger';
+            }
+
+            $transitionactions[] = [
+                'value' => $value,
+                'label' => match ($value) {
+                    event_access_manager::BOOKINGSTATUS_NEW
+                        => $bookingstatus === event_access_manager::BOOKINGSTATUS_REJECTED
+                            ? get_string('bookingstatus_action_reactivate', 'mod_bookit')
+                            : $option['label'],
+                    event_access_manager::BOOKINGSTATUS_IN_PROGRESS => get_string('bookingstatus_action_inprogress', 'mod_bookit'),
+                    event_access_manager::BOOKINGSTATUS_ACCEPTED => get_string('bookingstatus_action_accept', 'mod_bookit'),
+                    event_access_manager::BOOKINGSTATUS_CANCELED => get_string('bookingstatus_action_cancel', 'mod_bookit'),
+                    event_access_manager::BOOKINGSTATUS_REJECTED => get_string('bookingstatus_action_reject', 'mod_bookit'),
+                    default => $option['label'],
+                },
+                'btnclass' => $btnclass,
+            ];
+        }
 
         return [
             'eventid' => (int)$event->id,
@@ -60,8 +118,10 @@ class overview_queue_read_mapper {
             'starttime' => (int)($event->starttime ?? 0),
             'endtime' => (int)($event->endtime ?? 0),
             'room' => (string)($event->room ?? ''),
+            'personincharge' => $personincharge,
+            'myrole' => $roles ? implode(', ', $roles) : '-',
             'historyclassification' => $historyclassification,
-            'datestr' => userdate((int)($event->starttime ?? 0)),
+            'datestr' => userdate((int)($event->starttime ?? 0), '%d.%m.%Y'),
             'actions' => [
                 'caneventdetails' => event_access_manager::can_user_view_event_details($event, $context, $userid),
                 'canreactivate' => event_access_manager::can_reactivate_rejected_request($event, $context),
@@ -69,9 +129,23 @@ class overview_queue_read_mapper {
                     static fn(array $option): int => (int)$option['value'],
                     event_manager::get_booking_status_transition_options($bookingstatus, true)
                 ),
+                'transitionactions' => $transitionactions,
             ],
             'statusstyle' => 'background-color:' . $statusstyle['bg'] . ';color:' . $statusstyle['fg'] . ';',
+            'statusclass' => event_manager::get_booking_status_class($bookingstatus),
+            'statusgroupkey' => $statusgroupkey,
+            'statusgrouptext' => get_string('overview_status_group_' . $statusgroupkey, 'mod_bookit'),
             'statustext' => get_string('event_bookingstatus_' . $bookingstatus, 'mod_bookit'),
+            'savebuttontext' => event_access_manager::should_block_participant_past_edit($event, $context, $userid)
+                ? get_string('event_past_participant_close', 'mod_bookit')
+                : (
+                    event_access_manager::can_participant_cancel_only($event, $context, $userid)
+                        ? get_string('event_status_action_cancel_only', 'mod_bookit')
+                        : ''
+                ),
+            'cancelbuttontext' => event_access_manager::can_participant_cancel_only($event, $context, $userid)
+                ? get_string('event_status_action_close_modal', 'mod_bookit')
+                : '',
             'latesthistorysummary' => self::map_latest_history_summary($latesthistory),
         ];
     }
@@ -92,6 +166,13 @@ class overview_queue_read_mapper {
             return '';
         }
 
-        return get_string('overview_workflow_history', 'mod_bookit') . ': ' . $action;
+        $summary = get_string('history_action_' . $action, 'mod_bookit') . ' · '
+            . userdate((int)$latesthistory->timecreated, get_string('strftimedatetime', 'langconfig'));
+        $actorname = trim(($latesthistory->firstname ?? '') . ' ' . ($latesthistory->lastname ?? ''));
+        if ($actorname !== '') {
+            $summary .= ' · ' . $actorname;
+        }
+
+        return $summary;
     }
 }

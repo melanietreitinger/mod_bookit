@@ -29,6 +29,8 @@ import Notification from 'core/notification';
 
 const SELECTOR = 'select[data-action="update-booking-status"]';
 const BUTTON_SELECTOR = 'button[data-action="set-booking-status"]';
+const REQUEST_COUNT_SELECTOR = '[data-region="request-queue-count"]';
+const REQUEST_PAGING_SELECTOR = '[data-region="request-paging"]';
 
 /**
  * Resolve the optional governed read config injected by overview.php.
@@ -44,6 +46,7 @@ const getReadConfig = (workspace) => {
     return {
         ...window.bookitOverviewReadConfig,
         workspace: workspace,
+        page: Number(window.bookitOverviewReadConfig.page || 1),
     };
 };
 
@@ -81,16 +84,193 @@ const applyColor = (select) => {
 };
 
 /**
- * Update overview queue counters and remove outdated request rows after a workflow action.
+ * Escape text for safe HTML interpolation.
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+const escapeHtml = (value) => {
+    const div = document.createElement('div');
+    div.textContent = String(value ?? '');
+    return div.innerHTML;
+};
+
+/**
+ * Build the event title cell.
+ *
+ * @param {Object} item
+ * @param {Object} readConfig
+ * @returns {string}
+ */
+const renderTitleCell = (item, readConfig) => {
+    if (!item.actions || !item.actions.caneventdetails) {
+        return escapeHtml(item.name);
+    }
+
+    const saveText = item.savebuttontext ? ` data-save-button-text="${escapeHtml(item.savebuttontext)}"` : '';
+    const cancelText = item.cancelbuttontext ? ` data-cancel-button-text="${escapeHtml(item.cancelbuttontext)}"` : '';
+    return `<a href="#"
+        class="bookit-event-link"
+        data-eventid="${Number(item.eventid || item.id || 0)}"
+        data-cmid="${Number(readConfig.cmid || 0)}"${saveText}${cancelText}>${escapeHtml(item.name)}</a>`;
+};
+
+/**
+ * Render the workflow action buttons for a request row.
+ *
+ * @param {Object} item
+ * @param {Object} readConfig
+ * @param {string} workspace
+ * @returns {string}
+ */
+const renderActionButtons = (item, readConfig, workspace) => {
+    const actions = (item.actions && item.actions.transitionactions) || [];
+    return actions.map((action) => `<button type="button"
+            class="btn btn-sm ${escapeHtml(action.btnclass)}"
+            data-action="set-booking-status"
+            data-eventid="${Number(item.eventid || item.id || 0)}"
+            data-cmid="${Number(readConfig.cmid || 0)}"
+            data-tab="${escapeHtml(workspace)}"
+            data-status="${Number(action.value || 0)}">${escapeHtml(action.label)}</button>`).join('');
+};
+
+/**
+ * Render a request-workspace table row from the governed payload.
+ *
+ * @param {Object} item
+ * @param {Object} readConfig
+ * @param {string} workspace
+ * @returns {string}
+ */
+const renderRequestRow = (item, readConfig, workspace) => {
+    const rowClass = workspace === 'rejectedrequests' ? 'rejected' : 'open';
+    const statusGroupKey = escapeHtml(item.statusgroupkey || 'open');
+    const latestHistorySummary = item.latesthistorysummary
+        ? `<div class="small text-muted mt-1">${escapeHtml(item.latesthistorysummary)}</div>`
+        : '';
+
+    return `<tr class="mod-bookit-${rowClass}-request-row mod-bookit-status-row mod-bookit-status-row-${statusGroupKey}">
+    <td class="align-middle">${Number(item.id || item.eventid || 0)}</td>
+    <td class="align-middle">${renderTitleCell(item, readConfig)}</td>
+    <td class="align-middle">${escapeHtml(item.room || '-')}</td>
+    <td class="align-middle">${escapeHtml(item.personincharge || '-')}</td>
+    <td class="align-middle">${escapeHtml(item.myrole || '-')}</td>
+    <td class="align-middle mod-bookit-status-cell">
+        <div class="mod-bookit-status-chip ${escapeHtml(item.statusclass || '')} mod-bookit-status-chip-${statusGroupKey}"
+             style="${escapeHtml(item.statusstyle || '')}">
+            <div class="font-weight-bold">${escapeHtml(item.statustext || '')}</div>
+            <div class="small">${escapeHtml(item.statusgrouptext || '')}</div>
+            ${latestHistorySummary}
+        </div>
+    </td>
+    <td class="align-middle" data-sort="${Number(item.starttime || 0)}">${escapeHtml(item.datestr || '')}</td>
+    <td class="align-middle">
+        <div class="mod-bookit-open-request-actions">${renderActionButtons(item, readConfig, workspace)}</div>
+    </td>
+</tr>`;
+};
+
+/**
+ * Update the visible queue count text.
+ *
+ * @param {Object} queueResponse
+ */
+const updateVisibleQueueCount = (queueResponse) => {
+    const countNode = document.querySelector(REQUEST_COUNT_SELECTOR);
+    if (countNode && queueResponse.summary) {
+        countNode.textContent = queueResponse.summary.workspacecounttext || '';
+    }
+};
+
+/**
+ * Update the paging markup and browser URL for the current request workspace.
  *
  * @param {Object} readConfig
- * @param {HTMLElement} trigger
+ * @param {Object} queueResponse
+ */
+const syncPaging = (readConfig, queueResponse) => {
+    const pagingNode = document.querySelector(REQUEST_PAGING_SELECTOR);
+    const pagingHtml = queueResponse.fragments ? (queueResponse.fragments.paginghtml || '') : '';
+    if (pagingNode) {
+        if (pagingHtml) {
+            pagingNode.innerHTML = pagingHtml;
+        } else {
+            pagingNode.remove();
+        }
+    } else if (pagingHtml) {
+        const workspaceSection = document.querySelector('.mod_bookit-overview-examiner_overview');
+        if (workspaceSection) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mod-bookit-request-pagination mt-3';
+            wrapper.dataset.region = 'request-paging';
+            wrapper.innerHTML = pagingHtml;
+            workspaceSection.appendChild(wrapper);
+        }
+    }
+
+    if (queueResponse.paging) {
+        readConfig.page = Number(queueResponse.paging.currentpage || 1);
+        if (window.bookitOverviewReadConfig) {
+            window.bookitOverviewReadConfig.page = readConfig.page;
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('queuepage', String(readConfig.page));
+        window.history.replaceState({}, '', url);
+    }
+};
+
+/**
+ * Re-render the active request table or empty state.
+ *
+ * @param {Object} readConfig
+ * @param {Object} queueResponse
+ */
+const renderQueueState = (readConfig, queueResponse) => {
+    const tableSelector = readConfig.workspace === 'rejectedrequests' ? '#rejected-requests-table' : '#open-requests-table';
+    const table = document.querySelector(tableSelector);
+    const emptyMessage = readConfig.workspace === 'rejectedrequests'
+        ? (readConfig.rejectedrequestsempty || '')
+        : (readConfig.openrequestsempty || '');
+
+    updateVisibleQueueCount(queueResponse);
+    syncPaging(readConfig, queueResponse);
+
+    if (table && queueResponse.items && queueResponse.items.length) {
+        const tbody = table.querySelector('tbody');
+        tbody.innerHTML = queueResponse.items.map((item) => renderRequestRow(item, readConfig, readConfig.workspace)).join('');
+        return;
+    }
+
+    const alertMarkup = `<div class="alert alert-info mb-0">${escapeHtml(emptyMessage)}</div>`;
+    if (table) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = alertMarkup;
+        table.replaceWith(wrapper.firstElementChild);
+        return;
+    }
+
+    const existingAlert = document.querySelector('.mod_bookit-overview-examiner_overview .alert.alert-info');
+    if (existingAlert) {
+        existingAlert.textContent = emptyMessage;
+    }
+};
+
+/**
+ * Update overview queue counters and rows after a workflow action.
+ *
+ * @param {Object} readConfig
+ * @param {?Object} initialQueueResponse
  * @param {string} redirectUrl
  * @returns {Promise<void>}
  */
-const refreshQueueFromGovernedRead = (readConfig, trigger, redirectUrl) => {
+const refreshQueueFromGovernedRead = (readConfig, initialQueueResponse, redirectUrl) => {
     if (!readConfig || !['openrequests', 'rejectedrequests'].includes(readConfig.workspace)) {
         window.location.assign(redirectUrl || window.location.href);
+        return Promise.resolve();
+    }
+
+    if (initialQueueResponse) {
+        renderQueueState(readConfig, initialQueueResponse);
         return Promise.resolve();
     }
 
@@ -102,54 +282,12 @@ const refreshQueueFromGovernedRead = (readConfig, trigger, redirectUrl) => {
             bookingstatuses: readConfig.bookingstatuses || [],
             facultyids: readConfig.facultyids || [],
             semesterids: readConfig.semesterids || [],
+            page: readConfig.page || 1,
             reportstart: readConfig.reportstart || '',
             reportend: readConfig.reportend || '',
         },
     }])[0].then((queueResponse) => {
-        const openCount = queueResponse.summary ? queueResponse.summary.openrequestcount : 0;
-        const rejectedCount = queueResponse.summary ? queueResponse.summary.rejectedrequestcount : 0;
-
-        document.querySelectorAll('.mod-bookit-request-workspace-switch a').forEach((link) => {
-            if (link.href.includes('tab=openrequests')) {
-                const badge = link.querySelector('.badge');
-                if (badge) {
-                    badge.textContent = String(openCount);
-                }
-            }
-            if (link.href.includes('tab=rejectedrequests')) {
-                const badge = link.querySelector('.badge');
-                if (badge) {
-                    badge.textContent = String(rejectedCount);
-                }
-            }
-        });
-
-        document.querySelectorAll('.secondary-navigation .navigation a').forEach((link) => {
-            if (link.textContent.includes('Open requests')) {
-                link.textContent = link.textContent.replace(/\(\d+\)/, '(' + String(openCount) + ')');
-            }
-        });
-
-        const row = trigger.closest('tr');
-        const eventid = Number(trigger.dataset.eventid || 0);
-        const rowStillVisible = (queueResponse.items || []).some((item) => Number(item.eventid) === eventid);
-        if (row && !rowStillVisible) {
-            row.remove();
-        }
-
-        const table = document.querySelector(
-            readConfig.workspace === 'rejectedrequests' ? '#rejected-requests-table' : '#open-requests-table'
-        );
-        const tbody = table ? table.querySelector('tbody') : null;
-        if (tbody && tbody.children.length === 0) {
-            const alert = document.createElement('div');
-            alert.className = 'alert alert-info';
-            alert.textContent = readConfig.workspace === 'rejectedrequests'
-                ? (readConfig.rejectedrequestsempty || '')
-                : (readConfig.openrequestsempty || '');
-            table.replaceWith(alert);
-        }
-
+        renderQueueState(readConfig, queueResponse);
         return null;
     }).catch(() => {
         window.location.assign(redirectUrl || window.location.href);
@@ -181,11 +319,19 @@ export const init = () => {
 
         Ajax.call([{
             methodname: 'mod_bookit_update_event_booking_status',
-            args: {cmid, eventid, status, tab},
+            args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
         }])[0]
         .then((response) => {
             applyColor(select);
-            return refreshQueueFromGovernedRead(getReadConfig(tab), select, response.redirecturl || window.location.href);
+            if (['openrequests', 'rejectedrequests'].includes(tab)) {
+                window.location.assign(window.location.href);
+                return null;
+            }
+            return refreshQueueFromGovernedRead(
+                getReadConfig(tab),
+                response.queue || null,
+                response.redirecturl || window.location.href
+            );
         })
         .catch((err) => {
             select.disabled = false;
@@ -208,10 +354,18 @@ export const init = () => {
 
         Ajax.call([{
             methodname: 'mod_bookit_update_event_booking_status',
-            args: {cmid, eventid, status, tab},
+            args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
         }])[0]
         .then((response) => {
-            return refreshQueueFromGovernedRead(getReadConfig(tab), button, response.redirecturl || window.location.href);
+            if (['openrequests', 'rejectedrequests'].includes(tab)) {
+                window.location.assign(window.location.href);
+                return null;
+            }
+            return refreshQueueFromGovernedRead(
+                getReadConfig(tab),
+                response.queue || null,
+                response.redirecturl || window.location.href
+            );
         })
         .catch((err) => {
             button.disabled = false;

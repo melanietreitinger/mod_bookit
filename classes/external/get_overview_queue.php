@@ -63,6 +63,7 @@ class get_overview_queue extends external_api {
                 VALUE_DEFAULT,
                 []
             ),
+            'page' => new external_value(PARAM_INT, 'Request workspace page', VALUE_DEFAULT, 1),
             'reportstart' => new external_value(PARAM_TEXT, 'Reporting range start', VALUE_DEFAULT, ''),
             'reportend' => new external_value(PARAM_TEXT, 'Reporting range end', VALUE_DEFAULT, ''),
         ]);
@@ -76,6 +77,7 @@ class get_overview_queue extends external_api {
      * @param array $bookingstatuses
      * @param array $facultyids
      * @param array $semesterids
+     * @param int $page
      * @param string $reportstart
      * @param string $reportend
      * @return array
@@ -86,6 +88,7 @@ class get_overview_queue extends external_api {
         array $bookingstatuses = [],
         array $facultyids = [],
         array $semesterids = [],
+        int $page = 1,
         string $reportstart = '',
         string $reportend = ''
     ): array {
@@ -97,6 +100,7 @@ class get_overview_queue extends external_api {
             'bookingstatuses' => $bookingstatuses,
             'facultyids' => $facultyids,
             'semesterids' => $semesterids,
+            'page' => $page,
             'reportstart' => $reportstart,
             'reportend' => $reportend,
         ]);
@@ -109,7 +113,24 @@ class get_overview_queue extends external_api {
             return event_access_manager::build_governed_denied_response('overviewqueue', $params) + [
                 'workspace' => $workspace,
                 'items' => [],
-                'summary' => ['count' => 0, 'openrequestcount' => 0, 'rejectedrequestcount' => 0],
+                'summary' => [
+                    'count' => 0,
+                    'openrequestcount' => 0,
+                    'rejectedrequestcount' => 0,
+                    'workspacecounttext' => '',
+                ],
+                'paging' => [
+                    'requestedpage' => 1,
+                    'currentpage' => 1,
+                    'perpage' => 25,
+                    'totalpages' => 1,
+                    'totalcount' => 0,
+                    'hasprevious' => false,
+                    'hasnext' => false,
+                    'haspaging' => false,
+                    'adjusted' => false,
+                ],
+                'fragments' => ['paginghtml' => ''],
             ];
         }
 
@@ -128,8 +149,24 @@ class get_overview_queue extends external_api {
             $params['workspace'],
             $filters,
             $filters['start'] ? (new \DateTime($filters['start']))->getTimestamp() : null,
-            $filters['end'] ? (new \DateTime($filters['end']))->getTimestamp() : null
+            $filters['end'] ? (new \DateTime($filters['end']))->getTimestamp() : null,
+            $params['page']
         );
+
+        $paginghtml = '';
+        if (!empty($payload['paging']['haspaging'])) {
+            $pagingbar = new \paging_bar(
+                (int)$payload['paging']['totalcount'],
+                max(0, (int)$payload['paging']['currentpage'] - 1),
+                (int)$payload['paging']['perpage'],
+                new \moodle_url('/mod/bookit/overview.php', [
+                    'id' => $cm->id,
+                    'tab' => $params['workspace'],
+                ])
+            );
+            $paginghtml = $GLOBALS['OUTPUT']->render($pagingbar);
+        }
+        $payload['fragments'] = ['paginghtml' => $paginghtml];
 
         return event_access_manager::build_governed_empty_response(
             'overviewqueue',
@@ -171,19 +208,46 @@ class get_overview_queue extends external_api {
                 'room' => new external_value(PARAM_RAW, 'Room label'),
                 'historyclassification' => new external_value(PARAM_ALPHAEXT, 'History classification'),
                 'datestr' => new external_value(PARAM_RAW, 'Display date'),
+                'personincharge' => new external_value(PARAM_RAW, 'Person in charge'),
+                'myrole' => new external_value(PARAM_RAW, 'Current user roles'),
                 'actions' => new external_single_structure([
                     'caneventdetails' => new external_value(PARAM_BOOL, 'Whether details may be opened'),
                     'canreactivate' => new external_value(PARAM_BOOL, 'Whether the event may be reactivated'),
                     'allowedstatuses' => new external_multiple_structure(new external_value(PARAM_INT)),
+                    'transitionactions' => new external_multiple_structure(new external_single_structure([
+                        'value' => new external_value(PARAM_INT, 'Target status'),
+                        'label' => new external_value(PARAM_RAW, 'Action label'),
+                        'btnclass' => new external_value(PARAM_ALPHANUMEXT, 'Button class suffix'),
+                    ])),
                 ]),
                 'statusstyle' => new external_value(PARAM_RAW, 'Inline status style'),
+                'statusclass' => new external_value(PARAM_RAW, 'CSS class for the current status'),
+                'statusgroupkey' => new external_value(PARAM_ALPHAEXT, 'Grouped status key'),
+                'statusgrouptext' => new external_value(PARAM_RAW, 'Grouped status label'),
                 'statustext' => new external_value(PARAM_RAW, 'Status label'),
+                'savebuttontext' => new external_value(PARAM_RAW, 'Optional modal save-button text'),
+                'cancelbuttontext' => new external_value(PARAM_RAW, 'Optional modal cancel-button text'),
                 'latesthistorysummary' => new external_value(PARAM_RAW, 'Latest history summary'),
             ])),
             'summary' => new external_single_structure([
                 'count' => new external_value(PARAM_INT, 'Number of items in the current workspace'),
                 'openrequestcount' => new external_value(PARAM_INT, 'Open request count'),
                 'rejectedrequestcount' => new external_value(PARAM_INT, 'Rejected request count'),
+                'workspacecounttext' => new external_value(PARAM_RAW, 'Visible request total text for the current workspace'),
+            ]),
+            'paging' => new external_single_structure([
+                'requestedpage' => new external_value(PARAM_INT, 'Requested page number'),
+                'currentpage' => new external_value(PARAM_INT, 'Effective page number'),
+                'perpage' => new external_value(PARAM_INT, 'Items per page'),
+                'totalpages' => new external_value(PARAM_INT, 'Total number of pages'),
+                'totalcount' => new external_value(PARAM_INT, 'Total number of items in the workspace'),
+                'hasprevious' => new external_value(PARAM_BOOL, 'Whether a previous page exists'),
+                'hasnext' => new external_value(PARAM_BOOL, 'Whether a next page exists'),
+                'haspaging' => new external_value(PARAM_BOOL, 'Whether paging is needed'),
+                'adjusted' => new external_value(PARAM_BOOL, 'Whether the requested page had to be adjusted'),
+            ]),
+            'fragments' => new external_single_structure([
+                'paginghtml' => new external_value(PARAM_RAW, 'Rendered paging markup'),
             ]),
         ]);
     }

@@ -61,6 +61,7 @@ class update_event_booking_status extends external_api {
                 VALUE_DEFAULT,
                 'myevents'
             ),
+            'page' => new external_value(PARAM_INT, 'Request workspace page to preserve', VALUE_DEFAULT, 1),
         ]);
     }
 
@@ -71,9 +72,10 @@ class update_event_booking_status extends external_api {
      * @param int $eventid Event ID
      * @param int $status New booking status
      * @param string $tab Overview tab to return to
+     * @param int $page Request workspace page to return to
      * @return array
      */
-    public static function execute(int $cmid, int $eventid, int $status, string $tab = 'myevents'): array {
+    public static function execute(int $cmid, int $eventid, int $status, string $tab = 'myevents', int $page = 1): array {
         global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
@@ -81,6 +83,7 @@ class update_event_booking_status extends external_api {
             'eventid' => $eventid,
             'status'  => $status,
             'tab' => $tab,
+            'page' => $page,
         ]);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
@@ -138,12 +141,45 @@ class update_event_booking_status extends external_api {
         $redirecturl = (new \moodle_url('/mod/bookit/overview.php', [
             'id' => $cm->id,
             'tab' => $redirecttab,
+            'queuepage' => max(1, (int)$params['page']),
         ]))->out(false);
+
+        $queuepayload = null;
+        if (
+            in_array($redirecttab, ['openrequests', 'rejectedrequests'], true)
+            && event_access_manager::can_manage_open_requests($context)
+        ) {
+            $queuepayload = event_manager::get_governed_overview_queue(
+                $context,
+                (int)$USER->id,
+                $redirecttab,
+                ['workspace' => $redirecttab],
+                null,
+                null,
+                max(1, (int)$params['page'])
+            );
+
+            $paginghtml = '';
+            if (!empty($queuepayload['paging']['haspaging'])) {
+                $pagingbar = new \paging_bar(
+                    (int)$queuepayload['paging']['totalcount'],
+                    max(0, (int)$queuepayload['paging']['currentpage'] - 1),
+                    (int)$queuepayload['paging']['perpage'],
+                    new \moodle_url('/mod/bookit/overview.php', [
+                        'id' => $cm->id,
+                        'tab' => $redirecttab,
+                    ])
+                );
+                $paginghtml = $GLOBALS['OUTPUT']->render($pagingbar);
+            }
+            $queuepayload['fragments'] = ['paginghtml' => $paginghtml];
+        }
 
         return [
             'status' => $effectivestatus,
             'tab' => $redirecttab,
             'redirecturl' => $redirecturl,
+            'queue' => $queuepayload,
         ];
     }
 
@@ -157,6 +193,71 @@ class update_event_booking_status extends external_api {
             'status' => new external_value(PARAM_INT, 'Updated booking status value'),
             'tab' => new external_value(PARAM_ALPHA, 'Overview tab to reopen after the workflow action'),
             'redirecturl' => new external_value(PARAM_URL, 'Redirect URL that preserves the active overview queue'),
+            'queue' => new external_single_structure([
+                'workspace' => new external_value(PARAM_ALPHA, 'Workspace name'),
+                'filters' => new external_single_structure([
+                    'start' => new external_value(PARAM_TEXT, 'Normalised start filter', VALUE_OPTIONAL),
+                    'end' => new external_value(PARAM_TEXT, 'Normalised end filter', VALUE_OPTIONAL),
+                    'roomids' => new \core_external\external_multiple_structure(new external_value(PARAM_INT)),
+                    'facultyids' => new \core_external\external_multiple_structure(new external_value(PARAM_INT)),
+                    'bookingstatuses' => new \core_external\external_multiple_structure(new external_value(PARAM_INT)),
+                    'semesterids' => new \core_external\external_multiple_structure(new external_value(PARAM_INT)),
+                    'search' => new external_value(PARAM_RAW_TRIMMED, 'Search filter'),
+                    'workspace' => new external_value(PARAM_ALPHAEXT, 'Workspace filter'),
+                    'exportmode' => new external_value(PARAM_BOOL, 'Export mode'),
+                ]),
+                'items' => new \core_external\external_multiple_structure(new external_single_structure([
+                    'eventid' => new external_value(PARAM_INT, 'Event id'),
+                    'id' => new external_value(PARAM_INT, 'Compatibility event id'),
+                    'name' => new external_value(PARAM_RAW, 'Event title'),
+                    'bookingstatus' => new external_value(PARAM_INT, 'Booking status'),
+                    'starttime' => new external_value(PARAM_INT, 'Start time'),
+                    'endtime' => new external_value(PARAM_INT, 'End time'),
+                    'room' => new external_value(PARAM_RAW, 'Room label'),
+                    'personincharge' => new external_value(PARAM_RAW, 'Person in charge'),
+                    'myrole' => new external_value(PARAM_RAW, 'Current user roles'),
+                    'historyclassification' => new external_value(PARAM_ALPHAEXT, 'History classification'),
+                    'datestr' => new external_value(PARAM_RAW, 'Display date'),
+                    'actions' => new external_single_structure([
+                        'caneventdetails' => new external_value(PARAM_BOOL, 'Whether details may be opened'),
+                        'canreactivate' => new external_value(PARAM_BOOL, 'Whether the event may be reactivated'),
+                        'allowedstatuses' => new \core_external\external_multiple_structure(new external_value(PARAM_INT)),
+                        'transitionactions' => new \core_external\external_multiple_structure(new external_single_structure([
+                            'value' => new external_value(PARAM_INT, 'Target status'),
+                            'label' => new external_value(PARAM_RAW, 'Action label'),
+                            'btnclass' => new external_value(PARAM_ALPHANUMEXT, 'Button class suffix'),
+                        ])),
+                    ]),
+                    'statusstyle' => new external_value(PARAM_RAW, 'Inline status style'),
+                    'statusclass' => new external_value(PARAM_RAW, 'CSS class for the current status'),
+                    'statusgroupkey' => new external_value(PARAM_ALPHAEXT, 'Grouped status key'),
+                    'statusgrouptext' => new external_value(PARAM_RAW, 'Grouped status label'),
+                    'statustext' => new external_value(PARAM_RAW, 'Status label'),
+                    'savebuttontext' => new external_value(PARAM_RAW, 'Optional modal save-button text'),
+                    'cancelbuttontext' => new external_value(PARAM_RAW, 'Optional modal cancel-button text'),
+                    'latesthistorysummary' => new external_value(PARAM_RAW, 'Latest history summary'),
+                ])),
+                'summary' => new external_single_structure([
+                    'count' => new external_value(PARAM_INT, 'Number of items in the current workspace'),
+                    'openrequestcount' => new external_value(PARAM_INT, 'Open request count'),
+                    'rejectedrequestcount' => new external_value(PARAM_INT, 'Rejected request count'),
+                    'workspacecounttext' => new external_value(PARAM_RAW, 'Visible request total text for the current workspace'),
+                ]),
+                'paging' => new external_single_structure([
+                    'requestedpage' => new external_value(PARAM_INT, 'Requested page number'),
+                    'currentpage' => new external_value(PARAM_INT, 'Effective page number'),
+                    'perpage' => new external_value(PARAM_INT, 'Items per page'),
+                    'totalpages' => new external_value(PARAM_INT, 'Total number of pages'),
+                    'totalcount' => new external_value(PARAM_INT, 'Total number of items in the workspace'),
+                    'hasprevious' => new external_value(PARAM_BOOL, 'Whether a previous page exists'),
+                    'hasnext' => new external_value(PARAM_BOOL, 'Whether a next page exists'),
+                    'haspaging' => new external_value(PARAM_BOOL, 'Whether paging is needed'),
+                    'adjusted' => new external_value(PARAM_BOOL, 'Whether the requested page had to be adjusted'),
+                ]),
+                'fragments' => new external_single_structure([
+                    'paginghtml' => new external_value(PARAM_RAW, 'Rendered paging markup'),
+                ]),
+            ], 'Updated request workspace payload', VALUE_OPTIONAL),
         ]);
     }
 }

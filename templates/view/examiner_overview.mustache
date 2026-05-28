@@ -81,22 +81,11 @@
     </div>
 
     {{#showmyeventssection}}
-    {{#showhistorytab}}
-    <nav class="mb-3" aria-label="{{#str}}overview, mod_bookit{{/str}}">
-        <ul class="nav nav-tabs mod-bookit-overview-tabs">
-            <li class="nav-item">
-                <a class="nav-link {{#myeventsactive}}active{{/myeventsactive}}" href="{{myeventsurl}}">
-                    {{#str}}overview_my_events, mod_bookit{{/str}}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{#historyactive}}active{{/historyactive}}" href="{{historyurl}}">
-                    {{#str}}overview_history, mod_bookit{{/str}}
-                </a>
-            </li>
-        </ul>
-    </nav>
-    {{/showhistorytab}}
+    {{#showoverviewnavigation}}
+    <div class="mb-3">
+        {{{overviewnavigation}}}
+    </div>
+    {{/showoverviewnavigation}}
     <div class="mb-3">
         <h3 class="h5 mb-0">{{sectiontitle}}</h3>
         {{#showoverviewfilters}}
@@ -303,9 +292,9 @@
         <div>
             <h3 class="h5 mb-1">{{requestworkspacetitle}}</h3>
             <div class="text-muted small">{{requestworkspacehelp}}</div>
-        </div>
-        <div class="badge badge-pill p-2 {{requestqueuebadgeclass}}">
-            {{requestqueuecounttext}}
+            <div class="text-muted small mt-1 mod-bookit-request-queue-count" data-region="request-queue-count">
+                {{requestqueuecounttext}}
+            </div>
         </div>
     </div>
 
@@ -316,12 +305,10 @@
             <a class="btn {{#requestworkspaceopenactive}}btn-warning active{{/requestworkspaceopenactive}}{{^requestworkspaceopenactive}}btn-outline-warning{{/requestworkspaceopenactive}}"
                href="{{openrequestsurl}}">
                 {{openrequeststitle}}
-                <span class="badge badge-pill badge-light ml-1">{{openrequestcount}}</span>
             </a>
             <a class="btn {{#requestworkspacerejectedactive}}btn-danger active{{/requestworkspacerejectedactive}}{{^requestworkspacerejectedactive}}btn-outline-danger{{/requestworkspacerejectedactive}}"
                href="{{rejectedrequestsurl}}">
                 {{rejectedrequeststitle}}
-                <span class="badge badge-pill badge-light ml-1">{{rejectedrequestcount}}</span>
             </a>
         </div>
     </div>
@@ -540,35 +527,10 @@
     {{/hasrejectedrequests}}
     {{/requestworkspacerejectedactive}}
 
-    {{#showrequestpagination}}
-    <div class="mod-bookit-request-pagination mt-3">
-        <form method="get" class="form-inline mod-bookit-request-pagination-form">
-            <input type="hidden" name="id" value="{{cmid}}">
-            <input type="hidden" name="tab" value="{{requestworkspaceactivetab}}">
-            <input type="hidden" name="queuepage" value="1">
-            <label for="bookit-request-queueperpage" class="mr-2 mb-0">{{requestperpagelabel}}</label>
-            <select id="bookit-request-queueperpage" name="queueperpage" class="custom-select custom-select-sm mr-3">
-                {{#requestperpageoptions}}
-                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
-                {{/requestperpageoptions}}
-            </select>
-        </form>
-        <div class="small text-muted">{{requestpageinfo}}</div>
-        <div class="btn-group" role="group" aria-label="{{requestpaginationlabel}}">
-            {{#hasrequestprev}}
-            <a class="btn btn-sm btn-outline-secondary" href="{{requestprevurl}}">{{requestprevlabel}}</a>
-            {{/hasrequestprev}}
-            {{^hasrequestprev}}
-            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>{{requestprevlabel}}</button>
-            {{/hasrequestprev}}
-            {{#hasrequestnext}}
-            <a class="btn btn-sm btn-outline-secondary" href="{{requestnexturl}}">{{requestnextlabel}}</a>
-            {{/hasrequestnext}}
-            {{^hasrequestnext}}
-            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>{{requestnextlabel}}</button>
-            {{/hasrequestnext}}
-        </div>
+    {{#requestpaginghtml}}
+    <div class="mod-bookit-request-pagination mt-3" data-region="request-paging">
+        {{{requestpaginghtml}}}
     </div>
-    {{/showrequestpagination}}
+    {{/requestpaginghtml}}
     {{/showrequestworkspacesection}}
 </div>

@@ -1,4 +1,9 @@
-define(['jquery', 'core_form/modalform'], function($, ModalForm) {
+define([
+    'jquery',
+    'core_form/modalform',
+    'mod_bookit/possible_slots_refresh',
+    'mod_bookit/booking_form_resources'
+], function($, ModalForm, PossibleSlotsRefresh, BookingFormResources) {
     return {
         init: function() {
             document.addEventListener('click', function(e) {
@@ -29,6 +34,11 @@ define(['jquery', 'core_form/modalform'], function($, ModalForm) {
                 const modal = new ModalForm(modalConfig);
 
                 modal.addEventListener(modal.events.LOADED, function() {
+                    PossibleSlotsRefresh.initPossibleStarttimesRefresh(cmid, event);
+                    if (modal.modal) {
+                        BookingFormResources.init(modal.modal.getRoot()[0]);
+                    }
+
                     if (!cancelButtonText || !modal.modal) {
                         return;
                     }

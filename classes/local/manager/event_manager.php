@@ -263,12 +263,16 @@ class event_manager {
         string $workspace,
         array $filters = [],
         ?int $reportstart = null,
-        ?int $reportend = null
+        ?int $reportend = null,
+        int $page = 1,
+        int $perpage = 25
     ): array {
         $filters = event_access_manager::normalise_governed_read_filters(array_merge($filters, [
             'workspace' => $workspace,
         ]));
         $workspace = $filters['workspace'] ?: $workspace;
+        $page = max(1, $page);
+        $perpage = max(1, $perpage);
 
         $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
         $observerrestricted = event_access_manager::is_observer_restricted_mode($context);
@@ -301,6 +305,24 @@ class event_manager {
             );
         }
 
+        $totalcount = count($events);
+        $openrequestcount = $workspace === 'openrequests' ? $totalcount : (
+            $canmanageopenrequests ? count(self::get_open_requests()) : 0
+        );
+        $rejectedrequestcount = $workspace === 'rejectedrequests' ? $totalcount : (
+            $canmanageopenrequests ? count(self::get_rejected_requests()) : 0
+        );
+        $currentpage = 1;
+        $totalpages = 1;
+        $haspaging = false;
+        if (in_array($workspace, ['openrequests', 'rejectedrequests'], true)) {
+            $totalpages = max(1, (int)ceil($totalcount / $perpage));
+            $currentpage = min($page, $totalpages);
+            $offset = ($currentpage - 1) * $perpage;
+            $events = array_slice(array_values($events), $offset, $perpage);
+            $haspaging = $totalcount > $perpage;
+        }
+
         $historyentries = self::get_latest_booking_history_entries(array_map(
             static fn($event): int => (int)($event->id ?? 0),
             $events
@@ -321,9 +343,23 @@ class event_manager {
                 array_values($events)
             ),
             'summary' => [
-                'count' => count($events),
-                'openrequestcount' => $canmanageopenrequests ? self::count_open_requests() : 0,
-                'rejectedrequestcount' => $canmanageopenrequests ? self::count_rejected_requests() : 0,
+                'count' => $totalcount,
+                'openrequestcount' => $openrequestcount,
+                'rejectedrequestcount' => $rejectedrequestcount,
+                'workspacecounttext' => $workspace === 'rejectedrequests'
+                    ? get_string('overview_rejected_request_count', 'mod_bookit', $totalcount)
+                    : get_string('overview_open_request_count', 'mod_bookit', $totalcount),
+            ],
+            'paging' => [
+                'requestedpage' => $page,
+                'currentpage' => $currentpage,
+                'perpage' => $perpage,
+                'totalpages' => $totalpages,
+                'totalcount' => $totalcount,
+                'hasprevious' => $currentpage > 1,
+                'hasnext' => $currentpage < $totalpages,
+                'haspaging' => $haspaging,
+                'adjusted' => $currentpage !== $page,
             ],
         ];
     }

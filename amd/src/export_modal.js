@@ -7,7 +7,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             const stringKeys = [
                 {key: 'noevents', component: 'mod_bookit'},
                 {key: 'chooseevent', component: 'mod_bookit'},
-                {key: 'exportevents_selected', component: 'mod_bookit'},
+                {key: 'exportevents_selectedcount', component: 'mod_bookit'},
                 {key: 'event_bookingstatus_0', component: 'mod_bookit'},
                 {key: 'event_bookingstatus_1', component: 'mod_bookit'},
                 {key: 'event_bookingstatus_2', component: 'mod_bookit'},
@@ -34,7 +34,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                  * @returns {String}
                  */
                 function formatSelectedCount(count) {
-                    return selectedLabel + ': ' + String(count);
+                    return selectedLabel.replace('{$a}', String(count));
                 }
 
                 /**

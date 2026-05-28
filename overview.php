@@ -54,11 +54,7 @@ $selectedstatus = optional_param('bookingstatusfilter', -1, PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $queuepage = max(1, optional_param('queuepage', 1, PARAM_INT));
-$queueperpage = optional_param('queueperpage', 25, PARAM_INT);
-$allowedqueueperpage = [10, 25, 50, 100];
-if (!in_array($queueperpage, $allowedqueueperpage, true)) {
-    $queueperpage = 25;
-}
+$queueperpage = 25;
 $isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'rejectedrequests'], true);
 $requestworkspacemode = $tab === 'rejectedrequests' ? 'rejectedrequests' : 'openrequests';
 $currenttab = match (true) {
@@ -90,6 +86,36 @@ $overviewfilters = [
     'facultyids' => $selectedfacultyid > 0 ? [$selectedfacultyid] : [],
     'semesterids' => $selectedsemesterids,
 ];
+$buildoverviewurl = static function (string $targettab) use (
+    $cm,
+    $selectedstatus,
+    $selectedfacultyid,
+    $selectedsemesterids,
+    $showreportfilters,
+    $reportstartvalue,
+    $reportendvalue,
+    $hasexplicitsemesterfilter
+): string {
+    $params = [
+        'id' => $cm->id,
+        'tab' => $targettab,
+    ];
+    if ($selectedstatus >= 0) {
+        $params['bookingstatusfilter'] = $selectedstatus;
+    }
+    if ($selectedfacultyid > 0) {
+        $params['facultyid'] = $selectedfacultyid;
+    }
+    if (!empty($selectedsemesterids) || $hasexplicitsemesterfilter) {
+        $params['semesterids'] = $selectedsemesterids;
+    }
+    if ($showreportfilters) {
+        $params['reportstart'] = $reportstartvalue;
+        $params['reportend'] = $reportendvalue;
+    }
+
+    return (new moodle_url('/mod/bookit/overview.php'))->out(false) . '?' . http_build_query($params);
+};
 
 $parsetimestamp = static function (string $value, int $fallback, bool $endofday = false): int {
     $date = \DateTime::createFromFormat('Y-m-d H:i:s', $value . ($endofday ? ' 23:59:59' : ' 00:00:00'));
@@ -170,6 +196,7 @@ $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode
     'bookingstatuses' => $overviewfilters['bookingstatuses'],
     'facultyids' => $overviewfilters['facultyids'],
     'semesterids' => $overviewfilters['semesterids'],
+    'page' => $queuepage,
     'reportstart' => $reportstartvalue,
     'reportend' => $reportendvalue,
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
@@ -209,9 +236,9 @@ $events = event_manager::filter_overview_events(
     $currenttab === 'history'
 );
 $openrequests = $canmanageopenrequests ? event_manager::get_open_requests() : [];
-$openrequestcount = $canmanageopenrequests ? event_manager::count_open_requests() : 0;
+$openrequestcount = count($openrequests);
 $rejectedrequests = $canmanageopenrequests ? event_manager::get_rejected_requests() : [];
-$rejectedrequestcount = $canmanageopenrequests ? event_manager::count_rejected_requests() : 0;
+$rejectedrequestcount = count($rejectedrequests);
 $requestqueuecount = $requestworkspacemode === 'rejectedrequests' ? $rejectedrequestcount : $openrequestcount;
 $requesttotalpages = max(1, (int)ceil($requestqueuecount / $queueperpage));
 $queuepage = min($queuepage, $requesttotalpages);
@@ -219,6 +246,18 @@ if ($requestworkspacemode === 'rejectedrequests') {
     $rejectedrequests = array_values(array_slice($rejectedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
 } else {
     $openrequests = array_values(array_slice($openrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
+}
+$requestpaginghtml = '';
+if ($isinrequestworkspace && $requestqueuecount > $queueperpage) {
+    $requestpaginghtml = $OUTPUT->render(new paging_bar(
+        $requestqueuecount,
+        max(0, $queuepage - 1),
+        $queueperpage,
+        new moodle_url('/mod/bookit/overview.php', [
+            'id' => $cm->id,
+            'tab' => $requestworkspacemode,
+        ])
+    ));
 }
 $semesteroptions = [];
 foreach (event_manager::get_semester_filter_options() as $value => $label) {
@@ -272,12 +311,35 @@ $templatecontext = [
     'showidcolumn' => $canmanageopenrequests,
     'showmyeventssection' => $currenttab !== 'openrequests',
     'showhistorytab' => !$isobserverrestricted,
-    'myeventsactive' => $currenttab !== 'history',
-    'myeventsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'myevents']))->out(false),
-    'historyurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'history']))->out(false),
+    'showoverviewnavigation' => !$isobserverrestricted,
+    'overviewnavigation' => !$isobserverrestricted
+        ? html_writer::tag(
+            'nav',
+            html_writer::start_tag('ul', ['class' => 'nav nav-pills mod-bookit-overview-nav']) .
+            html_writer::tag(
+                'li',
+                html_writer::link(
+                    $buildoverviewurl('myevents'),
+                    get_string('overview_my_events', 'mod_bookit'),
+                    ['class' => 'nav-link ' . ($currenttab !== 'history' ? 'active' : '')]
+                ),
+                ['class' => 'nav-item']
+            ) .
+            html_writer::tag(
+                'li',
+                html_writer::link(
+                    $buildoverviewurl('history'),
+                    get_string('overview_history', 'mod_bookit'),
+                    ['class' => 'nav-link ' . ($currenttab === 'history' ? 'active' : '')]
+                ),
+                ['class' => 'nav-item']
+            ) .
+            html_writer::end_tag('ul'),
+            ['aria-label' => get_string('overview', 'mod_bookit')]
+        )
+        : '',
     'showrequestworkspacesection' => $currenttab === 'openrequests',
     'showrequestworkspaceswitch' => $canmanageopenrequests,
-    'historyactive' => $currenttab === 'history',
     'requestworkspaceopenactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
     'requestworkspacerejectedactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
     'openrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'openrequests']))->out(false),
@@ -296,13 +358,9 @@ $templatecontext = [
     'openrequeststitle' => get_string('overview_open_requests', 'mod_bookit'),
     'openrequestshelp' => get_string('overview_open_requests_help', 'mod_bookit'),
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
-    'openrequestcount' => $openrequestcount,
-    'openrequestcounttext' => get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
     'rejectedrequeststitle' => get_string('overview_rejected_requests', 'mod_bookit'),
     'rejectedrequestshelp' => get_string('overview_rejected_requests_help', 'mod_bookit'),
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
-    'rejectedrequestcount' => $rejectedrequestcount,
-    'rejectedrequestcounttext' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
     'requestqueuecurrenttitle' => $requestworkspacemode === 'rejectedrequests'
         ? get_string('overview_rejected_requests', 'mod_bookit')
         : get_string('overview_open_requests', 'mod_bookit'),
@@ -312,41 +370,7 @@ $templatecontext = [
     'requestqueuecounttext' => $requestworkspacemode === 'rejectedrequests'
         ? get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount)
         : get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
-    'requestqueuebadgeclass' => $requestworkspacemode === 'rejectedrequests'
-        ? 'badge-danger'
-        : 'badge-warning',
-    'showrequestpagination' => $isinrequestworkspace && $requestqueuecount > 0,
-    'requestpaginationlabel' => get_string('overview_request_workspace_switch', 'mod_bookit'),
-    'requestperpagelabel' => get_string('overview_request_per_page', 'mod_bookit'),
-    'requestpageinfo' => get_string('overview_request_pageinfo', 'mod_bookit', (object)[
-        'page' => $queuepage,
-        'pages' => $requesttotalpages,
-        'count' => $requestqueuecount,
-    ]),
-    'requestprevlabel' => get_string('previous'),
-    'requestnextlabel' => get_string('next'),
-    'hasrequestprev' => $queuepage > 1,
-    'hasrequestnext' => $queuepage < $requesttotalpages,
-    'requestprevurl' => (new moodle_url('/mod/bookit/overview.php', [
-        'id' => $cm->id,
-        'tab' => $requestworkspacemode,
-        'queuepage' => max(1, $queuepage - 1),
-        'queueperpage' => $queueperpage,
-    ]))->out(false),
-    'requestnexturl' => (new moodle_url('/mod/bookit/overview.php', [
-        'id' => $cm->id,
-        'tab' => $requestworkspacemode,
-        'queuepage' => min($requesttotalpages, $queuepage + 1),
-        'queueperpage' => $queueperpage,
-    ]))->out(false),
-    'requestperpageoptions' => array_map(
-        static fn(int $value): array => [
-            'value' => (string)$value,
-            'label' => (string)$value,
-            'selected' => $value === $queueperpage,
-        ],
-        $allowedqueueperpage
-    ),
+    'requestpaginghtml' => $requestpaginghtml,
     'showoverviewfilters' => $currenttab !== 'openrequests',
     'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
     'showprogresscolumn' => $checklistenabled || $resourcesenabled,
@@ -662,6 +686,12 @@ foreach ($openrequests as $ev) {
 foreach ($rejectedrequests as $ev) {
     $templatecontext['rejectedrequests'][] = $prepareeventrow($ev, true, 'rejectedrequests');
 }
+
+$templatecontext['hasopenrequests'] = !empty($templatecontext['openrequests']);
+$templatecontext['hasrejectedrequests'] = !empty($templatecontext['rejectedrequests']);
+$templatecontext['requestqueuecounttext'] = $requestworkspacemode === 'rejectedrequests'
+    ? get_string('overview_rejected_request_count', 'mod_bookit', count($templatecontext['rejectedrequests']))
+    : get_string('overview_open_request_count', 'mod_bookit', count($templatecontext['openrequests']));
 
 // Render Mustache.
 echo $OUTPUT->render_from_template('mod_bookit/view/examiner_overview', $templatecontext);
