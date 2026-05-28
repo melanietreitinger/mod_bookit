@@ -94,6 +94,17 @@ Feature: Filter reporting data and block past-date saves
     And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     Then I should see "Future service exam"
 
+  Scenario: Service-team may resubmit a historical event without a refreshed slot
+    Given the following "mod_bookit > events" exist:
+      | name                    | username    | personincharge_username | startdate                      | enddate                        | bookingstatus | institution |
+      | Historical service exam | susiservice | susiservice             | ##-1 day 09:00##%Y-%m-%dT%H:%M:%S## | ##-1 day 11:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
+    When I log in as "susiservice"
+    And I open the Bookit overview "history" for "My BookIt Activity"
+    And I open the Bookit event details for "Historical service exam"
+    And I submit the Bookit event details modal
+    And I open the Bookit overview "history" for "My BookIt Activity"
+    Then I should see "Historical service exam"
+
   Scenario: Booking person sees a blocked historical modal instead of a free edit path
     Given the following "mod_bookit > events" exist:
       | name                 | username    | personincharge_username | startdate                      | enddate                        | bookingstatus | institution |

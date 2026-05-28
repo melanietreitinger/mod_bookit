@@ -908,6 +908,7 @@ class edit_event_form extends dynamic_form {
         $cancancelonly = false;
         $statusonlyselfcancel = false;
         $resourcesenabled = event_access_manager::is_resources_enabled();
+        $currentrecord = null;
 
         if (!empty($formdata->id)) {
             $currentevent = bookit_event::from_database((int)$formdata->id);
@@ -993,6 +994,14 @@ class edit_event_form extends dynamic_form {
         if ($caneditpublic && !$statusonlyselfcancel) {
             $resolvedstarttime = $submittedstarttime ?? ($formdata->starttime ?? null);
             $resolvedduration = $submittedduration ?? ($formdata->duration ?? null) ?? $currentevent?->duration;
+
+            if (
+                $resolvedstarttime === null
+                && $currentrecord !== null
+                && $this->should_reuse_current_starttime($currentrecord, $formdata, $submittedstarttime, $submittedduration)
+            ) {
+                $resolvedstarttime = (int)$currentrecord->starttime;
+            }
 
             if ($resolvedstarttime === null || $resolvedduration === null) {
                 if (!$canmanagepastbookings) {
@@ -1489,6 +1498,75 @@ class edit_event_form extends dynamic_form {
         }
 
         return false;
+    }
+
+    /**
+     * Reuse the current start time when the request did not actually change the booking schedule.
+     *
+     * This keeps status-only updates working for service roles even if the start-time dropdown cannot
+     * repopulate options for an already scheduled historical slot.
+     *
+     * @param stdClass $currentevent
+     * @param stdClass $formdata
+     * @param int|null $submittedstarttime
+     * @param int|null $submittedduration
+     * @return bool
+     */
+    private function should_reuse_current_starttime(
+        stdClass $currentevent,
+        stdClass $formdata,
+        ?int $submittedstarttime,
+        ?int $submittedduration
+    ): bool {
+        if ($submittedstarttime !== null || (($formdata->starttime ?? null) !== null && $formdata->starttime !== '')) {
+            return false;
+        }
+
+        $currentstartdate = (new \DateTime())
+            ->setTimestamp((int)$currentevent->starttime)
+            ->setTime(0, 0)
+            ->getTimestamp();
+        $submittedstartdate = $this->normalise_submitted_startdate($formdata->startdate ?? null) ?? $currentstartdate;
+        $submittedroomid = (int)($formdata->roomid ?? ($formdata->room ?? $currentevent->roomid ?? 0));
+        $resolvedduration = $submittedduration ?? ($formdata->duration ?? $currentevent->duration ?? null);
+
+        if ($resolvedduration === null) {
+            return false;
+        }
+
+        return $submittedstartdate === $currentstartdate
+            && $submittedroomid === (int)$currentevent->roomid
+            && (int)$resolvedduration === (int)$currentevent->duration;
+    }
+
+    /**
+     * Normalise a submitted start-date value to a midnight timestamp.
+     *
+     * @param mixed $value
+     * @return int|null
+     */
+    private function normalise_submitted_startdate(mixed $value): ?int {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_array($value)) {
+            if (
+                !isset($value['year'], $value['month'], $value['day'])
+                || $value['year'] === ''
+                || $value['month'] === ''
+                || $value['day'] === ''
+            ) {
+                return null;
+            }
+
+            return make_timestamp((int)$value['year'], (int)$value['month'], (int)$value['day'], 0, 0, 0);
+        }
+
+        return (new \DateTime())
+            ->setTimestamp((int)$value)
+            ->setTime(0, 0)
+            ->getTimestamp();
     }
 
     /**
