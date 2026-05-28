@@ -46,6 +46,8 @@ Feature: Process open booking requests
     And the Bookit overview should show 1 activity tab row
     And the Bookit request workspace switch should contain "Open requests"
     And the Bookit request workspace switch should contain "Rejected requests"
+    And the Bookit request workspace tab "Open requests" should be active
+    And the Bookit overview should not show legacy inner navigation
     And I should see "1 open requests"
     And I should see "Exam Physics II"
 
@@ -74,6 +76,8 @@ Feature: Process open booking requests
     And the Bookit overview should show 1 activity tab row
     And the Bookit request workspace switch should contain "Open requests"
     And the Bookit request workspace switch should contain "Rejected requests"
+    And the Bookit request workspace tab "Rejected requests" should be active
+    And the Bookit overview should not show legacy inner navigation
     Then I should see "Rejected oral exam"
     And I should see "Workflow history"
     When I click the open request action "Reactivate as new request" for event "Rejected oral exam"
@@ -83,6 +87,7 @@ Feature: Process open booking requests
     And the Bookit request workspace switch should contain "Rejected requests"
     When I open the Bookit overview "openrequests" for "My BookIt Activity"
     Then I should see "Rejected oral exam"
+    And the Bookit request workspace tab "Open requests" should be active
     And I should see "Reactivated as new request"
 
   Scenario: Service team rejects an open request and the governed workspace refresh moves it to rejected requests

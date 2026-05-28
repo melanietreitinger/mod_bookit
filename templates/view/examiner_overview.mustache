@@ -83,7 +83,7 @@
     {{#showmyeventssection}}
     {{#showoverviewnavigation}}
     <div class="mb-3">
-        {{{overviewnavigation}}}
+        {{{overviewtabtree}}}
     </div>
     {{/showoverviewnavigation}}
     <div class="mb-3">
@@ -298,23 +298,14 @@
         </div>
     </div>
 
-    {{#showrequestworkspaceswitch}}
+    {{#showrequestworkspacetabs}}
     <div class="mb-3">
         <div class="text-muted small mb-2">{{requestqueueswitchhelp}}</div>
-        <div class="btn-group mod-bookit-request-workspace-switch" role="group" aria-label="{{requestqueueswitchlabel}}">
-            <a class="btn {{#requestworkspaceopenactive}}btn-warning active{{/requestworkspaceopenactive}}{{^requestworkspaceopenactive}}btn-outline-warning{{/requestworkspaceopenactive}}"
-               href="{{openrequestsurl}}">
-                {{openrequeststitle}}
-            </a>
-            <a class="btn {{#requestworkspacerejectedactive}}btn-danger active{{/requestworkspacerejectedactive}}{{^requestworkspacerejectedactive}}btn-outline-danger{{/requestworkspacerejectedactive}}"
-               href="{{rejectedrequestsurl}}">
-                {{rejectedrequeststitle}}
-            </a>
-        </div>
+        {{{requestworkspacetabtree}}}
     </div>
-    {{/showrequestworkspaceswitch}}
+    {{/showrequestworkspacetabs}}
 
-    {{#requestworkspaceopenactive}}
+    {{#showopenrequestworkspace}}
     <div class="mb-3">
         <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
         <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
@@ -418,9 +409,9 @@
         {{openrequestsempty}}
     </div>
     {{/hasopenrequests}}
-    {{/requestworkspaceopenactive}}
+    {{/showopenrequestworkspace}}
 
-    {{#requestworkspacerejectedactive}}
+    {{#showrejectedrequestworkspace}}
     <div class="mb-3">
         <div>
             <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
@@ -525,7 +516,7 @@
         {{rejectedrequestsempty}}
     </div>
     {{/hasrejectedrequests}}
-    {{/requestworkspacerejectedactive}}
+    {{/showrejectedrequestworkspace}}
 
     {{#requestpaginghtml}}
     <div class="mod-bookit-request-pagination mt-3" data-region="request-paging">

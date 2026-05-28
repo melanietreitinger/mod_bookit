@@ -220,11 +220,8 @@
     vertical-align: middle;
 }
 
-.mod_bookit-overview-examiner_overview .tabtree {
-    margin-bottom: 0;
-}
-
-.mod_bookit-overview-examiner_overview .tabtree .tabrow0 {
+.mod_bookit-overview-examiner_overview .mod-bookit-overview-inner-tabs .nav-tabs,
+.mod_bookit-overview-examiner_overview .mod-bookit-request-workspace-tabs .nav-tabs {
     margin-bottom: 0;
 }
 

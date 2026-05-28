@@ -124,4 +124,90 @@ class tabs {
 
         return $tabrow;
     }
+
+    /**
+     * Build the inner overview tabs for the overview/history workspace.
+     *
+     * @param int $cmid
+     * @param array $navigationparams
+     * @param bool $showhistory
+     * @return array
+     */
+    public static function get_overview_inner_tabrow(
+        int $cmid,
+        array $navigationparams,
+        bool $showhistory
+    ): array {
+        $tabrow = [
+            new tabobject(
+                'myevents',
+                self::build_overview_url($cmid, 'myevents', $navigationparams),
+                get_string('overview_my_events', 'mod_bookit')
+            ),
+        ];
+
+        if ($showhistory) {
+            $tabrow[] = new tabobject(
+                'history',
+                self::build_overview_url($cmid, 'history', $navigationparams),
+                get_string('overview_history', 'mod_bookit')
+            );
+        }
+
+        return $tabrow;
+    }
+
+    /**
+     * Build the inner request-workspace tabs for open/rejected requests.
+     *
+     * @param int $cmid
+     * @param array $navigationparams
+     * @return array
+     */
+    public static function get_request_workspace_tabrow(int $cmid, array $navigationparams): array {
+        return [
+            new tabobject(
+                'openrequests',
+                self::build_overview_url($cmid, 'openrequests', $navigationparams),
+                get_string('overview_open_requests', 'mod_bookit')
+            ),
+            new tabobject(
+                'rejectedrequests',
+                self::build_overview_url($cmid, 'rejectedrequests', $navigationparams),
+                get_string('overview_rejected_requests', 'mod_bookit')
+            ),
+        ];
+    }
+
+    /**
+     * Build an overview URL that safely preserves scalar and array filter state.
+     *
+     * moodle_url rejects array parameter values, but the overview needs to preserve
+     * filters such as semesterids[] when switching inner tabs.
+     *
+     * @param int $cmid
+     * @param string $tab
+     * @param array $navigationparams
+     * @return string
+     */
+    public static function build_overview_url(int $cmid, string $tab, array $navigationparams = []): string {
+        $params = [
+            'id' => $cmid,
+            'tab' => $tab,
+        ];
+
+        foreach ($navigationparams as $key => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            if (is_array($value) && $value === []) {
+                continue;
+            }
+
+            $params[$key] = $value;
+        }
+
+        return (new moodle_url('/mod/bookit/overview.php'))->out(false) . '?' . http_build_query($params);
+    }
 }

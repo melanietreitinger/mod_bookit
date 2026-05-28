@@ -44,8 +44,14 @@ class behat_mod_bookit extends behat_base {
     /** @var string CSS selector for the real Moodle secondary activity navigation. */
     private const MAIN_TABS_SELECTOR = '.secondary-navigation .moremenu.navigation';
 
-    /** @var string CSS selector for the obsolete duplicate in-page Bookit top tab row. */
-    private const LEGACY_TOP_TABS_SELECTOR = '.mod_bookit-overview-examiner_overview > .mb-3 > ul.nav.nav-tabs';
+    /** @var string CSS selector for the core inner overview tabs. */
+    private const OVERVIEW_TABS_SELECTOR = '.mod-bookit-overview-inner-tabs';
+
+    /** @var string CSS selector for the core request workspace tabs. */
+    private const REQUEST_WORKSPACE_TABS_SELECTOR = '.mod-bookit-request-workspace-tabs';
+
+    /** @var string CSS selector matching removed legacy inner-navigation markup. */
+    private const LEGACY_INNER_NAV_SELECTOR = '.mod-bookit-overview-nav, .mod-bookit-request-workspace-switch';
 
     /**
      * Opens the Bookit overview for the named activity and tab.
@@ -140,7 +146,7 @@ class behat_mod_bookit extends behat_base {
      */
     public function the_bookit_request_workspace_switch_should_contain(string $text): void {
         $this->assert_selector_contains_text(
-            '.mod-bookit-request-workspace-switch',
+            self::REQUEST_WORKSPACE_TABS_SELECTOR,
             $text,
             true,
             'Bookit request workspace switch'
@@ -156,11 +162,69 @@ class behat_mod_bookit extends behat_base {
      */
     public function the_bookit_request_workspace_switch_should_not_contain(string $text): void {
         $this->assert_selector_contains_text(
-            '.mod-bookit-request-workspace-switch',
+            self::REQUEST_WORKSPACE_TABS_SELECTOR,
             $text,
             false,
             'Bookit request workspace switch'
         );
+    }
+
+    /**
+     * Assert that the overview inner tabs contain the given text.
+     *
+     * @Then the Bookit overview inner tabs should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_inner_tabs_should_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            self::OVERVIEW_TABS_SELECTOR,
+            $text,
+            true,
+            'Bookit overview inner tabs'
+        );
+    }
+
+    /**
+     * Assert that the given overview tab is active.
+     *
+     * @Then the Bookit overview tab :text should be active
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_tab_should_be_active(string $text): void {
+        $this->assert_active_tab_label(self::OVERVIEW_TABS_SELECTOR, $text, 'Bookit overview tab');
+    }
+
+    /**
+     * Assert that the given request workspace tab is active.
+     *
+     * @Then the Bookit request workspace tab :text should be active
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_tab_should_be_active(string $text): void {
+        $this->assert_active_tab_label(
+            self::REQUEST_WORKSPACE_TABS_SELECTOR,
+            $text,
+            'Bookit request workspace tab'
+        );
+    }
+
+    /**
+     * Assert that removed legacy inner navigation markup is absent.
+     *
+     * @Then the Bookit overview should not show legacy inner navigation
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_show_legacy_inner_navigation(): void {
+        $legacyrows = $this->getSession()->getPage()->findAll('css', self::LEGACY_INNER_NAV_SELECTOR);
+        if (!empty($legacyrows)) {
+            throw new ExpectationException(
+                'Legacy inner navigation markup is still visible in the Bookit overview.',
+                $this->getSession()
+            );
+        }
     }
 
     /**
@@ -197,8 +261,7 @@ class behat_mod_bookit extends behat_base {
      */
     public function the_bookit_overview_should_show_activity_tab_rows(int $count): void {
         $secondaryrows = $this->getSession()->getPage()->findAll('css', self::MAIN_TABS_SELECTOR);
-        $legacyrows = $this->getSession()->getPage()->findAll('css', self::LEGACY_TOP_TABS_SELECTOR);
-        $visiblecount = count($secondaryrows) + count($legacyrows);
+        $visiblecount = count($secondaryrows);
         if ($visiblecount !== $count) {
             throw new ExpectationException(
                 "Expected $count Bookit activity tab row(s), found $visiblecount.",
@@ -349,6 +412,35 @@ class behat_mod_bookit extends behat_base {
         if (!$expected && $contains) {
             throw new ExpectationException(
                 "$description unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the active tab in the given tab row has the expected label.
+     *
+     * @param string $selector
+     * @param string $text
+     * @param string $description
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_active_tab_label(string $selector, string $text, string $description): void {
+        $container = $this->getSession()->getPage()->find('css', $selector);
+        if (!$container) {
+            throw new ExpectationException("Could not find $description container.", $this->getSession());
+        }
+
+        $activelink = $container->find('css', '.nav-link.active');
+        if (!$activelink) {
+            throw new ExpectationException("Could not find the active $description.", $this->getSession());
+        }
+
+        $activetext = trim($activelink->getText());
+        if ($activetext !== $text) {
+            throw new ExpectationException(
+                "Expected active $description \"$text\", found \"$activetext\".",
                 $this->getSession()
             );
         }

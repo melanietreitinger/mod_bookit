@@ -24,6 +24,7 @@
 
 require(__DIR__ . '/../../config.php');
 
+use mod_bookit\local\tabs;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_checklist_state_manager;
 use mod_bookit\local\manager\event_manager;
@@ -86,36 +87,24 @@ $overviewfilters = [
     'facultyids' => $selectedfacultyid > 0 ? [$selectedfacultyid] : [],
     'semesterids' => $selectedsemesterids,
 ];
-$buildoverviewurl = static function (string $targettab) use (
-    $cm,
-    $selectedstatus,
-    $selectedfacultyid,
-    $selectedsemesterids,
-    $showreportfilters,
-    $reportstartvalue,
-    $reportendvalue,
-    $hasexplicitsemesterfilter
-): string {
-    $params = [
-        'id' => $cm->id,
-        'tab' => $targettab,
-    ];
-    if ($selectedstatus >= 0) {
-        $params['bookingstatusfilter'] = $selectedstatus;
-    }
-    if ($selectedfacultyid > 0) {
-        $params['facultyid'] = $selectedfacultyid;
-    }
-    if (!empty($selectedsemesterids) || $hasexplicitsemesterfilter) {
-        $params['semesterids'] = $selectedsemesterids;
-    }
-    if ($showreportfilters) {
-        $params['reportstart'] = $reportstartvalue;
-        $params['reportend'] = $reportendvalue;
-    }
-
-    return (new moodle_url('/mod/bookit/overview.php'))->out(false) . '?' . http_build_query($params);
-};
+$overviewnavigationparams = [];
+if ($selectedstatus >= 0) {
+    $overviewnavigationparams['bookingstatusfilter'] = $selectedstatus;
+}
+if ($selectedfacultyid > 0) {
+    $overviewnavigationparams['facultyid'] = $selectedfacultyid;
+}
+if (!empty($selectedsemesterids) || $hasexplicitsemesterfilter) {
+    $overviewnavigationparams['semesterids'] = $selectedsemesterids;
+}
+if ($showreportfilters) {
+    $overviewnavigationparams['reportstart'] = $reportstartvalue;
+    $overviewnavigationparams['reportend'] = $reportendvalue;
+}
+$requestnavigationparams = $overviewnavigationparams;
+if ($queuepage > 1) {
+    $requestnavigationparams['queuepage'] = $queuepage;
+}
 
 $parsetimestamp = static function (string $value, int $fallback, bool $endofday = false): int {
     $date = \DateTime::createFromFormat('Y-m-d H:i:s', $value . ($endofday ? ' 23:59:59' : ' 00:00:00'));
@@ -130,7 +119,24 @@ $reportendtimestamp = $parsetimestamp($reportendvalue, $defaultreportend, true);
 if ($reportendtimestamp < $reportstarttimestamp) {
     [$reportstarttimestamp, $reportendtimestamp] = [$reportendtimestamp, $reportstarttimestamp];
     [$reportstartvalue, $reportendvalue] = [$reportendvalue, $reportstartvalue];
+    $overviewnavigationparams['reportstart'] = $reportstartvalue;
+    $overviewnavigationparams['reportend'] = $reportendvalue;
+    $requestnavigationparams['reportstart'] = $reportstartvalue;
+    $requestnavigationparams['reportend'] = $reportendvalue;
 }
+
+$buildoverviewurl = static function (string $targettab) use ($cm, $overviewnavigationparams): string {
+    return tabs::build_overview_url((int)$cm->id, $targettab, $overviewnavigationparams);
+};
+
+$overviewtabrow = tabs::get_overview_inner_tabrow(
+    (int)$cm->id,
+    $overviewnavigationparams,
+    !$isobserverrestricted
+);
+$requestworkspacetabrow = $canmanageopenrequests
+    ? tabs::get_request_workspace_tabrow((int)$cm->id, $requestnavigationparams)
+    : [];
 
 /* =======================================================================
    1.  Front-end requirements
@@ -311,47 +317,35 @@ $templatecontext = [
     'showidcolumn' => $canmanageopenrequests,
     'showmyeventssection' => $currenttab !== 'openrequests',
     'showhistorytab' => !$isobserverrestricted,
-    'showoverviewnavigation' => !$isobserverrestricted,
-    'overviewnavigation' => !$isobserverrestricted
+    'showoverviewnavigation' => count($overviewtabrow) > 1,
+    'overviewtabtree' => count($overviewtabrow) > 1
         ? html_writer::tag(
             'nav',
-            html_writer::start_tag('ul', ['class' => 'nav nav-pills mod-bookit-overview-nav']) .
-            html_writer::tag(
-                'li',
-                html_writer::link(
-                    $buildoverviewurl('myevents'),
-                    get_string('overview_my_events', 'mod_bookit'),
-                    ['class' => 'nav-link ' . ($currenttab !== 'history' ? 'active' : '')]
-                ),
-                ['class' => 'nav-item']
-            ) .
-            html_writer::tag(
-                'li',
-                html_writer::link(
-                    $buildoverviewurl('history'),
-                    get_string('overview_history', 'mod_bookit'),
-                    ['class' => 'nav-link ' . ($currenttab === 'history' ? 'active' : '')]
-                ),
-                ['class' => 'nav-item']
-            ) .
-            html_writer::end_tag('ul'),
-            ['aria-label' => get_string('overview', 'mod_bookit')]
+            $OUTPUT->tabtree($overviewtabrow, $currenttab),
+            [
+                'class' => 'mod-bookit-overview-inner-tabs',
+                'aria-label' => get_string('overview', 'mod_bookit'),
+            ]
         )
         : '',
     'showrequestworkspacesection' => $currenttab === 'openrequests',
-    'showrequestworkspaceswitch' => $canmanageopenrequests,
-    'requestworkspaceopenactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
-    'requestworkspacerejectedactive' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
-    'openrequestsurl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => 'openrequests']))->out(false),
-    'rejectedrequestsurl' => (new moodle_url(
-        '/mod/bookit/overview.php',
-        ['id' => $cm->id, 'tab' => 'rejectedrequests']
-    ))->out(false),
+    'showrequestworkspacetabs' => count($requestworkspacetabrow) > 1,
+    'requestworkspacetabtree' => count($requestworkspacetabrow) > 1
+        ? html_writer::tag(
+            'nav',
+            $OUTPUT->tabtree($requestworkspacetabrow, $requestworkspacemode),
+            [
+                'class' => 'mod-bookit-request-workspace-tabs',
+                'aria-label' => get_string('overview_request_workspace_switch', 'mod_bookit'),
+            ]
+        )
+        : '',
+    'showopenrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
+    'showrejectedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
     'requestworkspacehelp' => get_string('overview_request_workspace_help', 'mod_bookit'),
-    'requestworkspaceactivetab' => $requestworkspacemode,
-    'requestqueueswitchlabel' => get_string('overview_request_workspace_switch', 'mod_bookit'),
     'requestqueueswitchhelp' => get_string('overview_request_workspace_switch_help', 'mod_bookit'),
+    'historyactive' => $currenttab === 'history',
     'sectiontitle' => $currenttab === 'history'
         ? get_string('overview_history', 'mod_bookit')
         : ($showreportfilters ? get_string('overview_all_events', 'mod_bookit') : get_string('overview_my_events', 'mod_bookit')),
@@ -690,8 +684,8 @@ foreach ($rejectedrequests as $ev) {
 $templatecontext['hasopenrequests'] = !empty($templatecontext['openrequests']);
 $templatecontext['hasrejectedrequests'] = !empty($templatecontext['rejectedrequests']);
 $templatecontext['requestqueuecounttext'] = $requestworkspacemode === 'rejectedrequests'
-    ? get_string('overview_rejected_request_count', 'mod_bookit', count($templatecontext['rejectedrequests']))
-    : get_string('overview_open_request_count', 'mod_bookit', count($templatecontext['openrequests']));
+    ? get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount)
+    : get_string('overview_open_request_count', 'mod_bookit', $openrequestcount);
 
 // Render Mustache.
 echo $OUTPUT->render_from_template('mod_bookit/view/examiner_overview', $templatecontext);
