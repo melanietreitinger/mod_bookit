@@ -92,7 +92,7 @@ class get_overview_queue extends external_api {
         string $reportstart = '',
         string $reportend = ''
     ): array {
-        global $USER;
+        global $OUTPUT, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
@@ -164,7 +164,7 @@ class get_overview_queue extends external_api {
                     'tab' => $params['workspace'],
                 ])
             );
-            $paginghtml = $GLOBALS['OUTPUT']->render($pagingbar);
+            $paginghtml = $OUTPUT->render($pagingbar);
         }
         $payload['fragments'] = ['paginghtml' => $paginghtml];
 

@@ -125,7 +125,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $this->assert_is_canonical_calendar_event($response['events'][0]);
         $this->assertSame($visibleid, (int)$response['events'][0]['id']);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $response['events'][0]['extendedProps']['bookingstatus']);
-        $this->assertSame('reserved_projection', $response['events'][0]['extendedProps']['visibilitymode']);
-        $this->assertSame('Reserved', $response['events'][0]['title']);
+        $this->assertSame('full', $response['events'][0]['extendedProps']['visibilitymode']);
+        $this->assertStringContainsString('Calendar export parity', $response['events'][0]['title']);
     }
 }

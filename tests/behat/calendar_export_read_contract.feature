@@ -13,18 +13,17 @@ Feature: Governed calendar and export read contract stay aligned
       | fullname | shortname |
       | Course 1 | C1        |
     And the following "roles" exist:
-      | shortname   | name         | archetype |
-      | serviceteam | Service-Team | student   |
+      | shortname        | name               | archetype |
+      | bookitparticipant | Bookit Participant | student   |
     And the following "role capability" exists:
-      | role                             | serviceteam |
-      | mod/bookit:view                  | allow       |
-      | mod/bookit:viewownoverview       | allow       |
-      | mod/bookit:managebasics          | allow       |
-      | mod/bookit:viewalldetailsofevent | allow       |
+      | role                                | bookitparticipant |
+      | mod/bookit:view                     | allow             |
+      | mod/bookit:viewownoverview         | allow             |
+      | mod/bookit:viewalldetailsofownevent | allow            |
     And the following "course enrolments" exist:
-      | user        | course | role        |
-      | supportuser | C1     | serviceteam |
-      | bookinguser | C1     | serviceteam |
+      | user        | course | role              |
+      | supportuser | C1     | bookitparticipant |
+      | bookinguser | C1     | bookitparticipant |
     And the following "activities" exist:
       | activity | name               | course | idnumber |
       | bookit   | My BookIt Activity | C1     | 1        |

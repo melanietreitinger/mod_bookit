@@ -254,6 +254,8 @@ class event_manager {
      * @param array $filters
      * @param int|null $reportstart
      * @param int|null $reportend
+     * @param int $page
+     * @param int $perpage
      * @return array
      * @throws dml_exception
      */

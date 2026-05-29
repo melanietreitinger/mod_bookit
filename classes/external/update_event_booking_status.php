@@ -76,7 +76,7 @@ class update_event_booking_status extends external_api {
      * @return array
      */
     public static function execute(int $cmid, int $eventid, int $status, string $tab = 'myevents', int $page = 1): array {
-        global $DB, $USER;
+        global $DB, $OUTPUT, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid'    => $cmid,
@@ -170,7 +170,7 @@ class update_event_booking_status extends external_api {
                         'tab' => $redirecttab,
                     ])
                 );
-                $paginghtml = $GLOBALS['OUTPUT']->render($pagingbar);
+                $paginghtml = $OUTPUT->render($pagingbar);
             }
             $queuepayload['fragments'] = ['paginghtml' => $paginghtml];
         }

@@ -71,7 +71,7 @@ Feature: Enforce role-based visibility and editing for booking requests
     And I open the Bookit event details for "Cancel-only booking"
     Then the Bookit event details control "name" should be disabled
     And the Bookit event details control "bookingstatus" should not be visible
-    And the Bookit event details primary action should be "Cancel"
+    And the Bookit event details primary action should be "Cancel booking"
     And I submit the Bookit event details modal
     Then I should see "Canceled"
 

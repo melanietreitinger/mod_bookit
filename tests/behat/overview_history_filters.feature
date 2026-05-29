@@ -66,15 +66,15 @@ Feature: Complete overview defaults, history and role-specific columns
       | Past own exam    | bookinguser | ##yesterday noon##%Y-%m-%dT%H:%M:%S##    | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S##   | 2             | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
-    Then the Bookit overview inner tabs should contain "My events"
+    Then the Bookit overview inner tabs should contain "My booked events"
     And the Bookit overview inner tabs should contain "History"
-    And the Bookit overview tab "My events" should be active
+    And the Bookit overview tab "My booked events" should be active
     And the Bookit overview should not show legacy inner navigation
     Then I should see "Future own exam"
     And I should not see "Past own exam"
     And the Bookit overview should not show the ID column
     When I open the Bookit overview "history" for "My BookIt Activity"
-    Then the Bookit overview inner tabs should contain "My events"
+    Then the Bookit overview inner tabs should contain "My booked events"
     And the Bookit overview inner tabs should contain "History"
     And the Bookit overview tab "History" should be active
     Then I should see "Past own exam"
