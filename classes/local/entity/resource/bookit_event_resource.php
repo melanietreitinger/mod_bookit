@@ -283,5 +283,4 @@ class bookit_event_resource {
         }
         return $events;
     }
-
 }
