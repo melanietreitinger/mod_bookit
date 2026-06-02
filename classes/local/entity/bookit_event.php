@@ -215,7 +215,7 @@ class bookit_event {
             $existing = $DB->get_field('bookit_event', 'usercreated', ['id' => $this->id]);
             if ($existing) {
                 $this->usercreated = (int)$existing;
-           }
+            }
         }
         $this->timecreated  ??= time();
         $this->timemodified  = time();
@@ -438,7 +438,7 @@ class bookit_event {
 
         // Time-range export, capability-safe.
         $startts = $startts ?? 0;
-        $endts   = $endts   ?? 4102444800; // 2100-01-01 UTC.
+        $endts   = $endts ?? 4102444800; // 2100-01-01 UTC.
 
         if ($viewall) {
             $sql = "SELECT *

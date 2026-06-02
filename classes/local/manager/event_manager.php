@@ -414,6 +414,12 @@ class event_manager {
      * @return mixed Value of the first non-empty key, or null when none match.
      */
 
+    /**
+     * Read field @TODO: add better description
+     * @param mixed $src
+     * @param array $keys
+     * @return mixed
+     */
     private static function read_field(mixed $src, array $keys): mixed {
         foreach ($keys as $k) {
             if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) {
@@ -495,6 +501,11 @@ class event_manager {
      * @return array Reindexed list with reserved events removed.
      */
 
+    /**
+     * Filter events to show only own events.
+     * @param array $events
+     * @return array
+     */
     public static function strip_reserved_events(array $events): array {
         $filtered = array_filter($events, static function ($ev) {
             // Works for both array and object events.
@@ -553,6 +564,14 @@ class event_manager {
      * @return array Filtered events, keys preserved.
      */
 
+    /**
+     * Filter events for ics export.
+     * @param array $events
+     * @param int $room
+     * @param string $faculty
+     * @param int $status
+     * @return array
+     */
     public static function apply_export_filters(array $events, int $room, string $faculty, int $status): array {
         $filtered = array_filter($events, static function ($e) use ($faculty, $status): bool {
             if ($faculty !== '' && $faculty !== ($e->institutionid ?? '')) {
