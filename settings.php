@@ -244,25 +244,126 @@ if ($hassiteconfig) {
     }
 
     $installurl = new moodle_url('/mod/bookit/admin/install_helper_run.php', ['sesskey' => sesskey()]);
-    $rolelinks = [];
+
+    // Role preset downloads with info icons (Issue 2).
+    $rolepresetmap = [
+        'bookit_bookingperson.xml' => [
+            'namestring' => 'rolepreset_bookingperson',
+            'descstring' => 'rolepreset_bookingperson_desc',
+        ],
+        'bookit_examiner.xml' => [
+            'namestring' => 'rolepreset_examiner',
+            'descstring' => 'rolepreset_examiner_desc',
+        ],
+        'bookit_observer.xml' => [
+            'namestring' => 'rolepreset_observer',
+            'descstring' => 'rolepreset_observer_desc',
+        ],
+        'bookit_serviceteam.xml' => [
+            'namestring' => 'rolepreset_serviceteam',
+            'descstring' => 'rolepreset_serviceteam_desc',
+        ],
+        'bookit_supportonsite.xml' => [
+            'namestring' => 'rolepreset_supportonsite',
+            'descstring' => 'rolepreset_supportonsite_desc',
+        ],
+    ];
+
+    $roleitems = [];
     foreach (\mod_bookit\local\install_helper::get_default_role_preset_filenames() as $presetfile) {
+        $map = $rolepresetmap[$presetfile] ?? null;
         $url = new moodle_url('/mod/bookit/assets/roles/' . $presetfile);
-        $rolelinks[] = \core\output\html_writer::link($url, $presetfile, ['download' => $presetfile]);
+        $link = \core\output\html_writer::link(
+            $url,
+            $presetfile,
+            ['class' => 'font-weight-bold', 'download' => $presetfile]
+        );
+
+        // Info icon + tooltip with role name and description.
+        $infotext = '';
+        if ($map !== null) {
+            $roleicon = \html_writer::tag(
+                'i',
+                '',
+                ['class' => 'ml-1 text-muted fa fa-info-circle', 'aria-hidden' => 'true']
+            );
+            $tooltip = \html_writer::tag(
+                'span',
+                $roleicon . \html_writer::div(
+                    \html_writer::strong(get_string($map['namestring'], 'mod_bookit'))
+                    . \html_writer::div(
+                        get_string($map['descstring'], 'mod_bookit'),
+                        'text-muted small'
+                    ),
+                    'card card-body p-2 mt-1 shadow-sm bg-white position-absolute'
+                    . ' rounded'
+                ),
+                ['class' => 'position-relative d-inline-block role-preset-info']
+            );
+            $infotext = \html_writer::tag(
+                'span',
+                $tooltip,
+                [
+                    'data-bs-toggle' => 'popover',
+                    'data-bs-placement' => 'right',
+                    'data-bs-html' => 'true',
+                    'data-bs-content' => '',
+                    'tabindex' => '0',
+                    'role' => 'button',
+                    'aria-label' => get_string($map['namestring'], 'mod_bookit'),
+                ]
+            );
+        }
+
+        $roleitems[] = \html_writer::tag(
+            'li',
+            $link . $infotext,
+            ['class' => 'my-1']
+        );
     }
+
+    // Help icon for role preset downloads.
+    $helphelpicon = \html_writer::tag(
+        'i',
+        '',
+        ['class' => 'ml-2 fa fa-info-circle', 'aria-hidden' => 'true']
+    );
+    $helptext = \html_writer::tag(
+        'div',
+        get_string('rolepresethelp', 'mod_bookit') . $helphelpicon,
+        ['class' => 'text-muted small mt-2 mb-2']
+    );
 
     $description = $statushtml;
     $description .= \core\output\html_writer::div(get_string('runinstallhelperinfo', 'mod_bookit'));
-    $description .= \core\output\html_writer::link(
+    $description .= \html_writer::link(
         $installurl,
         new lang_string('runinstallhelper', 'mod_bookit'),
         ['class' => 'btn btn-secondary mt-3 mb-3', 'role' => 'button']
     );
-    $description .= \core\output\html_writer::tag(
+    $description .= \html_writer::tag(
         'div',
         get_string('rolepresetdownloads', 'mod_bookit') . ': '
-            . \core\output\html_writer::alist($rolelinks, ['class' => 'mb-0']),
-        ['class' => 'mt-3']
+            . \html_writer::tag('ul', implode('', $roleitems), ['class' => 'list-unstyled mb-0'])
     );
+    $description .= \html_writer::tag('div', $helptext, ['class' => 'mt-2']);
+
+    // Tooltip initialiser.
+    $description .= \html_writer::script("
+        document.addEventListener('DOMContentLoaded', function () {
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('.role-preset-info'));
+            popoverTriggerList.forEach(function (el) {
+                var popover = new bootstrap.Popover(el);
+                el.addEventListener('mouseenter', function () {
+                    popover.show();
+                });
+                // Keep open on focus for keyboard users.
+                el.addEventListener('focus', function () {
+                    popover.show();
+                });
+            });
+        });
+    ");
 
     $settings->add(new admin_setting_heading(
         'mod_bookit/runinstallhelper',
