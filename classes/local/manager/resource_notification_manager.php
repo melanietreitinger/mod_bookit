@@ -37,7 +37,8 @@ class resource_notification_manager {
     /**
      * Notify all relevant users when a resource status changes for an event.
      *
-     * Recipients are: the booker (usercreated), the person in charge (personinchargeid)     * and any other examiners (comma-separated IDs in otherexaminers).
+     * Recipients are: the booker (usercreated), the person in charge (personinchargeid)
+     * and any other examiners (comma-separated IDs in otherexaminers).
      * Duplicate IDs are skipped so nobody receives the message twice.
      *
      * @param int $cmid Course-module ID (used to build the context URL)

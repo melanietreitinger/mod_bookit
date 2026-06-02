@@ -115,7 +115,7 @@ class event_manager {
                 'starttime1' => $starttimestamp,
                 'endtime1' => $endtimestamp,
                 'usercreated1' => $USER->id,
-                
+
                 'personinchargeid1' => $USER->id,
                 'otherexaminers1' => $USER->id,
                 'starttime' => $starttimestamp,
@@ -148,7 +148,7 @@ class event_manager {
                 $roominfo .= ': ' . implode(', ', $addinfos);
             }
 
-            //Updated to work with v5 of the calendar. 
+            // Updated to work with v5 of the calendar.
             $events[] = [
                 'id' => $record->id,
                  'title' => ($record->name ?? $reserved) . " ($roominfo)",
@@ -415,6 +415,12 @@ class event_manager {
      * @return mixed Value of the first non-empty key, or null when none match.
      */
 
+    /**
+     * Read field @TODO: add better description
+     * @param mixed $src
+     * @param array $keys
+     * @return mixed
+     */
     private static function read_field(mixed $src, array $keys): mixed {
         foreach ($keys as $k) {
             if (is_array($src) && array_key_exists($k, $src) && $src[$k] !== '' && $src[$k] !== null) {
@@ -442,8 +448,13 @@ class event_manager {
      * @param string $search Free-text search needle; empty means no text filter.
      * @return array Filtered events, reindexed.
      */
-    public static function filter_events_by_criteria(array $events, array $roomids, array $faculties,
-                                                      array $statuses, string $search): array {
+    public static function filter_events_by_criteria(
+        array $events,
+        array $roomids,
+        array $faculties,
+        array $statuses,
+        string $search
+    ): array {
         // Helper to read from array or object.
         $filtered = array_filter($events, function ($ev) use ($roomids, $faculties, $statuses, $search) {
             // ROOM filter — match any of the selected room ids.
@@ -496,6 +507,11 @@ class event_manager {
      * @return array Reindexed list with reserved events removed.
      */
 
+    /**
+     * Filter events to show only own events.
+     * @param array $events
+     * @return array
+     */
     public static function strip_reserved_events(array $events): array {
         $filtered = array_filter($events, static function ($ev) {
             // Works for both array and object events.
@@ -526,25 +542,26 @@ class event_manager {
      * @param array $events Events with possibly space-separated start/end strings.
      * @return array Events with ISO 8601 start and end fields.
      */
-    public static function normalize_event_times_to_iso(array $events): array {return array_values(array_map(function ($e) {
-        if (is_array($e)) {
-            if (isset($e['start'])) {
-                $e['start'] = str_replace(' ', 'T', $e['start']) . ':00';
+    public static function normalize_event_times_to_iso(array $events): array {
+        return array_values(array_map(function ($e) {
+            if (is_array($e)) {
+                if (isset($e['start'])) {
+                    $e['start'] = str_replace(' ', 'T', $e['start']) . ':00';
+                }
+                if (isset($e['end'])) {
+                    $e['end'] = str_replace(' ', 'T', $e['end']) . ':00';
+                }
+            } else {
+                if (isset($e->start)) {
+                    $e->start = str_replace(' ', 'T', $e->start) . ':00';
+                }
+                if (isset($e->end)) {
+                    $e->end = str_replace(' ', 'T', $e->end) . ':00';
+                }
             }
-            if (isset($e['end'])) {
-                $e['end'] = str_replace(' ', 'T', $e['end']) . ':00';
-            }
-        } else {
-            if (isset($e->start)) {
-                $e->start = str_replace(' ', 'T', $e->start) . ':00';
-            }
-            if (isset($e->end)) {
-                $e->end = str_replace(' ', 'T', $e->end) . ':00';
-            }
-        }
-        return $e;
-    }, $events));
-}
+            return $e;
+        }, $events));
+    }
 
     /**
      * Apply the post-fetch filters used by the export endpoint.
@@ -562,6 +579,14 @@ class event_manager {
      * @return array Filtered events, keys preserved.
      */
 
+    /**
+     * Filter events for ics export.
+     * @param array $events
+     * @param int $room
+     * @param string $faculty
+     * @param int $status
+     * @return array
+     */
     public static function apply_export_filters(array $events, int $room, string $faculty, int $status): array {
         $filtered = array_filter($events, static function ($e) use ($faculty, $status): bool {
             if ($faculty !== '' && $faculty !== ($e->institutionid ?? '')) {
@@ -580,4 +605,3 @@ class event_manager {
         return $filtered;
     }
 }
-

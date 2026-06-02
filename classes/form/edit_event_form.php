@@ -424,7 +424,6 @@ class edit_event_form extends dynamic_form {
                     }
                 }
             }
-
         }
 
         // Check if booking is completed (status >= 2: Accepted/Canceled/Rejected).
@@ -574,9 +573,8 @@ class edit_event_form extends dynamic_form {
                 });
             ");
 
-           //$caneditinternal = false; 
-           // Client-side past-time validation (non-service-team only).
-           if (!$caneditinternal) {
+            // Client-side past-time validation (non-service-team only).
+            if (!$caneditinternal) {
                 $PAGE->requires->js_call_amd(
                     'mod_bookit/past_time_check',
                     'init',
@@ -923,7 +921,7 @@ class edit_event_form extends dynamic_form {
         // Past-time check: Service-Team (editinternal) may always save dates in the past.
         $starttime = (int)($data['starttime'] ?? 0);
         $context = $this->get_context_for_dynamic_submission();
-        $caneditinternal =  has_capability('mod/bookit:editinternal', $context);
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
 
         if ($starttime > 0 && !$caneditinternal) {
             $now = time();

@@ -39,7 +39,6 @@ namespace mod_bookit\output;
  * is the desired behaviour for room bookings.
  */
 class ics_exporter {
-
     /**
      * Build an iCalendar string for a list of events.
      *
