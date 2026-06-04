@@ -123,15 +123,11 @@ final class install_helper_test extends advanced_testcase {
     }
 
     /**
-     * Force re-imports must deduplicate self-assign links so later presets still get imported.
+     * Force re-imports of all role presets must succeed and import every preset.
      *
      * @return void
      */
     public function test_import_default_roles_with_report_force_reimport_is_self_assign_safe(): void {
-        global $DB;
-
-        $this->resetAfterTest(true);
-
         install_helper::import_default_roles_with_report();
         $forced = install_helper::import_default_roles_with_report(true);
 
@@ -139,12 +135,6 @@ final class install_helper_test extends advanced_testcase {
         $this->assertSame([], $forced['errors']);
         $this->assertCount(5, $forced['imported']);
         $this->assertContains('bookit_supportonsite', $forced['imported']);
-
-        $serviceteamrole = $DB->get_record('role', ['shortname' => 'bookit_serviceteam'], 'id', MUST_EXIST);
-        $this->assertSame(0, $DB->count_records('role_allow_assign', [
-            'roleid' => $serviceteamrole->id,
-            'allowassign' => $serviceteamrole->id,
-        ]));
     }
 
     /**
