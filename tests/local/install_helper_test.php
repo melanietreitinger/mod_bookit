@@ -128,6 +128,8 @@ final class install_helper_test extends advanced_testcase {
      * @return void
      */
     public function test_import_default_roles_with_report_force_reimport_is_self_assign_safe(): void {
+        $this->resetAfterTest(true);
+
         install_helper::import_default_roles_with_report();
         $forced = install_helper::import_default_roles_with_report(true);
 
