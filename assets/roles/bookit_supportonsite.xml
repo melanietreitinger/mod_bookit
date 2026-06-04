@@ -19,5 +19,6 @@
 		<allow>mod/bookit:view</allow>
 		<allow>mod/bookit:viewalldetailsofownevent</allow>
 		<allow>mod/bookit:viewownoverview</allow>
+		<allow>moodle/role:assign</allow>
 	</permissions>
 </role>
