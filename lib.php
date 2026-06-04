@@ -139,9 +139,13 @@ function bookit_extend_settings_navigation(
     }
 
     if (\mod_bookit\local\manager\event_access_manager::can_manage_open_requests($context)) {
+        $label = get_string('overview_open_requests_with_count', 'mod_bookit', (object)[
+            'title' => get_string('overview_open_requests', 'mod_bookit'),
+            'count' => \mod_bookit\local\manager\event_manager::count_open_requests(),
+        ]);
         $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'openrequests']);
         $openrequestsnode = $modnode->add(
-            get_string('overview_open_requests', 'mod_bookit'),
+            $label,
             $url,
             navigation_node::TYPE_SETTING,
             null,
