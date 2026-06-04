@@ -244,10 +244,19 @@ if ($hassiteconfig) {
     }
 
     $installurl = new moodle_url('/mod/bookit/admin/install_helper_run.php', ['sesskey' => sesskey()]);
-    $rolelinks = [];
+    $rolearray = [];
     foreach (\mod_bookit\local\install_helper::get_default_role_preset_filenames() as $presetfile) {
         $url = new moodle_url('/mod/bookit/assets/roles/' . $presetfile);
-        $rolelinks[] = \core\output\html_writer::link($url, $presetfile, ['download' => $presetfile]);
+        $link = \html_writer::link(
+            $url,
+            $presetfile,
+            ['class' => 'font-weight-bold', 'download' => $presetfile]
+        );
+        // Extract role key from filename (e.g. "bookit_bookingperson.xml" -> "bookingperson").
+        $rolekey = preg_replace('/^bookit_/', '', $presetfile);
+        $rolekey = preg_replace('/\.xml$/', '', $rolekey);
+        $helpicon = $OUTPUT->help_icon('rolepreset_' . $rolekey, 'mod_bookit');
+        $rolearray[] = \html_writer::tag('li', $link . $helpicon);
     }
 
     $description = $statushtml;
@@ -260,7 +269,7 @@ if ($hassiteconfig) {
     $description .= \core\output\html_writer::tag(
         'div',
         get_string('rolepresetdownloads', 'mod_bookit') . ': '
-            . \core\output\html_writer::alist($rolelinks, ['class' => 'mb-0']),
+            . \html_writer::tag('ul', \implode('', $rolearray), ['class' => 'mb-0']),
         ['class' => 'mt-3']
     );
 
