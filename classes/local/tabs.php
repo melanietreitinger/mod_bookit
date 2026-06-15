@@ -172,6 +172,11 @@ class tabs {
                 get_string('overview_open_requests', 'mod_bookit')
             ),
             new tabobject(
+                'acceptedrequests',
+                self::build_overview_url($cmid, 'acceptedrequests', $navigationparams),
+                get_string('overview_accepted_requests', 'mod_bookit')
+            ),
+            new tabobject(
                 'rejectedrequests',
                 self::build_overview_url($cmid, 'rejectedrequests', $navigationparams),
                 get_string('overview_rejected_requests', 'mod_bookit')

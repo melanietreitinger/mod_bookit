@@ -770,6 +770,201 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Accepted requests expose operative accepted bookings outside history.
+     *
+     * @return void
+     */
+    public function test_get_accepted_requests_returns_operative_accepted_events(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+        $referencetime = time();
+
+        $acceptedid = $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Future accepted',
+            'starttime' => strtotime('+2 days 09:00'),
+            'endtime' => strtotime('+2 days 11:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+        ]));
+
+        $accepted = array_values(event_manager::get_accepted_requests($referencetime));
+        $this->assertCount(1, $accepted);
+        $this->assertSame($acceptedid, (int)$accepted[0]->id);
+        $this->assertSame(1, event_manager::count_accepted_requests($referencetime));
+    }
+
+    /**
+     * Accepted requests exclude canceled and history bookings.
+     *
+     * @return void
+     */
+    public function test_get_accepted_requests_excludes_canceled_and_history_events(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+        $referencetime = time();
+
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Past accepted',
+            'starttime' => strtotime('-3 days 09:00'),
+            'endtime' => strtotime('-3 days 11:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Canceled accepted',
+            'starttime' => strtotime('+2 days 09:00'),
+            'endtime' => strtotime('+2 days 11:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+        ]));
+
+        $accepted = array_values(event_manager::get_accepted_requests($referencetime));
+        $this->assertCount(0, $accepted);
+        $this->assertSame(0, event_manager::count_accepted_requests($referencetime));
+    }
+
+    /**
+     * Open request counts stay limited to actionable New and In progress bookings.
+     *
+     * @return void
+     */
+    public function test_count_open_requests_only_counts_new_and_in_progress(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'starttime' => strtotime('+2 days 09:00'),
+            'endtime' => strtotime('+2 days 11:00'),
+        ];
+
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'New request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'In progress request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Accepted request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+        ]));
+
+        $this->assertSame(2, event_manager::count_open_requests());
+    }
+
+    /**
+     * Open request reads must not include accepted bookings.
+     *
+     * @return void
+     */
+    public function test_get_open_requests_excludes_accepted_bookings(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+        ];
+
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Open request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Accepted request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+        ]));
+
+        $open = array_values(event_manager::get_open_requests());
+        $this->assertCount(1, $open);
+        $this->assertSame('Open request', $open[0]->name);
+    }
+
+    /**
      * Rejected requests must leave active overview projections immediately.
      *
      * @return void

@@ -133,7 +133,7 @@ class update_event_booking_status extends external_api {
         event_manager::transition_booking_status($event, $effectivestatus, (int)$USER->id, $context, (int)$params['cmid']);
 
         $redirecttab = match (true) {
-            in_array($params['tab'], ['openrequests', 'rejectedrequests'], true)
+            in_array($params['tab'], ['openrequests', 'acceptedrequests', 'rejectedrequests'], true)
                 && event_access_manager::can_manage_open_requests($context) => $params['tab'],
             $params['tab'] === 'history' => 'history',
             default => 'myevents',
@@ -146,7 +146,7 @@ class update_event_booking_status extends external_api {
 
         $queuepayload = null;
         if (
-            in_array($redirecttab, ['openrequests', 'rejectedrequests'], true)
+            in_array($redirecttab, ['openrequests', 'acceptedrequests', 'rejectedrequests'], true)
             && event_access_manager::can_manage_open_requests($context)
         ) {
             $queuepayload = event_manager::get_governed_overview_queue(

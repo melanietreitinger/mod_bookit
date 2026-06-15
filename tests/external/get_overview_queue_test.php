@@ -164,4 +164,137 @@ final class get_overview_queue_test extends advanced_testcase {
         $this->assertSame(1, (int)$response['paging']['currentpage']);
         $this->assertFalse($response['paging']['adjusted']);
     }
+
+    /**
+     * Accepted-request reads must expose accepted bookings in the dedicated workspace.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_returns_accepted_request_queue_for_service_team(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Accepted queue']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit accepted queue', 'bookitacceptedqueue', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($serviceuser);
+
+        $starttime = strtotime('+3 days 09:00');
+        $endtime = strtotime('+3 days 11:00');
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Accepted request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => $starttime,
+            'endtime' => $endtime,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $serviceuser->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = get_overview_queue::execute($bookit->cmid, 'acceptedrequests', [], [], [], 1, '', '');
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertFalse($response['denied']);
+        $this->assertSame('acceptedrequests', $response['workspace']);
+        $this->assertCount(1, $response['items']);
+        $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
+        $this->assertSame(1, (int)$response['summary']['acceptedrequestcount']);
+        $this->assertSame(
+            get_string('overview_accepted_request_count', 'mod_bookit', 1),
+            $response['summary']['workspacecounttext']
+        );
+    }
+
+    /**
+     * Open-requests reads must not include accepted bookings after acceptance.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_open_queue_excludes_accepted_bookings(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Open excludes accepted']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit open excludes accepted', 'bookitopenexcludesaccepted', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($serviceuser);
+
+        $starttime = strtotime('+3 days 09:00');
+        $endtime = strtotime('+3 days 11:00');
+        $DB->insert_record('bookit_event', (object)[
+            'name' => 'Accepted only',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => $starttime,
+            'endtime' => $endtime,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $serviceuser->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
+
+        $this->assertSame('openrequests', $response['workspace']);
+        $this->assertCount(0, $response['items']);
+        $this->assertSame(0, (int)$response['summary']['openrequestcount']);
+    }
 }

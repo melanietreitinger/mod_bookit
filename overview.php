@@ -56,8 +56,12 @@ $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $queuepage = max(1, optional_param('queuepage', 1, PARAM_INT));
 $queueperpage = 25;
-$isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'rejectedrequests'], true);
-$requestworkspacemode = $tab === 'rejectedrequests' ? 'rejectedrequests' : 'openrequests';
+$isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'acceptedrequests', 'rejectedrequests'], true);
+$requestworkspacemode = match ($tab) {
+    'rejectedrequests' => 'rejectedrequests',
+    'acceptedrequests' => 'acceptedrequests',
+    default => 'openrequests',
+};
 $currenttab = match (true) {
     $isobserverrestricted => 'myevents',
     $isinrequestworkspace => 'openrequests',
@@ -66,6 +70,7 @@ $currenttab = match (true) {
 };
 $tableid = match (true) {
     $isinrequestworkspace && $requestworkspacemode === 'rejectedrequests' => 'rejected-requests-table',
+    $isinrequestworkspace && $requestworkspacemode === 'acceptedrequests' => 'accepted-requests-table',
     $isinrequestworkspace => 'open-requests-table',
     default => 'overview-table',
 };
@@ -206,6 +211,7 @@ $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode
     'reportstart' => $reportstartvalue,
     'reportend' => $reportendvalue,
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
+    'acceptedrequestsempty' => get_string('overview_accepted_requests_empty', 'mod_bookit'),
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
 ]));
 
@@ -245,11 +251,19 @@ $openrequests = $canmanageopenrequests ? event_manager::get_open_requests() : []
 $openrequestcount = count($openrequests);
 $rejectedrequests = $canmanageopenrequests ? event_manager::get_rejected_requests() : [];
 $rejectedrequestcount = count($rejectedrequests);
-$requestqueuecount = $requestworkspacemode === 'rejectedrequests' ? $rejectedrequestcount : $openrequestcount;
+$acceptedrequests = $canmanageopenrequests ? event_manager::get_accepted_requests() : [];
+$acceptedrequestcount = count($acceptedrequests);
+$requestqueuecount = match ($requestworkspacemode) {
+    'rejectedrequests' => $rejectedrequestcount,
+    'acceptedrequests' => $acceptedrequestcount,
+    default => $openrequestcount,
+};
 $requesttotalpages = max(1, (int)ceil($requestqueuecount / $queueperpage));
 $queuepage = min($queuepage, $requesttotalpages);
 if ($requestworkspacemode === 'rejectedrequests') {
     $rejectedrequests = array_values(array_slice($rejectedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
+} else if ($requestworkspacemode === 'acceptedrequests') {
+    $acceptedrequests = array_values(array_slice($acceptedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
 } else {
     $openrequests = array_values(array_slice($openrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
 }
@@ -341,6 +355,7 @@ $templatecontext = [
         )
         : '',
     'showopenrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
+    'showacceptedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'acceptedrequests',
     'showrejectedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
     'requestworkspacehelp' => get_string('overview_request_workspace_help', 'mod_bookit'),
@@ -355,15 +370,24 @@ $templatecontext = [
     'rejectedrequeststitle' => get_string('overview_rejected_requests', 'mod_bookit'),
     'rejectedrequestshelp' => get_string('overview_rejected_requests_help', 'mod_bookit'),
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
-    'requestqueuecurrenttitle' => $requestworkspacemode === 'rejectedrequests'
-        ? get_string('overview_rejected_requests', 'mod_bookit')
-        : get_string('overview_open_requests', 'mod_bookit'),
-    'requestqueuecurrenthelp' => $requestworkspacemode === 'rejectedrequests'
-        ? get_string('overview_rejected_requests_help', 'mod_bookit')
-        : get_string('overview_open_requests_help', 'mod_bookit'),
-    'requestqueuecounttext' => $requestworkspacemode === 'rejectedrequests'
-        ? get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount)
-        : get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
+    'acceptedrequeststitle' => get_string('overview_accepted_requests', 'mod_bookit'),
+    'acceptedrequestshelp' => get_string('overview_accepted_requests_help', 'mod_bookit'),
+    'acceptedrequestsempty' => get_string('overview_accepted_requests_empty', 'mod_bookit'),
+    'requestqueuecurrenttitle' => match ($requestworkspacemode) {
+        'rejectedrequests' => get_string('overview_rejected_requests', 'mod_bookit'),
+        'acceptedrequests' => get_string('overview_accepted_requests', 'mod_bookit'),
+        default => get_string('overview_open_requests', 'mod_bookit'),
+    },
+    'requestqueuecurrenthelp' => match ($requestworkspacemode) {
+        'rejectedrequests' => get_string('overview_rejected_requests_help', 'mod_bookit'),
+        'acceptedrequests' => get_string('overview_accepted_requests_help', 'mod_bookit'),
+        default => get_string('overview_open_requests_help', 'mod_bookit'),
+    },
+    'requestqueuecounttext' => match ($requestworkspacemode) {
+        'rejectedrequests' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
+        'acceptedrequests' => get_string('overview_accepted_request_count', 'mod_bookit', $acceptedrequestcount),
+        default => get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
+    },
     'requestpaginghtml' => $requestpaginghtml,
     'showoverviewfilters' => $currenttab !== 'openrequests',
     'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
@@ -392,9 +416,11 @@ $templatecontext = [
         ? get_string('observer_empty_state', 'mod_bookit')
         : get_string('overview_no_results', 'mod_bookit'),
     'hasopenrequests' => !empty($openrequests),
+    'hasacceptedrequests' => !empty($acceptedrequests),
     'hasrejectedrequests' => !empty($rejectedrequests),
     'events' => [],
     'openrequests' => [],
+    'acceptedrequests' => [],
     'rejectedrequests' => [],
 ];
 
@@ -677,15 +703,22 @@ foreach ($openrequests as $ev) {
     $templatecontext['openrequests'][] = $prepareeventrow($ev, true, 'openrequests');
 }
 
+foreach ($acceptedrequests as $ev) {
+    $templatecontext['acceptedrequests'][] = $prepareeventrow($ev, true, 'acceptedrequests');
+}
+
 foreach ($rejectedrequests as $ev) {
     $templatecontext['rejectedrequests'][] = $prepareeventrow($ev, true, 'rejectedrequests');
 }
 
 $templatecontext['hasopenrequests'] = !empty($templatecontext['openrequests']);
+$templatecontext['hasacceptedrequests'] = !empty($templatecontext['acceptedrequests']);
 $templatecontext['hasrejectedrequests'] = !empty($templatecontext['rejectedrequests']);
-$templatecontext['requestqueuecounttext'] = $requestworkspacemode === 'rejectedrequests'
-    ? get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount)
-    : get_string('overview_open_request_count', 'mod_bookit', $openrequestcount);
+$templatecontext['requestqueuecounttext'] = match ($requestworkspacemode) {
+    'rejectedrequests' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
+    'acceptedrequests' => get_string('overview_accepted_request_count', 'mod_bookit', $acceptedrequestcount),
+    default => get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
+};
 
 // Render Mustache.
 echo $OUTPUT->render_from_template('mod_bookit/view/examiner_overview', $templatecontext);

@@ -31,6 +31,55 @@ const SELECTOR = 'select[data-action="update-booking-status"]';
 const BUTTON_SELECTOR = 'button[data-action="set-booking-status"]';
 const REQUEST_COUNT_SELECTOR = '[data-region="request-queue-count"]';
 const REQUEST_PAGING_SELECTOR = '[data-region="request-paging"]';
+const REQUEST_WORKSPACES = ['openrequests', 'acceptedrequests', 'rejectedrequests'];
+
+/**
+ * Resolve the CSS row suffix for a request workspace.
+ *
+ * @param {string} workspace
+ * @returns {string}
+ */
+const getRequestRowClass = (workspace) => {
+    if (workspace === 'rejectedrequests') {
+        return 'rejected';
+    }
+    if (workspace === 'acceptedrequests') {
+        return 'accepted';
+    }
+    return 'open';
+};
+
+/**
+ * Resolve the table selector for a request workspace.
+ *
+ * @param {string} workspace
+ * @returns {string}
+ */
+const getRequestTableSelector = (workspace) => {
+    if (workspace === 'rejectedrequests') {
+        return '#rejected-requests-table';
+    }
+    if (workspace === 'acceptedrequests') {
+        return '#accepted-requests-table';
+    }
+    return '#open-requests-table';
+};
+
+/**
+ * Resolve the empty-state message for a request workspace.
+ *
+ * @param {Object} readConfig
+ * @returns {string}
+ */
+const getRequestEmptyMessage = (readConfig) => {
+    if (readConfig.workspace === 'rejectedrequests') {
+        return readConfig.rejectedrequestsempty || '';
+    }
+    if (readConfig.workspace === 'acceptedrequests') {
+        return readConfig.acceptedrequestsempty || '';
+    }
+    return readConfig.openrequestsempty || '';
+};
 
 /**
  * Resolve the optional governed read config injected by overview.php.
@@ -143,7 +192,7 @@ const renderActionButtons = (item, readConfig, workspace) => {
  * @returns {string}
  */
 const renderRequestRow = (item, readConfig, workspace) => {
-    const rowClass = workspace === 'rejectedrequests' ? 'rejected' : 'open';
+    const rowClass = getRequestRowClass(workspace);
     const statusGroupKey = escapeHtml(item.statusgroupkey || 'open');
     const latestHistorySummary = item.latesthistorysummary
         ? `<div class="small text-muted mt-1">${escapeHtml(item.latesthistorysummary)}</div>`
@@ -226,11 +275,9 @@ const syncPaging = (readConfig, queueResponse) => {
  * @param {Object} queueResponse
  */
 const renderQueueState = (readConfig, queueResponse) => {
-    const tableSelector = readConfig.workspace === 'rejectedrequests' ? '#rejected-requests-table' : '#open-requests-table';
+    const tableSelector = getRequestTableSelector(readConfig.workspace);
     const table = document.querySelector(tableSelector);
-    const emptyMessage = readConfig.workspace === 'rejectedrequests'
-        ? (readConfig.rejectedrequestsempty || '')
-        : (readConfig.openrequestsempty || '');
+    const emptyMessage = getRequestEmptyMessage(readConfig);
 
     updateVisibleQueueCount(queueResponse);
     syncPaging(readConfig, queueResponse);
@@ -264,7 +311,7 @@ const renderQueueState = (readConfig, queueResponse) => {
  * @returns {Promise<void>}
  */
 const refreshQueueFromGovernedRead = (readConfig, initialQueueResponse, redirectUrl) => {
-    if (!readConfig || !['openrequests', 'rejectedrequests'].includes(readConfig.workspace)) {
+    if (!readConfig || !REQUEST_WORKSPACES.includes(readConfig.workspace)) {
         window.location.assign(redirectUrl || window.location.href);
         return Promise.resolve();
     }
@@ -323,7 +370,7 @@ export const init = () => {
         }])[0]
         .then((response) => {
             applyColor(select);
-            if (['openrequests', 'rejectedrequests'].includes(tab)) {
+            if (REQUEST_WORKSPACES.includes(tab)) {
                 window.location.assign(window.location.href);
                 return null;
             }
@@ -357,7 +404,7 @@ export const init = () => {
             args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
         }])[0]
         .then((response) => {
-            if (['openrequests', 'rejectedrequests'].includes(tab)) {
+            if (REQUEST_WORKSPACES.includes(tab)) {
                 window.location.assign(window.location.href);
                 return null;
             }

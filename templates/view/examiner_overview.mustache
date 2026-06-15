@@ -411,6 +411,112 @@
     {{/hasopenrequests}}
     {{/showopenrequestworkspace}}
 
+    {{#showacceptedrequestworkspace}}
+    <div class="mb-3">
+        <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
+        <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
+    </div>
+
+    {{#hasacceptedrequests}}
+    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-accepted-requests-table">
+        <thead class="text-center">
+            <tr style="background-color:#d4edda;">
+                <th class="align-middle">ID</th>
+                <th class="align-middle">Title</th>
+                <th class="align-middle">Room</th>
+                <th class="align-middle">Person in charge</th>
+                <th class="align-middle">My role</th>
+                <th class="align-middle">Booking status</th>
+                <th class="align-middle">Date</th>
+                <th class="align-middle">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="text-center">
+            {{#acceptedrequests}}
+            <tr class="mod-bookit-accepted-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
+                <td class="align-middle">{{id}}</td>
+                <td class="align-middle">
+                    {{#caneventdetails}}
+                    <a href="#"
+                       class="bookit-event-link"
+                       data-eventid="{{id}}"
+                       data-cmid="{{cmid}}"
+                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}
+                       {{#cancelbuttontext}}data-cancel-button-text="{{cancelbuttontext}}"{{/cancelbuttontext}}>
+                        {{name}}
+                    </a>
+                    {{/caneventdetails}}
+                    {{^caneventdetails}}{{name}}{{/caneventdetails}}
+                </td>
+                <td class="align-middle">{{room}}</td>
+                <td class="align-middle">{{personincharge}}</td>
+                <td class="align-middle">{{myrole}}</td>
+                <td class="align-middle mod-bookit-status-cell">
+                    <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
+                         style="{{statusstyle}}">
+                        <div class="font-weight-bold">{{statustext}}</div>
+                        <div class="small">{{statusgrouptext}}</div>
+                        {{#haslatesthistorysummary}}
+                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
+                        {{/haslatesthistorysummary}}
+                        {{#showhistorydetails}}
+                        <details class="mt-2 text-left mod-bookit-history-details">
+                            <summary class="small font-weight-bold">{{historydetailslabel}}</summary>
+                            {{#hashistoryentries}}
+                            <ul class="list-unstyled small mb-0 mt-2">
+                                {{#historyentries}}
+                                <li class="mb-2">
+                                    <div>{{summary}}</div>
+                                    {{#hasrecoverymarker}}
+                                    <div class="text-info">{{recoverymarkertext}}</div>
+                                    {{/hasrecoverymarker}}
+                                    {{#haschanges}}
+                                    <ul class="pl-3 mb-0">
+                                        {{#changes}}
+                                        <li>{{text}}</li>
+                                        {{/changes}}
+                                    </ul>
+                                    {{/haschanges}}
+                                </li>
+                                {{/historyentries}}
+                            </ul>
+                            {{/hashistoryentries}}
+                            {{^hashistoryentries}}
+                            <div class="small text-muted mt-2">{{historydetailsempty}}</div>
+                            {{/hashistoryentries}}
+                        </details>
+                        {{/showhistorydetails}}
+                    </div>
+                </td>
+                <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
+                <td class="align-middle">
+                    <div class="mod-bookit-open-request-actions">
+                        {{#actions}}
+                        <button type="button"
+                                class="btn btn-sm {{btnclass}}"
+                                data-action="set-booking-status"
+                                data-eventid="{{eventid}}"
+                                data-cmid="{{cmid}}"
+                                data-tab="{{tab}}"
+                                data-status="{{value}}">
+                            {{label}}
+                        </button>
+                        {{/actions}}
+                    </div>
+                </td>
+            </tr>
+            {{/acceptedrequests}}
+        </tbody>
+    </table>
+    {{/hasacceptedrequests}}
+
+    {{^hasacceptedrequests}}
+    <div class="alert alert-info mb-0">
+        {{acceptedrequestsempty}}
+    </div>
+    {{/hasacceptedrequests}}
+    {{/showacceptedrequestworkspace}}
+
     {{#showrejectedrequestworkspace}}
     <div class="mb-3">
         <div>

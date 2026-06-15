@@ -299,6 +299,8 @@ class event_manager {
 
         if ($workspace === 'openrequests') {
             $events = $canmanageopenrequests ? self::get_open_requests() : [];
+        } else if ($workspace === 'acceptedrequests') {
+            $events = $canmanageopenrequests ? self::get_accepted_requests() : [];
         } else if ($workspace === 'rejectedrequests') {
             $events = $canmanageopenrequests ? self::get_rejected_requests() : [];
         } else {
@@ -331,10 +333,13 @@ class event_manager {
         $rejectedrequestcount = $workspace === 'rejectedrequests' ? $totalcount : (
             $canmanageopenrequests ? count(self::get_rejected_requests()) : 0
         );
+        $acceptedrequestcount = $workspace === 'acceptedrequests' ? $totalcount : (
+            $canmanageopenrequests ? self::count_accepted_requests() : 0
+        );
         $currentpage = 1;
         $totalpages = 1;
         $haspaging = false;
-        if (in_array($workspace, ['openrequests', 'rejectedrequests'], true)) {
+        if (in_array($workspace, ['openrequests', 'acceptedrequests', 'rejectedrequests'], true)) {
             $totalpages = max(1, (int)ceil($totalcount / $perpage));
             $currentpage = min($page, $totalpages);
             $offset = ($currentpage - 1) * $perpage;
@@ -364,10 +369,13 @@ class event_manager {
             'summary' => [
                 'count' => $totalcount,
                 'openrequestcount' => $openrequestcount,
+                'acceptedrequestcount' => $acceptedrequestcount,
                 'rejectedrequestcount' => $rejectedrequestcount,
-                'workspacecounttext' => $workspace === 'rejectedrequests'
-                    ? get_string('overview_rejected_request_count', 'mod_bookit', $totalcount)
-                    : get_string('overview_open_request_count', 'mod_bookit', $totalcount),
+                'workspacecounttext' => match ($workspace) {
+                    'rejectedrequests' => get_string('overview_rejected_request_count', 'mod_bookit', $totalcount),
+                    'acceptedrequests' => get_string('overview_accepted_request_count', 'mod_bookit', $totalcount),
+                    default => get_string('overview_open_request_count', 'mod_bookit', $totalcount),
+                },
             ],
             'paging' => [
                 'requestedpage' => $page,
@@ -734,6 +742,56 @@ class event_manager {
         return $DB->get_records_sql($sql, [
             'status' => event_access_manager::BOOKINGSTATUS_REJECTED,
         ]);
+    }
+
+    /**
+     * Return accepted bookings that are still active for the service-team workspace.
+     *
+     * @param int|null $referencetime
+     * @return array
+     * @throws dml_exception
+     */
+    public static function get_accepted_requests(?int $referencetime = null): array {
+        global $DB;
+
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            WHERE e.bookingstatus = :status
+            ORDER BY e.starttime ASC
+        ";
+
+        $records = $DB->get_records_sql($sql, [
+            'status' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+        ]);
+        $referencetime ??= time();
+
+        return array_values(array_filter(
+            $records,
+            static fn(stdClass $event): bool => !self::is_event_in_history($event, $referencetime)
+        ));
+    }
+
+    /**
+     * Return the number of accepted bookings in the dedicated service-team workspace.
+     *
+     * @param int|null $referencetime
+     * @return int
+     * @throws dml_exception
+     */
+    public static function count_accepted_requests(?int $referencetime = null): int {
+        return count(self::get_accepted_requests($referencetime));
     }
 
     /**
