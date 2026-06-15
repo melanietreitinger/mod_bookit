@@ -816,6 +816,6 @@ class event_access_manager {
             return true;
         }
 
-        return in_array('supportperson', $roles, true) && self::is_booking_confirmed($event);
+        return in_array('supportperson', $roles, true) && self::is_booking_accessible($event);
     }
 }

@@ -345,11 +345,11 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Support persons may only see accepted bookings unless another participant role also applies.
+     * Support-only users see in-progress and accepted bookings but not new requests.
      *
      * @return void
      */
-    public function test_supportperson_visibility_requires_accepted_booking(): void {
+    public function test_supportperson_visibility_requires_accessible_booking(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $user = $this->getDataGenerator()->create_user();
@@ -369,6 +369,15 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertFalse(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
+
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_IN_PROGRESS;
+
+        $this->assertTrue(event_access_manager::can_user_view_event_details($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
 
         $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
 
