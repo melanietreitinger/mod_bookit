@@ -148,23 +148,79 @@ class examiner_pool_resolver {
 
         $options = [];
         foreach ($this->load_pool_users() as $id => $user) {
-            $options[(int)$id] = fullname($user) . ' | ' . $user->email;
+            $options[(int)$id] = self::format_user_label($user);
         }
 
         $missinglegacyids = array_diff(array_map('intval', $legacyuserids), array_keys($options));
         if (!empty($missinglegacyids)) {
-            [$insql, $params] = $DB->get_in_or_equal($missinglegacyids, SQL_PARAMS_NAMED);
-            $sql = "SELECT u.*
-                      FROM {user} u
-                     WHERE u.id $insql
-                       AND u.deleted = 0";
-            $legacyusers = $DB->get_records_sql($sql, $params);
-            foreach ($legacyusers as $id => $user) {
-                $options[(int)$id] = fullname($user) . ' | ' . $user->email;
-            }
+            $options += self::build_options_for_user_ids($missinglegacyids);
         }
 
         return $options;
+    }
+
+    /**
+     * Build a readable selector label for a user record.
+     *
+     * @param \stdClass $user
+     * @return string
+     */
+    public static function format_user_label(stdClass $user): string {
+        $name = fullname($user);
+        if (trim($name) !== '' && !empty($user->email)) {
+            return $name . ' | ' . $user->email;
+        }
+        if (trim($name) !== '') {
+            return $name;
+        }
+        if (!empty($user->username)) {
+            return (string)$user->username;
+        }
+
+        return get_string('examiner_display_unknown_user', 'mod_bookit');
+    }
+
+    /**
+     * Resolve readable autocomplete labels for the given user ids.
+     *
+     * Deleted or suspended users remain readable when their record still exists.
+     * Missing records fall back to a neutral placeholder instead of a bare id.
+     *
+     * @param int[] $userids
+     * @return array<int,string>
+     */
+    public static function build_options_for_user_ids(array $userids): array {
+        global $DB;
+
+        $userids = array_values(array_unique(array_filter(array_map('intval', $userids))));
+        if ($userids === []) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $users = $DB->get_records_sql("SELECT u.* FROM {user} u WHERE u.id $insql", $params);
+
+        $options = [];
+        foreach ($userids as $userid) {
+            if (isset($users[$userid])) {
+                $options[$userid] = self::format_user_label($users[$userid]);
+                continue;
+            }
+
+            $options[$userid] = self::format_fallback_label($userid);
+        }
+
+        return $options;
+    }
+
+    /**
+     * Fallback label when a stored user id can no longer be resolved.
+     *
+     * @param int $userid
+     * @return string
+     */
+    public static function format_fallback_label(int $userid): string {
+        return get_string('examiner_display_unknown_user', 'mod_bookit', $userid);
     }
 
     /**

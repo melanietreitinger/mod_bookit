@@ -303,6 +303,7 @@ $string['event_timecompensation_help'] = 'Check if you have participants entitle
 $string['event_usermodified'] = 'Created by user';
 $string['eventaudit_booking_reactivated'] = 'Buchung reaktiviert';
 $string['eventaudit_booking_status_changed'] = 'Buchungsstatus geändert';
+$string['examiner_display_unknown_user'] = 'Unbekannter Nutzer (ID {$a})';
 $string['examiner_pool_invalid_assignment'] = 'Die ausgewählte Person gehört nicht zum konfigurierten Prüfenden-Pool.';
 $string['examiner_pool_usernames'] = 'Usernames für den Prüfenden-Pool';
 $string['examiner_pool_usernames_desc'] = 'Optionale kommagetrennte Liste von Moodle-Usernames, die als verantwortliche Person oder weitere Prüfende ausgewählt werden dürfen. Leer lassen, um alle aktiven Nutzer zuzulassen.';

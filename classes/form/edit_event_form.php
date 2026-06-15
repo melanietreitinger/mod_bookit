@@ -774,6 +774,8 @@ class edit_event_form extends dynamic_form {
             $mform->getElement('bookingstatus')->setValue((string)event_access_manager::BOOKINGSTATUS_CANCELED);
             $mform->setConstant('bookingstatus', event_access_manager::BOOKINGSTATUS_CANCELED);
         }
+
+        $this->inject_examiner_selector_labels($mform, $data);
     }
 
     /**
@@ -1565,6 +1567,54 @@ class edit_event_form extends dynamic_form {
     }
 
     /**
+     * Ensure selected examiner ids have readable autocomplete labels after form data is loaded.
+     *
+     * @param \MoodleQuickForm $mform
+     * @param \stdClass $data
+     * @return void
+     */
+    private function inject_examiner_selector_labels(\MoodleQuickForm $mform, ?\stdClass $data): void {
+        if ($data === null) {
+            return;
+        }
+        $personid = (int)($data->personinchargeid ?? 0);
+        if ($personid > 0 && $mform->elementExists('personinchargeid')) {
+            $this->merge_examiner_autocomplete_options($mform, 'personinchargeid', [$personid]);
+        }
+
+        $otherexaminerids = examiner_pool_resolver::parse_user_id_list(
+            isset($data->otherexaminers) ? (string)$data->otherexaminers : null
+        );
+        if ($otherexaminerids !== [] && $mform->elementExists('otherexaminers')) {
+            $this->merge_examiner_autocomplete_options($mform, 'otherexaminers', $otherexaminerids);
+        }
+    }
+
+    /**
+     * Merge resolved labels into an examiner autocomplete element.
+     *
+     * @param \MoodleQuickForm $mform
+     * @param string $fieldname
+     * @param int[] $userids
+     * @return void
+     */
+    private function merge_examiner_autocomplete_options(\MoodleQuickForm $mform, string $fieldname, array $userids): void {
+        $element = $mform->getElement($fieldname);
+        if (!is_object($element) || !method_exists($element, 'load')) {
+            return;
+        }
+
+        $currentoptions = [];
+        if (property_exists($element, '_options') && is_array($element->_options)) {
+            foreach ($element->_options as $value => $label) {
+                $currentoptions[(int)$value] = $label;
+            }
+        }
+
+        $element->load($currentoptions + examiner_pool_resolver::build_options_for_user_ids($userids));
+    }
+
+    /**
      * Format one or more selected user ids for readonly selector output.
      *
      * @param mixed $value
@@ -1572,17 +1622,20 @@ class edit_event_form extends dynamic_form {
      * @return string
      */
     private function format_selector_display(mixed $value, array $options): string {
-        $ids = explode(',', $this->normalise_comma_separated_ids($value));
+        $ids = examiner_pool_resolver::parse_user_id_list(
+            $value === null || $value === '' ? null : (string)$value
+        );
+        if ($ids === []) {
+            return '-';
+        }
+
+        $resolvedlabels = examiner_pool_resolver::build_options_for_user_ids($ids);
         $labels = [];
 
         foreach ($ids as $id) {
-            if ($id === '') {
-                continue;
-            }
-
-            $labels[] = $options[(int)$id] ?? ('#' . $id);
+            $labels[] = $options[$id] ?? $resolvedlabels[$id] ?? examiner_pool_resolver::format_fallback_label($id);
         }
 
-        return $labels ? implode(', ', $labels) : '-';
+        return implode(', ', $labels);
     }
 }

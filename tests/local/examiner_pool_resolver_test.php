@@ -149,4 +149,79 @@ final class examiner_pool_resolver_test extends advanced_testcase {
 
         $this->assertSame([11, 12, 13], $legacyids);
     }
+
+    /**
+     * User labels should follow the selector display format.
+     *
+     * @return void
+     */
+    public function test_format_user_label_uses_fullname_and_email(): void {
+        $this->resetAfterTest(true);
+
+        $user = $this->getDataGenerator()->create_user([
+            'firstname' => 'Emma',
+            'lastname' => 'Examiner',
+            'email' => 'examiner1@example.com',
+        ]);
+
+        $label = examiner_pool_resolver::format_user_label($user);
+        $this->assertStringContainsString('Emma', $label);
+        $this->assertStringContainsString('Examiner', $label);
+        $this->assertStringContainsString('examiner1@example.com', $label);
+    }
+
+    /**
+     * build_options_for_user_ids should resolve active users and keep request order.
+     *
+     * @return void
+     */
+    public function test_build_options_for_user_ids_resolves_known_users(): void {
+        $this->resetAfterTest(true);
+
+        $first = $this->getDataGenerator()->create_user(['username' => 'first.examiner']);
+        $second = $this->getDataGenerator()->create_user(['username' => 'second.examiner']);
+
+        $options = examiner_pool_resolver::build_options_for_user_ids([$second->id, $first->id]);
+
+        $this->assertArrayHasKey($first->id, $options);
+        $this->assertArrayHasKey($second->id, $options);
+        $this->assertSame(
+            examiner_pool_resolver::format_user_label($first),
+            $options[$first->id]
+        );
+    }
+
+    /**
+     * Missing user ids should fall back to a readable placeholder.
+     *
+     * @return void
+     */
+    public function test_build_options_for_user_ids_uses_fallback_for_missing_users(): void {
+        $this->resetAfterTest(true);
+
+        $options = examiner_pool_resolver::build_options_for_user_ids([424242]);
+
+        $this->assertArrayHasKey(424242, $options);
+        $this->assertStringContainsString('424242', $options[424242]);
+        $this->assertStringNotContainsString('#424242', $options[424242]);
+    }
+
+    /**
+     * Deleted users should remain readable when their record still exists.
+     *
+     * @return void
+     */
+    public function test_build_options_for_user_ids_includes_deleted_users(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $deleted = $this->getDataGenerator()->create_user(['username' => 'deleted.examiner']);
+        $DB->set_field('user', 'deleted', 1, ['id' => $deleted->id]);
+
+        $options = examiner_pool_resolver::build_options_for_user_ids([$deleted->id]);
+
+        $this->assertArrayHasKey($deleted->id, $options);
+        $this->assertStringContainsString('deleted.examiner', $options[$deleted->id]);
+    }
 }
