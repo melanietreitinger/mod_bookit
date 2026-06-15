@@ -514,6 +514,74 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Overview cancel is available for self-cancel and cancel-only participant paths.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_can_participant_overview_cancel(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => $user->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+            'starttime' => strtotime('+1 day'),
+        ];
+
+        $this->assertTrue(event_access_manager::can_participant_overview_cancel($event, $context, $user->id));
+
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $this->assertTrue(event_access_manager::can_participant_overview_cancel($event, $context, $user->id));
+
+        foreach (
+            [
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+            ] as $status
+        ) {
+            $event->bookingstatus = $status;
+            $this->assertFalse(event_access_manager::can_participant_overview_cancel($event, $context, $user->id));
+        }
+    }
+
+    /**
+     * Overview cancel is not offered in observer or unrelated participant contexts.
+     *
+     * @return void
+     */
+    public function test_can_participant_overview_cancel_boundaries(): void {
+        $this->resetAfterTest(true);
+        $observercontext = $this->create_bookit_context_with_observer_role();
+        $observer = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($observercontext, $observer->id, 'bookitobserver');
+
+        $acceptedevent = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 999,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+            'starttime' => strtotime('+1 day'),
+        ];
+        $this->assertFalse(
+            event_access_manager::can_participant_overview_cancel($acceptedevent, $observercontext, $observer->id)
+        );
+
+        $participantcontext = $this->create_bookit_context_with_participant_role();
+        $outsider = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($participantcontext, $outsider->id);
+        $this->assertFalse(
+            event_access_manager::can_participant_overview_cancel($acceptedevent, $participantcontext, $outsider->id)
+        );
+    }
+
+    /**
      * Past booking management is reserved for service-team style capabilities.
      *
      * @return void

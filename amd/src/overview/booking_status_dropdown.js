@@ -25,10 +25,12 @@
  */
 
 import Ajax from 'core/ajax';
-import Notification from 'core/notification';
+import {saveCancelPromise, exception} from 'core/notification';
+import {get_strings as getStrings} from 'core/str';
 
 const SELECTOR = 'select[data-action="update-booking-status"]';
 const BUTTON_SELECTOR = 'button[data-action="set-booking-status"]';
+const CANCEL_OVERVIEW_SELECTOR = 'button[data-action="cancel-booking-from-overview"]';
 const REQUEST_COUNT_SELECTOR = '[data-region="request-queue-count"]';
 const REQUEST_PAGING_SELECTOR = '[data-region="request-paging"]';
 const REQUEST_WORKSPACES = ['openrequests', 'acceptedrequests', 'rejectedrequests'];
@@ -382,7 +384,7 @@ export const init = () => {
         })
         .catch((err) => {
             select.disabled = false;
-            Notification.exception(err);
+            exception(err);
         });
     });
 
@@ -416,7 +418,45 @@ export const init = () => {
         })
         .catch((err) => {
             button.disabled = false;
-            Notification.exception(err);
+            exception(err);
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest(CANCEL_OVERVIEW_SELECTOR);
+        if (!button) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const cmid = parseInt(button.dataset.cmid, 10);
+        const eventid = parseInt(button.dataset.eventid, 10);
+        const status = parseInt(button.dataset.status, 10);
+        const tab = resolveActiveTab(button);
+
+        getStrings([
+            {key: 'overview_cancel_booking_confirm', component: 'mod_bookit'},
+            {key: 'overview_cancel_booking_confirm_body', component: 'mod_bookit'},
+            {key: 'overview_cancel_booking', component: 'mod_bookit'},
+        ]).then((strings) => saveCancelPromise(strings[0], strings[1], strings[2], {triggerElement: button}))
+        .then(() => {
+            button.disabled = true;
+
+            return Ajax.call([{
+                methodname: 'mod_bookit_update_event_booking_status',
+                args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
+            }])[0];
+        })
+        .then((response) => refreshQueueFromGovernedRead(
+            getReadConfig(tab),
+            response.queue || null,
+            response.redirecturl || window.location.href
+        ))
+        .catch((err) => {
+            button.disabled = false;
+            exception(err);
+            return null;
         });
     });
 };

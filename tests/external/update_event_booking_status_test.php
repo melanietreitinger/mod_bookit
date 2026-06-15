@@ -94,4 +94,136 @@ final class update_event_booking_status_test extends advanced_testcase {
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$record->bookingstatus);
     }
+
+    /**
+     * Participants may cancel their own bookings from the personal overview without managebasics.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_allows_participant_overview_cancel(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Participant cancel']);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant', 'bookitparticipant', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $user = $this->getDataGenerator()->create_user();
+        \role_assign($roleid, $user->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $this->setUser($user);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Participant overview cancel',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('+1 day'),
+            'endtime' => strtotime('+1 day +2 hours'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => $user->id,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            'myevents',
+            1
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, (int)$response['status']);
+        $this->assertSame('myevents', $response['tab']);
+
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, (int)$record->bookingstatus);
+    }
+
+    /**
+     * Unauthorized users cannot cancel bookings they do not own via the participant path.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_rejects_unauthorized_participant_overview_cancel(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Unauthorized cancel']);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant', 'bookitparticipant', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $outsider = $this->getDataGenerator()->create_user();
+        \role_assign($roleid, $outsider->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($outsider->id, $course->id, 'student');
+        $this->setUser($outsider);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Foreign booking',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('+1 day'),
+            'endtime' => strtotime('+1 day +2 hours'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 999,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => 999,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->expectException(\required_capability_exception::class);
+        update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            'myevents',
+            1
+        );
+    }
 }

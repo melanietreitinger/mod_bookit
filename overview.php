@@ -394,6 +394,8 @@ $templatecontext = [
     'showprogresscolumn' => $checklistenabled || $resourcesenabled,
     'showchecklistcolumn' => $checklistenabled,
     'showresourcescolumn' => $resourcesenabled,
+    'showcancelcolumn' => !$canmanage && !$isobserverrestricted && $currenttab === 'myevents',
+    'overviewcancelcolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'reportinghelp' => $currenttab === 'history'
         ? get_string('overview_history_help', 'mod_bookit')
         : get_string('overview_reporting_help', 'mod_bookit'),
@@ -525,7 +527,8 @@ $prepareeventrow = function (
     $resourcesenabled,
     $resourceprogressmap,
     $latesthistorymap,
-    $buildhistorydetails
+    $buildhistorydetails,
+    $currenttab
 ): array {
     $room = $ev->room ?: '-';
     $isreservedprojection = $isobserverrestricted;
@@ -684,6 +687,13 @@ $prepareeventrow = function (
         'historydetailsempty' => get_string('overview_workflow_history_empty', 'mod_bookit'),
         'hashistoryentries' => !$isreservedprojection && !empty($historydetails),
         'historyentries' => !$isreservedprojection ? $historydetails : [],
+        'hascancelaction' => !$isrequestworkspaceitem
+            && !$canmanage
+            && !$isreservedprojection
+            && event_access_manager::can_participant_overview_cancel($ev, $context, (int)$USER->id),
+        'cancelactionlabel' => get_string('overview_cancel_booking', 'mod_bookit'),
+        'canceltargetstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+        'overviewtab' => $currenttab === 'history' ? 'history' : 'myevents',
     ];
 };
 

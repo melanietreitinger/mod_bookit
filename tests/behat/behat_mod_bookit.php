@@ -1012,6 +1012,84 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Cancel a booking from the personal overview row action.
+     *
+     * @When I cancel the booking :eventname from the Bookit overview
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function i_cancel_the_booking_from_the_bookit_overview(string $eventname): void {
+        $js = <<<JS
+            (function(eventLabel) {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                for (var i = 0; i < rows.length; i++) {
+                    var link = rows[i].querySelector('a.bookit-event-link');
+                    var title = rows[i].querySelector('td span[data-is-reserved-projection="1"]');
+                    var label = link ? link.textContent.trim() : (title ? title.textContent.trim() : '');
+                    if (label !== eventLabel) {
+                        continue;
+                    }
+                    var button = rows[i].querySelector('button[data-action="cancel-booking-from-overview"]');
+                    if (!button) {
+                        return 'button-not-found';
+                    }
+                    button.click();
+                    return 'clicked';
+                }
+                return 'row-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'clicked') {
+            throw new ExpectationException(
+                "Could not cancel booking \"$eventname\" from the overview. Result: $result",
+                $this->getSession()
+            );
+        }
+        $this->getSession()->wait(1000);
+    }
+
+    /**
+     * Confirm the overview cancel dialog opened from the personal overview row action.
+     *
+     * @When I confirm the Bookit overview cancel dialog
+     * @return void
+     * @throws ExpectationException
+     */
+    public function i_confirm_the_bookit_overview_cancel_dialog(): void {
+        $this->getSession()->wait(5000, <<<'JS'
+            (function() {
+                return document.querySelector('.modal.show button[data-action="save"], .modal.show .btn-primary') !== null;
+            })();
+        JS);
+
+        $script = <<<'JS'
+            (function() {
+                const modal = document.querySelector('.modal.show');
+                if (!modal) {
+                    return false;
+                }
+                const button = modal.querySelector('button[data-action="save"]')
+                    || modal.querySelector('.modal-footer .btn-primary');
+                if (!button) {
+                    return false;
+                }
+                button.click();
+                return true;
+            })();
+        JS;
+
+        if (!$this->getSession()->evaluateScript($script)) {
+            throw new ExpectationException(
+                'The Bookit overview cancel confirmation dialog could not be confirmed.',
+                $this->getSession()
+            );
+        }
+        $this->getSession()->wait(3000);
+    }
+
+    /**
      * Assert that the overview table currently renders the ID column.
      *
      * @Then the Bookit overview should show the ID column
@@ -1029,6 +1107,28 @@ class behat_mod_bookit extends behat_base {
      */
     public function the_bookit_overview_should_not_show_the_id_column(): void {
         $this->assert_overview_id_column(false);
+    }
+
+    /**
+     * Assert that the overview row for an event exposes the participant cancel action.
+     *
+     * @Then the Bookit overview should show a cancel action for event :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_a_cancel_action_for_event(string $eventname): void {
+        $this->assert_overview_cancel_action($eventname, true);
+    }
+
+    /**
+     * Assert that the overview row for an event does not expose the participant cancel action.
+     *
+     * @Then the Bookit overview should not show a cancel action for event :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_show_a_cancel_action_for_event(string $eventname): void {
+        $this->assert_overview_cancel_action($eventname, false);
     }
 
     /**
@@ -1569,6 +1669,48 @@ class behat_mod_bookit extends behat_base {
             $message = $expected
                 ? 'Expected the overview to show the ID column, but it did not.'
                 : 'Expected the overview to hide the ID column, but it was visible.';
+            throw new ExpectationException($message, $this->getSession());
+        }
+    }
+
+    /**
+     * Assert whether the personal overview row exposes the participant cancel action.
+     *
+     * @param string $eventname
+     * @param bool $expected
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_overview_cancel_action(string $eventname, bool $expected): void {
+        $js = <<<JS
+            (function(eventLabel) {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                for (var i = 0; i < rows.length; i++) {
+                    var link = rows[i].querySelector('a.bookit-event-link');
+                    var title = rows[i].querySelector('td span[data-is-reserved-projection="1"]');
+                    var label = link ? link.textContent.trim() : (title ? title.textContent.trim() : '');
+                    if (label !== eventLabel) {
+                        continue;
+                    }
+                    return !!rows[i].querySelector('button[data-action="cancel-booking-from-overview"]');
+                }
+                return 'row-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result === 'row-not-found') {
+            throw new ExpectationException(
+                "Could not find overview row for event \"$eventname\".",
+                $this->getSession()
+            );
+        }
+
+        $actual = (bool)$result;
+        if ($actual !== $expected) {
+            $message = $expected
+                ? "Expected overview cancel action for \"$eventname\"."
+                : "Did not expect overview cancel action for \"$eventname\".";
             throw new ExpectationException($message, $this->getSession());
         }
     }

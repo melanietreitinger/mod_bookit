@@ -123,7 +123,13 @@ class update_event_booking_status extends external_api {
                 throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
             }
         } else {
-            require_capability('mod/bookit:managebasics', $context);
+            $allowparticipantoverviewcancel = (int)$params['status'] === event_access_manager::BOOKINGSTATUS_CANCELED
+                && $effectivestatus === event_access_manager::BOOKINGSTATUS_CANCELED
+                && $params['tab'] === 'myevents'
+                && event_access_manager::can_participant_overview_cancel($event, $context, (int)$USER->id);
+            if (!$allowparticipantoverviewcancel) {
+                require_capability('mod/bookit:managebasics', $context);
+            }
         }
 
         if ($effectivestatus === null || !event_access_manager::can_transition_booking_status($oldstatus, $effectivestatus)) {
@@ -175,12 +181,16 @@ class update_event_booking_status extends external_api {
             $queuepayload['fragments'] = ['paginghtml' => $paginghtml];
         }
 
-        return [
+        $response = [
             'status' => $effectivestatus,
             'tab' => $redirecttab,
             'redirecturl' => $redirecturl,
-            'queue' => $queuepayload,
         ];
+        if ($queuepayload !== null) {
+            $response['queue'] = $queuepayload;
+        }
+
+        return $response;
     }
 
     /**

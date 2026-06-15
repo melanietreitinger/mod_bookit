@@ -161,6 +161,9 @@
                 {{#showresourcescolumn}}
                 <th class="align-middle">Resources</th>
                 {{/showresourcescolumn}}
+                {{#showcancelcolumn}}
+                <th class="align-middle">{{overviewcancelcolumnlabel}}</th>
+                {{/showcancelcolumn}}
             </tr>
         </thead>
 
@@ -274,6 +277,22 @@
                         {{^hasresourcesaction}}-{{/hasresourcesaction}}
                     </td>
                     {{/showresourcescolumn}}
+                    {{#showcancelcolumn}}
+                    <td class="align-middle">
+                        {{#hascancelaction}}
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                data-action="cancel-booking-from-overview"
+                                data-eventid="{{id}}"
+                                data-cmid="{{cmid}}"
+                                data-status="{{canceltargetstatus}}"
+                                data-tab="{{overviewtab}}">
+                            {{cancelactionlabel}}
+                        </button>
+                        {{/hascancelaction}}
+                        {{^hascancelaction}}-{{/hascancelaction}}
+                    </td>
+                    {{/showcancelcolumn}}
                 </tr>
             {{/events}}
         </tbody>

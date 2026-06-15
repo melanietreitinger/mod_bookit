@@ -312,6 +312,27 @@ class event_access_manager {
     }
 
     /**
+     * Check whether the user may cancel a booking from the personal overview row action.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_participant_overview_cancel(stdClass $event, context_module $context, int $userid): bool {
+        if (self::should_block_participant_past_edit($event, $context, $userid)) {
+            return false;
+        }
+
+        if (self::can_manage_open_requests($context)) {
+            return false;
+        }
+
+        return self::can_self_cancel_new_request($event, $context, $userid)
+            || self::can_participant_cancel_only($event, $context, $userid);
+    }
+
+    /**
      * Check whether the user may open the event details with full event data.
      *
      * Service-team users may always access the event. Other users need the own-event

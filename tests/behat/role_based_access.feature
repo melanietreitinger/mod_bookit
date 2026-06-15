@@ -57,6 +57,26 @@ Feature: Enforce role-based visibility and editing for booking requests
     And the Bookit event details control "bookingstatus" should be disabled
     And the Bookit event details control "internalnotes" should be enabled
 
+  Scenario: Booking person cancels a new request from the overview row
+    Given the following "mod_bookit > events" exist:
+      | name                    | username    | personincharge_username | startdate                         | enddate                              | bookingstatus | institution |
+      | Overview cancel booking | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
+    When I log in as "bookinguser"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    And I cancel the booking "Overview cancel booking" from the Bookit overview
+    And I confirm the Bookit overview cancel dialog
+    Then the Bookit overview should list only the events ""
+
+  Scenario: Booking person cancels an accepted booking from the overview row
+    Given the following "mod_bookit > events" exist:
+      | name                         | username    | personincharge_username | startdate                         | enddate                              | bookingstatus | institution |
+      | Overview cancel-only booking | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 15:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
+    When I log in as "bookinguser"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    And I cancel the booking "Overview cancel-only booking" from the Bookit overview
+    And I confirm the Bookit overview cancel dialog
+    Then the Bookit overview should list only the events ""
+
   Scenario: Booking person may edit only while status is New and may later only cancel
     Given the following "mod_bookit > events" exist:
       | name                    | username    | personincharge_username | startdate                         | enddate                              | bookingstatus | institution |
@@ -99,6 +119,7 @@ Feature: Enforce role-based visibility and editing for booking requests
     And the Bookit calendar projection for user "observeruser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Observer hidden request"
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview should list only the events "Reserved"
+    And the Bookit overview should not show a cancel action for event "Reserved"
 
   Scenario: Observer overview rows do not open event details
     Given the following "mod_bookit > events" exist:
