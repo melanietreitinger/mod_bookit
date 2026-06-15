@@ -162,6 +162,12 @@ class edit_event_form extends dynamic_form {
         }
 
         $mform->addElement('select', 'semester', get_string('select_semester', 'mod_bookit'), $semesters);
+        if (empty($eventid)) {
+            $currentsemester = event_manager::get_current_semester();
+            if (array_key_exists($currentsemester, $semesters)) {
+                $mform->setDefault('semester', $currentsemester);
+            }
+        }
         $mform->disabledIf('semester', 'editevent', 'neq');
         if ($requirepublicfields) {
             $mform->addRule('semester', null, 'required', null, 'client');

@@ -206,6 +206,27 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Booking form semester options must include the current semester for default preselection.
+     *
+     * @return void
+     */
+    public function test_current_semester_is_available_for_booking_form_options(): void {
+        $referencetime = strtotime('2026-05-15 12:00:00');
+        $currentsemester = event_manager::get_current_semester($referencetime);
+        $currentyear = (int)date('Y', $referencetime);
+        $lookbackyears = 1;
+        $lookaheadyears = 1;
+
+        $semesters = [];
+        for ($i = -$lookbackyears; $i <= $lookaheadyears; $i++) {
+            $semesters[($currentyear + $i) * 10 + 1] = 'summer';
+            $semesters[($currentyear + $i) * 10 + 2] = 'winter';
+        }
+
+        $this->assertArrayHasKey($currentsemester, $semesters);
+    }
+
+    /**
      * Reporting defaults must span the full current year.
      *
      * @return void
