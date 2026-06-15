@@ -1600,18 +1600,13 @@ class edit_event_form extends dynamic_form {
      */
     private function merge_examiner_autocomplete_options(\MoodleQuickForm $mform, string $fieldname, array $userids): void {
         $element = $mform->getElement($fieldname);
-        if (!is_object($element) || !method_exists($element, 'load')) {
+        if (!is_object($element) || !method_exists($element, 'addOption')) {
             return;
         }
 
-        $currentoptions = [];
-        if (property_exists($element, '_options') && is_array($element->_options)) {
-            foreach ($element->_options as $value => $label) {
-                $currentoptions[(int)$value] = $label;
-            }
+        foreach (examiner_pool_resolver::build_options_for_user_ids($userids) as $value => $label) {
+            $element->addOption($label, (string)$value);
         }
-
-        $element->load($currentoptions + examiner_pool_resolver::build_options_for_user_ids($userids));
     }
 
     /**

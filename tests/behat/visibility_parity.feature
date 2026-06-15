@@ -54,3 +54,32 @@ Feature: Keep calendar and overview visibility aligned
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Mixed role exam"
     And I should see "Accepted helper exam"
+
+  Scenario: Booking person keeps visibility after service-team status transition
+    Given the following "users" exist:
+      | username    | firstname | lastname |
+      | serviceteam | Service   | Team     |
+    And the following "roles" exist:
+      | shortname   | name         | archetype |
+      | serviceteam | Service-Team | student   |
+    And the following "role capability" exists:
+      | role                             | serviceteam |
+      | mod/bookit:view                  | allow       |
+      | mod/bookit:viewownoverview       | allow       |
+      | mod/bookit:managebasics          | allow       |
+      | mod/bookit:viewalldetailsofevent | allow       |
+    And the following "course enrolments" exist:
+      | user        | course | role        |
+      | serviceteam | C1     | serviceteam |
+    Given the following "mod_bookit > events" exist:
+      | name                  | username    | startdate                            | enddate                              | bookingstatus | institution |
+      | Transition visibility | bookinguser | ##tomorrow 10:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 12:00##%Y-%m-%dT%H:%M:%S## | 0             | 1           |
+    When I log in as "serviceteam"
+    And I open the Bookit overview "openrequests" for "My BookIt Activity"
+    And I click the open request action "Set in progress" for event "Transition visibility"
+    And I click the open request action "Accept" for event "Transition visibility"
+    When I log in as "bookinguser"
+    Then the Bookit calendar projection for user "bookinguser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Transition visibility"
+    When I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then I should see "Transition visibility"
+    And I should see "Accepted"

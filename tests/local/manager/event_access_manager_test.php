@@ -648,6 +648,149 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Booking persons must keep participant visibility after service-team status transitions.
+     *
+     * @return void
+     */
+    public function test_booking_person_retains_visibility_after_service_team_status_transitions(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $context = $this->create_bookit_context_with_service_role('bookitservicevis007');
+        $participantrole = \create_role('Bookit participant vis', 'bookitparticipantvis007', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $serviceuser->id, 'bookitservicevis007');
+        \role_assign($participantrole, $bookingperson->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Visibility transition exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->setUser($serviceuser);
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            ] as $targetstatus
+        ) {
+            $event = event_manager::transition_booking_status(
+                $event,
+                $targetstatus,
+                (int)$serviceuser->id,
+                $context
+            );
+            $this->assertSame((int)$bookingperson->id, (int)$event->usermodified);
+
+            $this->setUser($bookingperson);
+            $this->assertTrue(
+                event_access_manager::can_user_view_event_in_overview($event, $context, (int)$bookingperson->id),
+                'Overview visibility must remain after transition to status ' . $targetstatus
+            );
+            $this->assertTrue(
+                event_access_manager::can_user_view_event_in_calendar($event, $context, (int)$bookingperson->id),
+                'Calendar visibility must remain after transition to status ' . $targetstatus
+            );
+            $this->setUser($serviceuser);
+        }
+    }
+
+    /**
+     * Assigned examiners must keep visibility after service-team status transitions.
+     *
+     * @return void
+     */
+    public function test_examiner_participants_retain_visibility_after_service_team_status_transitions(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $context = $this->create_bookit_context_with_service_role('bookitserviceexam007');
+        $participantrole = \create_role('Bookit participant exam', 'bookitparticipantexam007', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $examiner = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $serviceuser->id, 'bookitserviceexam007');
+        \role_assign($participantrole, $bookingperson->id, $context->id);
+        \role_assign($participantrole, $examiner->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Examiner visibility transition',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-21 09:00:00'),
+            'endtime' => strtotime('2026-05-21 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => $examiner->id,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->setUser($serviceuser);
+        $event = event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            (int)$serviceuser->id,
+            $context
+        );
+
+        $this->setUser($examiner);
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, (int)$examiner->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, (int)$examiner->id));
+    }
+
+    /**
      * Event checklist and resources pages must disappear completely when the optional module parts are disabled.
      *
      * @return void

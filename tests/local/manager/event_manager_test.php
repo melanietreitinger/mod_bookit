@@ -472,6 +472,87 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Status transitions must not overwrite the booking person stored in usermodified.
+     *
+     * @return void
+     */
+    public function test_transition_booking_status_preserves_booking_person_usermodified(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Preserve creator']);
+        $context = context_module::instance($bookit->cmid);
+
+        $eventid = $this->create_event_record([
+            'name' => 'Preserve booking person',
+            'usermodified' => (int)$bookingperson->id,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            (int)$serviceuser->id,
+            $context
+        );
+
+        $updated = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $this->assertSame((int)$bookingperson->id, (int)$updated->usermodified);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_IN_PROGRESS, (int)$updated->bookingstatus);
+    }
+
+    /**
+     * Personal overview queries must still return bookings after service-team status transitions.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_keeps_booking_person_events_after_status_transition(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Overview transition']);
+        $context = context_module::instance($bookit->cmid);
+
+        $eventid = $this->create_event_record([
+            'name' => 'Overview after transition',
+            'usermodified' => (int)$bookingperson->id,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            (int)$serviceuser->id,
+            $context
+        );
+
+        $personalevents = array_values(event_manager::get_events_for_examiner((int)$bookingperson->id));
+        $this->assertCount(1, $personalevents);
+        $this->assertSame($eventid, (int)$personalevents[0]->id);
+
+        $filtered = array_values(event_manager::filter_overview_events(
+            $personalevents,
+            [],
+            false,
+            strtotime('2026-05-07 10:00:00')
+        ));
+        $this->assertCount(1, $filtered);
+        $this->assertSame($eventid, (int)$filtered[0]->id);
+    }
+
+    /**
      * Workflow history entries are persisted and returned newest-first.
      *
      * @return void

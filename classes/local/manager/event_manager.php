@@ -986,7 +986,7 @@ class event_manager {
         $changed = $oldstatus !== $newstatus;
 
         $event->bookingstatus = $newstatus;
-        $event->usermodified = $userid;
+        // Usermodified stores the booking person (created-by), not the actor performing the transition.
         $event->timemodified = time();
         $DB->update_record('bookit_event', $event);
 

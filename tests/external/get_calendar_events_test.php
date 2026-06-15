@@ -18,6 +18,7 @@ namespace mod_bookit\external;
 
 use externallib_advanced_testcase;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\event_manager;
 use mod_bookit\tests\read_contract_assertions_trait;
 
 defined('MOODLE_INTERNAL') || die();
@@ -127,5 +128,91 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $response['events'][0]['extendedProps']['bookingstatus']);
         $this->assertSame('full', $response['events'][0]['extendedProps']['visibilitymode']);
         $this->assertStringContainsString('Calendar export parity', $response['events'][0]['title']);
+    }
+
+    /**
+     * Governed calendar reads must keep booking-person events visible after service-team transitions.
+     *
+     * @return void
+     */
+    public function test_execute_returns_booking_person_event_after_service_team_status_transition(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Calendar transition']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $participantrole = \create_role('Bookit calendar participant', 'bookitcalendarparticipant', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \role_assign($participantrole, $bookingperson->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Transition room',
+            'shortname' => 'TR-1',
+            'location' => 'East',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Calendar transition exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => $roomid,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->setUser($serviceuser);
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            (int)$serviceuser->id,
+            $context
+        );
+
+        $this->setUser($bookingperson);
+        $response = get_calendar_events::execute(
+            $bookit->cmid,
+            '2026-05-20T00:00:00',
+            '2026-05-20T23:59:59',
+            [$roomid],
+            [],
+            [],
+            '',
+            false
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertFalse($response['denied']);
+        $this->assertCount(1, $response['events']);
+        $this->assertSame($eventid, (int)$response['events'][0]['id']);
+        $this->assertStringContainsString('Calendar transition exam', $response['events'][0]['title']);
     }
 }
