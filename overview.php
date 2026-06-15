@@ -396,6 +396,7 @@ $templatecontext = [
     'showresourcescolumn' => $resourcesenabled,
     'showcancelcolumn' => !$canmanage && !$isobserverrestricted && $currenttab === 'myevents',
     'overviewcancelcolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
+    'overviewcolumndatetime' => get_string('overview_column_datetime', 'mod_bookit'),
     'reportinghelp' => $currenttab === 'history'
         ? get_string('overview_history_help', 'mod_bookit')
         : get_string('overview_reporting_help', 'mod_bookit'),
@@ -568,6 +569,7 @@ $prepareeventrow = function (
     }
 
     $datestr = userdate($ev->starttime, '%d.%m.%Y');
+    $datetimestr = userdate((int)$ev->starttime, get_string('strftimedatetime', 'langconfig'));
     $canviewchecklist = event_access_manager::can_view_event_checklist($ev, $context, (int)$USER->id);
     $canviewresources = event_access_manager::can_view_event_resources($ev, $context, (int)$USER->id);
 
@@ -662,6 +664,7 @@ $prepareeventrow = function (
         'hasactions' => !empty($actions),
         'actions' => $actions,
         'datestr' => $datestr,
+        'datetimestr' => $datetimestr,
         'starttime' => (int)$ev->starttime,
         'cmid' => (int)$cm->id,
         'checklistprogress' => $progressmap[(int)$ev->id] ?? 0,

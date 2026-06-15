@@ -1142,17 +1142,19 @@ class behat_mod_bookit extends behat_base {
         $expected = array_values(array_filter(array_map('trim', explode(',', $eventlist))));
         $js = <<<'JS'
             (function() {
-                var rows = document.querySelectorAll('#overview-table tbody tr');
-                return Array.from(rows).map(function(row) {
-                    var cells = row.querySelectorAll('td');
-                    for (var i = 0; i < cells.length; i++) {
-                        var link = cells[i].querySelector('a.bookit-event-link');
-                        if (link) {
-                            return link.textContent.trim();
-                        }
+                function rowTitle(row) {
+                    var reserved = row.querySelector('span[data-is-reserved-projection="1"]');
+                    if (reserved) {
+                        return reserved.textContent.trim();
                     }
-                    return cells.length ? cells[0].textContent.trim() : '';
-                }).filter(Boolean);
+                    var link = row.querySelector('a.bookit-event-link');
+                    if (link) {
+                        return link.textContent.trim();
+                    }
+                    return '';
+                }
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(rowTitle).filter(Boolean);
             })();
         JS;
 
@@ -1670,6 +1672,156 @@ class behat_mod_bookit extends behat_base {
                 ? 'Expected the overview to show the ID column, but it did not.'
                 : 'Expected the overview to hide the ID column, but it was visible.';
             throw new ExpectationException($message, $this->getSession());
+        }
+    }
+
+    /**
+     * Return normalized overview table header labels from the active personal overview table.
+     *
+     * @return string[]
+     * @throws ExpectationException
+     */
+    private function get_overview_table_headers(): array {
+        $js = <<<'JS'
+            (function() {
+                var table = document.querySelector('#overview-table');
+                if (!table) {
+                    return JSON.stringify({status: 'table-not-found'});
+                }
+                var headers = Array.from(table.querySelectorAll('thead th')).map(function(th) {
+                    return th.textContent.replace(/[▲▼]/g, '').trim();
+                });
+                return JSON.stringify({status: 'ok', headers: headers});
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not resolve overview table headers. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        return $result['headers'] ?? [];
+    }
+
+    /**
+     * Assert that the datetime column is the first data column on the personal overview table.
+     *
+     * @Then the Bookit overview should show the datetime column as the first data column
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_the_datetime_column_as_the_first_data_column(): void {
+        $expected = get_string('overview_column_datetime', 'mod_bookit');
+        $headers = $this->get_overview_table_headers();
+        if ($headers === []) {
+            throw new ExpectationException('Expected overview headers but found none.', $this->getSession());
+        }
+
+        $firstdata = $headers[0];
+        if (str_starts_with($firstdata, 'ID')) {
+            $firstdata = $headers[1] ?? '';
+        }
+
+        if ($firstdata !== $expected) {
+            throw new ExpectationException(
+                'Expected first data column "' . $expected . '" but got "' . $firstdata
+                    . '". Headers: ' . json_encode($headers),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the overview table headers begin with the given comma-separated labels.
+     *
+     * @Then the Bookit overview table headers should start with :headerlist
+     * @param string $headerlist
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_table_headers_should_start_with(string $headerlist): void {
+        $expected = array_values(array_filter(array_map('trim', explode(',', $headerlist))));
+        $actual = $this->get_overview_table_headers();
+        $slice = array_slice($actual, 0, count($expected));
+        if ($slice !== $expected) {
+            throw new ExpectationException(
+                'Expected overview headers to start with ' . json_encode($expected)
+                    . ' but got ' . json_encode($slice) . ' (full: ' . json_encode($actual) . ')',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that overview rows are rendered in ascending start-time order.
+     *
+     * @Then the Bookit overview rows should be sorted ascending by start time
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_rows_should_be_sorted_ascending_by_start_time(): void {
+        $js = <<<'JS'
+            (function() {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(function(row) {
+                    var cell = row.querySelector('td[data-sort]');
+                    return cell ? Number(cell.getAttribute('data-sort') || 0) : 0;
+                });
+            })();
+        JS;
+
+        $sortvalues = $this->getSession()->evaluateScript($js);
+        if (!is_array($sortvalues) || $sortvalues === []) {
+            throw new ExpectationException(
+                'Expected sortable overview rows but found none.',
+                $this->getSession()
+            );
+        }
+
+        $sorted = $sortvalues;
+        sort($sorted, SORT_NUMERIC);
+        if ($sortvalues !== $sorted) {
+            throw new ExpectationException(
+                'Expected ascending start-time order but got ' . json_encode($sortvalues),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert event titles appear in the overview table in the given DOM order.
+     *
+     * @Then the Bookit overview should list events in order :eventlist
+     * @param string $eventlist
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_list_events_in_order(string $eventlist): void {
+        $expected = array_values(array_filter(array_map('trim', explode(',', $eventlist))));
+        $js = <<<'JS'
+            (function() {
+                function rowTitle(row) {
+                    var reserved = row.querySelector('span[data-is-reserved-projection="1"]');
+                    if (reserved) {
+                        return reserved.textContent.trim();
+                    }
+                    var link = row.querySelector('a.bookit-event-link');
+                    if (link) {
+                        return link.textContent.trim();
+                    }
+                    return '';
+                }
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(rowTitle).filter(Boolean);
+            })();
+        JS;
+
+        $actual = $this->getSession()->evaluateScript($js);
+        if ($actual !== $expected) {
+            throw new ExpectationException(
+                'Unexpected overview event order. Expected ' . json_encode($expected)
+                    . ' but got ' . json_encode($actual),
+                $this->getSession()
+            );
         }
     }
 

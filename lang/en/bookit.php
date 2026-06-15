@@ -444,6 +444,7 @@ $string['overview_cancel_booking'] = 'Cancel booking';
 $string['overview_cancel_booking_confirm'] = 'Cancel booking?';
 $string['overview_cancel_booking_confirm_body'] = 'This will cancel your booking request. You can review it later in the history tab.';
 $string['overview_cancel_column'] = 'Actions';
+$string['overview_column_datetime'] = 'Date and time';
 $string['overview_count'] = '{$a} events';
 $string['overview_filter_all_faculties'] = 'All faculties';
 $string['overview_filter_all_statuses'] = 'All statuses';

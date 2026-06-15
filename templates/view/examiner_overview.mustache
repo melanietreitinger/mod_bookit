@@ -146,6 +146,7 @@
                 {{#showidcolumn}}
                 <th class="align-middle">ID</th>
                 {{/showidcolumn}}
+                <th class="align-middle">{{overviewcolumndatetime}}</th>
                 <th class="align-middle">Title</th>
                 <th class="align-middle">Room</th>
                 <th class="align-middle">Person in charge</th>
@@ -173,6 +174,8 @@
                     {{#showidcolumn}}
                     <td class="align-middle">{{id}}</td>
                     {{/showidcolumn}}
+
+                    <td class="align-middle" data-sort="{{starttime}}">{{datetimestr}}</td>
 
                     <td class="align-middle">
                         {{#is_reserved_projection}}
@@ -227,8 +230,6 @@
                         {{/haslatesthistorysummary}}
                     </td>
                     {{/canmanage}}
-
-                    <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
 
                     {{#showprogresscolumn}}
                     <td class="align-middle">

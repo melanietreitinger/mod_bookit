@@ -437,6 +437,7 @@ $string['overview_cancel_booking'] = 'Buchung stornieren';
 $string['overview_cancel_booking_confirm'] = 'Buchung stornieren?';
 $string['overview_cancel_booking_confirm_body'] = 'Ihre Buchungsanfrage wird storniert. Sie finden den Eintrag später im Verlauf.';
 $string['overview_cancel_column'] = 'Aktionen';
+$string['overview_column_datetime'] = 'Datum und Uhrzeit';
 $string['overview_count'] = '{$a} Ereignisse';
 $string['overview_filter_all_faculties'] = 'Alle Fakultäten';
 $string['overview_filter_all_statuses'] = 'Alle Status';

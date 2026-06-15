@@ -47,6 +47,30 @@ Feature: Complete overview defaults, history and role-specific columns
     And I should not see "Winter review exam"
     And I should see "1 events"
     And the Bookit overview should show the ID column
+    And the Bookit overview table headers should start with "ID,Date and time,Title"
+
+  Scenario: Booking person sees date and time as the first overview column
+    Given the following "mod_bookit > events" exist:
+      | name         | username    | startdate                              | enddate                                | bookingstatus | institution |
+      | Earlier exam | bookinguser | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+      | Later exam   | bookinguser | ##+2 days 14:00##%Y-%m-%dT%H:%M:%S##  | ##+2 days 16:00##%Y-%m-%dT%H:%M:%S##  | 2             | 1 |
+    When I log in as "bookinguser"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit overview should show the datetime column as the first data column
+    And the Bookit overview should not show the ID column
+    And the Bookit overview rows should be sorted ascending by start time
+    And the Bookit overview should list events in order "Earlier exam,Later exam"
+
+  Scenario: History tab shows date and time first with ascending order
+    Given the following "mod_bookit > events" exist:
+      | name            | username    | startdate                              | enddate                                | bookingstatus | institution |
+      | Older past exam | bookinguser | ##-3 days 09:00##%Y-%m-%dT%H:%M:%S##   | ##-3 days 11:00##%Y-%m-%dT%H:%M:%S##   | 2             | 1 |
+      | Recent past exam | bookinguser | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S## | ##yesterday 16:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+    When I log in as "bookinguser"
+    And I open the Bookit overview "history" for "My BookIt Activity"
+    Then the Bookit overview should show the datetime column as the first data column
+    And the Bookit overview rows should be sorted ascending by start time
+    And the Bookit overview should list events in order "Older past exam,Recent past exam"
 
   Scenario: Explicit non-default semester selection stays active
     Given the following "mod_bookit > events" exist:
