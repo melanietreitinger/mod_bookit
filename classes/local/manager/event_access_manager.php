@@ -382,6 +382,10 @@ class event_access_manager {
         }
 
         if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
+            if ((int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_CANCELED) {
+                return false;
+            }
+
             return true;
         }
 

@@ -146,6 +146,23 @@ class event_manager {
             $filters['end'] ?? $endtime,
             (int)$context->instanceid
         );
+
+        if (
+            !empty($filters['exportmode'])
+            && in_array(event_access_manager::BOOKINGSTATUS_CANCELED, $filters['bookingstatuses'] ?? [], true)
+            && (
+                event_access_manager::can_manage_open_requests($context)
+                || has_capability('mod/bookit:viewalldetailsofevent', $context, $userid)
+            )
+        ) {
+            $events = self::merge_service_team_canceled_export_events(
+                $events,
+                $filters['start'] ?? $starttime,
+                $filters['end'] ?? $endtime,
+                $context
+            );
+        }
+
         $needle = core_text::strtolower($filters['search']);
 
         $events = array_values(array_filter($events, static function (array $event) use ($filters, $needle): bool {
@@ -1160,6 +1177,59 @@ class event_manager {
             static fn(array $entry): array => room_availability_read_mapper::map($entry, $roomid),
             self::get_slots_in_timerange($starttime, $endtime, $roomid)
         );
+    }
+
+    /**
+     * Merge canceled bookings into export reads when service team explicitly requests them.
+     *
+     * @param array $events
+     * @param string $starttime
+     * @param string $endtime
+     * @param context_module $context
+     * @return array
+     * @throws dml_exception|coding_exception
+     */
+    private static function merge_service_team_canceled_export_events(
+        array $events,
+        string $starttime,
+        string $endtime,
+        context_module $context
+    ): array {
+        global $DB;
+
+        $starttimestamp = DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
+        $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
+        $observerrestricted = event_access_manager::is_observer_restricted_mode($context);
+        $facultylabels = self::get_faculties();
+
+        $sql = 'SELECT e.id, e.name, e.semester, e.institutionid, e.roomid, e.bookingstatus, e.starttime, e.endtime,
+                    e.extratimebefore, e.extratimeafter, e.personinchargeid, e.otherexaminers, e.supportpersons,
+                    e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
+                FROM {bookit_event} e
+                LEFT JOIN {bookit_room} r ON r.id = e.roomid
+                WHERE e.bookingstatus = :status
+                  AND e.endtime >= :starttime AND e.starttime <= :endtime
+                ORDER BY e.starttime';
+        $records = $DB->get_records_sql($sql, [
+            'status' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => $starttimestamp,
+            'endtime' => $endtimestamp,
+        ]);
+
+        $existingids = [];
+        foreach ($events as $event) {
+            $existingids[(int)($event['id'] ?? 0)] = true;
+        }
+
+        foreach ($records as $record) {
+            if (!empty($existingids[(int)$record->id])) {
+                continue;
+            }
+
+            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels);
+        }
+
+        return $events;
     }
 
     /**

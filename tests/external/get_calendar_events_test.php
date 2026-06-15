@@ -215,4 +215,256 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $this->assertSame($eventid, (int)$response['events'][0]['id']);
         $this->assertStringContainsString('Calendar transition exam', $response['events'][0]['title']);
     }
+
+    /**
+     * Governed calendar reads must hide canceled bookings from the service-team active calendar.
+     *
+     * @return void
+     */
+    public function test_execute_hides_canceled_event_after_service_team_transition(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Calendar canceled']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $servicerole = \create_role('Bookit calendar service', 'bookitcalservice016', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $servicerole, $context->id, true);
+        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Canceled room',
+            'shortname' => 'CN-1',
+            'location' => 'West',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Canceled calendar exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => $roomid,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->setUser($serviceuser);
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            (int)$serviceuser->id,
+            $context
+        );
+
+        $response = get_calendar_events::execute(
+            $bookit->cmid,
+            '2026-05-20T00:00:00',
+            '2026-05-20T23:59:59',
+            [$roomid],
+            [],
+            [],
+            '',
+            false
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertFalse($response['denied']);
+        $this->assertCount(0, $response['events']);
+    }
+
+    /**
+     * Self-canceled bookings must not appear in the service-team active calendar read.
+     *
+     * @return void
+     */
+    public function test_execute_hides_self_canceled_event_from_service_team_calendar(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Self cancel calendar']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $participantrole = \create_role('Bookit self-cancel participant', 'bookitselfcancel016', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \role_assign($participantrole, $bookingperson->id, $context->id);
+
+        $servicerole = \create_role('Bookit self-cancel service', 'bookitselfcancelsvc016', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $servicerole, $context->id, true);
+        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Self-cancel room',
+            'shortname' => 'SC-1',
+            'location' => 'South',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Self canceled calendar exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-21 09:00:00'),
+            'endtime' => strtotime('2026-05-21 11:00:00'),
+            'duration' => 120,
+            'roomid' => $roomid,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->setUser($bookingperson);
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            (int)$bookingperson->id,
+            $context
+        );
+
+        $this->setUser($serviceuser);
+        $response = get_calendar_events::execute(
+            $bookit->cmid,
+            '2026-05-21T00:00:00',
+            '2026-05-21T23:59:59',
+            [$roomid],
+            [],
+            [],
+            '',
+            false
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertFalse($response['denied']);
+        $this->assertCount(0, $response['events']);
+    }
+
+    /**
+     * Export preview may include canceled bookings when the service team explicitly filters for them.
+     *
+     * @return void
+     */
+    public function test_execute_includes_canceled_event_in_export_mode_with_explicit_status_filter(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Export canceled']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $servicerole = \create_role('Bookit export service', 'bookitexport016', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $servicerole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $servicerole, $context->id, true);
+        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Export canceled room',
+            'shortname' => 'EC-1',
+            'location' => 'North',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Export canceled exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-22 09:00:00'),
+            'endtime' => strtotime('2026-05-22 11:00:00'),
+            'duration' => 120,
+            'roomid' => $roomid,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->setUser($serviceuser);
+        $response = get_calendar_events::execute(
+            $bookit->cmid,
+            '2026-05-22T00:00:00',
+            '2026-05-22T23:59:59',
+            [$roomid],
+            [],
+            [event_access_manager::BOOKINGSTATUS_CANCELED],
+            '',
+            true
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertFalse($response['denied']);
+        $this->assertCount(1, $response['events']);
+        $this->assertSame($eventid, (int)$response['events'][0]['id']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, $response['events'][0]['extendedProps']['bookingstatus']);
+    }
 }

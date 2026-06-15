@@ -1086,4 +1086,42 @@ final class event_manager_test extends advanced_testcase {
             $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST)
         ));
     }
+
+    /**
+     * Canceled bookings must be classified as history regardless of their end time.
+     *
+     * @return void
+     */
+    public function test_is_event_in_history_treats_canceled_as_history(): void {
+        $canceled = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'endtime' => strtotime('+2 days'),
+        ];
+
+        $this->assertTrue(event_manager::is_event_in_history($canceled));
+    }
+
+    /**
+     * History overview filtering must still include canceled bookings.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_includes_canceled_in_history_view(): void {
+        $referencetime = time();
+        $canceled = (object)[
+            'id' => 21,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('+2 days'),
+            'endtime' => strtotime('+2 days +2 hours'),
+        ];
+
+        $active = event_manager::filter_overview_events([$canceled], [], false, $referencetime);
+        $history = event_manager::filter_overview_events([$canceled], [], true, $referencetime);
+
+        $this->assertCount(0, $active);
+        $this->assertCount(1, $history);
+        $this->assertSame(21, (int)$history[0]->id);
+    }
 }

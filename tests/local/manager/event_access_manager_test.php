@@ -820,4 +820,87 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_view_event_checklist($event, $context, (int)$user->id));
         $this->assertTrue(event_access_manager::can_view_event_resources($event, $context, (int)$user->id));
     }
+
+    /**
+     * Service-team users must not see canceled bookings in the active calendar projection.
+     *
+     * @return void
+     */
+    public function test_service_team_cannot_view_canceled_event_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice016');
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $serviceuser->id, 'bookitservice016');
+        $this->setUser($serviceuser);
+
+        $canceled = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'personinchargeid' => 0,
+            'usermodified' => 0,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $accepted = clone $canceled;
+        $accepted->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($canceled, $context, $serviceuser->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_details($canceled, $context, $serviceuser->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($accepted, $context, $serviceuser->id));
+    }
+
+    /**
+     * Reactivating a canceled booking must restore service-team calendar visibility.
+     *
+     * @return void
+     */
+    public function test_service_team_calendar_visibility_returns_after_canceled_reactivation(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $context = $this->create_bookit_context_with_service_role('bookitservice016react');
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $serviceuser->id, 'bookitservice016react');
+        $this->setUser($serviceuser);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Reactivate canceled exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $serviceuser->id));
+
+        event_manager::transition_booking_status(
+            $event,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            (int)$serviceuser->id,
+            $context
+        );
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $serviceuser->id));
+    }
 }
