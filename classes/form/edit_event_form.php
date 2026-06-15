@@ -35,6 +35,7 @@ use core_user\fields;
 use dml_exception;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\entity\resource\bookit_resource_status;
+use mod_bookit\local\examiner_pool_resolver;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
@@ -268,15 +269,19 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
 
         // Add the "person in charge" field.
+        $examinersresolver = examiner_pool_resolver::from_config($config);
+        $legacyexaminerids = examiner_pool_resolver::get_legacy_user_ids_from_event($existingevent);
+        $examinerlist = $examinersresolver->build_options($legacyexaminerids);
         $userselectoroptions = [
-                'ajax' => 'enrol_manual/form-potential-user-selector',
                 'multiple' => false,
                 'courseid' => $course[0]->id,
                 'enrolid' => 0,
                 'perpage' => $CFG->maxusersperpage,
                 'userfields' => implode(',', fields::get_identity_fields($contextcourse, true)),
         ];
-        $examinerlist = $this->build_examiner_pool($config);
+        if (!$examinersresolver->is_restricted()) {
+            $userselectoroptions['ajax'] = 'enrol_manual/form-potential-user-selector';
+        }
         $personinchargeelementname = 'personinchargeid';
         if (!$caneditevent && $existingevent) {
             $personinchargeelementname = 'personinchargeid_readonly';
@@ -769,49 +774,6 @@ class edit_event_form extends dynamic_form {
             $mform->getElement('bookingstatus')->setValue((string)event_access_manager::BOOKINGSTATUS_CANCELED);
             $mform->setConstant('bookingstatus', event_access_manager::BOOKINGSTATUS_CANCELED);
         }
-    }
-
-    /**
-     * Build the configured examiner pool for requester and service-team forms.
-     *
-     * @param \stdClass $config
-     * @return array<int,string>
-     * @throws dml_exception
-     */
-    private function build_examiner_pool(\stdClass $config): array {
-        global $DB;
-
-        $usernames = array_values(array_filter(array_map('trim', preg_split(
-            '/[\s,;]+/',
-            (string)($config->examiner_pool_usernames ?? '')
-        ) ?: [])));
-
-        if (empty($usernames)) {
-            $sql = "SELECT DISTINCT u.*
-                      FROM {user} u
-                     WHERE u.deleted = 0 AND u.suspended = 0
-                  ORDER BY lastname, firstname";
-            $users = $DB->get_records_sql($sql, []);
-        } else {
-            [$insql, $params] = $DB->get_in_or_equal($usernames, SQL_PARAMS_NAMED);
-            foreach ($params as $key => $value) {
-                $params[$key] = \core_text::strtolower($value);
-            }
-            $sql = "SELECT DISTINCT u.*
-                      FROM {user} u
-                     WHERE u.deleted = 0
-                       AND u.suspended = 0
-                      AND LOWER(" . $DB->sql_compare_text('u.username') . ") $insql
-                  ORDER BY lastname, firstname";
-            $users = $DB->get_records_sql($sql, $params);
-        }
-
-        $examinerlist = [];
-        foreach ($users as $id => $user) {
-            $examinerlist[$id] = fullname($user) . ' | ' . $user->email;
-        }
-
-        return $examinerlist;
     }
 
     /**
@@ -1432,6 +1394,18 @@ class edit_event_form extends dynamic_form {
                     }
                 }
             }
+        }
+
+        $config = get_config('mod_bookit');
+        $examinersresolver = examiner_pool_resolver::from_config($config);
+        $legacyexaminerids = examiner_pool_resolver::get_legacy_user_ids_from_event($existingevent);
+        $poolerrors = $examinersresolver->validate_assignments(
+            isset($data['personinchargeid']) ? (string)$data['personinchargeid'] : null,
+            isset($data['otherexaminers']) ? (string)$data['otherexaminers'] : null,
+            $legacyexaminerids
+        );
+        foreach ($poolerrors as $fieldname => $message) {
+            $errors[$fieldname] = $message;
         }
 
         return $errors;
