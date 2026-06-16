@@ -215,7 +215,7 @@ class bookit_event {
             $existing = $DB->get_field('bookit_event', 'usercreated', ['id' => $this->id]);
             if ($existing) {
                 $this->usercreated = (int)$existing;
-           }
+            }
         }
         $this->timecreated  ??= time();
         $this->timemodified  = time();
@@ -400,10 +400,13 @@ class bookit_event {
      * @return array Event records keyed by id.
      * @throws dml_exception
      */
-    public static function get_for_export(\context_module $context, int $userid,
-                                           array $ids = [],
-                                           ?int $startts = null,
-                                           ?int $endts = null): array {
+    public static function get_for_export(
+        \context_module $context,
+        int $userid,
+        array $ids = [],
+        ?int $startts = null,
+        ?int $endts = null
+    ): array {
         global $DB;
 
         $viewall = has_capability('mod/bookit:viewalldetailsofevent', $context);
@@ -438,7 +441,7 @@ class bookit_event {
 
         // Time-range export, capability-safe.
         $startts = $startts ?? 0;
-        $endts   = $endts   ?? 4102444800; // 2100-01-01 UTC.
+        $endts   = $endts ?? 4102444800; // 2100-01-01 UTC.
 
         if ($viewall) {
             $sql = "SELECT *
@@ -510,5 +513,4 @@ class bookit_event {
         unset($ev);
         return $events;
     }
-
 }
