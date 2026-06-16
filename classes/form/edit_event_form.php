@@ -110,6 +110,7 @@ class edit_event_form extends dynamic_form {
         $showbookingstatusreadonly = $existingevent
             && !$participantpastreadonly
             && !$showbookingstatus
+            && !has_capability('mod/bookit:editevent', $context)
             && event_access_manager::can_user_view_event_details($existingevent, $context, (int)$USER->id);
         $requirepublicfields = $caneditevent && !$canselfcancelnew;
         $cmid = $this->_ajaxformdata['cmid'] ?? false;
@@ -763,7 +764,10 @@ class edit_event_form extends dynamic_form {
                     $starttimeel->updateAttributes(['data-current-starttime' => (string)$currentstarttime]);
                 }
                 if (
-                    $participantpastreadonly
+                    (
+                        $participantpastreadonly
+                        || event_access_manager::can_manage_past_bookings($context)
+                    )
                     && $currentstarttime > 0
                     && !array_key_exists($currentstarttime, $possiblestarttimes)
                 ) {
@@ -1580,7 +1584,7 @@ class edit_event_form extends dynamic_form {
      * Ensure selected examiner ids have readable autocomplete labels after form data is loaded.
      *
      * @param \MoodleQuickForm $mform
-     * @param \stdClass $data
+     * @param \stdClass|null $data
      * @return void
      */
     private function inject_examiner_selector_labels(\MoodleQuickForm $mform, ?\stdClass $data): void {

@@ -64,8 +64,8 @@ Feature: Filter reporting data and block past-date saves
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     And I open the Bookit event details for "Future validation exam"
     And I set the Bookit event details control "starttime" to a past timestamp
-    And I click the save action in the Bookit event details modal
-    Then I should see "You cannot enter events in the past."
+    And I align the Bookit event details startdate with the selected starttime
+    And I submit the Bookit event details modal expecting validation error "You cannot enter events in the past."
 
   Scenario: Examiner saving an event with a forced past start time is rejected
     Given the following "mod_bookit > events" exist:
@@ -75,13 +75,13 @@ Feature: Filter reporting data and block past-date saves
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     And I open the Bookit event details for "Future examiner exam"
     And I set the Bookit event details control "starttime" to a past timestamp
-    And I click the save action in the Bookit event details modal
-    Then I should see "You cannot enter events in the past."
+    And I align the Bookit event details startdate with the selected starttime
+    And I submit the Bookit event details modal expecting validation error "You cannot enter events in the past."
 
   Scenario: Service-team may save an event with a forced past start time
     Given the following "mod_bookit > events" exist:
-      | name                | username    | startdate            | enddate              | bookingstatus | institution |
-      | Future service exam | susiservice | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 0             | 1 |
+      | name                | username    | personincharge_username | startdate            | enddate              | bookingstatus | institution |
+      | Future service exam | susiservice | susiservice             | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 0             | 1 |
     When I log in as "susiservice"
     And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     And I open the Bookit event details for "Future service exam"
@@ -90,6 +90,7 @@ Feature: Filter reporting data and block past-date saves
     And I close the currently open dialog
     And I open the Bookit event details for "Future service exam"
     And I set the Bookit event details control "starttime" to a past timestamp
+    And I align the Bookit event details startdate with the selected starttime
     And I submit the Bookit event details modal
     And I open the Bookit reporting overview for "My BookIt Activity" from "-30 days" to "+30 days" with semesters "current"
     Then I should see "Future service exam"
@@ -101,6 +102,7 @@ Feature: Filter reporting data and block past-date saves
     When I log in as "susiservice"
     And I open the Bookit overview "history" for "My BookIt Activity"
     And I open the Bookit event details for "Historical service exam"
+    And I restore the Bookit event details starttime selection after slot refresh
     And I submit the Bookit event details modal
     And I open the Bookit overview "history" for "My BookIt Activity"
     Then I should see "Historical service exam"

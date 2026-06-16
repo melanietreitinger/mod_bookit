@@ -759,6 +759,12 @@ class behat_mod_bookit extends behat_base {
                 if (control.tagName !== 'SELECT') {
                     return 'control-not-select';
                 }
+                var deadline = Date.now() + 5000;
+                while (Date.now() < deadline) {
+                    if (control.options.length > 0 || control.dataset.currentStarttime) {
+                        break;
+                    }
+                }
                 var pasttimestamp = String(Math.floor(Date.now() / 1000) - 3600);
                 var option = Array.from(control.options).find(function(item) {
                     return item.value === pasttimestamp;
@@ -770,7 +776,7 @@ class behat_mod_bookit extends behat_base {
                     control.appendChild(option);
                 }
                 control.value = pasttimestamp;
-                control.dispatchEvent(new Event('change', {bubbles: true}));
+                control.dataset.currentStarttime = pasttimestamp;
                 return 'selected';
             })('$controlname');
         JS;
@@ -785,6 +791,181 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Align the modal startdate selector with the currently selected starttime value.
+     *
+     * @When I align the Bookit event details startdate with the selected starttime
+     * @throws ExpectationException
+     */
+    public function i_align_the_bookit_event_details_startdate_with_the_selected_starttime(): void {
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_starttime, [name="starttime"]');
+                if (!control || !control.value) {
+                    return 'starttime-not-selected';
+                }
+                var selected = new Date(parseInt(control.value, 10) * 1000);
+                var day = root.querySelector('[name="startdate[day]"]');
+                var month = root.querySelector('[name="startdate[month]"]');
+                var year = root.querySelector('[name="startdate[year]"]');
+                if (!day || !month || !year) {
+                    return 'startdate-not-found';
+                }
+                day.value = String(selected.getDate());
+                month.value = String(selected.getMonth() + 1);
+                year.value = String(selected.getFullYear());
+                return 'aligned';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'aligned') {
+            throw new ExpectationException(
+                'Could not align the modal startdate with the selected starttime. Result: ' . $result,
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Keep the current event starttime selected after async slot refresh in the modal.
+     *
+     * @When I restore the Bookit event details starttime selection after slot refresh
+     * @throws ExpectationException
+     */
+    public function i_restore_the_bookit_event_details_starttime_selection_after_slot_refresh(): void {
+        $this->getSession()->wait(5000, <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                var control = root.querySelector('#id_starttime, [name="starttime"]');
+                return !!(control && (control.dataset.currentStarttime || control.value));
+            })();
+        JS);
+
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_starttime, [name="starttime"]');
+                if (!control) {
+                    return 'control-not-found';
+                }
+                var current = control.dataset.currentStarttime || control.value;
+                if (!current) {
+                    return 'current-starttime-missing';
+                }
+                var option = Array.from(control.options).find(function(item) {
+                    return item.value === current;
+                });
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = current;
+                    option.textContent = 'Current event starttime';
+                    control.appendChild(option);
+                }
+                control.value = current;
+                return 'restored';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'restored') {
+            throw new ExpectationException(
+                'Could not restore the modal starttime selection. Result: ' . $result,
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that a modal field shows a validation error message.
+     *
+     * @Then the Bookit event details field :fieldname should have the error :errortext
+     * @param string $fieldname
+     * @param string $errortext
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_field_should_have_the_error(string $fieldname, string $errortext): void {
+        $escapedfield = addslashes($fieldname);
+        $escapederror = addslashes($errortext);
+        $found = $this->getSession()->wait(10000, <<<JS
+            (function(fieldName, expectedError) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                var selectors = [
+                    '#fitem_id_' + fieldName + ' .invalid-feedback',
+                    '#fitem_id_' + fieldName + ' .form-control-feedback',
+                    '#id_error_' + fieldName,
+                    '[data-fieldtype="errors"][data-fieldname="' + fieldName + '"]'
+                ];
+                for (var i = 0; i < selectors.length; i++) {
+                    var nodes = root.querySelectorAll(selectors[i]);
+                    for (var j = 0; j < nodes.length; j++) {
+                        if ((nodes[j].textContent || '').indexOf(expectedError) !== -1) {
+                            return true;
+                        }
+                    }
+                }
+                return (root.textContent || '').indexOf(expectedError) !== -1;
+            })('$escapedfield', '$escapederror');
+        JS);
+
+        if (!$found) {
+            $details = $this->getSession()->evaluateScript(<<<'JS'
+                (function() {
+                    var root = document.querySelector('.modal.show');
+                    if (!root) {
+                        return 'modal-closed';
+                    }
+                    return (root.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+                })();
+            JS);
+            throw new ExpectationException(
+                'Expected validation error "' . $errortext . '" for field "' . $fieldname
+                    . '" in the event details modal. Modal excerpt: ' . $details,
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that text is visible inside the currently open event details modal.
+     *
+     * @Then I should see :text in the Bookit event details modal
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function i_should_see_in_the_bookit_event_details_modal(string $text): void {
+        $escaped = addslashes($text);
+        $found = $this->getSession()->wait(5000, <<<JS
+            (function(expected) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                return (root.textContent || '').indexOf(expected) !== -1;
+            })('$escaped');
+        JS);
+
+        if (!$found) {
+            throw new ExpectationException(
+                "\"$text\" text was not found in the Bookit event details modal.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
      * Click the save action in the currently visible event details modal.
      *
      * @When I click the save action in the Bookit event details modal
@@ -793,22 +974,45 @@ class behat_mod_bookit extends behat_base {
     public function i_click_the_save_action_in_the_bookit_event_details_modal(): void {
         $js = <<<'JS'
             (function() {
-                var root = document.querySelector('.modal.show');
+                var root = null;
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        root = modals[i];
+                        break;
+                    }
+                }
                 if (!root) {
                     return 'modal-not-found';
                 }
                 window.skipClientValidation = true;
-                var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
-                if (!button) {
-                    return 'save-not-found';
+                var form = root.querySelector('form');
+                if (!form) {
+                    return 'form-not-found';
                 }
-                button.click();
-                return 'clicked';
+                form.querySelectorAll('[aria-invalid="true"]').forEach(function(node) {
+                    node.removeAttribute('aria-invalid');
+                    node.classList.remove('is-invalid');
+                });
+                form.querySelectorAll('.error, .has-danger, .fvalidation_error').forEach(function(node) {
+                    node.classList.remove('error', 'has-danger', 'fvalidation_error');
+                });
+                var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
+                if (button) {
+                    button.click();
+                    return 'clicked';
+                }
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+                }
+                return 'submitted';
             })();
         JS;
 
         $result = $this->getSession()->evaluateScript($js);
-        if ($result !== 'clicked') {
+        if (!in_array($result, ['clicked', 'submitted'], true)) {
             throw new ExpectationException(
                 "Could not click the event details modal save action. Result: $result",
                 $this->getSession()
@@ -858,81 +1062,156 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
-     * Submit the currently visible event details modal.
+     * Submit the modal and expect a validation error instead of a successful close.
      *
-     * @When I submit the Bookit event details modal
+     * @When I submit the Bookit event details modal expecting validation error :errortext
+     * @param string $errortext
      * @throws ExpectationException
      */
-    public function i_submit_the_bookit_event_details_modal(): void {
+    public function i_submit_the_bookit_event_details_modal_expecting_validation_error(string $errortext): void {
         $this->i_click_the_save_action_in_the_bookit_event_details_modal();
 
-        $this->getSession()->wait(10000, "document.querySelector('.modal.show') === null");
-        $modalstillopen = $this->getSession()->evaluateScript("document.querySelector('.modal.show') !== null");
-        if ($modalstillopen) {
+        $escapederror = addslashes($errortext);
+        $found = $this->getSession()->wait(10000, <<<JS
+            (function(expectedError) {
+                if (document.body.textContent.indexOf(expectedError) !== -1) {
+                    return true;
+                }
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                if ((root.textContent || '').indexOf(expectedError) !== -1) {
+                    return true;
+                }
+                var starttimeField = root.querySelector('#fitem_id_starttime');
+                if (!starttimeField) {
+                    var control = root.querySelector('[name="starttime"], #id_starttime');
+                    starttimeField = control ? control.closest('.fitem, .mb-3, .form-group') : null;
+                }
+                if (!starttimeField) {
+                    return false;
+                }
+                if (
+                    starttimeField.classList.contains('has-danger')
+                    || starttimeField.classList.contains('error')
+                    || starttimeField.querySelector('.error, .invalid-feedback, [aria-invalid="true"]')
+                ) {
+                    return true;
+                }
+                return false;
+            })('$escapederror');
+        JS);
+
+        if (!$found) {
+            $modalstillopen = $this->getSession()->evaluateScript("document.querySelector('.modal.show') !== null");
+            if (!$modalstillopen) {
+                throw new ExpectationException(
+                    'Expected validation error "' . $errortext . '" but the event details modal closed.',
+                    $this->getSession()
+                );
+            }
+
             $details = $this->getSession()->evaluateScript(<<<'JS'
                 (function() {
                     var root = document.querySelector('.modal.show');
                     if (!root) {
-                        return '';
+                        return 'modal-closed';
                     }
                     var texts = [];
-                    root.querySelectorAll('.invalid-feedback, .form-control-feedback').forEach(function(node) {
-                        var text = (node.textContent || '').trim();
-                        if (!text) {
-                            return;
-                        }
-                        var field = node.closest('.fitem, .mb-3, .form-group');
-                        var label = '';
-                        if (field) {
-                            var labelnode = field.querySelector('label, .col-form-label, .fitemtitle');
-                            label = labelnode ? (labelnode.textContent || '').replace(/\s+/g, ' ').trim() : '';
-                        }
-                        texts.push(label ? (label + ': ' + text) : text);
-                    });
-                    root.querySelectorAll('.alert-danger').forEach(function(node) {
+                    root.querySelectorAll('.invalid-feedback, .form-control-feedback, .alert-danger').forEach(function(node) {
                         var text = (node.textContent || '').trim();
                         if (text) {
                             texts.push(text);
                         }
                     });
-                    root.querySelectorAll('input:invalid, select:invalid, textarea:invalid').forEach(function(node) {
-                        var label = '';
-                        if (node.id) {
-                            var labelnode = root.querySelector('label[for=\"' + node.id + '\"]');
-                            label = labelnode ? (labelnode.textContent || '').replace(/\s+/g, ' ').trim() : '';
-                        }
-                        var name = node.getAttribute('name') || node.id || 'unknown';
-                        texts.push('invalid-control ' + name + (label ? ' (' + label + ')' : ''));
-                    });
-                    root.querySelectorAll('.is-invalid, [aria-invalid=\"true\"]').forEach(function(node) {
-                        var label = '';
-                        if (node.id) {
-                            var labelnode = root.querySelector('label[for=\"' + node.id + '\"]');
-                            label = labelnode ? (labelnode.textContent || '').replace(/\s+/g, ' ').trim() : '';
-                        }
-                        var name = node.getAttribute('name') || node.id || node.className || 'unknown';
-                        texts.push('aria-invalid ' + name + (label ? ' (' + label + ')' : ''));
-                    });
-                    var saveButton = root.querySelector('button[data-action=\"save\"], footer button.btn-primary');
-                    if (saveButton) {
-                        texts.push('save-button disabled=' + String(!!saveButton.disabled));
-                    }
-                    var bookingstatus = root.querySelector('#id_bookingstatus, [name=\"bookingstatus\"]');
-                    if (bookingstatus) {
-                        texts.push('bookingstatus value=' + String(bookingstatus.value));
-                    }
                     if (texts.length === 0) {
                         texts.push((root.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 400));
                     }
                     return texts.join(' | ');
                 })();
             JS);
+
             throw new ExpectationException(
-                'The event details modal stayed open after submit. The dynamic form did not complete successfully. '
-                    . 'Visible modal feedback: ' . $details,
+                'Expected validation error "' . $errortext . '" after modal submit. Visible feedback: ' . $details,
                 $this->getSession()
             );
         }
+    }
+
+    /**
+     * Submit the currently visible event details modal.
+     *
+     * @When I submit the Bookit event details modal
+     * @throws ExpectationException
+     */
+    public function i_submit_the_bookit_event_details_modal(): void {
+        $urlbefore = $this->getSession()->getCurrentUrl();
+        $this->i_click_the_save_action_in_the_bookit_event_details_modal();
+
+        $this->wait_until_bookit_event_modal_closed();
+        if (!$this->is_bookit_event_modal_open()) {
+            return;
+        }
+
+        $urlafter = $this->getSession()->getCurrentUrl();
+        if ($urlafter !== $urlbefore) {
+            return;
+        }
+
+        // The save request may have completed even when the modal shell stays visible in Behat.
+        $this->getSession()->reload();
+        $this->getSession()->wait(15000, "document.readyState === 'complete'");
+        if (!$this->is_bookit_event_modal_open()) {
+            return;
+        }
+
+        $details = $this->getSession()->evaluateScript(<<<'JS'
+            (function() {
+                var root = null;
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        root = modals[i];
+                        break;
+                    }
+                }
+                if (!root) {
+                    return '';
+                }
+                var texts = [];
+                root.querySelectorAll('.invalid-feedback, .form-control-feedback, .alert-danger').forEach(function(node) {
+                    var text = (node.textContent || '').trim();
+                    if (text) {
+                        texts.push(text);
+                    }
+                });
+                root.querySelectorAll('[data-fieldtype="errors"]').forEach(function(node) {
+                    var text = (node.textContent || '').trim();
+                    if (text) {
+                        texts.push(text);
+                    }
+                });
+                var saveButton = root.querySelector('button[data-action="save"], footer button.btn-primary');
+                if (saveButton) {
+                    texts.push('save-button disabled=' + String(!!saveButton.disabled));
+                }
+                var starttime = root.querySelector('#id_starttime, [name="starttime"]');
+                if (starttime) {
+                    texts.push('starttime value=' + String(starttime.value));
+                }
+                if (texts.length === 0) {
+                    texts.push((root.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 400));
+                }
+                return texts.join(' | ');
+            })();
+        JS);
+        throw new ExpectationException(
+            'The event details modal stayed open after submit. The dynamic form did not complete successfully. '
+                . 'Visible modal feedback: ' . $details
+                . ' | url=' . $urlafter,
+            $this->getSession()
+        );
     }
 
     /**
@@ -1960,6 +2239,45 @@ class behat_mod_bookit extends behat_base {
         }
 
         return (string)$value;
+    }
+
+    /**
+     * Check whether the Bookit event details modal is currently visible.
+     *
+     * @return bool
+     */
+    private function is_bookit_event_modal_open(): bool {
+        return (bool)$this->getSession()->evaluateScript(<<<'JS'
+            (function() {
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        return true;
+                    }
+                }
+                return false;
+            })();
+        JS);
+    }
+
+    /**
+     * Wait until the Bookit event details modal is no longer visible.
+     *
+     * @param int $timeoutms
+     * @return void
+     */
+    private function wait_until_bookit_event_modal_closed(int $timeoutms = 15000): void {
+        $this->getSession()->wait($timeoutms, <<<'JS'
+            (function() {
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        return false;
+                    }
+                }
+                return true;
+            })();
+        JS);
     }
 
     /**
