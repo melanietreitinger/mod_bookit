@@ -110,11 +110,14 @@ Feature: Complete overview defaults, history and role-specific columns
       | Self-cancel history | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
-    And I open the Bookit event details for "Self-cancel history"
-    And I select "Canceled" in the Bookit event details control "bookingstatus"
-    And I submit the Bookit event details modal
+    And I cancel the booking "Self-cancel history" from the Bookit overview
+    And I confirm the Bookit overview cancel dialog
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview should list only the events ""
+    When I open the Bookit overview "history" for "My BookIt Activity"
+    And I open the Bookit event details for "Self-cancel history"
+    Then the Bookit event details control "bookingstatus" should not be visible
+    And I should see "Canceled"
     When I log in as "serviceteam"
     And I open the Bookit overview "history" for "My BookIt Activity"
     Then I should see "Self-cancel history"

@@ -101,10 +101,8 @@ Feature: Enforce role-based visibility and editing for booking requests
       | Self-cancel booking     | bookinguser | bookinguser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
-    And I open the Bookit event details for "Self-cancel booking"
-    Then the Bookit event details control "bookingstatus" should be enabled
-    When I select "Canceled" in the Bookit event details control "bookingstatus"
-    And I submit the Bookit event details modal
+    And I cancel the booking "Self-cancel booking" from the Bookit overview
+    And I confirm the Bookit overview cancel dialog
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview should list only the events ""
 

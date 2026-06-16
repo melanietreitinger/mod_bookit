@@ -107,6 +107,10 @@ class edit_event_form extends dynamic_form {
         $cancancelonly = !$participantpastreadonly && $existingevent
             && event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
         $showbookingstatus = $caneditinternal || $canviewrestrictedfields || $cancancelonly || $canselfcancelnew;
+        $showbookingstatusreadonly = $existingevent
+            && !$participantpastreadonly
+            && !$showbookingstatus
+            && event_access_manager::can_user_view_event_details($existingevent, $context, (int)$USER->id);
         $requirepublicfields = $caneditevent && !$canselfcancelnew;
         $cmid = $this->_ajaxformdata['cmid'] ?? false;
         $course = get_course_and_cm_from_cmid($cmid);
@@ -537,7 +541,7 @@ class edit_event_form extends dynamic_form {
             );
             $mform->disabledIf('bookingstatus', 'editbookingstatus', 'neq', 1);
             $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
-        } else if ($cancancelonly) {
+        } else if ($cancancelonly || $showbookingstatusreadonly) {
             $mform->addElement(
                 'static',
                 'bookingstatusreadonly',
