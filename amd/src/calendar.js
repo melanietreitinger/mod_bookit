@@ -160,7 +160,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
 
         /* Date click (create new event) */
         dateClick: function(info) {
-            const weekday = info.date.getgitDay(); // 0=Sun … 6=Sat
+            const weekday = info.date.getDay(); // 0=Sun … 6=Sat
             if (!allowedWeekdays.includes(weekday)) {
                 return;
             }
