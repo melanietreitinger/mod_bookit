@@ -362,52 +362,22 @@ class edit_event_form extends dynamic_form {
         }
         $mform->addHelpButton($otherexaminerselementname, 'event_otherexaminers', 'mod_bookit');
 
-        if ($this->is_optional_field_enabled($config, 'coursetemplate')) {
-            // Add the coursetemplate field.
-            $coursetemplates = [0 => get_string('default')];
-            $mform->addElement('select', 'coursetemplate', get_string('select_coursetemplate', 'mod_bookit'), $coursetemplates);
-            $mform->disabledIf('coursetemplate', 'editevent', 'neq');
-            if ($requirepublicfields) {
-                $mform->addRule('coursetemplate', null, 'required', null, 'client');
-            }
-            $mform->addHelpButton('coursetemplate', 'select_coursetemplate', 'mod_bookit');
-        } else {
-            $mform->addElement('hidden', 'coursetemplate');
-            $mform->setType('coursetemplate', PARAM_INT);
-        }
 
-        if ($this->is_optional_field_enabled($config, 'timecompensation')) {
-            $mform->addElement(
-                'advcheckbox',
-                'timecompensation',
-                get_string('event_timecompensation', 'mod_bookit'),
-                get_string('yes')
-            );
-            $mform->disabledIf('timecompensation', 'editevent', 'neq');
-            $mform->setType('timecompensation', PARAM_BOOL);
-            $mform->addHelpButton('timecompensation', 'event_timecompensation', 'mod_bookit');
-        } else {
-            $mform->addElement('hidden', 'timecompensation');
-            $mform->setType('timecompensation', PARAM_BOOL);
-        }
-
-        if ($this->is_optional_field_enabled($config, 'compensationfordisadvantages')) {
-            // MCE editor (#177) within the shared optional-field profile gate.
-            $mform->addElement(
-                'editor',
-                'compensationfordisadvantages',
-                get_string('event_compensationfordisadvantages', 'mod_bookit'),
-                ['rows' => 5],
-                ['maxfiles' => 0, 'noclean' => false]
-            );
-            $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
-            $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
-            // Hide for new bookings (status New) – examiners won't have this info yet.
-            $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
-        } else {
-            $mform->addElement('hidden', 'compensationfordisadvantages');
-            $mform->setType('compensationfordisadvantages', PARAM_RAW);
-        }
+        // Add the "compensationfordisadvantages" field; hidden for new bookings.
+        $mform->addElement(
+            'textarea',
+            'compensationfordisadvantages',
+            get_string(
+                'event_compensationfordisadvantages_label',
+                'mod_bookit'
+            ),
+            ['size' => '64']
+        );
+        $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
+        $mform->setType('compensationfordisadvantages', PARAM_TEXT);
+        $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
+        // Hide for new bookings (status 0) – examiners won't have this info yet.
+        $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
 
         if ($this->is_optional_field_enabled($config, 'notes')) {
             $mform->addElement(
