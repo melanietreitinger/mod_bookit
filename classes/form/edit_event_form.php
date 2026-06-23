@@ -265,23 +265,12 @@ class edit_event_form extends dynamic_form {
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
 
-        // Add the "timecompensation" field.
-        $mform->addElement(
-            'advcheckbox',
-            'timecompensation',
-            get_string('event_timecompensation', 'mod_bookit'),
-            get_string('yes')
-        );
-        $mform->disabledIf('timecompensation', 'editevent', 'neq');
-        $mform->setType('timecompensation', PARAM_BOOL);
-        $mform->addHelpButton('timecompensation', 'event_timecompensation', 'mod_bookit');
-
-        // Add the "compensationfordisadvantages" field.
+        // Add the "compensationfordisadvantages" field; hidden for new bookings.
         $mform->addElement(
             'textarea',
             'compensationfordisadvantages',
             get_string(
-                'event_compensationfordisadvantages',
+                'event_compensationfordisadvantages_label',
                 'mod_bookit'
             ),
             ['size' => '64']
@@ -289,6 +278,8 @@ class edit_event_form extends dynamic_form {
         $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
         $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
+        // Hide for new bookings (status 0) – examiners won't have this info yet.
+        $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
 
         // Add the "notes" field.
         $mform->addElement(
