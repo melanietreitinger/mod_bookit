@@ -191,10 +191,12 @@ class edit_event_form extends dynamic_form {
         $starttimearray['stopyear'] = $config->eventmaxyear ?? (date("Y") + 1);
 
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
+        $mform->disabledIf('startdate', 'editevent', 'neq');
         $mform->addRule('startdate', null, 'required', null, 'client');
         $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
 
         $mform->addElement('select', 'starttime');
+        $mform->disabledIf('starttime', 'editevent', 'neq');
         $mform->addRule('starttime', null, 'required', null, 'client');
 
         $mform->addElement('static', 'starttime_explanation', '', '');
@@ -245,6 +247,7 @@ class edit_event_form extends dynamic_form {
         );
         $mform->disabledIf('personinchargeid', 'editevent', 'neq');
         $mform->setType('personinchargeid', PARAM_TEXT);
+        // The person in charge is by default the booking person. 
         $mform->setDefault('personinchargeid', '');
         $mform->addRule('personinchargeid', null, 'required', null, 'client');
         $mform->addHelpButton('personinchargeid', 'event_personincharge', 'mod_bookit');
@@ -278,6 +281,7 @@ class edit_event_form extends dynamic_form {
         $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
         $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
+
         // Hide for new bookings (status 0) – examiners won't have this info yet.
         $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
 
@@ -465,7 +469,7 @@ class edit_event_form extends dynamic_form {
      * @throws coding_exception|dml_exception
      */
     public function definition_after_data(): void {
-        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
+        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection; $User for prefilling the Booking person. 
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
 
@@ -601,7 +605,8 @@ class edit_event_form extends dynamic_form {
     /**
      * Load in existing data as form defaults
      */
-    public function set_data_for_dynamic_submission(): void {
+      public function set_data_for_dynamic_submission(): void {
+        global $USER;
         $e = new StdClass();
         $id = $this->optional_param('id', null, PARAM_INT);
 
@@ -611,6 +616,9 @@ class edit_event_form extends dynamic_form {
             $date->setTime(0, 0);
             $e->startdate = $date->getTimestamp();
             $this->event = $e;
+        } else {
+            // New event: pre-fill person in charge with the current user.
+            $e->personinchargeid = $USER->id;
         }
         $e->cmid = $this->optional_param('cmid', null, PARAM_INT);
 
