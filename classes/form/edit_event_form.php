@@ -135,6 +135,7 @@ class edit_event_form extends dynamic_form {
 
         $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
         $mform->addRule('institutionid', null, 'required', null, 'client');
+        $mform->disabledIf('institutionid', 'editevent', 'neq');
         $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
 
         // Add the "roomid" field.
@@ -524,10 +525,19 @@ class edit_event_form extends dynamic_form {
         
         // Disable submit button when user has no edit rights at all.
         if (!$caneditevent && !$caneditinternal) {
-            $submitbutton = $mform->getElement('submitbutton');
-            $submitbutton->updateAttributes(['disabled' => 'disabled', 'style' => 'pointer-events:none;opacity:0.5;']);
+            $PAGE->requires->js_init_code("
+                require(['jquery'], function($) {
+                    var poll = setInterval(function() {
+                        var btn = $('.modal [data-action=\"save\"]');
+                        if (btn.length) {
+                            btn.prop('disabled', true).css({'pointer-events': 'none', 'opacity': '0.5'});
+                            clearInterval(poll);
+                        }
+                    }, 200);
+                });
+            ");
         }
-        
+
         // Week-day validation  – server side.
         $mform->addRule(
             'starttime',
