@@ -521,7 +521,13 @@ class edit_event_form extends dynamic_form {
             ),
             'name'
         )->setType('editinternal', PARAM_BOOL);
-
+        
+        // Disable submit button when user has no edit rights at all.
+        if (!$caneditevent && !$caneditinternal) {
+            $submitbutton = $mform->getElement('submitbutton');
+            $submitbutton->updateAttributes(['disabled' => 'disabled', 'style' => 'pointer-events:none;opacity:0.5;']);
+        }
+        
         // Week-day validation  – server side.
         $mform->addRule(
             'starttime',
@@ -569,7 +575,7 @@ class edit_event_form extends dynamic_form {
             ");
 
             // Client-side past-time validation (non-service-team only).
-            if (!$caneditinternal) {
+            if ($caneditevent && !$caneditinternal) {
                 $PAGE->requires->js_call_amd(
                     'mod_bookit/past_time_check',
                     'init',
