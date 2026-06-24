@@ -133,6 +133,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 */
             }
         },
+        
 
         /* Custom toolbar button (“Add booking”) */
         customButtons: {

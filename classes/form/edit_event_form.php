@@ -269,18 +269,18 @@ class edit_event_form extends dynamic_form {
         $mform->setType('otherexaminers', PARAM_TEXT);
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
 
-        // Add the "compensationfordisadvantages" field; hidden for new bookings.
-        $mform->addElement(
-            'textarea',
+        // The "compensationfordisadvantages" field; hidden for new bookings.
+          $mform->addElement(
+            'editor',
             'compensationfordisadvantages',
             get_string(
                 'event_compensationfordisadvantages_label',
                 'mod_bookit'
             ),
-            ['size' => '64']
+            ['rows' => 5],
+            ['maxfiles' => 0, 'noclean' => false]
         );
         $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
-        $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
 
         // Hide for new bookings (status 0) – examiners won't have this info yet.
@@ -641,6 +641,7 @@ class edit_event_form extends dynamic_form {
         // Wrap plain-text values for editor elements.
         $e->notes = ['text' => $e->notes ?? '', 'format' => FORMAT_HTML];
         $e->internalnotes = ['text' => $e->internalnotes ?? '', 'format' => FORMAT_HTML];
+        $e->compensationfordisadvantages = ['text' => $e->compensationfordisadvantages ?? '', 'format' => FORMAT_HTML];
 
         $this->set_data($e);
     }
@@ -727,6 +728,9 @@ class edit_event_form extends dynamic_form {
         }
         if (is_array($formdata->internalnotes)) {
             $formdata->internalnotes = $formdata->internalnotes['text'] ?? '';
+        }
+        if (is_array($formdata->compensationfordisadvantages)) {
+            $formdata->compensationfordisadvantages = $formdata->compensationfordisadvantages['text'] ?? '';
         }
         // Hard guard: reject past start times for non-service-team users.
         $context = $this->get_context_for_dynamic_submission();
