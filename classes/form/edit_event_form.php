@@ -302,23 +302,10 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
         }
-        // Add the "refcourseid" field.
-        // ...@TODO: make category to select courses an admin option for 'exclude'.
-        // ...@TODO: exclude current course.
-        // ...@TODO: make use of capabilities to show courses ???
-        $mform->addElement(
-            'course',
-            'refcourseid',
-            get_string(
-                'event_refcourseid',
-                'mod_bookit'
-            ),
-            ['multiple' => false, 'showhidden' => true, 'exclude' => '']
-        );
+        // Add the "refcourseid" field. Legacy Field, kept it for #85 if necessary. 
+         $mform->addElement('hidden', 'refcourseid');
         $mform->setType('refcourseid', PARAM_INT);
         $mform->setDefault('refcourseid', 0);
-        $mform->hideIf('refcourseid', 'editinternal', 'neq');
-        $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
 
         if ($caneditinternal) {
             // Add the "supportpersons" field.
@@ -499,11 +486,17 @@ class edit_event_form extends dynamic_form {
         ));
 
         $context = $this->get_context_for_dynamic_submission();
-        $caneditevent = has_capability('mod/bookit:editevent', $context)
+             $caneditevent = has_capability('mod/bookit:editevent', $context)
                 || !$id
                 || (self::BOOKINGSTATUS_NEW == $bookingstat && in_array($USER->id, $otherexaminers, true));
         $caneditinternal = has_capability('mod/bookit:editinternal', $context);
 
+        // Past events are read-only for non-service-team users.
+        if ($id && !$caneditinternal && $this->event) {
+            if ((int)$this->event->starttime < time()) {
+                $caneditevent = false;
+            }
+        }
         // Store capability flags as hidden elements.
         $mform->insertElementBefore(
             $mform->createElement(
