@@ -358,6 +358,15 @@ class event_access_manager {
             return false;
         }
 
+        $roles = self::get_user_roles_for_event($event, $userid);
+        if (
+            in_array('supportperson', $roles, true)
+            && empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']))
+            && (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_NEW
+        ) {
+            return false;
+        }
+
         return self::user_has_participant_visibility($event, $userid);
     }
 
@@ -412,6 +421,21 @@ class event_access_manager {
 
         if (self::is_observer_restricted_mode($context)) {
             return self::is_booking_confirmed($event);
+        }
+
+        if (self::is_support_on_site_user($context, $userid)) {
+            $roles = self::get_user_roles_for_event($event, $userid);
+            if (empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']))) {
+                $status = (int)($event->bookingstatus ?? -1);
+                if (in_array($status, self::OPEN_BOOKING_STATUSES, true)) {
+                    return true;
+                }
+                if ($status === self::BOOKINGSTATUS_ACCEPTED) {
+                    return in_array($userid, self::parse_csv_ids($event->supportpersons ?? ''), true);
+                }
+
+                return false;
+            }
         }
 
         return self::can_user_view_event_in_overview($event, $context, $userid);
@@ -821,6 +845,35 @@ class event_access_manager {
     }
 
     /**
+     * Check whether the user has the support-on-site module role without broader read grants.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    private static function is_support_on_site_user(context_module $context, int $userid): bool {
+        if (self::can_manage_open_requests($context)) {
+            return false;
+        }
+
+        if (has_capability('mod/bookit:viewalldetailsofevent', $context, $userid)) {
+            return false;
+        }
+
+        if (self::is_observer_restricted_mode($context)) {
+            return false;
+        }
+
+        foreach (get_user_roles($context, $userid) as $role) {
+            if ($role->shortname === 'bookit_supportonsite') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Resolve participant visibility for non-service-team users once so all booking views stay aligned.
      *
      * @param stdClass $event
@@ -837,6 +890,11 @@ class event_access_manager {
             return true;
         }
 
-        return in_array('supportperson', $roles, true) && self::is_booking_accessible($event);
+        return in_array('supportperson', $roles, true)
+            && in_array((int)($event->bookingstatus ?? -1), [
+                self::BOOKINGSTATUS_NEW,
+                self::BOOKINGSTATUS_IN_PROGRESS,
+                self::BOOKINGSTATUS_ACCEPTED,
+            ], true);
     }
 }

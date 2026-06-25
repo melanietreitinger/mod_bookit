@@ -122,6 +122,44 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Create a Bookit module context with a support-on-site role.
+     *
+     * @return context_module
+     */
+    private function create_bookit_context_with_support_role(): context_module {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Bookit support test']);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $role = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$role) {
+            $roleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $roleid = (int)$role->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        return $context;
+    }
+
+    /**
+     * Assign the support-on-site role to the given user.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @return void
+     */
+    private function assign_support_role(context_module $context, int $userid): void {
+        $this->assign_role_by_shortname($context, $userid, 'bookit_supportonsite');
+    }
+
+    /**
      * Assign a role by shortname to the given user.
      *
      * @param context_module $context
@@ -345,7 +383,7 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Support-only users see in-progress and accepted bookings but not new requests.
+     * Support-only users see assigned New/In progress/Accepted in overview and calendar.
      *
      * @return void
      */
@@ -364,9 +402,9 @@ final class event_access_manager_test extends advanced_testcase {
         $event->supportpersons = (string)$user->id;
 
         $this->assertFalse(event_access_manager::can_user_view_event_details($event, $context, $user->id));
-        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
-        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
-        $this->assertFalse(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
         $this->assertFalse(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
 
@@ -387,6 +425,206 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
+    }
+
+    /**
+     * Module support users see unassigned New bookings in the calendar.
+     *
+     * @return void
+     */
+    public function test_support_unassigned_new_visible_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+    }
+
+    /**
+     * Module support users see unassigned In progress bookings in the calendar.
+     *
+     * @return void
+     */
+    public function test_support_unassigned_in_progress_visible_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+    }
+
+    /**
+     * Assigned support users see New bookings in overview.
+     *
+     * @return void
+     */
+    public function test_support_assigned_new_visible_in_overview(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$user->id,
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+    }
+
+    /**
+     * Module support users do not see unassigned Accepted bookings in the calendar.
+     *
+     * @return void
+     */
+    public function test_support_unassigned_accepted_hidden_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+    }
+
+    /**
+     * Support users do not see Canceled or Rejected bookings in the calendar.
+     *
+     * @return void
+     */
+    public function test_support_canceled_rejected_hidden_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $canceled = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $rejected = clone $canceled;
+        $rejected->bookingstatus = event_access_manager::BOOKINGSTATUS_REJECTED;
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($canceled, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($rejected, $context, $user->id));
+    }
+
+    /**
+     * Assigned support users see Accepted bookings in the calendar.
+     *
+     * @return void
+     */
+    public function test_support_assigned_accepted_visible_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$user->id,
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+    }
+
+    /**
+     * Module support users do not see unassigned New bookings in overview.
+     *
+     * @return void
+     */
+    public function test_support_unassigned_new_hidden_in_overview(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+    }
+
+    /**
+     * Assigned support users see New, In progress, and Accepted bookings in overview.
+     *
+     * @return void
+     */
+    public function test_support_assigned_open_and_accepted_visible_in_overview(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            ] as $status
+        ) {
+            $event = (object)[
+                'bookingstatus' => $status,
+                'personinchargeid' => 0,
+                'usermodified' => 999,
+                'otherexaminers' => '',
+                'supportpersons' => (string)$user->id,
+            ];
+
+            $this->assertTrue(
+                event_access_manager::can_user_view_event_in_overview($event, $context, $user->id),
+                'Expected overview visibility for status ' . $status
+            );
+        }
     }
 
     /**

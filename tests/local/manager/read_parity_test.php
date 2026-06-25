@@ -120,4 +120,82 @@ final class read_parity_test extends advanced_testcase {
         $this->assert_is_canonical_calendar_event($governed[1]);
         $this->assertSame([$firstid, $secondid], array_map(static fn(array $event): int => (int)$event['id'], $governed));
     }
+
+    /**
+     * Support calendar breadth must not leak unassigned open bookings into overview reads.
+     *
+     * @return void
+     */
+    public function test_support_calendar_includes_unassigned_open_overview_does_not(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $supportuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Support parity']);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$supportrole) {
+            $supportroleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $supportroleid = (int)$supportrole->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
+        \role_assign($supportroleid, $supportuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Parity support room',
+            'shortname' => 'PS-1',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Parity support new',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => $roomid,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $calendar = event_manager::get_governed_calendar_events(
+            $context,
+            (int)$supportuser->id,
+            '2026-05-20 00:00',
+            '2026-05-20 23:59',
+            []
+        );
+        $overview = event_manager::get_events_for_examiner((int)$supportuser->id);
+
+        $this->assertSame([$eventid], array_map(static fn(array $item): int => (int)$item['id'], $calendar));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, (int)$supportuser->id));
+        $this->assertSame([], array_values(array_filter(
+            $overview,
+            static fn(stdClass $item): bool => (int)$item->id === $eventid
+        )));
+    }
 }
