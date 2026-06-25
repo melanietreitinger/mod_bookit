@@ -533,16 +533,17 @@ class edit_event_form extends dynamic_form {
                 get_string('event_bookingstatus', 'mod_bookit'),
                 get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
             );
-        } else if ($showbookingstatus && !$cancancelonly) {
+        } else if ($showbookingstatus) {
             $mform->addElement(
                 'select',
                 'bookingstatus',
                 get_string('event_bookingstatus', 'mod_bookit'),
                 $bookingstatusoptions
             );
+            $mform->setDefault('bookingstatus', $currentbookingstatus);
             $mform->disabledIf('bookingstatus', 'editbookingstatus', 'neq', 1);
             $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
-        } else if ($cancancelonly || $showbookingstatusreadonly) {
+        } else if ($showbookingstatusreadonly) {
             $mform->addElement(
                 'static',
                 'bookingstatusreadonly',
@@ -782,11 +783,6 @@ class edit_event_form extends dynamic_form {
                     $mform->setDefault('starttime', $currentstarttime);
                 }
             }
-        }
-
-        if ($cancancelonly) {
-            $mform->getElement('bookingstatus')->setValue((string)event_access_manager::BOOKINGSTATUS_CANCELED);
-            $mform->setConstant('bookingstatus', event_access_manager::BOOKINGSTATUS_CANCELED);
         }
 
         $this->inject_examiner_selector_labels($mform, $data);
@@ -1049,10 +1045,6 @@ class edit_event_form extends dynamic_form {
 
         if ($currentevent && !$caneditinternalnotes) {
             $formdata->internalnotes = $currentevent->internalnotes;
-        }
-
-        if ($cancancelonly) {
-            $formdata->bookingstatus = event_access_manager::BOOKINGSTATUS_CANCELED;
         }
 
         if ($currentevent && $caneditbookingstatus && !$caneditinternal) {
