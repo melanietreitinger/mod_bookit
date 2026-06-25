@@ -109,7 +109,12 @@
             {{/showreportfilters}}
             <div class="form-group col-md-2">
                 <label for="bookit-bookingstatusfilter">{{statusfilterlabel}}</label>
+                {{#statusfiltermultiple}}
+                <select id="bookit-bookingstatusfilter" name="bookingstatusfilter[]" class="form-control" multiple size="5">
+                {{/statusfiltermultiple}}
+                {{^statusfiltermultiple}}
                 <select id="bookit-bookingstatusfilter" name="bookingstatusfilter" class="form-control">
+                {{/statusfiltermultiple}}
                     {{#statusfilteroptions}}
                     <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
                     {{/statusfilteroptions}}
@@ -132,8 +137,10 @@
                 </select>
             </div>
             <div class="form-group col-md-2">
-                <button type="submit" class="btn btn-primary btn-block mb-2">{{reportapplylabel}}</button>
-                <a href="{{reportreseturl}}" class="btn btn-outline-secondary btn-block">{{reportresetlabel}}</a>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">{{reportapplylabel}}</button>
+                    <a href="{{reportreseturl}}" class="btn btn-outline-secondary">{{reportresetlabel}}</a>
+                </div>
             </div>
         </div>
     </form>
@@ -151,6 +158,9 @@
                 <th class="align-middle">Room</th>
                 <th class="align-middle">Person in charge</th>
                 <th class="align-middle">My role</th>
+                {{#showcreatedbycolumn}}
+                <th class="align-middle">{{createdbycolumnlabel}}</th>
+                {{/showcreatedbycolumn}}
                 <th class="align-middle">Booking status</th>
                 {{#showprogresscolumn}}
                 <th class="align-middle">Progress</th>
@@ -199,6 +209,9 @@
                     <td class="align-middle">{{room}}</td>
                     <td class="align-middle">{{personincharge}}</td>
                     <td class="align-middle">{{myrole}}</td>
+                    {{#showcreatedbycolumn}}
+                    <td class="align-middle">{{createdby}}</td>
+                    {{/showcreatedbycolumn}}
 
                     {{{statuscellhtml}}}
 

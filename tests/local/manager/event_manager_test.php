@@ -239,6 +239,215 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Service-team reporting defaults must start today instead of year start.
+     *
+     * @return void
+     */
+    public function test_get_reporting_default_range_service_team_starts_today(): void {
+        $reference = strtotime('2026-05-07 10:00:00');
+        [$start, $end] = event_manager::get_reporting_default_range($reference, true);
+
+        $this->assertSame(usergetmidnight($reference), $start);
+        $this->assertSame(strtotime('2026-12-31 23:59:59'), $end);
+    }
+
+    /**
+     * Default reporting status filter excludes terminal statuses.
+     *
+     * @return void
+     */
+    public function test_reporting_default_status_filter_excludes_terminal(): void {
+        $futurestart = strtotime('+2 days 09:00:00');
+        $futureend = strtotime('+2 days 11:00:00');
+        $base = ['starttime' => $futurestart, 'endtime' => $futureend];
+        $events = [
+            (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
+            (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
+            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED], $base),
+            (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
+            (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            ['bookingstatuses' => event_manager::get_reporting_default_booking_status_filter()]
+        );
+
+        $this->assertSame([1, 2, 3], array_map(static fn($event): int => (int)$event->id, $filtered));
+    }
+
+    /**
+     * Reporting query must expose creator full name fields instead of numeric ids only.
+     *
+     * @return void
+     */
+    public function test_get_events_for_reporting_includes_createdby_fullname(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $creator = $this->getDataGenerator()->create_user([
+            'firstname' => 'Casey',
+            'lastname' => 'Creator',
+        ]);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Reporting']);
+        $context = context_module::instance($bookit->cmid);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Created-by reporting event',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$creator->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $events = event_manager::get_events_for_reporting(
+            $context,
+            (int)get_admin()->id,
+            strtotime('2026-05-01 00:00:00'),
+            strtotime('2026-05-31 23:59:59'),
+            []
+        );
+        $event = null;
+        foreach ($events as $candidate) {
+            if ((int)$candidate->id === $eventid) {
+                $event = $candidate;
+                break;
+            }
+        }
+
+        $this->assertNotNull($event);
+        $this->assertSame('Casey', $event->creatorfirstname);
+        $this->assertSame('Creator', $event->creatorlastname);
+        $this->assertSame(0, (int)$event->creatordeleted);
+    }
+
+    /**
+     * Terminal queue must include booker-initiated cancellations.
+     *
+     * @return void
+     */
+    public function test_get_rejected_requests_includes_booker_canceled(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $booker = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+
+        $canceledid = $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Booker canceled',
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+        ]));
+        event_manager::record_booking_history(
+            (int)$canceledid,
+            'status_changed',
+            (int)$booker->id,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $requests = event_manager::get_rejected_requests();
+        $ids = array_map(static fn($event): int => (int)$event->id, $requests);
+
+        $this->assertContains((int)$canceledid, $ids);
+    }
+
+    /**
+     * Terminal queue must exclude service-team-initiated cancellations.
+     *
+     * @return void
+     */
+    public function test_get_rejected_requests_excludes_service_team_canceled(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $booker = $this->getDataGenerator()->create_user();
+        $serviceteam = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+
+        $canceledid = $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Service canceled',
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+        ]));
+        event_manager::record_booking_history(
+            (int)$canceledid,
+            'status_changed',
+            (int)$serviceteam->id,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $requests = event_manager::get_rejected_requests();
+        $ids = array_map(static fn($event): int => (int)$event->id, $requests);
+
+        $this->assertNotContains((int)$canceledid, $ids);
+    }
+
+    /**
      * Reporting defaults must apply the real current semester on first load.
      *
      * @return void

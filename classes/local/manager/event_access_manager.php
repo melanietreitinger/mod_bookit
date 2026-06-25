@@ -585,6 +585,52 @@ class event_access_manager {
     }
 
     /**
+     * Check whether a canceled booking was initiated by the booking person.
+     *
+     * @param stdClass $event
+     * @return bool
+     */
+    public static function is_booking_person_canceled(stdClass $event): bool {
+        if ((int)($event->bookingstatus ?? -1) !== self::BOOKINGSTATUS_CANCELED) {
+            return false;
+        }
+
+        foreach (event_manager::get_booking_history((int)$event->id, 50) as $entry) {
+            if ((int)($entry->newstatus ?? -1) !== self::BOOKINGSTATUS_CANCELED) {
+                continue;
+            }
+
+            $actorid = (int)($entry->usermodified ?? 0);
+            if ($actorid === (int)($event->usermodified ?? 0)) {
+                return true;
+            }
+
+            return in_array('bookingperson', self::get_user_roles_for_event($event, $actorid), true);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check whether a rejected or booker-canceled request may be restored from the terminal tab.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @return bool
+     */
+    public static function can_restore_terminal_request(stdClass $event, context_module $context): bool {
+        if (!self::can_manage_open_requests($context)) {
+            return false;
+        }
+
+        if (self::is_rejected_request($event)) {
+            return true;
+        }
+
+        return self::is_booking_person_canceled($event);
+    }
+
+    /**
      * Check whether a cancelled booking may be restored to a prior valid state.
      *
      * @param stdClass $event

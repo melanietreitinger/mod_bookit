@@ -121,10 +121,13 @@ function bookit_extend_settings_navigation(
 
     if (has_capability('mod/bookit:viewownoverview', $context)) {
         $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'myevents']);
+        $overviewlabel = \mod_bookit\local\manager\event_access_manager::can_manage_open_requests($context)
+            ? get_string('overview_all_events', 'mod_bookit')
+            : get_string('overview', 'bookit');
 
         // THIS is the line that puts the entry under the current Bookit node.
         $overviewnode = $modnode->add(
-            get_string('overview', 'bookit'),
+            $overviewlabel,
             $url,
             navigation_node::TYPE_SETTING,
             null,

@@ -136,13 +136,14 @@ class tabs {
     public static function get_overview_inner_tabrow(
         int $cmid,
         array $navigationparams,
-        bool $showhistory
+        bool $showhistory,
+        bool $useservicebookinglabel = false
     ): array {
         $tabrow = [
             new tabobject(
                 'myevents',
                 self::build_overview_url($cmid, 'myevents', $navigationparams),
-                get_string('overview_my_events', 'mod_bookit')
+                get_string($useservicebookinglabel ? 'overview_all_events' : 'overview_my_events', 'mod_bookit')
             ),
         ];
 

@@ -117,6 +117,11 @@ class update_event_booking_status extends external_api {
             && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
         ) {
             if (
+                $params['tab'] === 'rejectedrequests'
+                && event_access_manager::can_restore_terminal_request($event, $context)
+            ) {
+                $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
+            } else if (
                 $effectivestatus === null
                 || !event_access_manager::can_restore_canceled_booking($event, $context, $effectivestatus)
             ) {

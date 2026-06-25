@@ -304,21 +304,26 @@ class event_manager {
         } else if ($workspace === 'rejectedrequests') {
             $events = $canmanageopenrequests ? self::get_rejected_requests() : [];
         } else {
-            [$defaultstart, $defaultend] = self::get_reporting_default_range();
+            [$defaultstart, $defaultend] = self::get_reporting_default_range(null, $canmanageopenrequests);
             $reportstart ??= $defaultstart;
             $reportend ??= $defaultend;
             $semesterids = $filters['semesterids'];
+            $bookingstatuses = $filters['bookingstatuses'];
             if ($showreportfilters) {
                 $semesterids = self::resolve_effective_semester_filter_ids($semesterids, !empty($filters['semesterids']));
+                if (empty($bookingstatuses)) {
+                    $bookingstatuses = self::get_reporting_default_booking_status_filter();
+                }
                 $events = self::get_events_for_reporting($context, $userid, $reportstart, $reportend, $semesterids);
             } else {
                 $events = self::get_events_for_examiner($userid);
             }
             $filters['semesterids'] = $semesterids;
+            $filters['bookingstatuses'] = $bookingstatuses;
             $events = self::filter_overview_events(
                 $events,
                 [
-                    'bookingstatuses' => $filters['bookingstatuses'],
+                    'bookingstatuses' => $bookingstatuses,
                     'facultyids' => $filters['facultyids'],
                     'semesterids' => $filters['semesterids'],
                 ],
@@ -517,14 +522,32 @@ class event_manager {
      * @param int|null $referencetime
      * @return int[]
      */
-    public static function get_reporting_default_range(?int $referencetime = null): array {
-        $date = (new DateTime())->setTimestamp($referencetime ?? time());
+    public static function get_reporting_default_range(?int $referencetime = null, bool $serviceteam = false): array {
+        $timestamp = $referencetime ?? time();
+        $date = (new DateTime())->setTimestamp($timestamp);
         $year = (int)$date->format('Y');
 
-        $start = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
+        if ($serviceteam) {
+            $start = usergetmidnight($timestamp);
+        } else {
+            $start = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
+        }
         $end = (new DateTime())->setDate($year, 12, 31)->setTime(23, 59, 59)->getTimestamp();
 
         return [$start, $end];
+    }
+
+    /**
+     * Return the default reporting status filter for service-team overview loads.
+     *
+     * @return int[]
+     */
+    public static function get_reporting_default_booking_status_filter(): array {
+        return [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+        ];
     }
 
     /**
@@ -618,9 +641,13 @@ class event_manager {
                 e.otherexaminers,
                 e.supportpersons,
                 e.usermodified,
+                creator.firstname AS creatorfirstname,
+                creator.lastname AS creatorlastname,
+                creator.deleted AS creatordeleted,
                 r.name AS room
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            LEFT JOIN {user} creator ON creator.id = e.usermodified
             WHERE " . implode(' AND ', $conditions) . "
             ORDER BY e.starttime ASC
         ";
@@ -734,13 +761,25 @@ class event_manager {
                 r.name AS room
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE e.bookingstatus = :status
+            WHERE e.bookingstatus IN (:rejected, :canceled)
             ORDER BY e.starttime ASC
         ";
 
-        return $DB->get_records_sql($sql, [
-            'status' => event_access_manager::BOOKINGSTATUS_REJECTED,
+        $records = $DB->get_records_sql($sql, [
+            'rejected' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'canceled' => event_access_manager::BOOKINGSTATUS_CANCELED,
         ]);
+
+        return array_values(array_filter(
+            $records,
+            static function (stdClass $event): bool {
+                if ((int)($event->bookingstatus ?? -1) === event_access_manager::BOOKINGSTATUS_REJECTED) {
+                    return true;
+                }
+
+                return event_access_manager::is_booking_person_canceled($event);
+            }
+        ));
     }
 
     /**
@@ -801,11 +840,9 @@ class event_manager {
      * @throws dml_exception
      */
     public static function count_rejected_requests(?int $referencetime = null): int {
-        global $DB;
+        unset($referencetime);
 
-        return (int)$DB->count_records_select('bookit_event', 'bookingstatus = :status', [
-            'status' => event_access_manager::BOOKINGSTATUS_REJECTED,
-        ]);
+        return count(self::get_rejected_requests());
     }
 
     /**

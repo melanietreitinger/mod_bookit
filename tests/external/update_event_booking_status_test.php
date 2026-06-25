@@ -18,6 +18,7 @@ namespace mod_bookit\external;
 
 use advanced_testcase;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\event_manager;
 
 /**
  * Regression tests for booking-status updates during governed-read rollout.
@@ -293,5 +294,69 @@ final class update_event_booking_status_test extends advanced_testcase {
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus,usermodified', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
         $this->assertSame((int)$bookingperson->id, (int)$record->usermodified);
+    }
+
+    /**
+     * Service team must restore booker-canceled requests to New from the terminal tab.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_service_team_canceled_to_new_from_rejected_tab(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $booker = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Terminal restore']);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Canceled terminal request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        event_manager::record_booking_history(
+            $eventid,
+            'status_changed',
+            (int)$booker->id,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'rejectedrequests',
+            1
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
+        $this->assertSame('rejectedrequests', $response['tab']);
+
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
     }
 }

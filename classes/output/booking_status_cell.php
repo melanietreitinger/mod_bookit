@@ -186,8 +186,11 @@ class booking_status_cell implements renderable, templatable {
 
         $canedit = false;
         if ($isrequestworkspace) {
-            $canedit = event_access_manager::can_manage_open_requests($context)
-                && $requesttab === 'openrequests';
+            if ($requesttab === 'openrequests') {
+                $canedit = event_access_manager::can_manage_open_requests($context);
+            } else if ($requesttab === 'rejectedrequests') {
+                $canedit = event_access_manager::can_restore_terminal_request($event, $context);
+            }
         } else if ($requesttab === 'history') {
             $canedit = event_access_manager::can_reactivate_rejected_request($event, $context);
         } else {
@@ -204,10 +207,10 @@ class booking_status_cell implements renderable, templatable {
                 ));
             }
             if ($isrequestworkspace && $requesttab === 'rejectedrequests') {
-                $canedit = event_access_manager::can_reactivate_rejected_request($event, $context);
-                if ($canedit) {
-                    $options = event_manager::get_booking_status_options($bookingstatus);
-                }
+                $options = array_values(array_filter(
+                    $options,
+                    static fn(array $option): bool => (int)$option['value'] === event_access_manager::BOOKINGSTATUS_NEW
+                ));
             }
             if (empty($options)) {
                 $canedit = false;
