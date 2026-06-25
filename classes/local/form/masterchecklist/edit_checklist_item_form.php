@@ -71,7 +71,9 @@ class edit_checklist_item_form extends dynamic_form {
 
         $mform->addElement('textarea', 'title', get_string('checklistitemname', 'mod_bookit'), ['style' => 'width:50%;']);
         $mform->setType('title', PARAM_TEXT);
-        $mform->addRule('title', null, 'required', null, 'client');
+        $titlerequired = get_string('checklistitemname_required', 'mod_bookit');
+        $mform->addRule('title', $titlerequired, 'required', null, 'client');
+        $mform->addRule('title', $titlerequired, 'required', null, 'server');
         $mform->addHelpButton('title', 'checklistitemname', 'mod_bookit');
 
         $mform->addElement(
@@ -82,7 +84,9 @@ class edit_checklist_item_form extends dynamic_form {
             ['style' => 'width:50%;']
         );
         $mform->setType('categoryid', PARAM_INT);
-        $mform->addRule('categoryid', null, 'required', null, 'client');
+        $categoryrequired = get_string('checklistcategory_required', 'mod_bookit');
+        $mform->addRule('categoryid', $categoryrequired, 'required', null, 'client');
+        $mform->addRule('categoryid', $categoryrequired, 'required', null, 'server');
         $mform->addHelpButton('categoryid', 'checklistcategory', 'mod_bookit');
 
         $allrooms = array_column(checklist_manager::get_bookit_rooms(), 'name', 'id');
@@ -93,7 +97,9 @@ class edit_checklist_item_form extends dynamic_form {
             'size' => '4',
         ]);
         $mform->setType('roomids', PARAM_TEXT);
-        $mform->addRule('roomids', null, 'required', null, 'client');
+        $roomsrequired = get_string('checklistrooms_required', 'mod_bookit');
+        $mform->addRule('roomids', $roomsrequired, 'required', null, 'client');
+        $mform->addRule('roomids', $roomsrequired, 'required', null, 'server');
         $select->setMultiple(true);
         $mform->addHelpButton('roomids', 'rooms', 'mod_bookit');
 
@@ -102,7 +108,9 @@ class edit_checklist_item_form extends dynamic_form {
             'size' => '4',
         ]);
         $mform->setType('roleids', PARAM_TEXT);
-        $mform->addRule('roleids', null, 'required', null, 'client');
+        $rolerequired = get_string('checklistrole_required', 'mod_bookit');
+        $mform->addRule('roleids', $rolerequired, 'required', null, 'client');
+        $mform->addRule('roleids', $rolerequired, 'required', null, 'server');
         $select->setMultiple(true);
         $mform->addHelpButton('roleids', 'role', 'mod_bookit');
 
@@ -114,7 +122,9 @@ class edit_checklist_item_form extends dynamic_form {
 
         $mform->addGroup($duedateradio, 'duedategroup', get_string('duedate', 'mod_bookit'), null, false);
         $mform->setDefault('duedate', 'none');
-        $mform->addRule('duedategroup', null, 'required', null, 'client');
+        $duedaterequired = get_string('checklistduedate_required', 'mod_bookit');
+        $mform->addRule('duedategroup', $duedaterequired, 'required', null, 'client');
+        $mform->addRule('duedategroup', $duedaterequired, 'required', null, 'server');
         $mform->addHelpButton('duedategroup', 'duedate', 'mod_bookit');
 
         $mform->addElement('duration', 'duedaysoffset', get_string('time', 'mod_bookit'), ['units' => [DAYSECS]]);
@@ -408,6 +418,26 @@ class edit_checklist_item_form extends dynamic_form {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
+        if (!isset($data['title']) || trim((string) $data['title']) === '') {
+            $errors['title'] = get_string('checklistitemname_required', 'mod_bookit');
+        }
+
+        if (empty($data['categoryid'])) {
+            $errors['categoryid'] = get_string('checklistcategory_required', 'mod_bookit');
+        }
+
+        if ($this->is_multiselect_empty($data['roomids'] ?? null)) {
+            $errors['roomids'] = get_string('checklistrooms_required', 'mod_bookit');
+        }
+
+        if ($this->is_multiselect_empty($data['roleids'] ?? null)) {
+            $errors['roleids'] = get_string('checklistrole_required', 'mod_bookit');
+        }
+
+        if (!isset($data['duedate']) || $data['duedate'] === '') {
+            $errors['duedategroup'] = get_string('checklistduedate_required', 'mod_bookit');
+        }
+
         if (isset($data['duedate']) && $data['duedate'] != 'none') {
             if (isset($data['duedaysoffset']) && $data['duedaysoffset'] <= 0) {
                 $errors['duedaysoffset'] = get_string('err_numeric', 'form');
@@ -436,6 +466,27 @@ class edit_checklist_item_form extends dynamic_form {
                 $this->fix_duration_field($fieldname);
             }
         }
+    }
+
+    /**
+     * Whether a multi-select form value is empty.
+     *
+     * @param mixed $value Submitted select value(s).
+     * @return bool
+     */
+    private function is_multiselect_empty($value): bool {
+        if ($value === null || $value === '' || $value === []) {
+            return true;
+        }
+        if (!is_array($value)) {
+            return false;
+        }
+        foreach ($value as $item) {
+            if ($item !== '' && $item !== null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
