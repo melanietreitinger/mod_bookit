@@ -661,7 +661,11 @@ foreach ($events as $ev) {
         ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)
         : event_access_manager::can_user_view_event_in_overview($ev, $context, (int)$USER->id);
     if ($canviewevent) {
-        $templatecontext['events'][] = $prepareeventrow($ev);
+        $templatecontext['events'][] = $prepareeventrow(
+            $ev,
+            false,
+            $currenttab === 'history' ? 'history' : 'myevents'
+        );
     }
 }
 

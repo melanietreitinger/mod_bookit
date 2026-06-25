@@ -438,14 +438,21 @@ class event_access_manager {
             }
         }
 
+        $roles = self::get_user_roles_for_event($event, $userid);
+        if (
+            in_array('bookingperson', $roles, true)
+            && (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_CANCELED
+        ) {
+            return false;
+        }
+
         return self::can_user_view_event_in_overview($event, $context, $userid);
     }
 
     /**
      * Check whether the user may see the event in the overview history.
      *
-     * History follows the same visibility projection as the active overview so hidden
-     * requests never reappear through a different entry point.
+     * Active overview still hides rejected requests; history widens visibility for booking persons.
      *
      * @param stdClass $event
      * @param context_module $context
@@ -459,6 +466,13 @@ class event_access_manager {
 
         if (self::is_observer_restricted_mode($context)) {
             return false;
+        }
+
+        if (
+            self::is_rejected_request($event)
+            && in_array('bookingperson', self::get_user_roles_for_event($event, $userid), true)
+        ) {
+            return true;
         }
 
         return self::can_user_view_event_in_overview($event, $context, $userid);
@@ -545,7 +559,7 @@ class event_access_manager {
     }
 
     /**
-     * Check whether a rejected request may be reactivated by the service team.
+     * Check whether a rejected request may be reactivated.
      *
      * @param stdClass $event
      * @param context_module $context
@@ -557,7 +571,17 @@ class event_access_manager {
         context_module $context,
         ?int $referencetime = null
     ): bool {
-        return self::can_manage_open_requests($context) && self::is_rejected_request($event, $referencetime);
+        if (!self::is_rejected_request($event, $referencetime)) {
+            return false;
+        }
+
+        if (self::can_manage_open_requests($context)) {
+            return true;
+        }
+
+        global $USER;
+
+        return in_array('bookingperson', self::get_user_roles_for_event($event, (int)$USER->id), true);
     }
 
     /**

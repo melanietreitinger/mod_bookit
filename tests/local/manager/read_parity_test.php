@@ -182,6 +182,7 @@ final class read_parity_test extends advanced_testcase {
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
+        $this->setUser($supportuser);
         $calendar = event_manager::get_governed_calendar_events(
             $context,
             (int)$supportuser->id,
@@ -196,6 +197,89 @@ final class read_parity_test extends advanced_testcase {
         $this->assertSame([], array_values(array_filter(
             $overview,
             static fn(stdClass $item): bool => (int)$item->id === $eventid
+        )));
+    }
+
+    /**
+     * Booking persons see rejected requests in history projection but not in active overview.
+     *
+     * @return void
+     */
+    public function test_booking_person_rejected_in_history_not_in_active_overview(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Rejected history parity',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $participantrole = \create_role('Bookit rejected participant', 'bookitrejectedparticipant', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \role_assign($participantrole, $bookingperson->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Rejected history exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+
+        $this->setUser($bookingperson);
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, (int)$bookingperson->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, (int)$bookingperson->id));
+
+        $historyevents = event_manager::filter_overview_events(
+            event_manager::get_events_for_examiner((int)$bookingperson->id),
+            [],
+            true
+        );
+        $activeevents = event_manager::filter_overview_events(
+            event_manager::get_events_for_examiner((int)$bookingperson->id),
+            [],
+            false
+        );
+
+        $historyids = array_values(array_map(
+            static fn($item): int => (int)$item->id,
+            array_filter(
+                $historyevents,
+                static fn($item): bool => (int)$item->id === $eventid
+                    && event_access_manager::can_user_view_event_in_history($item, $context, (int)$bookingperson->id)
+            )
+        ));
+        $this->assertSame([$eventid], $historyids);
+        $this->assertSame([], array_values(array_filter(
+            $activeevents,
+            static fn($item): bool => (int)$item->id === $eventid
         )));
     }
 }

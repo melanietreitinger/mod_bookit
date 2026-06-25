@@ -39,15 +39,32 @@ define([
                         BookingFormResources.init(modal.modal.getRoot()[0]);
                     }
 
-                    if (!cancelButtonText || !modal.modal) {
+                    if (!cancelButtonText || !saveButtonText || !modal.modal) {
                         return;
                     }
 
                     const modalRoot = modal.modal.getRoot()[0];
-                    const cancelButton = modalRoot.querySelector('[data-action="cancel"]');
-                    if (cancelButton) {
-                        cancelButton.textContent = cancelButtonText;
+                    const footer = modalRoot.querySelector('.modal-footer');
+                    if (!footer) {
+                        return;
                     }
+
+                    const submitButton = footer.querySelector('[data-action="save"]');
+                    const dismissButton = footer.querySelector('[data-action="cancel"]');
+                    if (!submitButton || !dismissButton) {
+                        return;
+                    }
+
+                    // Cancel-only mode: left grey submit (Cancel booking), right blue dismiss (Keep booking).
+                    submitButton.textContent = saveButtonText;
+                    submitButton.classList.remove('btn-primary');
+                    submitButton.classList.add('btn-secondary');
+
+                    dismissButton.textContent = cancelButtonText;
+                    dismissButton.classList.remove('btn-secondary');
+                    dismissButton.classList.add('btn-primary');
+
+                    footer.insertBefore(submitButton, dismissButton);
                 });
 
                 modal.addEventListener(modal.events.FORM_SUBMITTED, function() {

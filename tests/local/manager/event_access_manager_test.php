@@ -1299,4 +1299,207 @@ final class event_access_manager_test extends advanced_testcase {
 
         $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($event, $context, $serviceuser->id));
     }
+
+    /**
+     * Booking persons must not see canceled bookings in the calendar.
+     *
+     * @return void
+     */
+    public function test_booking_person_canceled_hidden_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+    }
+
+    /**
+     * Booking persons keep active booking statuses visible in the calendar.
+     *
+     * @return void
+     */
+    public function test_booking_person_active_statuses_visible_in_calendar(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            ] as $status
+        ) {
+            $event = (object)[
+                'bookingstatus' => $status,
+                'personinchargeid' => 0,
+                'usermodified' => (int)$user->id,
+                'otherexaminers' => '',
+                'supportpersons' => '',
+            ];
+            $this->assertTrue(
+                event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id),
+                'Status ' . $status . ' should remain visible in calendar'
+            );
+        }
+    }
+
+    /**
+     * Service-team canceled calendar filtering remains unchanged.
+     *
+     * @return void
+     */
+    public function test_service_team_canceled_calendar_unchanged(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice039');
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice039');
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'usermodified' => 0,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+    }
+
+    /**
+     * Booking persons see rejected requests in history but not in active overview.
+     *
+     * @return void
+     */
+    public function test_booking_person_rejected_visible_in_history(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+            'endtime' => strtotime('2026-05-01 12:00:00'),
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, $user->id));
+    }
+
+    /**
+     * Rejected bookings stay hidden from the active overview for booking persons.
+     *
+     * @return void
+     */
+    public function test_booking_person_rejected_hidden_in_active_overview(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+            'endtime' => strtotime('2026-05-01 12:00:00'),
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+    }
+
+    /**
+     * Booking persons may reactivate their own rejected requests.
+     *
+     * @return void
+     */
+    public function test_booking_person_can_reactivate_own_rejected(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_reactivate_rejected_request($event, $context));
+    }
+
+    /**
+     * Booking persons cannot reactivate non-rejected bookings.
+     *
+     * @return void
+     */
+    public function test_booking_person_cannot_reactivate_non_rejected(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            ] as $status
+        ) {
+            $event = (object)[
+                'bookingstatus' => $status,
+                'personinchargeid' => 0,
+                'usermodified' => (int)$user->id,
+                'otherexaminers' => '',
+                'supportpersons' => '',
+            ];
+            $this->assertFalse(event_access_manager::can_reactivate_rejected_request($event, $context));
+        }
+    }
+
+    /**
+     * Service-team reactivate permission remains available on rejected requests.
+     *
+     * @return void
+     */
+    public function test_service_team_reactivate_unchanged(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice039react');
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice039react');
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_reactivate_rejected_request($event, $context));
+    }
 }

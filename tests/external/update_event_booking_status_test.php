@@ -226,4 +226,72 @@ final class update_event_booking_status_test extends advanced_testcase {
             1
         );
     }
+
+    /**
+     * Booking persons may reactivate their own rejected requests without managebasics.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_booking_person_rejected_to_new_via_api(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Booker reactivate']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant reactivate', 'bookitparticipantreactivate', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $bookingperson->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Rejected reactivate exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->setUser($bookingperson);
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'history',
+            1
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
+        $this->assertSame('history', $response['tab']);
+
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus,usermodified', MUST_EXIST);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
+        $this->assertSame((int)$bookingperson->id, (int)$record->usermodified);
+    }
 }

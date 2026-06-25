@@ -596,6 +596,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
         \role_assign($supportroleid, $supportuser->id, $context->id);
         \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($supportuser->id, $course->id);
 
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
         $roomid = $generator->create_room([
@@ -672,5 +673,106 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $returnedids = array_map(static fn(array $event): int => (int)$event['id'], $response['events']);
         $this->assertContains($newid, $returnedids);
         $this->assertContains($inprogressid, $returnedids);
+    }
+
+    /**
+     * Governed calendar reads omit canceled bookings for booking persons.
+     *
+     * @return void
+     */
+    public function test_booking_person_canceled_omitted_from_calendar_read(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Canceled calendar read']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $participantrole = \create_role('Bookit canceled participant', 'bookitcanceledparticipant', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \role_assign($participantrole, $bookingperson->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Canceled room',
+            'shortname' => 'CN-1',
+            'location' => 'North',
+        ]);
+
+        $canceledid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Canceled calendar exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-22 09:00:00'),
+            'endtime' => strtotime('2026-05-22 11:00:00'),
+            'duration' => 120,
+            'roomid' => $roomid,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $acceptedid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Accepted calendar exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-22 13:00:00'),
+            'endtime' => strtotime('2026-05-22 15:00:00'),
+            'duration' => 120,
+            'roomid' => $roomid,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->setUser($bookingperson);
+        $response = get_calendar_events::execute(
+            $bookit->cmid,
+            '2026-05-22T00:00:00',
+            '2026-05-22T23:59:59',
+            [$roomid],
+            [],
+            [],
+            '',
+            false
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $returnedids = array_map(static fn(array $event): int => (int)$event['id'], $response['events']);
+        $this->assertNotContains($canceledid, $returnedids);
+        $this->assertContains($acceptedid, $returnedids);
     }
 }

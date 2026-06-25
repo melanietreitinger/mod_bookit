@@ -188,6 +188,8 @@ class booking_status_cell implements renderable, templatable {
         if ($isrequestworkspace) {
             $canedit = event_access_manager::can_manage_open_requests($context)
                 && $requesttab === 'openrequests';
+        } else if ($requesttab === 'history') {
+            $canedit = event_access_manager::can_reactivate_rejected_request($event, $context);
         } else {
             $canedit = $canmanagebasics;
         }
