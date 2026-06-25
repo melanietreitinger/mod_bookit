@@ -803,6 +803,87 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Foreign form saves must keep overview and history visibility for the booking person.
+     *
+     * @return void
+     */
+    public function test_foreign_form_save_keeps_booking_person_overview_and_history_visibility(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $context = $this->create_bookit_context_with_participant_role();
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $admin = get_admin();
+        $this->assign_participant_role($context, (int)$bookingperson->id);
+
+        /** @var \mod_bookit_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Foreign overview room',
+            'shortname' => 'FOR001',
+        ]);
+
+        $this->setUser($bookingperson);
+        $event = new \mod_bookit\local\entity\bookit_event(
+            0,
+            'Foreign overview exam',
+            20261,
+            1,
+            strtotime('2026-05-20 09:00:00'),
+            strtotime('2026-05-20 11:00:00'),
+            120,
+            $roomid,
+            10,
+            0,
+            '',
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            null,
+            '',
+            0,
+            'External note',
+            'Internal note',
+            '',
+            0,
+            0,
+            null,
+            (int)$bookingperson->id,
+            time(),
+            time(),
+            []
+        );
+        $saved = event_manager::save_event_with_lifecycle_tracking(
+            $event,
+            null,
+            (int)$bookingperson->id,
+            $context
+        );
+
+        $before = \mod_bookit\local\entity\bookit_event::from_database($saved->id);
+        $updated = \mod_bookit\local\entity\bookit_event::from_database($saved->id);
+        $updated->notes = 'Foreign save overview check';
+
+        $this->setUser($admin);
+        event_manager::save_event_with_lifecycle_tracking(
+            $updated,
+            $before,
+            (int)$admin->id,
+            $context
+        );
+
+        $persisted = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
+        $this->assertSame((int)$bookingperson->id, (int)$persisted->usermodified);
+
+        $this->setUser($bookingperson);
+        $this->assertTrue(
+            event_access_manager::can_user_view_event_in_overview($persisted, $context, (int)$bookingperson->id)
+        );
+        $this->assertTrue(
+            event_access_manager::can_user_view_event_in_history($persisted, $context, (int)$bookingperson->id)
+        );
+    }
+
+    /**
      * Assigned examiners must keep visibility after service-team status transitions.
      *
      * @return void

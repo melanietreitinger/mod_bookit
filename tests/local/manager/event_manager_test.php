@@ -528,6 +528,208 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Create a Bookit context with participant capabilities for booking-person visibility tests.
+     *
+     * @param int[] $participantuserids
+     * @return context_module
+     */
+    private function create_participant_context(array $participantuserids): context_module {
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Foreign save']);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant foreign', 'bookitparticipantforeign', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
+        foreach ($participantuserids as $userid) {
+            \role_assign($roleid, $userid, $context->id);
+        }
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        return $context;
+    }
+
+    /**
+     * Assign a service-team role with form-save capabilities in the module context.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @param string $roleshortname
+     * @return void
+     */
+    private function assign_service_role(
+        context_module $context,
+        int $userid,
+        string $roleshortname = 'bookitserviceforeign'
+    ): void {
+        global $DB;
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit service foreign', $roleshortname, 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $userid, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+    }
+
+    /**
+     * Foreign form saves must preserve booking person identity and calendar visibility.
+     *
+     * @param int $actorid
+     * @param context_module|null $context
+     * @param int|null $bookingpersonid
+     * @return void
+     */
+    private function assert_foreign_save_preserves_booking_person(
+        int $actorid,
+        ?context_module $context = null,
+        ?int $bookingpersonid = null
+    ): void {
+        global $DB;
+
+        if ($bookingpersonid === null) {
+            $bookingperson = $this->getDataGenerator()->create_user();
+            $bookingpersonid = (int)$bookingperson->id;
+        }
+        if ($context === null) {
+            $context = $this->create_participant_context([$bookingpersonid]);
+        }
+        $roomid = $this->create_room();
+
+        $this->setUser($bookingpersonid);
+        $event = $this->build_bookit_event($roomid, $bookingpersonid, [
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'name' => 'Foreign save identity',
+        ]);
+        $saved = event_manager::save_event_with_lifecycle_tracking(
+            $event,
+            null,
+            $bookingpersonid,
+            $context
+        );
+
+        $before = bookit_event::from_database($saved->id);
+        $updated = bookit_event::from_database($saved->id);
+        $updated->notes = 'Updated by foreign actor';
+
+        $this->setUser($actorid);
+        event_manager::save_event_with_lifecycle_tracking(
+            $updated,
+            $before,
+            $actorid,
+            $context
+        );
+
+        $persisted = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
+        $this->assertSame($bookingpersonid, (int)$persisted->usermodified);
+
+        $this->setUser($bookingpersonid);
+        $this->assertTrue(
+            event_access_manager::can_user_view_event_in_calendar($persisted, $context, $bookingpersonid)
+        );
+        $this->assertTrue(
+            event_access_manager::can_user_view_event_in_overview($persisted, $context, $bookingpersonid)
+        );
+    }
+
+    /**
+     * Admin foreign saves must not overwrite the booking person stored in usermodified.
+     *
+     * @return void
+     */
+    public function test_save_event_preserves_booking_person_usermodified_on_foreign_save(): void {
+        $this->resetAfterTest(true);
+        $admin = get_admin();
+        $this->assert_foreign_save_preserves_booking_person((int)$admin->id);
+    }
+
+    /**
+     * Service-team foreign saves must not overwrite the booking person stored in usermodified.
+     *
+     * @return void
+     */
+    public function test_save_event_preserves_booking_person_usermodified_on_service_team_foreign_save(): void {
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $context = $this->create_participant_context([(int)$bookingperson->id]);
+        $this->assign_service_role($context, (int)$serviceuser->id);
+
+        $this->assert_foreign_save_preserves_booking_person(
+            (int)$serviceuser->id,
+            $context,
+            (int)$bookingperson->id
+        );
+    }
+
+    /**
+     * New bookings must store the creating user as booking person in usermodified.
+     *
+     * @return void
+     */
+    public function test_save_event_sets_booking_person_usermodified_on_insert(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $context = $this->create_bookit_context();
+        $roomid = $this->create_room();
+        $event = $this->build_bookit_event($roomid, (int)$user->id, ['name' => 'Insert identity']);
+
+        event_manager::save_event_with_lifecycle_tracking($event, null, (int)$user->id, $context);
+
+        $record = $DB->get_record('bookit_event', ['id' => $event->id], '*', MUST_EXIST);
+        $this->assertSame((int)$user->id, (int)$record->usermodified);
+    }
+
+    /**
+     * Booking-person self saves must keep usermodified aligned with the booking person.
+     *
+     * @return void
+     */
+    public function test_save_event_preserves_booking_person_usermodified_on_self_save(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $context = $this->create_participant_context([(int)$bookingperson->id]);
+        $roomid = $this->create_room();
+
+        $this->setUser($bookingperson);
+        $event = $this->build_bookit_event($roomid, (int)$bookingperson->id, [
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'name' => 'Self save identity',
+        ]);
+        $saved = event_manager::save_event_with_lifecycle_tracking(
+            $event,
+            null,
+            (int)$bookingperson->id,
+            $context
+        );
+
+        $before = bookit_event::from_database($saved->id);
+        $updated = bookit_event::from_database($saved->id);
+        $updated->notes = 'Updated by booking person';
+
+        event_manager::save_event_with_lifecycle_tracking(
+            $updated,
+            $before,
+            (int)$bookingperson->id,
+            $context
+        );
+
+        $record = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
+        $this->assertSame((int)$bookingperson->id, (int)$record->usermodified);
+    }
+
+    /**
      * Personal overview queries must still return bookings after service-team status transitions.
      *
      * @return void

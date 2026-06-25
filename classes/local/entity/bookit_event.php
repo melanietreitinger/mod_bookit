@@ -204,7 +204,17 @@ class bookit_event {
     final public function save(?int $userid = null): void {
         global $DB, $USER;
 
-        $this->usermodified = $userid ?? $USER->id;
+        $actorid = (int)($userid ?? $USER->id);
+        if (!empty($this->id)) {
+            $existing = $DB->get_field('bookit_event', 'usermodified', ['id' => $this->id]);
+            if ($existing !== false && (int)$existing !== $actorid) {
+                $this->usermodified = (int)$existing;
+            } else {
+                $this->usermodified = $actorid;
+            }
+        } else {
+            $this->usermodified = $actorid;
+        }
         $this->timecreated  ??= time();
         $this->timemodified  = time();
         $this->bookingstatus ??= 0;

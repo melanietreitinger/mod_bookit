@@ -64,11 +64,11 @@ Feature: Process open booking requests
     And the Bookit overview should show 1 activity tab row
     When I open the Bookit overview "acceptedrequests" for "My BookIt Activity"
     Then I should see "Exam Chemistry I"
-    And I should see "Accepted"
+    And I should see "Confirmed"
     And the Bookit request workspace tab "Accepted bookings" should be active
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Exam Chemistry I"
-    And I should see "Accepted"
+    And I should see "Confirmed"
 
   Scenario: Service team reaches rejected requests inside the request workspace and keeps direct routes working
     Given the following "mod_bookit > events" exist:

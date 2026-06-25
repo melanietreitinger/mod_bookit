@@ -36,11 +36,10 @@
     * room - Room label (string).
     * personincharge - Full name of the person in charge (string).
     * myrole - Role label for current user (string).
-    * statustext - Booking status label (string).
-    * statusstyle - Inline CSS for the status cell (string).
-    * statusoptions - Array of {value, label, selected} for admin dropdown.
-    * canmanage - Whether current user can manage events (bool).
+    * statusgroupkey - Row accent class suffix (open|confirmed|closed).
+    * statuscellhtml - Pre-rendered shared booking status cell markup.
     * datestr - Date string for display (string).
+    * datetimestr - Date/time string for my-events table (string).
     * starttime - Unix timestamp used for sorting (number).
     * cmid - Course module id for the modal (number).
     * checklistprogress - Checklist progress percent (int, -1 = no master checklist).
@@ -59,9 +58,10 @@
           "room": "Room 1",
           "personincharge": "Jane Doe",
           "myrole": "Person in charge",
-          "statustext": "Accepted",
-          "statusstyle": "background-color:#d4edda;color:#000000;",
+          "statusgroupkey": "confirmed",
+          "statuscellhtml": "<td class=\"mod-bookit-status-cell\">...</td>",
           "datestr": "14.01.2026",
+          "datetimestr": "14.01.2026 10:00",
           "starttime": 1768425600,
           "cmid": 42,
           "checklistprogress": 50,
@@ -200,35 +200,7 @@
                     <td class="align-middle">{{personincharge}}</td>
                     <td class="align-middle">{{myrole}}</td>
 
-                    {{#canmanage}}
-                    <td class="align-middle text-center mod-bookit-status-cell">
-                        <select class="custom-select custom-select-sm"
-                                data-action="update-booking-status"
-                                data-eventid="{{id}}"
-                                data-cmid="{{cmid}}"
-                                data-bookingstatus="{{bookingstatus}}">
-                            {{#statusoptions}}
-                            <option value="{{value}}" data-bg="{{bg}}" data-fg="{{fg}}" {{#selected}}selected{{/selected}}>{{label}}</option>
-                            {{/statusoptions}}
-                        </select>
-                        <div class="small text-muted mt-1">{{statusgrouptext}}</div>
-                        {{#haslatesthistorysummary}}
-                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
-                        {{/haslatesthistorysummary}}
-                    </td>
-                    {{/canmanage}}
-                    {{^canmanage}}
-                    <td class="align-middle mod-bookit-status-cell">
-                        <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
-                             style="{{statusstyle}}">
-                            <div class="font-weight-bold">{{statustext}}</div>
-                            <div class="small">{{statusgrouptext}}</div>
-                        </div>
-                        {{#haslatesthistorysummary}}
-                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
-                        {{/haslatesthistorysummary}}
-                    </td>
-                    {{/canmanage}}
+                    {{{statuscellhtml}}}
 
                     {{#showprogresscolumn}}
                     <td class="align-middle">
@@ -341,7 +313,6 @@
                 <th class="align-middle">My role</th>
                 <th class="align-middle">Booking status</th>
                 <th class="align-middle">Date</th>
-                <th class="align-middle">Actions</th>
             </tr>
         </thead>
         <tbody class="text-center">
@@ -364,59 +335,8 @@
                 <td class="align-middle">{{room}}</td>
                 <td class="align-middle">{{personincharge}}</td>
                 <td class="align-middle">{{myrole}}</td>
-                <td class="align-middle mod-bookit-status-cell">
-                    <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
-                         style="{{statusstyle}}">
-                        <div class="font-weight-bold">{{statustext}}</div>
-                        <div class="small">{{statusgrouptext}}</div>
-                        {{#haslatesthistorysummary}}
-                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
-                        {{/haslatesthistorysummary}}
-                        {{#showhistorydetails}}
-                        <details class="mt-2 text-left mod-bookit-history-details">
-                            <summary class="small font-weight-bold">{{historydetailslabel}}</summary>
-                            {{#hashistoryentries}}
-                            <ul class="list-unstyled small mb-0 mt-2">
-                                {{#historyentries}}
-                                <li class="mb-2">
-                                    <div>{{summary}}</div>
-                                    {{#hasrecoverymarker}}
-                                    <div class="text-info">{{recoverymarkertext}}</div>
-                                    {{/hasrecoverymarker}}
-                                    {{#haschanges}}
-                                    <ul class="pl-3 mb-0">
-                                        {{#changes}}
-                                        <li>{{text}}</li>
-                                        {{/changes}}
-                                    </ul>
-                                    {{/haschanges}}
-                                </li>
-                                {{/historyentries}}
-                            </ul>
-                            {{/hashistoryentries}}
-                            {{^hashistoryentries}}
-                            <div class="small text-muted mt-2">{{historydetailsempty}}</div>
-                            {{/hashistoryentries}}
-                        </details>
-                        {{/showhistorydetails}}
-                    </div>
-                </td>
+                {{{statuscellhtml}}}
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
-                <td class="align-middle">
-                    <div class="mod-bookit-open-request-actions">
-                        {{#actions}}
-                        <button type="button"
-                                class="btn btn-sm {{btnclass}}"
-                                data-action="set-booking-status"
-                                data-eventid="{{eventid}}"
-                                data-cmid="{{cmid}}"
-                                data-tab="{{tab}}"
-                                data-status="{{value}}">
-                            {{label}}
-                        </button>
-                        {{/actions}}
-                    </div>
-                </td>
             </tr>
             {{/openrequests}}
         </tbody>
@@ -447,7 +367,6 @@
                 <th class="align-middle">My role</th>
                 <th class="align-middle">Booking status</th>
                 <th class="align-middle">Date</th>
-                <th class="align-middle">Actions</th>
             </tr>
         </thead>
         <tbody class="text-center">
@@ -470,59 +389,8 @@
                 <td class="align-middle">{{room}}</td>
                 <td class="align-middle">{{personincharge}}</td>
                 <td class="align-middle">{{myrole}}</td>
-                <td class="align-middle mod-bookit-status-cell">
-                    <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
-                         style="{{statusstyle}}">
-                        <div class="font-weight-bold">{{statustext}}</div>
-                        <div class="small">{{statusgrouptext}}</div>
-                        {{#haslatesthistorysummary}}
-                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
-                        {{/haslatesthistorysummary}}
-                        {{#showhistorydetails}}
-                        <details class="mt-2 text-left mod-bookit-history-details">
-                            <summary class="small font-weight-bold">{{historydetailslabel}}</summary>
-                            {{#hashistoryentries}}
-                            <ul class="list-unstyled small mb-0 mt-2">
-                                {{#historyentries}}
-                                <li class="mb-2">
-                                    <div>{{summary}}</div>
-                                    {{#hasrecoverymarker}}
-                                    <div class="text-info">{{recoverymarkertext}}</div>
-                                    {{/hasrecoverymarker}}
-                                    {{#haschanges}}
-                                    <ul class="pl-3 mb-0">
-                                        {{#changes}}
-                                        <li>{{text}}</li>
-                                        {{/changes}}
-                                    </ul>
-                                    {{/haschanges}}
-                                </li>
-                                {{/historyentries}}
-                            </ul>
-                            {{/hashistoryentries}}
-                            {{^hashistoryentries}}
-                            <div class="small text-muted mt-2">{{historydetailsempty}}</div>
-                            {{/hashistoryentries}}
-                        </details>
-                        {{/showhistorydetails}}
-                    </div>
-                </td>
+                {{{statuscellhtml}}}
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
-                <td class="align-middle">
-                    <div class="mod-bookit-open-request-actions">
-                        {{#actions}}
-                        <button type="button"
-                                class="btn btn-sm {{btnclass}}"
-                                data-action="set-booking-status"
-                                data-eventid="{{eventid}}"
-                                data-cmid="{{cmid}}"
-                                data-tab="{{tab}}"
-                                data-status="{{value}}">
-                            {{label}}
-                        </button>
-                        {{/actions}}
-                    </div>
-                </td>
             </tr>
             {{/acceptedrequests}}
         </tbody>
@@ -555,7 +423,6 @@
                 <th class="align-middle">My role</th>
                 <th class="align-middle">Booking status</th>
                 <th class="align-middle">Date</th>
-                <th class="align-middle">Actions</th>
             </tr>
         </thead>
         <tbody class="text-center">
@@ -577,59 +444,8 @@
                 <td class="align-middle">{{room}}</td>
                 <td class="align-middle">{{personincharge}}</td>
                 <td class="align-middle">{{myrole}}</td>
-                <td class="align-middle mod-bookit-status-cell">
-                    <div class="mod-bookit-status-chip {{statusclass}} mod-bookit-status-chip-{{statusgroupkey}}"
-                         style="{{statusstyle}}">
-                        <div class="font-weight-bold">{{statustext}}</div>
-                        <div class="small">{{statusgrouptext}}</div>
-                        {{#haslatesthistorysummary}}
-                        <div class="small text-muted mt-1">{{latesthistorysummary}}</div>
-                        {{/haslatesthistorysummary}}
-                        {{#showhistorydetails}}
-                        <details class="mt-2 text-left mod-bookit-history-details">
-                            <summary class="small font-weight-bold">{{historydetailslabel}}</summary>
-                            {{#hashistoryentries}}
-                            <ul class="list-unstyled small mb-0 mt-2">
-                                {{#historyentries}}
-                                <li class="mb-2">
-                                    <div>{{summary}}</div>
-                                    {{#hasrecoverymarker}}
-                                    <div class="text-info">{{recoverymarkertext}}</div>
-                                    {{/hasrecoverymarker}}
-                                    {{#haschanges}}
-                                    <ul class="pl-3 mb-0">
-                                        {{#changes}}
-                                        <li>{{text}}</li>
-                                        {{/changes}}
-                                    </ul>
-                                    {{/haschanges}}
-                                </li>
-                                {{/historyentries}}
-                            </ul>
-                            {{/hashistoryentries}}
-                            {{^hashistoryentries}}
-                            <div class="small text-muted mt-2">{{historydetailsempty}}</div>
-                            {{/hashistoryentries}}
-                        </details>
-                        {{/showhistorydetails}}
-                    </div>
-                </td>
+                {{{statuscellhtml}}}
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
-                <td class="align-middle">
-                    <div class="mod-bookit-open-request-actions">
-                        {{#actions}}
-                        <button type="button"
-                                class="btn btn-sm {{btnclass}}"
-                                data-action="set-booking-status"
-                                data-eventid="{{eventid}}"
-                                data-cmid="{{cmid}}"
-                                data-tab="{{tab}}"
-                                data-status="{{value}}">
-                            {{label}}
-                        </button>
-                        {{/actions}}
-                    </div>
-                </td>
             </tr>
             {{/rejectedrequests}}
         </tbody>

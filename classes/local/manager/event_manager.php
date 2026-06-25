@@ -351,8 +351,6 @@ class event_manager {
             static fn($event): int => (int)($event->id ?? 0),
             $events
         ));
-        $statuscolors = self::get_booking_status_colors();
-
         return [
             'workspace' => $workspace,
             'filters' => $filters,
@@ -361,8 +359,9 @@ class event_manager {
                     $event,
                     $context,
                     $userid,
-                    $statuscolors,
-                    $historyentries[(int)$event->id] ?? null
+                    $historyentries[(int)$event->id] ?? null,
+                    $workspace,
+                    (int)$context->instanceid
                 ),
                 array_values($events)
             ),
@@ -1416,6 +1415,32 @@ class event_manager {
      */
     public static function get_booking_status_class(int $status): string {
         return 'bookit-bookingstatus-' . $status;
+    }
+
+    /**
+     * Return the customer-facing label for a booking status value.
+     *
+     * @param int $status
+     * @return string
+     */
+    public static function get_booking_status_label(int $status): string {
+        return get_string('event_bookingstatus_' . $status, 'mod_bookit');
+    }
+
+    /**
+     * Return the customer-facing label for a resource line status value.
+     *
+     * @param string $status
+     * @return string
+     */
+    public static function get_resource_status_label(string $status): string {
+        return match ($status) {
+            'requested' => get_string('resources:status_requested', 'mod_bookit'),
+            'confirmed' => get_string('resources:status_confirmed', 'mod_bookit'),
+            'inprogress' => get_string('resources:status_inprogress', 'mod_bookit'),
+            'rejected' => get_string('resources:status_rejected', 'mod_bookit'),
+            default => $status,
+        };
     }
 
     /**

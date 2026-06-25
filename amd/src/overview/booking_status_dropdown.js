@@ -29,7 +29,6 @@ import {saveCancelPromise, exception} from 'core/notification';
 import {get_strings as getStrings} from 'core/str';
 
 const SELECTOR = 'select[data-action="update-booking-status"]';
-const BUTTON_SELECTOR = 'button[data-action="set-booking-status"]';
 const CANCEL_OVERVIEW_SELECTOR = 'button[data-action="cancel-booking-from-overview"]';
 const REQUEST_COUNT_SELECTOR = '[data-region="request-queue-count"]';
 const REQUEST_PAGING_SELECTOR = '[data-region="request-paging"]';
@@ -167,25 +166,6 @@ const renderTitleCell = (item, readConfig) => {
 };
 
 /**
- * Render the workflow action buttons for a request row.
- *
- * @param {Object} item
- * @param {Object} readConfig
- * @param {string} workspace
- * @returns {string}
- */
-const renderActionButtons = (item, readConfig, workspace) => {
-    const actions = (item.actions && item.actions.transitionactions) || [];
-    return actions.map((action) => `<button type="button"
-            class="btn btn-sm ${escapeHtml(action.btnclass)}"
-            data-action="set-booking-status"
-            data-eventid="${Number(item.eventid || item.id || 0)}"
-            data-cmid="${Number(readConfig.cmid || 0)}"
-            data-tab="${escapeHtml(workspace)}"
-            data-status="${Number(action.value || 0)}">${escapeHtml(action.label)}</button>`).join('');
-};
-
-/**
  * Render a request-workspace table row from the governed payload.
  *
  * @param {Object} item
@@ -196,9 +176,7 @@ const renderActionButtons = (item, readConfig, workspace) => {
 const renderRequestRow = (item, readConfig, workspace) => {
     const rowClass = getRequestRowClass(workspace);
     const statusGroupKey = escapeHtml(item.statusgroupkey || 'open');
-    const latestHistorySummary = item.latesthistorysummary
-        ? `<div class="small text-muted mt-1">${escapeHtml(item.latesthistorysummary)}</div>`
-        : '';
+    const statusCell = item.statuscellhtml || '';
 
     return `<tr class="mod-bookit-${rowClass}-request-row mod-bookit-status-row mod-bookit-status-row-${statusGroupKey}">
     <td class="align-middle">${Number(item.id || item.eventid || 0)}</td>
@@ -206,19 +184,20 @@ const renderRequestRow = (item, readConfig, workspace) => {
     <td class="align-middle">${escapeHtml(item.room || '-')}</td>
     <td class="align-middle">${escapeHtml(item.personincharge || '-')}</td>
     <td class="align-middle">${escapeHtml(item.myrole || '-')}</td>
-    <td class="align-middle mod-bookit-status-cell">
-        <div class="mod-bookit-status-chip ${escapeHtml(item.statusclass || '')} mod-bookit-status-chip-${statusGroupKey}"
-             style="${escapeHtml(item.statusstyle || '')}">
-            <div class="font-weight-bold">${escapeHtml(item.statustext || '')}</div>
-            <div class="small">${escapeHtml(item.statusgrouptext || '')}</div>
-            ${latestHistorySummary}
-        </div>
-    </td>
+    ${statusCell}
     <td class="align-middle" data-sort="${Number(item.starttime || 0)}">${escapeHtml(item.datestr || '')}</td>
-    <td class="align-middle">
-        <div class="mod-bookit-open-request-actions">${renderActionButtons(item, readConfig, workspace)}</div>
-    </td>
 </tr>`;
+};
+
+/**
+ * Apply dropdown colours after SSR or AJAX row render.
+ *
+ * @param {HTMLElement} root
+ */
+const applyColorsIn = (root) => {
+    root.querySelectorAll(SELECTOR).forEach((select) => {
+        applyColor(select);
+    });
 };
 
 /**
@@ -287,6 +266,7 @@ const renderQueueState = (readConfig, queueResponse) => {
     if (table && queueResponse.items && queueResponse.items.length) {
         const tbody = table.querySelector('tbody');
         tbody.innerHTML = queueResponse.items.map((item) => renderRequestRow(item, readConfig, readConfig.workspace)).join('');
+        applyColorsIn(tbody);
         return;
     }
 
@@ -384,40 +364,6 @@ export const init = () => {
         })
         .catch((err) => {
             select.disabled = false;
-            exception(err);
-        });
-    });
-
-    document.addEventListener('click', (e) => {
-        const button = e.target.closest(BUTTON_SELECTOR);
-        if (!button) {
-            return;
-        }
-
-        const cmid = parseInt(button.dataset.cmid, 10);
-        const eventid = parseInt(button.dataset.eventid, 10);
-        const status = parseInt(button.dataset.status, 10);
-        const tab = resolveActiveTab(button);
-
-        button.disabled = true;
-
-        Ajax.call([{
-            methodname: 'mod_bookit_update_event_booking_status',
-            args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
-        }])[0]
-        .then((response) => {
-            if (REQUEST_WORKSPACES.includes(tab)) {
-                window.location.assign(window.location.href);
-                return null;
-            }
-            return refreshQueueFromGovernedRead(
-                getReadConfig(tab),
-                response.queue || null,
-                response.redirecturl || window.location.href
-            );
-        })
-        .catch((err) => {
-            button.disabled = false;
             exception(err);
         });
     });

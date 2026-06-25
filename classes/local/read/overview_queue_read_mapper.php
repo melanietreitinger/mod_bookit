@@ -20,6 +20,7 @@ use context_module;
 use core_user;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
+use mod_bookit\output\booking_status_cell;
 use stdClass;
 
 /**
@@ -36,22 +37,25 @@ class overview_queue_read_mapper {
      * @param stdClass $event
      * @param context_module $context
      * @param int $userid
-     * @param array $statuscolors
      * @param stdClass|null $latesthistory
+     * @param string $workspace
+     * @param int $cmid
      * @return array
      */
     public static function map(
         stdClass $event,
         context_module $context,
         int $userid,
-        array $statuscolors = [],
-        ?stdClass $latesthistory = null
+        ?stdClass $latesthistory = null,
+        string $workspace = 'openrequests',
+        int $cmid = 0
     ): array {
+        global $PAGE;
+
         $bookingstatus = (int)($event->bookingstatus ?? -1);
         $historyclassification = event_manager::is_event_in_history($event)
             ? 'history'
             : (event_manager::is_hidden_from_active_overview($event) ? 'hidden_from_active' : 'active');
-        $statusstyle = $statuscolors[$bookingstatus] ?? ['bg' => '#ffffff', 'fg' => '#000000'];
         $statusgroupkey = match ($bookingstatus) {
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
@@ -79,36 +83,21 @@ class overview_queue_read_mapper {
             }
         }
 
-        $transitionactions = [];
-        foreach (event_manager::get_booking_status_transition_options($bookingstatus) as $option) {
-            $value = (int)$option['value'];
-            $btnclass = 'btn-outline-secondary';
-            if ($value === event_access_manager::BOOKINGSTATUS_IN_PROGRESS) {
-                $btnclass = 'btn-warning';
-            } else if ($value === event_access_manager::BOOKINGSTATUS_ACCEPTED) {
-                $btnclass = 'btn-success';
-            } else if ($value === event_access_manager::BOOKINGSTATUS_CANCELED) {
-                $btnclass = 'btn-dark';
-            } else if ($value === event_access_manager::BOOKINGSTATUS_REJECTED) {
-                $btnclass = 'btn-danger';
-            }
-
-            $transitionactions[] = [
-                'value' => $value,
-                'label' => match ($value) {
-                    event_access_manager::BOOKINGSTATUS_NEW
-                        => $bookingstatus === event_access_manager::BOOKINGSTATUS_REJECTED
-                            ? get_string('bookingstatus_action_reactivate', 'mod_bookit')
-                            : $option['label'],
-                    event_access_manager::BOOKINGSTATUS_IN_PROGRESS => get_string('bookingstatus_action_inprogress', 'mod_bookit'),
-                    event_access_manager::BOOKINGSTATUS_ACCEPTED => get_string('bookingstatus_action_accept', 'mod_bookit'),
-                    event_access_manager::BOOKINGSTATUS_CANCELED => get_string('bookingstatus_action_cancel', 'mod_bookit'),
-                    event_access_manager::BOOKINGSTATUS_REJECTED => get_string('bookingstatus_action_reject', 'mod_bookit'),
-                    default => $option['label'],
-                },
-                'btnclass' => $btnclass,
-            ];
-        }
+        $latesthistorysummary = self::map_latest_history_summary($latesthistory);
+        $canmanagebasics = has_capability('mod/bookit:managebasics', $context);
+        $statuscell = booking_status_cell::for_booking_overview_row(
+            $event,
+            $context,
+            $userid,
+            $cmid,
+            $canmanagebasics,
+            true,
+            $workspace,
+            $latesthistorysummary,
+            []
+        );
+        $bookitrenderer = $PAGE->get_renderer('mod_bookit');
+        $statuscellhtml = $bookitrenderer->render($statuscell);
 
         return [
             'eventid' => (int)$event->id,
@@ -124,18 +113,9 @@ class overview_queue_read_mapper {
             'datestr' => userdate((int)($event->starttime ?? 0), '%d.%m.%Y'),
             'actions' => [
                 'caneventdetails' => event_access_manager::can_user_view_event_details($event, $context, $userid),
-                'canreactivate' => event_access_manager::can_reactivate_rejected_request($event, $context),
-                'allowedstatuses' => array_map(
-                    static fn(array $option): int => (int)$option['value'],
-                    event_manager::get_booking_status_transition_options($bookingstatus, true)
-                ),
-                'transitionactions' => $transitionactions,
             ],
-            'statusstyle' => 'background-color:' . $statusstyle['bg'] . ';color:' . $statusstyle['fg'] . ';',
-            'statusclass' => event_manager::get_booking_status_class($bookingstatus),
             'statusgroupkey' => $statusgroupkey,
-            'statusgrouptext' => get_string('overview_status_group_' . $statusgroupkey, 'mod_bookit'),
-            'statustext' => get_string('event_bookingstatus_' . $bookingstatus, 'mod_bookit'),
+            'statuscellhtml' => $statuscellhtml,
             'savebuttontext' => event_access_manager::should_block_participant_past_edit($event, $context, $userid)
                 ? get_string('event_past_participant_close', 'mod_bookit')
                 : (
@@ -146,7 +126,6 @@ class overview_queue_read_mapper {
             'cancelbuttontext' => event_access_manager::can_participant_cancel_only($event, $context, $userid)
                 ? get_string('event_status_action_close_modal', 'mod_bookit')
                 : '',
-            'latesthistorysummary' => self::map_latest_history_summary($latesthistory),
         ];
     }
 

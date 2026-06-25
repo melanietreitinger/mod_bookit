@@ -243,6 +243,12 @@
     min-width: 10rem;
 }
 
+.mod-bookit-status-select {
+    width: 100%;
+    border: 0;
+    font-weight: 600;
+}
+
 .mod-bookit-status-chip {
     display: flex;
     flex-direction: column;

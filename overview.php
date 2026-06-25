@@ -29,6 +29,7 @@ use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_checklist_state_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\event_resource_manager;
+use mod_bookit\output\booking_status_cell;
 
 /* =======================================================================
    0.  Setup, capability checks
@@ -317,9 +318,6 @@ $masterrecord = $DB->get_record('bookit_checklist_master', ['isdefault' => 1], '
 $masterid = $masterrecord ? (int)$masterrecord->id : 0;
 
 
-/* ----- status → label / colours (via event_manager) ------------------- */
-$statuscolors = event_manager::get_booking_status_colors();
-
 /* =======================================================================
    4+5.  Render via Mustache template (no HTML in PHP)
    ======================================================================= */
@@ -523,28 +521,23 @@ $prepareeventrow = function (
     $canmanage,
     $checklistenabled,
     $isobserverrestricted,
-    $statuscolors,
     $progressmap,
     $resourcesenabled,
     $resourceprogressmap,
     $latesthistorymap,
     $buildhistorydetails,
-    $currenttab
+    $currenttab,
+    $PAGE
 ): array {
     $room = $ev->room ?: '-';
     $isreservedprojection = $isobserverrestricted;
 
-    $statusbg  = $statuscolors[$ev->bookingstatus]['bg'] ?? '#ffffff';
-    $statusfg  = $statuscolors[$ev->bookingstatus]['fg'] ?? '#000000';
-    $statustxt = get_string('event_bookingstatus_' . (int)($ev->bookingstatus ?? 0), 'mod_bookit');
-    $statusclass = event_manager::get_booking_status_class((int)($ev->bookingstatus ?? 0));
     $statusgroupkey = match ((int)($ev->bookingstatus ?? 0)) {
         event_access_manager::BOOKINGSTATUS_NEW,
         event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
         event_access_manager::BOOKINGSTATUS_ACCEPTED => 'confirmed',
         default => 'closed',
     };
-    $statusgrouptext = get_string('overview_status_group_' . $statusgroupkey, 'mod_bookit');
 
     // My role.
     $myrole = '-';
@@ -582,40 +575,6 @@ $prepareeventrow = function (
         $pic = '-';
     }
 
-    $actions = [];
-    if ($isrequestworkspaceitem) {
-        foreach (event_manager::get_booking_status_transition_options((int)($ev->bookingstatus ?? 0)) as $option) {
-            $btnclass = 'btn-outline-secondary';
-            if ((int)$option['value'] === event_access_manager::BOOKINGSTATUS_IN_PROGRESS) {
-                $btnclass = 'btn-warning';
-            } else if ((int)$option['value'] === event_access_manager::BOOKINGSTATUS_ACCEPTED) {
-                $btnclass = 'btn-success';
-            } else if ((int)$option['value'] === event_access_manager::BOOKINGSTATUS_CANCELED) {
-                $btnclass = 'btn-dark';
-            } else if ((int)$option['value'] === event_access_manager::BOOKINGSTATUS_REJECTED) {
-                $btnclass = 'btn-danger';
-            }
-
-            $actions[] = [
-                'value' => (int)$option['value'],
-                'eventid' => (int)$ev->id,
-                'cmid' => (int)$cm->id,
-                'tab' => $requesttab,
-                'label' => match ((int)$option['value']) {
-                    event_access_manager::BOOKINGSTATUS_NEW
-                        => ((int)($ev->bookingstatus ?? 0) === event_access_manager::BOOKINGSTATUS_REJECTED)
-                            ? get_string('bookingstatus_action_reactivate', 'mod_bookit')
-                            : $option['label'],
-                    event_access_manager::BOOKINGSTATUS_IN_PROGRESS => get_string('bookingstatus_action_inprogress', 'mod_bookit'),
-                    event_access_manager::BOOKINGSTATUS_ACCEPTED => get_string('bookingstatus_action_accept', 'mod_bookit'),
-                    event_access_manager::BOOKINGSTATUS_CANCELED => get_string('bookingstatus_action_cancel', 'mod_bookit'),
-                    event_access_manager::BOOKINGSTATUS_REJECTED => get_string('bookingstatus_action_reject', 'mod_bookit'),
-                    default => $option['label'],
-                },
-                'btnclass' => $btnclass,
-            ];
-        }
-    }
     $caneventdetails = !$isreservedprojection
         && event_access_manager::can_user_view_event_details($ev, $context, (int)$USER->id);
     $latesthistory = $latesthistorymap[(int)$ev->id] ?? null;
@@ -631,6 +590,20 @@ $prepareeventrow = function (
     }
     $historydetails = $isrequestworkspaceitem ? $buildhistorydetails((int)$ev->id) : [];
 
+    $statuscell = booking_status_cell::for_booking_overview_row(
+        $ev,
+        $context,
+        (int)$USER->id,
+        (int)$cm->id,
+        $canmanage,
+        $isrequestworkspaceitem,
+        $requesttab,
+        $latesthistorysummary,
+        $historydetails
+    );
+    $bookitrenderer = $PAGE->get_renderer('mod_bookit');
+    $statuscellhtml = $bookitrenderer->render($statuscell);
+
     return [
         'id' => (string)$ev->id,
         'name' => $isreservedprojection
@@ -641,12 +614,7 @@ $prepareeventrow = function (
         'room' => s($room),
         'personincharge' => s($pic),
         'myrole' => s($myrole),
-        'statustext' => s($statustxt),
-        'statusstyle' => "background-color:$statusbg;color:$statusfg;",
-        'statusclass' => $statusclass,
         'statusgroupkey' => $statusgroupkey,
-        'statusgrouptext' => s($statusgrouptext),
-        'bookingstatus' => (int)($ev->bookingstatus ?? 0),
         'savebuttontext' => event_access_manager::should_block_participant_past_edit($ev, $context, (int)$USER->id)
             ? get_string('event_past_participant_close', 'mod_bookit')
             : (
@@ -657,12 +625,7 @@ $prepareeventrow = function (
         'cancelbuttontext' => event_access_manager::can_participant_cancel_only($ev, $context, (int)$USER->id)
             ? get_string('event_status_action_close_modal', 'mod_bookit')
             : '',
-        'canmanage'     => $canmanage,
-        'statusoptions' => $canmanage
-            ? event_manager::get_booking_status_options((int)($ev->bookingstatus ?? 0))
-            : [],
-        'hasactions' => !empty($actions),
-        'actions' => $actions,
+        'statuscellhtml' => $statuscellhtml,
         'datestr' => $datestr,
         'datetimestr' => $datetimestr,
         'starttime' => (int)$ev->starttime,
@@ -683,13 +646,6 @@ $prepareeventrow = function (
         ]))->out(false),
         'resourcesprogress' => $resourceprogressmap[(int)$ev->id]['percent'] ?? 0,
         'resourcesprogress_available' => $resourcesenabled && (($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0),
-        'haslatesthistorysummary' => !$isreservedprojection && $latesthistorysummary !== '',
-        'latesthistorysummary' => s($latesthistorysummary),
-        'showhistorydetails' => !$isreservedprojection && $isrequestworkspaceitem,
-        'historydetailslabel' => get_string('overview_workflow_history', 'mod_bookit'),
-        'historydetailsempty' => get_string('overview_workflow_history_empty', 'mod_bookit'),
-        'hashistoryentries' => !$isreservedprojection && !empty($historydetails),
-        'historyentries' => !$isreservedprojection ? $historydetails : [],
         'hascancelaction' => !$isrequestworkspaceitem
             && !$canmanage
             && !$isreservedprojection

@@ -217,6 +217,107 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
     }
 
     /**
+     * Governed calendar reads must keep booking-person events visible after foreign form saves.
+     *
+     * @return void
+     */
+    public function test_execute_returns_booking_person_event_after_foreign_form_save(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $admin = get_admin();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Calendar foreign save']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $participantrole = \create_role('Bookit calendar foreign participant', 'bookitcalendarforeign', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \role_assign($participantrole, $bookingperson->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $roomid = $generator->create_room([
+            'name' => 'Foreign save room',
+            'shortname' => 'FS-1',
+            'location' => 'South',
+        ]);
+
+        $this->setUser($bookingperson);
+        $event = new \mod_bookit\local\entity\bookit_event(
+            0,
+            'Calendar foreign save exam',
+            20261,
+            1,
+            strtotime('2026-05-20 09:00:00'),
+            strtotime('2026-05-20 11:00:00'),
+            120,
+            $roomid,
+            12,
+            0,
+            '',
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            0,
+            '',
+            null,
+            '',
+            '',
+            '',
+            0,
+            0,
+            null,
+            (int)$bookingperson->id,
+            time(),
+            time(),
+            []
+        );
+        $saved = event_manager::save_event_with_lifecycle_tracking(
+            $event,
+            null,
+            (int)$bookingperson->id,
+            $context
+        );
+
+        $before = \mod_bookit\local\entity\bookit_event::from_database($saved->id);
+        $updated = \mod_bookit\local\entity\bookit_event::from_database($saved->id);
+        $updated->notes = 'Admin foreign save';
+
+        $this->setUser($admin);
+        event_manager::save_event_with_lifecycle_tracking(
+            $updated,
+            $before,
+            (int)$admin->id,
+            $context
+        );
+
+        $persisted = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
+        $this->assertSame((int)$bookingperson->id, (int)$persisted->usermodified);
+
+        $this->setUser($bookingperson);
+        $response = get_calendar_events::execute(
+            $bookit->cmid,
+            '2026-05-20T00:00:00',
+            '2026-05-20T23:59:59',
+            [$roomid],
+            [],
+            [],
+            '',
+            false
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertFalse($response['denied']);
+        $this->assertCount(1, $response['events']);
+        $this->assertSame((int)$saved->id, (int)$response['events'][0]['id']);
+        $this->assertStringContainsString('Calendar foreign save exam', $response['events'][0]['title']);
+    }
+
+    /**
      * Governed calendar reads must hide canceled bookings from the service-team active calendar.
      *
      * @return void

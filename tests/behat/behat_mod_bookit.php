@@ -1249,7 +1249,7 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
-     * Click an open-request action button in the row of the given event.
+     * Click an open-request workflow action via the status dropdown in the given event row.
      *
      * @When I click the open request action :action for event :eventname
      * @param string $action
@@ -1260,17 +1260,35 @@ class behat_mod_bookit extends behat_base {
         $js = <<<JS
             (function(actionLabel, eventLabel) {
                 var rows = document.querySelectorAll(
-                    'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row'
+                    'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row, tr.mod-bookit-accepted-request-row'
                 );
+                var actionMap = {
+                    'Accept': '2',
+                    'Reject': '4',
+                    'Reactivate as new request': '0',
+                    'Set in progress': '1',
+                    'Cancel': '3',
+                    'Confirmed': '2'
+                };
                 for (var i = 0; i < rows.length; i++) {
                     var link = rows[i].querySelector('a.bookit-event-link');
                     if (!link || link.textContent.trim() !== eventLabel) {
                         continue;
                     }
-                    var buttons = rows[i].querySelectorAll('button[data-action="set-booking-status"]');
-                    for (var j = 0; j < buttons.length; j++) {
-                        if (buttons[j].textContent.trim() === actionLabel) {
-                            buttons[j].click();
+                    var select = rows[i].querySelector('select[data-action="update-booking-status"]');
+                    if (!select) {
+                        return 'select-not-found';
+                    }
+                    var targetValue = actionMap[actionLabel];
+                    if (targetValue !== undefined) {
+                        select.value = targetValue;
+                        select.dispatchEvent(new Event('change', {bubbles: true}));
+                        return 'clicked';
+                    }
+                    for (var k = 0; k < select.options.length; k++) {
+                        if (select.options[k].textContent.trim() === actionLabel) {
+                            select.value = select.options[k].value;
+                            select.dispatchEvent(new Event('change', {bubbles: true}));
                             return 'clicked';
                         }
                     }

@@ -28,6 +28,7 @@ namespace mod_bookit\output;
 use mod_bookit\local\entity\resource\bookit_resource_status;
 use mod_bookit\local\manager\event_resource_manager;
 use mod_bookit\local\manager\resource_settings_manager;
+use mod_bookit\output\booking_status_cell;
 use renderer_base;
 use renderable;
 use templatable;
@@ -78,7 +79,7 @@ class event_resources_checklist_catalog implements renderable, templatable {
      * @return stdClass
      */
     public function export_for_template(renderer_base $output): stdClass {
-        global $DB;
+        global $DB, $PAGE;
 
         $data = new stdClass();
         $data->eventid = $this->eventid;
@@ -115,6 +116,8 @@ class event_resources_checklist_catalog implements renderable, templatable {
 
         // Group items by category.
         $categoriesmap = [];
+
+        $bookitrenderer = $PAGE->get_renderer('mod_bookit');
 
         foreach ($eventresources as $eventresource) {
             $resource = $DB->get_record('bookit_resource', ['id' => $eventresource->get_resourceid()]);
@@ -173,10 +176,15 @@ class event_resources_checklist_catalog implements renderable, templatable {
             $itemdata->status           = $status->value;
             $itemdata->duedate          = $duedate;
             $itemdata->canmanage        = (int)$this->canmanage;
+            $itemdata->cmid             = $this->cmid;
+            $itemdata->eventid          = $this->eventid;
             $itemdata->isrequested      = ($status === bookit_resource_status::REQUESTED);
             $itemdata->isconfirmed      = ($status === bookit_resource_status::CONFIRMED);
             $itemdata->isinprogress     = ($status === bookit_resource_status::INPROGRESS);
             $itemdata->isrejected       = ($status === bookit_resource_status::REJECTED);
+
+            $statuscell = booking_status_cell::for_resource_row($itemdata, $this->canmanage);
+            $itemdata->statuscellhtml = $bookitrenderer->render($statuscell);
 
             $totalcount++;
             if ($status === bookit_resource_status::CONFIRMED) {

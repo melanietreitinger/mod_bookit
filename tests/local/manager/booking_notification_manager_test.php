@@ -97,6 +97,46 @@ final class booking_notification_manager_test extends advanced_testcase {
     }
 
     /**
+     * Notifications must still reach the booking person after an admin foreign form save.
+     *
+     * @return void
+     */
+    public function test_notify_status_changed_reaches_booking_person_after_foreign_form_save(): void {
+        global $DB;
+
+        $booker = $this->getDataGenerator()->create_user();
+        $admin = get_admin();
+        $eventid = $this->create_test_event((int)$booker->id, null, null, 'Foreign notification event');
+
+        $before = \mod_bookit\local\entity\bookit_event::from_database($eventid);
+        $updated = \mod_bookit\local\entity\bookit_event::from_database($eventid);
+        $updated->notes = 'Foreign save before notification';
+
+        event_manager::save_event_with_lifecycle_tracking(
+            $updated,
+            $before,
+            (int)$admin->id,
+            $this->context
+        );
+
+        $persisted = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $this->assertSame((int)$booker->id, (int)$persisted->usermodified);
+
+        $sink = $this->redirectMessages();
+        $sent = booking_notification_manager::notify_status_changed(
+            $this->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        );
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertGreaterThanOrEqual(1, $sent);
+        $this->assert_message_recipients($messages, [$booker->id]);
+    }
+
+    /**
      * Disabled recipient toggles must reduce the recipient set without affecting others.
      *
      * @return void

@@ -96,6 +96,17 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Renders the shared booking / resource status cell.
+     *
+     * @param booking_status_cell $cell
+     * @return string HTML output
+     */
+    protected function render_booking_status_cell(booking_status_cell $cell) {
+        $data = $cell->export_for_template($this->output);
+        return $this->output->render_from_template('mod_bookit/components/booking_status_cell', $data);
+    }
+
+    /**
      * Write the tab row in page
      *
      * @param array $tabs the tabs

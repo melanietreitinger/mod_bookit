@@ -85,7 +85,7 @@ Feature: Keep calendar and overview visibility aligned
     Then the Bookit calendar projection for user "bookinguser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Transition visibility"
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Transition visibility"
-    And I should see "Accepted"
+    And I should see "Confirmed"
 
   Scenario: Service team no longer sees canceled booking in calendar
     Given the following "users" exist:

@@ -69,7 +69,7 @@ export default class EventResourcesChecklistItem extends BaseComponent {
      */
     stateReady() {
         if (this.canmanage) {
-            const select = this.getElement('[data-action="update-status"]');
+            const select = this.getElement('.mod-bookit-status-select');
             if (select) {
                 this.addEventListener(select, 'change', this._onDropdownChange.bind(this));
             }
