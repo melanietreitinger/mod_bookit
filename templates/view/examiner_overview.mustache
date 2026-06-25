@@ -75,11 +75,6 @@
 }}
 
 <div class="mod_bookit-overview-examiner_overview">
-    <div class="mb-3">
-        <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
-        <input type="text" id="bookit-filter" class="form-control w-auto d-inline">
-    </div>
-
     {{#showmyeventssection}}
     {{#showoverviewnavigation}}
     <div class="mb-3">
@@ -92,6 +87,7 @@
         <div class="text-muted small mt-1">{{reportinghelp}}</div>
         {{/showoverviewfilters}}
     </div>
+    {{> mod_bookit/view/partials/overview_search_field }}
     {{#showoverviewfilters}}
     <form method="get" class="mb-3">
         <input type="hidden" name="id" value="{{cmid}}">
@@ -314,6 +310,7 @@
         <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
         <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
     </div>
+    {{> mod_bookit/view/partials/overview_search_field }}
 
     {{#hasopenrequests}}
     <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-open-requests-table">
@@ -368,6 +365,7 @@
         <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
         <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
     </div>
+    {{> mod_bookit/view/partials/overview_search_field }}
 
     {{#hasacceptedrequests}}
     <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-accepted-requests-table">
@@ -424,6 +422,7 @@
             <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
         </div>
     </div>
+    {{> mod_bookit/view/partials/overview_search_field }}
 
     {{#hasrejectedrequests}}
     <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-rejected-requests-table">

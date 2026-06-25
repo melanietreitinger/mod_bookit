@@ -1,0 +1,15 @@
+{{!
+    @template mod_bookit/view/partials/overview_search_field
+
+    Live-search control for overview tables. Requires #bookit-filter for overview.php jQuery init.
+
+    Context variables required for this template:
+    * none (uses core search string only)
+
+    Example context (json):
+    {}
+}}
+<div class="mb-3 mod-bookit-overview-search">
+    <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
+    <input type="text" id="bookit-filter" class="form-control w-auto d-inline">
+</div>
