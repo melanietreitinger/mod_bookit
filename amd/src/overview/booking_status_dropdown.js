@@ -401,6 +401,10 @@ export const init = () => {
         ))
         .catch((err) => {
             button.disabled = false;
+            // User dismissed the confirmation dialog — not an error (see mod_quiz/submission_confirmation).
+            if (!err || err.type === 'modal-save-cancel:cancel') {
+                return null;
+            }
             exception(err);
             return null;
         });

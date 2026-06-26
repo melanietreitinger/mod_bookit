@@ -676,11 +676,6 @@ class edit_event_form extends dynamic_form {
         $existingevent = $currenteventid > 0 ? event_manager::get_event($currenteventid) : null;
         $participantpastreadonly = $existingevent
             && event_access_manager::should_block_participant_past_edit($existingevent, $context, (int)$USER->id);
-        $creatorid = $this->_form->getElementValue('usermodified');
-        $user = $DB->get_record('user', ['id' => $creatorid]);
-        $mform->getElement('usermodified')->setValue(
-            fullname($user, has_capability('moodle/site:viewfullnames', $context)) // ...TODO: find better way?
-        );
 
         // Week-day validation  – server side.
         $mform->addRule(
@@ -788,6 +783,15 @@ class edit_event_form extends dynamic_form {
         }
 
         $this->inject_examiner_selector_labels($mform, $data);
+
+        // Re-apply after starttime setDefault(), which resets usermodified to the numeric id.
+        if ($existingevent && !empty($existingevent->usermodified) && $mform->elementExists('usermodified')) {
+            $user = $DB->get_record('user', ['id' => (int)$existingevent->usermodified]);
+            $displayname = $user
+                ? fullname($user, has_capability('moodle/site:viewfullnames', $context))
+                : get_string('deleteduser', 'moodle');
+            $mform->getElement('usermodified')->setValue($displayname);
+        }
     }
 
     /**
