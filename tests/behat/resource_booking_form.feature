@@ -79,8 +79,8 @@ Feature: Resource integration in the BookIt booking workflow
     Given I log in as "susiservice"
     And I am on "Course 1" course homepage
     And I follow "My BookIt Activity"
-    When I navigate to "My booked events" in current page administration
-    Then I should see "My booked events"
+    When I navigate to "All bookings" in current page administration
+    Then I should see "All bookings"
 
   Scenario: Overview page shows resources column header
     Given the following "mod_bookit > events" exist:
@@ -89,7 +89,7 @@ Feature: Resource integration in the BookIt booking workflow
     And I log in as "susiservice"
     And I am on "Course 1" course homepage
     And I follow "My BookIt Activity"
-    When I navigate to "My booked events" in current page administration
+    When I navigate to "All bookings" in current page administration
     Then I should see "Test Event"
     And I should see "Resources"
 

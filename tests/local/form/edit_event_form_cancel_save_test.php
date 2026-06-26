@@ -33,11 +33,6 @@ use mod_bookit\local\install_helper;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot . '/lib/form/dynamic_form.php');
-
 /**
  * Form submission tests for save-without-cancel semantics.
  *

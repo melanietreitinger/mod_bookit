@@ -131,6 +131,7 @@ class tabs {
      * @param int $cmid
      * @param array $navigationparams
      * @param bool $showhistory
+     * @param bool $useservicebookinglabel
      * @return array
      */
     public static function get_overview_inner_tabrow(

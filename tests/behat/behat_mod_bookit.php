@@ -339,6 +339,39 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Opens the Bookit history tab with an explicit reporting date range.
+     *
+     * @When I open the Bookit history overview for :activity from :start to :end with semesters :semesters
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $semesters
+     */
+    public function i_open_the_bookit_history_overview_for_with_filters(
+        string $activity,
+        string $start,
+        string $end,
+        string $semesters
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $params = [
+            'id' => $cm->id,
+            'tab' => 'history',
+            'reportstart' => $this->resolve_filter_date_value($start),
+            'reportend' => $this->resolve_filter_date_value($end),
+        ];
+        $query = http_build_query($params);
+        foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
+            $query .= '&semesterids[]=' . rawurlencode($semester);
+        }
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
      * Resolve semester filter tokens used in Behat scenarios.
      *
      * @param string $semesters

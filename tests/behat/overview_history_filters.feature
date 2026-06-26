@@ -119,6 +119,6 @@ Feature: Complete overview defaults, history and role-specific columns
     Then the Bookit event details control "bookingstatus" should not be visible
     And I should see "Canceled"
     When I log in as "serviceteam"
-    And I open the Bookit overview "history" for "My BookIt Activity"
+    And I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
     Then I should see "Self-cancel history"
     And I should see "Cancelled by requester"

@@ -81,9 +81,9 @@ Feature: Manage resource settings in the admin area
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
     And I set the field "University service addresses" to "service@example.invalid;invalid-address"
-    And I set the field "Message subject for Accepted" to "Accepted custom subject"
-    And I set the field "Message body for Accepted" to "Accepted custom body"
+    And I set the field "Message subject for Confirmed" to "Accepted custom subject"
+    And I set the field "Message body for Confirmed" to "Accepted custom body"
     When I press "Save changes"
     Then the field "University service addresses" matches value "service@example.invalid;invalid-address"
-    And the field "Message subject for Accepted" matches value "Accepted custom subject"
-    And the field "Message body for Accepted" matches value "Accepted custom body"
+    And the field "Message subject for Confirmed" matches value "Accepted custom subject"
+    And the field "Message body for Confirmed" matches value "Accepted custom body"

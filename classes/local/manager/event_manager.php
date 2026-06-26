@@ -520,6 +520,7 @@ class event_manager {
      * Return the default reporting range for the year of the given reference time.
      *
      * @param int|null $referencetime
+     * @param bool $serviceteam
      * @return int[]
      */
     public static function get_reporting_default_range(?int $referencetime = null, bool $serviceteam = false): array {

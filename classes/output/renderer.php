@@ -29,6 +29,7 @@ use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_master;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
 use mod_bookit\local\entity\bookit_notification_slot;
+use html_writer;
 
 /**
  * Renderer class for the BookIt module.
@@ -103,7 +104,10 @@ class renderer extends \plugin_renderer_base {
      */
     protected function render_booking_status_cell(booking_status_cell $cell) {
         $data = $cell->export_for_template($this->output);
-        return $this->output->render_from_template('mod_bookit/components/booking_status_cell', $data);
+        $inner = $this->output->render_from_template('mod_bookit/components/booking_status_cell_inner', $data);
+        $classes = trim((string)($data->cellclasses ?? '') . ($data->showoptions ? ' text-center' : ''));
+
+        return html_writer::tag('td', $inner, ['class' => $classes]);
     }
 
     /**

@@ -43,13 +43,13 @@ Feature: Governed overview queue reads keep request workspaces consistent
     When I log in as "susiservice"
     And I open the Bookit overview "openrequests" for "My BookIt Activity"
     Then the Bookit request workspace switch should contain "Open requests"
-    And the Bookit request workspace switch should contain "Rejected requests"
+    And the Bookit request workspace switch should contain "Rejected and cancelled requests"
     And the Bookit request workspace tab "Open requests" should be active
     And the Bookit overview should not show legacy inner navigation
     And I should see "Open queue exam"
     When I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
     Then I should see "Rejected queue exam"
-    And the Bookit request workspace tab "Rejected requests" should be active
+    And the Bookit request workspace tab "Rejected and cancelled requests" should be active
     And I should not see "Open queue exam"
 
   Scenario: Non-service users still do not gain request-workspace visibility
@@ -58,5 +58,5 @@ Feature: Governed overview queue reads keep request workspaces consistent
       | Hidden request    | ##today noon##%Y-%m-%dT%H:%M:%S##       | ##tomorrow noon##%Y-%m-%dT%H:%M:%S##    | 0             | 1           |
     When I log in as "bertbooking"
     And I open the Bookit overview "openrequests" for "My BookIt Activity"
-    Then the Bookit request workspace switch should not contain "Rejected requests"
+    Then the Bookit request workspace switch should not contain "Rejected and cancelled requests"
     And the Bookit main tabs should not contain "Open requests"

@@ -41,7 +41,7 @@ Feature: Enforce role-based visibility and editing for booking requests
       | name         | shortname | seats |
       | Default room | DEF       | 0     |
 
-  Scenario: Support person sees only accepted bookings and may edit only internal notes
+  Scenario: Support person sees assigned new and confirmed bookings and may edit only internal notes
     Given the following "mod_bookit > events" exist:
       | name                    | username    | supportperson_usernames | startdate                         | enddate                              | bookingstatus | institution |
       | Accepted support exam   | bookinguser | supportuser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
@@ -49,7 +49,7 @@ Feature: Enforce role-based visibility and editing for booking requests
     When I log in as "supportuser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Accepted support exam"
-    And I should not see "New support exam"
+    And I should see "New support exam"
     When I open the Bookit event details for "Accepted support exam"
     Then the Bookit event details control "name" should be disabled
     And the Bookit event details control "institutionid" should be disabled
@@ -90,7 +90,7 @@ Feature: Enforce role-based visibility and editing for booking requests
     When I close the currently open dialog
     And I open the Bookit event details for "Cancel-only booking"
     Then the Bookit event details control "name" should be disabled
-    And the Bookit event details control "bookingstatus" should not be visible
+    And the Bookit event details control "bookingstatus" should be enabled
     And the Bookit event details primary action should be "Cancel booking"
     And I submit the Bookit event details modal
     Then I should see "Canceled"

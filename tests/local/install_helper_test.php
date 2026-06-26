@@ -212,6 +212,12 @@ final class install_helper_test extends advanced_testcase {
     public function test_ensure_booking_status_notification_defaults_exposes_expressive_config_keys(): void {
         $this->resetAfterTest(true);
 
+        foreach (install_helper::get_booking_status_notification_statuses() as $statusdata) {
+            unset_config($statusdata['subjectconfig'], 'mod_bookit');
+            unset_config($statusdata['bodyconfig'], 'mod_bookit');
+            unset_config($statusdata['enabledconfig'], 'mod_bookit');
+        }
+
         install_helper::ensure_booking_status_notification_defaults();
 
         foreach (install_helper::get_booking_status_notification_statuses() as $statuskey => $statusdata) {

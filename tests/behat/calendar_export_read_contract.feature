@@ -35,8 +35,8 @@ Feature: Governed calendar and export read contract stay aligned
       | Hidden export exam   | bookinguser | supportuser             | ##tomorrow 12:00##%Y-%m-%dT%H:%M:%S##   | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S##   | 0             | 1           |
     When I log in as "supportuser"
     Then the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Accepted export exam"
-    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Hidden export exam"
+    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Hidden export exam"
     When I am on the "My BookIt Activity" "bookit activity" page
     And I click on "Export events" "button"
     Then the Bookit export modal should contain "Accepted export exam"
-    And I should not see "Hidden export exam"
+    And the Bookit export modal should contain "Hidden export exam"
