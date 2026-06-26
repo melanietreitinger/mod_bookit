@@ -56,16 +56,11 @@ $modulecontext = context_module::instance($cm->id);
 require_capability('mod/bookit:view', $modulecontext);
 $observerrestricted = event_access_manager::is_observer_restricted_mode($modulecontext);
 
-// Helper data for the filter <select>s  (WORK IN PROGRESS).
-// $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced'.
-$eventstatus = explode(',', get_string('event_bookingstatus_list', 'mod_bookit'));
-$statusmap = [
-    0 => $eventstatus[0],
-    1 => $eventstatus[1],
-    2 => $eventstatus[2],
-    3 => $eventstatus[3],
-    4 => $eventstatus[4],
-];
+// Status labels for calendar filter (canonical registry vocabulary).
+$statusmap = [];
+foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+    $statusmap[$statusvalue] = event_manager::get_booking_status_label($statusvalue);
+}
 
 $rooms = resource_manager::get_rooms();
 $faculties = event_manager::get_faculties();

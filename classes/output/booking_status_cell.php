@@ -182,7 +182,7 @@ class booking_status_cell implements renderable, templatable {
         $colors = event_manager::get_booking_status_colors();
         $statusbg = $colors[$bookingstatus]['bg'] ?? '#ffffff';
         $statusfg = $colors[$bookingstatus]['fg'] ?? '#000000';
-        $statusgroupkey = self::resolve_booking_group_key($bookingstatus);
+        $statusgroupkey = event_manager::get_booking_status_group_key($bookingstatus);
 
         $canedit = false;
         if ($isrequestworkspace) {
@@ -224,7 +224,7 @@ class booking_status_cell implements renderable, templatable {
             event_manager::get_booking_status_label($bookingstatus),
             event_manager::get_booking_status_class($bookingstatus),
             $statusgroupkey,
-            get_string('overview_status_group_' . $statusgroupkey, 'mod_bookit'),
+            event_manager::get_booking_status_group_label($bookingstatus),
             "background-color:$statusbg;color:$statusfg;",
             $options,
             [
@@ -333,21 +333,6 @@ class booking_status_cell implements renderable, templatable {
         $data->hashistoryentries = $this->hashistoryentries;
         $data->historyentries = $this->historyentries;
         return $data;
-    }
-
-    /**
-     * Resolve booking status group key.
-     *
-     * @param int $bookingstatus
-     * @return string
-     */
-    private static function resolve_booking_group_key(int $bookingstatus): string {
-        return match ($bookingstatus) {
-            event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
-            event_access_manager::BOOKINGSTATUS_ACCEPTED => 'confirmed',
-            default => 'closed',
-        };
     }
 
     /**

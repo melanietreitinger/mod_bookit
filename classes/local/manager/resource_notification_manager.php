@@ -28,6 +28,7 @@ namespace mod_bookit\local\manager;
 use core_user;
 use dml_exception;
 use mod_bookit\local\entity\resource\bookit_resource_status;
+use mod_bookit\local\manager\event_manager;
 use moodle_url;
 
 /**
@@ -76,7 +77,7 @@ class resource_notification_manager {
             return 0;
         }
 
-        $statuslabel = get_string('resources:status_' . $status->value, 'mod_bookit');
+        $statuslabel = event_manager::get_resource_status_label($status->value);
         $contexturl  = new moodle_url(
             '/mod/bookit/view/event_resources.php',
             ['id' => $cmid, 'eventid' => $eventid]

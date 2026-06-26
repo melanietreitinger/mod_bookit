@@ -26,6 +26,7 @@
 namespace mod_bookit\output;
 
 use mod_bookit\local\entity\resource\bookit_resource_status;
+use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\event_resource_manager;
 use mod_bookit\local\manager\resource_settings_manager;
 use mod_bookit\output\booking_status_cell;
@@ -98,15 +99,8 @@ class event_resources_checklist_catalog implements renderable, templatable {
         }
 
         // Booking status label.
-        $statusmap = [
-            0 => get_string('event_bookingstatus_0', 'mod_bookit'),
-            1 => get_string('event_bookingstatus_1', 'mod_bookit'),
-            2 => get_string('event_bookingstatus_2', 'mod_bookit'),
-            3 => get_string('event_bookingstatus_3', 'mod_bookit'),
-            4 => get_string('event_bookingstatus_4', 'mod_bookit'),
-        ];
         $bookingstatus = (int)($this->event->bookingstatus ?? 0);
-        $data->bookingstatus = $statusmap[$bookingstatus] ?? '';
+        $data->bookingstatus = event_manager::get_booking_status_label($bookingstatus);
 
         $eventresources = event_resource_manager::get_resources_for_event($this->eventid);
 

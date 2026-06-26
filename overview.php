@@ -322,7 +322,7 @@ if ($showreportfilters) {
     foreach ([0, 1, 2, 3, 4] as $statusvalue) {
         $statusfilteroptions[] = [
             'value' => (string)$statusvalue,
-            'label' => get_string('event_bookingstatus_' . $statusvalue, 'mod_bookit'),
+            'label' => event_manager::get_booking_status_label($statusvalue),
             'selected' => in_array($statusvalue, $selectedstatuses, true),
         ];
     }
@@ -335,7 +335,7 @@ if ($showreportfilters) {
     foreach ([0, 1, 2, 3, 4] as $statusvalue) {
         $statusfilteroptions[] = [
             'value' => (string)$statusvalue,
-            'label' => get_string('event_bookingstatus_' . $statusvalue, 'mod_bookit'),
+            'label' => event_manager::get_booking_status_label($statusvalue),
             'selected' => $statusvalue === $selectedstatus,
         ];
     }
@@ -499,7 +499,7 @@ $formathistoryvalue = static function (string $field, $value): string {
     }
 
     return match ($field) {
-        'bookingstatus' => get_string('event_bookingstatus_' . (int)$value, 'mod_bookit'),
+        'bookingstatus' => event_manager::get_booking_status_label((int)$value),
         'starttime', 'endtime' => userdate((int)$value, get_string('strftimedatetime', 'langconfig')),
         default => is_scalar($value) ? (string)$value : '-',
     };
@@ -563,12 +563,7 @@ $prepareeventrow = function (
     $room = $ev->room ?: '-';
     $isreservedprojection = $isobserverrestricted;
 
-    $statusgroupkey = match ((int)($ev->bookingstatus ?? 0)) {
-        event_access_manager::BOOKINGSTATUS_NEW,
-        event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
-        event_access_manager::BOOKINGSTATUS_ACCEPTED => 'confirmed',
-        default => 'closed',
-    };
+    $statusgroupkey = event_manager::get_booking_status_group_key((int)($ev->bookingstatus ?? 0));
 
     // My role.
     $myrole = '-';

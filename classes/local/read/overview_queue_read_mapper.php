@@ -56,12 +56,7 @@ class overview_queue_read_mapper {
         $historyclassification = event_manager::is_event_in_history($event)
             ? 'history'
             : (event_manager::is_hidden_from_active_overview($event) ? 'hidden_from_active' : 'active');
-        $statusgroupkey = match ($bookingstatus) {
-            event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
-            event_access_manager::BOOKINGSTATUS_ACCEPTED => 'confirmed',
-            default => 'closed',
-        };
+        $statusgroupkey = event_manager::get_booking_status_group_key($bookingstatus);
         $roles = [];
         foreach (event_access_manager::get_user_roles_for_event($event, $userid) as $role) {
             if ($role === 'personincharge') {

@@ -730,7 +730,12 @@ class event_manager {
      * @return bool
      */
     public static function is_event_in_history(stdClass $event, ?int $referencetime = null): bool {
-        if ((int)($event->bookingstatus ?? -1) === event_access_manager::BOOKINGSTATUS_CANCELED) {
+        $bookingstatus = (int)($event->bookingstatus ?? -1);
+        if ($bookingstatus === event_access_manager::BOOKINGSTATUS_CANCELED) {
+            return true;
+        }
+
+        if ($bookingstatus === event_access_manager::BOOKINGSTATUS_REJECTED) {
             return true;
         }
 
@@ -1435,13 +1440,59 @@ class event_manager {
             $color = $colors[$value];
             $options[] = [
                 'value'    => $value,
-                'label'    => get_string('event_bookingstatus_' . $value, 'mod_bookit'),
+                'label'    => self::get_booking_status_label($value),
                 'selected' => ($value === $current),
                 'bg'       => $color['bg'],
                 'fg'       => $color['fg'],
             ];
         }
         return $options;
+    }
+
+    /**
+     * Return the presentation group key for a booking status value.
+     *
+     * @param int $status
+     * @return string One of open, confirmed, closed.
+     */
+    public static function get_booking_status_group_key(int $status): string {
+        return match ($status) {
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
+            event_access_manager::BOOKINGSTATUS_ACCEPTED => 'confirmed',
+            default => 'closed',
+        };
+    }
+
+    /**
+     * Return the localized group label for a booking status value.
+     *
+     * @param int $status
+     * @return string
+     */
+    public static function get_booking_status_group_label(int $status): string {
+        return get_string('overview_status_group_' . self::get_booking_status_group_key($status), 'mod_bookit');
+    }
+
+    /**
+     * Return the authoritative booking status definition for presentation.
+     *
+     * @param int $status
+     * @return array{value:int,label:string,groupkey:string,grouplabel:string,colors:array,cssclass:string}
+     */
+    public static function get_booking_status_definition(int $status): array {
+        $colors = self::get_booking_status_colors();
+        $color = $colors[$status] ?? ['bg' => '#ffffff', 'fg' => '#000000'];
+        $groupkey = self::get_booking_status_group_key($status);
+
+        return [
+            'value' => $status,
+            'label' => self::get_booking_status_label($status),
+            'groupkey' => $groupkey,
+            'grouplabel' => get_string('overview_status_group_' . $groupkey, 'mod_bookit'),
+            'colors' => $color,
+            'cssclass' => self::get_booking_status_class($status),
+        ];
     }
 
     /**
@@ -1472,11 +1523,27 @@ class event_manager {
      */
     public static function get_resource_status_label(string $status): string {
         return match ($status) {
-            'requested' => get_string('resources:status_requested', 'mod_bookit'),
-            'confirmed' => get_string('resources:status_confirmed', 'mod_bookit'),
-            'inprogress' => get_string('resources:status_inprogress', 'mod_bookit'),
-            'rejected' => get_string('resources:status_rejected', 'mod_bookit'),
+            'requested' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_NEW),
+            'confirmed' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_ACCEPTED),
+            'inprogress' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_IN_PROGRESS),
+            'rejected' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_REJECTED),
             default => $status,
+        };
+    }
+
+    /**
+     * Return Bootstrap badge class for a resource line status value.
+     *
+     * @param string $status
+     * @return string
+     */
+    public static function get_resource_status_bootstrap_badge_class(string $status): string {
+        return match ($status) {
+            'requested' => 'badge-secondary',
+            'confirmed' => 'badge-success',
+            'inprogress' => 'badge-primary',
+            'rejected' => 'badge-danger',
+            default => 'badge-secondary',
         };
     }
 

@@ -70,12 +70,13 @@ final class booking_status_cell_test extends advanced_testcase {
             'openrequests'
         );
 
-        $output = $this->get_renderer('mod_bookit');
+        global $PAGE;
+        $output = $PAGE->get_renderer('mod_bookit');
         $data = $cell->export_for_template($output);
 
         $this->assertTrue($data->canedit);
         $this->assertTrue($data->showoptions);
-        $this->assertSame('new', $data->statustext);
+        $this->assertSame(get_string('event_bookingstatus_0', 'mod_bookit'), $data->statustext);
         $optionvalues = array_map(static fn(array $option): int => (int)$option['value'], $data->options);
         $this->assertNotContains(event_access_manager::BOOKINGSTATUS_CANCELED, $optionvalues);
     }
@@ -93,12 +94,13 @@ final class booking_status_cell_test extends advanced_testcase {
         ];
 
         $cell = booking_status_cell::for_resource_row($itemdata, false);
-        $output = $this->get_renderer('mod_bookit');
+        global $PAGE;
+        $output = $PAGE->get_renderer('mod_bookit');
         $data = $cell->export_for_template($output);
 
         $this->assertFalse($data->canedit);
         $this->assertFalse($data->showoptions);
         $this->assertSame('resource', $data->mode);
-        $this->assertSame('new', $data->statustext);
+        $this->assertSame(get_string('event_bookingstatus_0', 'mod_bookit'), $data->statustext);
     }
 }

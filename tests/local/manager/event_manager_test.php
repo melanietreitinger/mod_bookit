@@ -1729,6 +1729,20 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Rejected bookings must be classified as history regardless of their end time.
+     *
+     * @return void
+     */
+    public function test_is_event_in_history_treats_rejected_as_history(): void {
+        $rejected = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'endtime' => strtotime('+2 days'),
+        ];
+
+        $this->assertTrue(event_manager::is_event_in_history($rejected));
+    }
+
+    /**
      * History overview filtering must still include canceled bookings.
      *
      * @return void
@@ -1750,5 +1764,119 @@ final class event_manager_test extends advanced_testcase {
         $this->assertCount(0, $active);
         $this->assertCount(1, $history);
         $this->assertSame(21, (int)$history[0]->id);
+    }
+
+    /**
+     * History overview filtering must include rejected bookings with future end times.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_includes_rejected_in_history_view(): void {
+        $referencetime = time();
+        $rejected = (object)[
+            'id' => 22,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'starttime' => strtotime('+2 days'),
+            'endtime' => strtotime('+2 days +2 hours'),
+        ];
+
+        $active = event_manager::filter_overview_events([$rejected], [], false, $referencetime);
+        $history = event_manager::filter_overview_events([$rejected], [], true, $referencetime);
+
+        $this->assertCount(0, $active);
+        $this->assertCount(1, $history);
+        $this->assertSame(22, (int)$history[0]->id);
+    }
+
+    /**
+     * Booking status labels resolve through central lang strings (Title Case).
+     *
+     * @return void
+     */
+    public function test_get_booking_status_label_uses_title_case_lang_strings(): void {
+        $this->resetAfterTest();
+
+        $this->assertSame(get_string('event_bookingstatus_0', 'mod_bookit'), event_manager::get_booking_status_label(0));
+        $this->assertSame('New', event_manager::get_booking_status_label(event_access_manager::BOOKINGSTATUS_NEW));
+    }
+
+    /**
+     * Booking status group keys must follow open / confirmed / closed.
+     *
+     * @return void
+     */
+    public function test_get_booking_status_group_key(): void {
+        $this->resetAfterTest();
+
+        $this->assertSame('open', event_manager::get_booking_status_group_key(
+            event_access_manager::BOOKINGSTATUS_NEW
+        ));
+        $this->assertSame('open', event_manager::get_booking_status_group_key(
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS
+        ));
+        $this->assertSame('confirmed', event_manager::get_booking_status_group_key(
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        ));
+        $this->assertSame('closed', event_manager::get_booking_status_group_key(
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        ));
+        $this->assertSame('closed', event_manager::get_booking_status_group_key(
+            event_access_manager::BOOKINGSTATUS_REJECTED
+        ));
+    }
+
+    /**
+     * Group labels resolve through overview_status_group lang strings.
+     *
+     * @return void
+     */
+    public function test_get_booking_status_group_label(): void {
+        $this->resetAfterTest();
+
+        $this->assertSame(
+            get_string('overview_status_group_open', 'mod_bookit'),
+            event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_NEW)
+        );
+        $this->assertSame(
+            get_string('overview_status_group_confirmed', 'mod_bookit'),
+            event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_ACCEPTED)
+        );
+    }
+
+    /**
+     * Booking status definition exposes registry shape and canonical labels.
+     *
+     * @return void
+     */
+    public function test_get_booking_status_definition(): void {
+        $this->resetAfterTest();
+
+        $definition = event_manager::get_booking_status_definition(
+            event_access_manager::BOOKINGSTATUS_ACCEPTED
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $definition['value']);
+        $this->assertSame('Confirmed', $definition['label']);
+        $this->assertSame('confirmed', $definition['groupkey']);
+        $this->assertNotEmpty($definition['grouplabel']);
+        $this->assertArrayHasKey('bg', $definition['colors']);
+        $this->assertArrayHasKey('fg', $definition['colors']);
+        $this->assertSame('bookit-bookingstatus-2', $definition['cssclass']);
+    }
+
+    /**
+     * Resource status labels map to canonical booking vocabulary.
+     *
+     * @return void
+     */
+    public function test_get_resource_status_label(): void {
+        $this->resetAfterTest();
+
+        $this->assertSame('New', event_manager::get_resource_status_label('requested'));
+        $this->assertSame('Confirmed', event_manager::get_resource_status_label('confirmed'));
+        $this->assertSame('In Progress', event_manager::get_resource_status_label('inprogress'));
+        $this->assertSame('Rejected', event_manager::get_resource_status_label('rejected'));
     }
 }

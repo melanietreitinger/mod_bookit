@@ -267,7 +267,7 @@ final class booking_notification_manager_test extends advanced_testcase {
         $sink->close();
 
         $this->assertCount(1, $messages);
-        $this->assertStringStartsWith('Booking request accepted: Configured Exam on ', $messages[0]->subject);
+        $this->assertStringStartsWith('Booking request confirmed: Configured Exam on ', $messages[0]->subject);
         $this->assertStringStartsWith(
             "Hello,\n\nThank you for your request \"Configured Exam\" for ",
             $messages[0]->fullmessage

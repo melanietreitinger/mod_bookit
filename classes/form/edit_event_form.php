@@ -508,7 +508,9 @@ class edit_event_form extends dynamic_form {
         $bookingstatusoptions = [];
         $currentbookingstatus = (int)($existingevent->bookingstatus ?? self::BOOKINGSTATUS_NEW);
         if ($caneditinternal) {
-            $bookingstatusoptions = explode(',', get_string('event_bookingstatus_list', 'mod_bookit'));
+            foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+                $bookingstatusoptions[$statusvalue] = event_manager::get_booking_status_label($statusvalue);
+            }
         } else if ($showbookingstatus) {
             $bookingstatusoptions[$currentbookingstatus] = get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit');
             if (
@@ -1168,14 +1170,8 @@ class edit_event_form extends dynamic_form {
                     $bookedinfo = $bookedresources[$resource['id']];
                     $bookedamount = $bookedinfo['amount'];
                     $bookedstatus = $bookedinfo['status'];
-                    $statusclassmap = [
-                        bookit_resource_status::REQUESTED->value  => 'badge-secondary',
-                        bookit_resource_status::CONFIRMED->value  => 'badge-success',
-                        bookit_resource_status::INPROGRESS->value => 'badge-primary',
-                        bookit_resource_status::REJECTED->value   => 'badge-danger',
-                    ];
-                    $badgeclass = 'badge ' . ($statusclassmap[$bookedstatus] ?? 'badge-secondary');
-                    $statuslabel = get_string('resources:status_' . $bookedstatus, 'mod_bookit');
+                    $badgeclass = 'badge ' . event_manager::get_resource_status_bootstrap_badge_class($bookedstatus);
+                    $statuslabel = event_manager::get_resource_status_label($bookedstatus);
                     $statichtml = '<span class="' . $badgeclass . '">' . $statuslabel . '</span>';
                     if (!$resource['amountirrelevant']) {
                         $statichtml .= ' &nbsp;' . get_string('booking:resource_amount', 'mod_bookit')

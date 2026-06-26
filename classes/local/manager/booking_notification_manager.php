@@ -30,6 +30,7 @@ use core_user;
 use dml_exception;
 use moodle_url;
 use mod_bookit\local\install_helper;
+use mod_bookit\local\manager\event_manager;
 use stdClass;
 
 /**
@@ -444,8 +445,8 @@ class booking_notification_manager {
         }
 
         $localized = clone $template;
-        $localized->bookingstatus = get_string('event_bookingstatus_' . (int)$template->newstatus, 'mod_bookit');
-        $localized->oldbookingstatus = get_string('event_bookingstatus_' . (int)$template->oldstatus, 'mod_bookit');
+        $localized->bookingstatus = event_manager::get_booking_status_label((int)$template->newstatus);
+        $localized->oldbookingstatus = event_manager::get_booking_status_label((int)$template->oldstatus);
         $localized->bookingdate = userdate((int)($template->starttimestamp ?? 0), get_string('strftimedate', 'langconfig'));
         $localized->starttime = userdate((int)($template->starttimestamp ?? 0));
         $localized->endtime = userdate((int)($template->endtimestamp ?? 0));
