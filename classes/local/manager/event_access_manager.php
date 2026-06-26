@@ -54,6 +54,12 @@ class event_access_manager {
     /** Booking status: rejected. */
     public const BOOKINGSTATUS_REJECTED = 4;
 
+    /** Modal footer: single OK button, no submit. */
+    public const MODAL_FOOTER_MODE_VIEW_ONLY = 'view_only';
+
+    /** Modal footer: standard Cancel + Save changes. */
+    public const MODAL_FOOTER_MODE_EDITABLE = 'editable';
+
     /** @var int[] booking statuses that still require service-team action. */
     public const OPEN_BOOKING_STATUSES = [
         self::BOOKINGSTATUS_NEW,
@@ -524,6 +530,44 @@ class event_access_manager {
             && !self::can_participant_edit_event($event, $userid)
             && !has_capability('mod/bookit:editevent', $context)
             && !has_capability('mod/bookit:editinternal', $context);
+    }
+
+    /**
+     * Resolve the event-detail modal footer profile for the current user.
+     *
+     * Mirrors the effective edit flags in edit_event_form::definition().
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return string One of MODAL_FOOTER_MODE_VIEW_ONLY or MODAL_FOOTER_MODE_EDITABLE.
+     */
+    public static function get_event_modal_footer_mode(stdClass $event, context_module $context, int $userid): string {
+        if (self::can_manage_open_requests($context)) {
+            return self::MODAL_FOOTER_MODE_EDITABLE;
+        }
+
+        $participantpastreadonly = self::should_block_participant_past_edit($event, $context, $userid);
+        $caneditevent = has_capability('mod/bookit:editevent', $context, $userid)
+            || self::can_participant_edit_event($event, $userid);
+        if ($participantpastreadonly) {
+            $caneditevent = false;
+        }
+
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context, $userid);
+        $caneditinternalnotes = $caneditinternal
+            || self::can_supportperson_edit_internal_notes($event, $context, $userid);
+        $canselfcancelnew = !$participantpastreadonly
+            && self::can_self_cancel_new_request($event, $context, $userid);
+        $cancancelonly = !$participantpastreadonly
+            && self::can_participant_cancel_only($event, $context, $userid);
+        $caneditbookingstatus = $caneditinternal || $cancancelonly || $canselfcancelnew;
+
+        if ($caneditevent || $caneditinternalnotes || $caneditbookingstatus) {
+            return self::MODAL_FOOTER_MODE_EDITABLE;
+        }
+
+        return self::MODAL_FOOTER_MODE_VIEW_ONLY;
     }
 
     /**

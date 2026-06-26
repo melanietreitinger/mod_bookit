@@ -192,8 +192,7 @@
                            class="bookit-event-link"
                            data-eventid="{{id}}"
                            data-cmid="{{cmid}}"
-                           {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}
-                           {{#cancelbuttontext}}data-cancel-button-text="{{cancelbuttontext}}"{{/cancelbuttontext}}
+                           data-modal-footer-mode="{{modalfootermode}}"
                            data-is-reserved-projection="{{#is_reserved_projection}}1{{/is_reserved_projection}}{{^is_reserved_projection}}0{{/is_reserved_projection}}">
                            {{name}}
                         </a>
@@ -335,8 +334,7 @@
                        class="bookit-event-link"
                        data-eventid="{{id}}"
                        data-cmid="{{cmid}}"
-                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}
-                       {{#cancelbuttontext}}data-cancel-button-text="{{cancelbuttontext}}"{{/cancelbuttontext}}>
+                       data-modal-footer-mode="{{modalfootermode}}">
                         {{name}}
                     </a>
                     {{/caneventdetails}}
@@ -390,8 +388,7 @@
                        class="bookit-event-link"
                        data-eventid="{{id}}"
                        data-cmid="{{cmid}}"
-                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}
-                       {{#cancelbuttontext}}data-cancel-button-text="{{cancelbuttontext}}"{{/cancelbuttontext}}>
+                       data-modal-footer-mode="{{modalfootermode}}">
                         {{name}}
                     </a>
                     {{/caneventdetails}}
@@ -447,7 +444,7 @@
                        class="bookit-event-link"
                        data-eventid="{{id}}"
                        data-cmid="{{cmid}}"
-                       {{#savebuttontext}}data-save-button-text="{{savebuttontext}}"{{/savebuttontext}}>
+                       data-modal-footer-mode="{{modalfootermode}}">
                         {{name}}
                     </a>
                     {{/caneventdetails}}

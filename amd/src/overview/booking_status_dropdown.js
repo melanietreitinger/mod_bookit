@@ -157,12 +157,11 @@ const renderTitleCell = (item, readConfig) => {
         return escapeHtml(item.name);
     }
 
-    const saveText = item.savebuttontext ? ` data-save-button-text="${escapeHtml(item.savebuttontext)}"` : '';
-    const cancelText = item.cancelbuttontext ? ` data-cancel-button-text="${escapeHtml(item.cancelbuttontext)}"` : '';
+    const footerMode = item.modalfootermode ? ` data-modal-footer-mode="${escapeHtml(item.modalfootermode)}"` : '';
     return `<a href="#"
         class="bookit-event-link"
         data-eventid="${Number(item.eventid || item.id || 0)}"
-        data-cmid="${Number(readConfig.cmid || 0)}"${saveText}${cancelText}>${escapeHtml(item.name)}</a>`;
+        data-cmid="${Number(readConfig.cmid || 0)}"${footerMode}>${escapeHtml(item.name)}</a>`;
 };
 
 /**

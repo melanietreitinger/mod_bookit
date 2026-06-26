@@ -81,6 +81,14 @@ trait read_contract_assertions_trait {
         $this->assertArrayHasKey('bookingstatus', $extendedprops);
         $this->assertArrayHasKey('semesterid', $extendedprops);
         $this->assertArrayHasKey('visibilitymode', $extendedprops);
+        if (($extendedprops['visibilitymode'] ?? '') === 'full') {
+            $this->assertArrayHasKey('modalfootermode', $extendedprops);
+            $this->assertContains(
+                $extendedprops['modalfootermode'],
+                ['view_only', 'editable', ''],
+                'modalfootermode must be view_only or editable when present on full events'
+            );
+        }
         $this->assertArrayHasKey('room', $extendedprops);
         $this->assertIsString($extendedprops['titlehtml']);
         $this->assertIsInt($extendedprops['bookingstatus']);

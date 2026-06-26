@@ -113,7 +113,7 @@ class event_manager {
                 continue;
             }
 
-            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels);
+            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels, $context, (int)$USER->id);
         }
         return $events;
     }
@@ -1295,7 +1295,7 @@ class event_manager {
         string $endtime,
         context_module $context
     ): array {
-        global $DB;
+        global $DB, $USER;
 
         $starttimestamp = DateTime::createFromFormat('Y-m-d H:i', $starttime)->getTimestamp();
         $endtimestamp = DateTime::createFromFormat('Y-m-d H:i', $endtime)->getTimestamp();
@@ -1326,7 +1326,7 @@ class event_manager {
                 continue;
             }
 
-            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels);
+            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels, $context, (int)$USER->id);
         }
 
         return $events;
@@ -1338,9 +1338,17 @@ class event_manager {
      * @param stdClass $record
      * @param bool $observerrestricted
      * @param array $facultylabels
+     * @param context_module $context
+     * @param int $userid
      * @return array
      */
-    private static function build_calendar_read_event(stdClass $record, bool $observerrestricted, array $facultylabels): array {
+    private static function build_calendar_read_event(
+        stdClass $record,
+        bool $observerrestricted,
+        array $facultylabels,
+        context_module $context,
+        int $userid
+    ): array {
         $roomname = trim((string)($record->roomname ?? ''));
         if ($roomname === '') {
             $roomname = get_string('resources:all_rooms', 'mod_bookit');
@@ -1384,6 +1392,9 @@ class event_manager {
                 'bookingstatus' => (int)$record->bookingstatus,
                 'semesterid' => (int)($record->semester ?? 0),
                 'visibilitymode' => $observerrestricted ? 'reserved_projection' : 'full',
+                'modalfootermode' => $observerrestricted
+                    ? event_access_manager::MODAL_FOOTER_MODE_VIEW_ONLY
+                    : event_access_manager::get_event_modal_footer_mode($record, $context, $userid),
                 'room' => [
                     'roomid' => (int)($record->roomid ?? 0),
                     'roomname' => $roomname,

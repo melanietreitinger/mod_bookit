@@ -111,15 +111,8 @@ class overview_queue_read_mapper {
             ],
             'statusgroupkey' => $statusgroupkey,
             'statuscellhtml' => $statuscellhtml,
-            'savebuttontext' => event_access_manager::should_block_participant_past_edit($event, $context, $userid)
-                ? get_string('event_past_participant_close', 'mod_bookit')
-                : (
-                    event_access_manager::can_participant_cancel_only($event, $context, $userid)
-                        ? get_string('event_status_action_cancel_only', 'mod_bookit')
-                        : ''
-                ),
-            'cancelbuttontext' => event_access_manager::can_participant_cancel_only($event, $context, $userid)
-                ? get_string('event_status_action_close_modal', 'mod_bookit')
+            'modalfootermode' => event_access_manager::can_user_view_event_details($event, $context, $userid)
+                ? event_access_manager::get_event_modal_footer_mode($event, $context, $userid)
                 : '',
         ];
     }

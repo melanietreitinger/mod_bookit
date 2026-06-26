@@ -116,7 +116,7 @@ Feature: Filter reporting data and block past-date saves
     And I open the Bookit event details for "Historical booking"
     Then the Bookit event details control "name" should be disabled
     And the Bookit event details control "starttime" should be disabled
-    And the Bookit event details primary action should be "Close"
+    And the Bookit event details primary action should be "OK"
     And I should see "This booking already started and can no longer be changed by participants."
 
   Scenario: Examiner sees the same historical blocked state as the booking person
@@ -128,5 +128,5 @@ Feature: Filter reporting data and block past-date saves
     And I open the Bookit event details for "Historical examiner exam"
     Then the Bookit event details control "name" should be disabled
     And the Bookit event details control "starttime" should be disabled
-    And the Bookit event details primary action should be "Close"
+    And the Bookit event details primary action should be "OK"
     And I should see "This booking already started and can no longer be changed by participants."

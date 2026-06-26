@@ -654,15 +654,8 @@ $prepareeventrow = function (
         'myrole' => s($myrole),
         'createdby' => s($createdby),
         'statusgroupkey' => $statusgroupkey,
-        'savebuttontext' => event_access_manager::should_block_participant_past_edit($ev, $context, (int)$USER->id)
-            ? get_string('event_past_participant_close', 'mod_bookit')
-            : (
-                event_access_manager::can_participant_cancel_only($ev, $context, (int)$USER->id)
-                    ? get_string('event_status_action_cancel_only', 'mod_bookit')
-                    : ''
-            ),
-        'cancelbuttontext' => event_access_manager::can_participant_cancel_only($ev, $context, (int)$USER->id)
-            ? get_string('event_status_action_close_modal', 'mod_bookit')
+        'modalfootermode' => $caneventdetails
+            ? event_access_manager::get_event_modal_footer_mode($ev, $context, (int)$USER->id)
             : '',
         'statuscellhtml' => $statuscellhtml,
         'datestr' => $datestr,

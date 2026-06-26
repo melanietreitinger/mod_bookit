@@ -1069,6 +1069,9 @@ class behat_mod_bookit extends behat_base {
                 }
                 var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
                 if (!button) {
+                    button = root.querySelector('button[data-action="cancel"]');
+                }
+                if (!button) {
                     return JSON.stringify({status: 'save-not-found'});
                 }
                 return JSON.stringify({

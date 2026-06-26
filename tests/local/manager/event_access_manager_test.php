@@ -1502,4 +1502,75 @@ final class event_access_manager_test extends advanced_testcase {
 
         $this->assertTrue(event_access_manager::can_reactivate_rejected_request($event, $context));
     }
+
+    /**
+     * Modal footer mode follows the same editability rules as edit_event_form.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_get_event_modal_footer_mode(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $canceled = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => time() + 3600,
+            'personinchargeid' => $user->id,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertSame(
+            event_access_manager::MODAL_FOOTER_MODE_VIEW_ONLY,
+            event_access_manager::get_event_modal_footer_mode($canceled, $context, $user->id)
+        );
+
+        $cancelonly = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertSame(
+            event_access_manager::MODAL_FOOTER_MODE_EDITABLE,
+            event_access_manager::get_event_modal_footer_mode($cancelonly, $context, $user->id)
+        );
+
+        $pastreadonly = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => time() - 3600,
+            'personinchargeid' => $user->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertSame(
+            event_access_manager::MODAL_FOOTER_MODE_VIEW_ONLY,
+            event_access_manager::get_event_modal_footer_mode($pastreadonly, $context, $user->id)
+        );
+
+        $servicecontext = $this->create_bookit_context_with_service_role('bookitservice048modal');
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($servicecontext, $serviceuser->id, 'bookitservice048modal');
+        $this->setUser($serviceuser);
+
+        $openrequest = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => time() + 7200,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertSame(
+            event_access_manager::MODAL_FOOTER_MODE_EDITABLE,
+            event_access_manager::get_event_modal_footer_mode($openrequest, $servicecontext, $serviceuser->id)
+        );
+    }
 }

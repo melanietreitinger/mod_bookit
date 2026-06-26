@@ -58,6 +58,7 @@ class calendar_event_read_mapper {
             'bookingstatus' => (int)($extendedprops['bookingstatus'] ?? $event['bookingstatus'] ?? -1),
             'semesterid' => (int)($extendedprops['semesterid'] ?? $event['semesterid'] ?? $event['semester'] ?? 0),
             'visibilitymode' => $visibilitymode,
+            'modalfootermode' => (string)($extendedprops['modalfootermode'] ?? ''),
             'room' => [
                 'roomid' => $roomid,
                 'roomname' => $roomname,

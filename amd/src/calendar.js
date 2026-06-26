@@ -25,6 +25,7 @@ import {getString} from 'core/str';
 import Ajax from 'core/ajax';
 import ModalForm from 'core_form/modalform';
 import {prefetchStrings} from 'core/prefetch';
+import {openEditEventModal} from 'mod_bookit/event_modal_opener';
 import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
 import BookingFormResources from "mod_bookit/booking_form_resources";
 
@@ -237,22 +238,16 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 return;
             }
 
-            const modalForm = new ModalForm({
-                formClass: "mod_bookit\\form\\edit_event_form",
-                args: {
-                    cmid: cmid,
-                    id: id
+            openEditEventModal({
+                cmid: cmid,
+                eventid: id,
+                title: editevent,
+                modalfootermode: info.event.extendedProps.modalfootermode || 'editable',
+                reloadOnSubmit: false,
+                onSubmitted: () => {
+                    calendar.refetchEvents();
                 },
-                modalConfig: {title: editevent},
             });
-            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-                calendar.refetchEvents();
-            });
-            modalForm.addEventListener(modalForm.events.LOADED, () => {
-                initPossibleStarttimesRefresh(cmid, id);
-                BookingFormResources.init(modalForm.modal.getRoot()[0]);
-            });
-            modalForm.show();
         },
 
         // Toolbar configuration
