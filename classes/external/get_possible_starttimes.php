@@ -83,7 +83,8 @@ class get_possible_starttimes extends external_api {
                 'excepteventid' => new external_value(
                     PARAM_INT,
                     'Optionally, an eventid to exclude from blocking events',
-                    VALUE_OPTIONAL
+                    VALUE_DEFAULT,
+                    null
                 ),
         ]);
     }
@@ -239,6 +240,40 @@ class get_possible_starttimes extends external_api {
     }
 
     /**
+     * Keep the edited event starttime selectable when service-team past booking is allowed.
+     *
+     * @param array<int, string> $starttimes
+     * @param int $excepteventid
+     * @param \DateTime $date
+     * @return array<int, string>
+     */
+    private static function inject_editing_event_starttime(
+        array $starttimes,
+        int $excepteventid,
+        \DateTime $date
+    ): array {
+        global $DB;
+
+        $event = $DB->get_record('bookit_event', ['id' => $excepteventid], 'starttime', MUST_EXIST);
+        $currentstarttime = (int)$event->starttime;
+        if ($currentstarttime <= 0) {
+            return $starttimes;
+        }
+
+        $eventdate = (new \DateTime())->setTimestamp($currentstarttime)->setTime(0, 0);
+        if ($eventdate->format('Y-m-d') !== $date->format('Y-m-d')) {
+            return $starttimes;
+        }
+
+        if (!array_key_exists($currentstarttime, $starttimes)) {
+            $timestring = (new \DateTime())->setTimestamp($currentstarttime)->format('H:i');
+            $starttimes = [$currentstarttime => $timestring] + $starttimes;
+        }
+
+        return $starttimes;
+    }
+
+    /**
      * Execution for get_possible_slots external api.
      *
      * @param int $cmid
@@ -286,6 +321,14 @@ class get_possible_starttimes extends external_api {
         $date->setDate($year, $month, $day);
 
         [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid, $excepteventid, $allowpast);
+
+        if ($allowpast && $excepteventid) {
+            $starttimes = self::inject_editing_event_starttime($starttimes, $excepteventid, $date);
+            if (!empty($starttimes)) {
+                $status = null;
+            }
+        }
+
         $transformed = [];
 
         if ($status !== null && !has_capability('mod/bookit:managebasics', $context)) {

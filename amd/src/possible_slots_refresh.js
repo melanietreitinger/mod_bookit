@@ -73,18 +73,33 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
 
         const currentSelectionValue = timeEl.value || timeEl.dataset.currentStarttime || '';
         const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
+        const preserveCurrentStarttime = exceptEventId !== null && currentSelectionValue !== '';
 
         while (timeEl.options.length) {
             timeEl.options.remove(0);
         }
 
-        starttimeEl.hidden = status !== null;
-        starttimeExplanationEl.hidden = status === null;
+        if (status !== null && preserveCurrentStarttime) {
+            starttimeEl.hidden = false;
+            starttimeExplanationEl.hidden = true;
+            const preservedOption = document.createElement('option');
+            preservedOption.value = currentSelectionValue;
+            preservedOption.innerText = currentSelected.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            });
+            preservedOption.selected = true;
+            timeEl.options.add(preservedOption);
+        } else {
+            starttimeEl.hidden = status !== null;
+            starttimeExplanationEl.hidden = status === null;
 
-        if (status !== null) {
-            starttimeExplanationTextEl.innerHTML =
-                await getString(status === 1 ? 'no_weekplan_defined' : 'no_slot_available',
-                    'mod_bookit');
+            if (status !== null) {
+                starttimeExplanationTextEl.innerHTML =
+                    await getString(status === 1 ? 'no_weekplan_defined' : 'no_slot_available',
+                        'mod_bookit');
+            }
         }
 
         for (let slot of starttimes) {

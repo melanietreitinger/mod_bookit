@@ -27,6 +27,7 @@
 namespace mod_bookit\external;
 
 use advanced_testcase;
+use context_module;
 use mod_bookit\local\install_helper;
 
 /**
@@ -143,5 +144,163 @@ final class get_possible_starttimes_test extends advanced_testcase {
         $this->assertNotEmpty($roomresponse['entries']);
         $this->assertNotEmpty($slots);
         $this->assertNull($status);
+    }
+
+    /**
+     * Service-team edit keeps the current event starttime when no weekplan applies.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_injects_current_starttime_for_service_team_edit_without_weekplan(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        ['bookit' => $bookit, 'serviceuser' => $serviceuser, 'baseline' => $baseline, 'generator' => $generator] =
+            $this->create_execute_context_for_service_team();
+
+        $DB->delete_records('bookit_weekplan_room', ['roomid' => $baseline['roomid']]);
+
+        $starttime = strtotime('tomorrow 09:00');
+        $generator->create_event([
+            'name' => 'PHPUnit service exam',
+            'startdate' => date('Y-m-d H:i:s', $starttime),
+            'enddate' => date('Y-m-d H:i:s', $starttime + 7200),
+            'bookingstatus' => 0,
+            'institution' => $baseline['institutionid'],
+            'roomid' => $baseline['roomid'],
+        ]);
+        $eventid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_event}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => 'PHPUnit service exam'],
+            MUST_EXIST
+        );
+
+        $this->setUser($serviceuser);
+        $response = get_possible_starttimes::execute(
+            $bookit->cmid,
+            (int)date('Y', $starttime),
+            (int)date('n', $starttime),
+            (int)date('j', $starttime),
+            90,
+            $baseline['roomid'],
+            $eventid
+        );
+
+        $this->assertNull($response['status']);
+        $this->assertCount(1, $response['slots']);
+        $this->assertSame($starttime, $response['slots'][0]['timestamp']);
+    }
+
+    /**
+     * Participants must not get a synthetic starttime when slots are unavailable.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_does_not_inject_current_starttime_for_participant_without_allowpast(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        ['bookit' => $bookit, 'participant' => $participant, 'baseline' => $baseline, 'generator' => $generator] =
+            $this->create_execute_context_for_participant();
+
+        $DB->delete_records('bookit_weekplan_room', ['roomid' => $baseline['roomid']]);
+
+        $starttime = strtotime('tomorrow 09:00');
+        $generator->create_event([
+            'name' => 'PHPUnit participant exam',
+            'startdate' => date('Y-m-d H:i:s', $starttime),
+            'enddate' => date('Y-m-d H:i:s', $starttime + 7200),
+            'bookingstatus' => 0,
+            'institution' => $baseline['institutionid'],
+            'roomid' => $baseline['roomid'],
+        ]);
+        $eventid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_event}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => 'PHPUnit participant exam'],
+            MUST_EXIST
+        );
+
+        $this->setUser($participant);
+        $response = get_possible_starttimes::execute(
+            $bookit->cmid,
+            (int)date('Y', $starttime),
+            (int)date('n', $starttime),
+            (int)date('j', $starttime),
+            90,
+            $baseline['roomid'],
+            $eventid
+        );
+
+        $this->assertSame(0, $response['status']);
+        $this->assertSame([], $response['slots']);
+    }
+
+    /**
+     * Build a course, service-team user, and fresh-install baseline for execute() tests.
+     *
+     * @return array{bookit:\stdClass,context:context_module,serviceuser:\stdClass,baseline:array,generator:\mod_bookit_generator}
+     */
+    private function create_execute_context_for_service_team(): array {
+        $course = $this->getDataGenerator()->create_course(['visible' => 1]);
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'visible' => 1]);
+        $context = context_module::instance($bookit->cmid);
+
+        $servicerole = \create_role('Bookit service team execute', 'bookitserviceexec', '');
+        foreach (['mod/bookit:addevent', 'mod/bookit:editevent', 'mod/bookit:managebasics', 'mod/bookit:view'] as $capability) {
+            \assign_capability($capability, CAP_ALLOW, $servicerole, $context->id, true);
+        }
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $baseline = $generator->create_fresh_install_baseline();
+
+        return [
+            'bookit' => $bookit,
+            'context' => $context,
+            'serviceuser' => $serviceuser,
+            'baseline' => $baseline,
+            'generator' => $generator,
+        ];
+    }
+
+    /**
+     * Build a course, participant user, and fresh-install baseline for execute() tests.
+     *
+     * @return array{bookit:\stdClass,context:context_module,participant:\stdClass,baseline:array,generator:\mod_bookit_generator}
+     */
+    private function create_execute_context_for_participant(): array {
+        $course = $this->getDataGenerator()->create_course(['visible' => 1]);
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'visible' => 1]);
+        $context = context_module::instance($bookit->cmid);
+
+        $participantrole = \create_role('Bookit participant execute', 'bookitparticipantexec', '');
+        \assign_capability('mod/bookit:addevent', CAP_ALLOW, $participantrole, $context->id, true);
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
+
+        $participant = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($participant->id, $course->id);
+        \role_assign($participantrole, $participant->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
+        $baseline = $generator->create_fresh_install_baseline();
+
+        return [
+            'bookit' => $bookit,
+            'context' => $context,
+            'participant' => $participant,
+            'baseline' => $baseline,
+            'generator' => $generator,
+        ];
     }
 }
