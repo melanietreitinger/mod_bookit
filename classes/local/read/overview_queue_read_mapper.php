@@ -94,6 +94,9 @@ class overview_queue_read_mapper {
         $bookitrenderer = $PAGE->get_renderer('mod_bookit');
         $statuscellhtml = $bookitrenderer->render($statuscell);
 
+        $hasreactivateaction = $workspace === 'rejectedrequests'
+            && event_access_manager::can_restore_terminal_request($event, $context);
+
         return [
             'eventid' => (int)$event->id,
             'id' => (int)$event->id,
@@ -114,6 +117,10 @@ class overview_queue_read_mapper {
             'modalfootermode' => event_access_manager::can_user_view_event_details($event, $context, $userid)
                 ? event_access_manager::get_event_modal_footer_mode($event, $context, $userid)
                 : '',
+            'hasreactivateaction' => $hasreactivateaction,
+            'reactivateactionlabel' => get_string('bookingstatus_action_reactivate', 'mod_bookit'),
+            'reactivatetargetstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'overviewtab' => $workspace,
         ];
     }
 

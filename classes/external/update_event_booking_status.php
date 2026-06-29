@@ -115,6 +115,20 @@ class update_event_booking_status extends external_api {
         } else if (
             $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
             && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+            && $params['tab'] === 'history'
+            && event_access_manager::can_reactivate_canceled_request($event, $context)
+        ) {
+            $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
+        } else if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+            && $params['tab'] === 'history'
+            && event_access_manager::can_manage_open_requests($context)
+        ) {
+            $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
+        } else if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
         ) {
             if (
                 $params['tab'] === 'rejectedrequests'

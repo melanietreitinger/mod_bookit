@@ -30,6 +30,7 @@ import {get_strings as getStrings} from 'core/str';
 
 const SELECTOR = 'select[data-action="update-booking-status"]';
 const CANCEL_OVERVIEW_SELECTOR = 'button[data-action="cancel-booking-from-overview"]';
+const REACTIVATE_OVERVIEW_SELECTOR = 'button[data-action="reactivate-booking-from-overview"]';
 const REQUEST_COUNT_SELECTOR = '[data-region="request-queue-count"]';
 const REQUEST_PAGING_SELECTOR = '[data-region="request-paging"]';
 const REQUEST_WORKSPACES = ['openrequests', 'acceptedrequests', 'rejectedrequests'];
@@ -165,6 +166,32 @@ const renderTitleCell = (item, readConfig) => {
 };
 
 /**
+ * Render the Actions column for rejected-request rows.
+ *
+ * @param {Object} item
+ * @param {Object} readConfig
+ * @param {string} workspace
+ * @returns {string}
+ */
+const renderReactivateActionsCell = (item, readConfig, workspace) => {
+    if (workspace !== 'rejectedrequests') {
+        return '';
+    }
+
+    if (item.hasreactivateaction) {
+        return `<td class="align-middle"><button type="button"
+            class="btn btn-sm btn-outline-primary"
+            data-action="reactivate-booking-from-overview"
+            data-eventid="${Number(item.eventid || item.id || 0)}"
+            data-cmid="${Number(readConfig.cmid || 0)}"
+            data-status="${Number(item.reactivatetargetstatus || 0)}"
+            data-tab="${escapeHtml(item.overviewtab || workspace)}">${escapeHtml(item.reactivateactionlabel || '')}</button></td>`;
+    }
+
+    return '<td class="align-middle">-</td>';
+};
+
+/**
  * Render a request-workspace table row from the governed payload.
  *
  * @param {Object} item
@@ -185,6 +212,7 @@ const renderRequestRow = (item, readConfig, workspace) => {
     <td class="align-middle">${escapeHtml(item.myrole || '-')}</td>
     ${statusCell}
     <td class="align-middle" data-sort="${Number(item.starttime || 0)}">${escapeHtml(item.datestr || '')}</td>
+    ${renderReactivateActionsCell(item, readConfig, workspace)}
 </tr>`;
 };
 
@@ -401,6 +429,47 @@ export const init = () => {
         .catch((err) => {
             button.disabled = false;
             // User dismissed the confirmation dialog — not an error (see mod_quiz/submission_confirmation).
+            if (!err || err.type === 'modal-save-cancel:cancel') {
+                return null;
+            }
+            exception(err);
+            return null;
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest(REACTIVATE_OVERVIEW_SELECTOR);
+        if (!button) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const cmid = parseInt(button.dataset.cmid, 10);
+        const eventid = parseInt(button.dataset.eventid, 10);
+        const status = parseInt(button.dataset.status, 10);
+        const tab = resolveActiveTab(button);
+
+        getStrings([
+            {key: 'overview_reactivate_booking_confirm', component: 'mod_bookit'},
+            {key: 'overview_reactivate_booking_confirm_body', component: 'mod_bookit'},
+            {key: 'bookingstatus_action_reactivate', component: 'mod_bookit'},
+        ]).then((strings) => saveCancelPromise(strings[0], strings[1], strings[2], {triggerElement: button}))
+        .then(() => {
+            button.disabled = true;
+
+            return Ajax.call([{
+                methodname: 'mod_bookit_update_event_booking_status',
+                args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
+            }])[0];
+        })
+        .then((response) => refreshQueueFromGovernedRead(
+            getReadConfig(tab),
+            response.queue || null,
+            response.redirecturl || window.location.href
+        ))
+        .catch((err) => {
+            button.disabled = false;
             if (!err || err.type === 'modal-save-cancel:cancel') {
                 return null;
             }

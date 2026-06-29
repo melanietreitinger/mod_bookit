@@ -308,12 +308,12 @@ class event_manager {
             $reportstart ??= $defaultstart;
             $reportend ??= $defaultend;
             $semesterids = $filters['semesterids'];
-            $bookingstatuses = $filters['bookingstatuses'];
+            $bookingstatuses = self::resolve_overview_booking_status_filter_ids(
+                $filters['bookingstatuses'] ?? [],
+                !empty($filters['bookingstatuses'])
+            );
             if ($showreportfilters) {
                 $semesterids = self::resolve_effective_semester_filter_ids($semesterids, !empty($filters['semesterids']));
-                if (empty($bookingstatuses)) {
-                    $bookingstatuses = self::get_reporting_default_booking_status_filter();
-                }
                 $events = self::get_events_for_reporting($context, $userid, $reportstart, $reportend, $semesterids);
             } else {
                 $events = self::get_events_for_examiner($userid);
@@ -549,6 +549,35 @@ class event_manager {
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_ACCEPTED,
         ];
+    }
+
+    /**
+     * Resolve overview booking status filter ids from request payload.
+     *
+     * @param int[] $rawids Raw status ids from bookingstatusfilter[].
+     * @param bool $hasexplicitfilter Whether the request included bookingstatusfilter.
+     * @return int[]
+     */
+    public static function resolve_overview_booking_status_filter_ids(array $rawids, bool $hasexplicitfilter): array {
+        $allowed = [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+        ];
+
+        if (!$hasexplicitfilter) {
+            return self::get_reporting_default_booking_status_filter();
+        }
+
+        $normalised = self::normalise_filter_ids($rawids);
+        if ($normalised === []) {
+            return self::get_reporting_default_booking_status_filter();
+        }
+
+        $filtered = array_values(array_intersect($normalised, $allowed));
+        return $filtered !== [] ? $filtered : self::get_reporting_default_booking_status_filter();
     }
 
     /**

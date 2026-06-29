@@ -297,6 +297,146 @@ final class update_event_booking_status_test extends advanced_testcase {
     }
 
     /**
+     * Booking persons may reactivate their own canceled bookings from History without managebasics.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_booking_person_canceled_to_new_via_history_tab(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $bookingperson = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Booker canceled reactivate',
+        ]);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant canceled reactivate', 'bookitparticipantcancelreact', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $bookingperson->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Canceled reactivate exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$bookingperson->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        event_manager::record_booking_history(
+            $eventid,
+            'status_changed',
+            (int)$bookingperson->id,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $this->setUser($bookingperson);
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'history',
+            1
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
+        $this->assertSame('history', $response['tab']);
+
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus,usermodified', MUST_EXIST);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
+        $this->assertSame((int)$bookingperson->id, (int)$record->usermodified);
+    }
+
+    /**
+     * Non-owners cannot reactivate canceled bookings via History tab.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_non_owner_canceled_to_new_via_history_tab_rejected(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $owner = $this->getDataGenerator()->create_user();
+        $other = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Non-owner canceled']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($other->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant non-owner', 'bookitparticipantnonowner', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $other->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Foreign canceled exam',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$owner->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->setUser($other);
+        $this->expectException(\required_capability_exception::class);
+        update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'history',
+            1
+        );
+    }
+
+    /**
      * Service team must restore booker-canceled requests to New from the terminal tab.
      *
      * @runInSeparateProcess
@@ -358,5 +498,246 @@ final class update_event_booking_status_test extends advanced_testcase {
 
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
+    }
+
+    /**
+     * Service team may restore canceled bookings from History tab.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_service_team_canceled_to_new_via_history_tab(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $booker = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'History service restore',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Canceled history restore',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'history',
+            1
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
+        $this->assertSame('history', $response['tab']);
+
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
+    }
+
+    /**
+     * Service team may restore rejected bookings from History tab.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_service_team_rejected_to_new_via_history_tab(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $booker = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'History service rejected',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Rejected history restore',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'history',
+            1
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
+        $this->assertSame('history', $response['tab']);
+
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
+    }
+
+    /**
+     * Service team may restore rejected bookings from the rejected-requests tab.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_service_team_rejected_to_new_from_rejected_tab(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $booker = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Rejected tab restore']);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Rejected terminal request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'rejectedrequests',
+            1
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
+        $this->assertSame('rejectedrequests', $response['tab']);
+
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
+    }
+
+    /**
+     * Unauthorized users cannot restore from the rejected-requests tab.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_rejects_unauthorized_rejected_tab_restore(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Rejected tab deny']);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant', 'bookitparticipant050', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $owner = $this->getDataGenerator()->create_user();
+        $outsider = $this->getDataGenerator()->create_user();
+        \role_assign($roleid, $outsider->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($outsider->id, $course->id, 'student');
+        $this->setUser($outsider);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Rejected foreign request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$owner->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->expectException(\required_capability_exception::class);
+        update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'rejectedrequests',
+            1
+        );
     }
 }

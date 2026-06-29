@@ -629,6 +629,53 @@ class event_access_manager {
     }
 
     /**
+     * Check whether a canceled booking may be reactivated as a new request from History.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @return bool
+     */
+    public static function can_reactivate_canceled_request(
+        stdClass $event,
+        context_module $context
+    ): bool {
+        unset($context);
+
+        if ((int)($event->bookingstatus ?? -1) !== self::BOOKINGSTATUS_CANCELED) {
+            return false;
+        }
+
+        global $USER;
+
+        return in_array('bookingperson', self::get_user_roles_for_event($event, (int)$USER->id), true);
+    }
+
+    /**
+     * Check whether a terminal booking may show the History reactivate/restore action.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @return bool
+     */
+    public static function can_reactivate_from_history(stdClass $event, context_module $context): bool {
+        if (self::can_reactivate_rejected_request($event, $context)) {
+            return true;
+        }
+
+        if (self::can_reactivate_canceled_request($event, $context)) {
+            return true;
+        }
+
+        if (!self::can_manage_open_requests($context)) {
+            return false;
+        }
+
+        $status = (int)($event->bookingstatus ?? -1);
+
+        return in_array($status, [self::BOOKINGSTATUS_REJECTED, self::BOOKINGSTATUS_CANCELED], true);
+    }
+
+    /**
      * Check whether a canceled booking was initiated by the booking person.
      *
      * @param stdClass $event

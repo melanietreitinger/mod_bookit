@@ -277,6 +277,114 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Overview status resolver returns default triplet when filter param is absent.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_default_when_implicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false);
+
+        $this->assertSame(event_manager::get_reporting_default_booking_status_filter(), $resolved);
+    }
+
+    /**
+     * Overview status resolver returns default triplet when selection is explicitly empty.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_default_when_empty_explicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], true);
+
+        $this->assertSame(event_manager::get_reporting_default_booking_status_filter(), $resolved);
+    }
+
+    /**
+     * Overview status resolver honours explicit multi-status selection.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_explicit_subset(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids(
+            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_CANCELED],
+            true
+        );
+
+        $this->assertSame(
+            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_CANCELED],
+            $resolved
+        );
+    }
+
+    /**
+     * Overview status resolver keeps all five valid statuses when explicitly selected.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_all_five(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids(
+            [
+                event_access_manager::BOOKINGSTATUS_NEW,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                event_access_manager::BOOKINGSTATUS_ACCEPTED,
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+            ],
+            true
+        );
+
+        $this->assertSame(
+            [
+                event_access_manager::BOOKINGSTATUS_NEW,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                event_access_manager::BOOKINGSTATUS_ACCEPTED,
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+            ],
+            $resolved
+        );
+    }
+
+    /**
+     * Resolved status ids are suitable for overview tab navigation arrays.
+     *
+     * @return void
+     */
+    public function test_overview_navigation_params_status_array_for_service_team(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids(
+            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_IN_PROGRESS],
+            true
+        );
+
+        $this->assertSame(
+            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_IN_PROGRESS],
+            $resolved
+        );
+    }
+
+    /**
+     * Booker overview default status filter excludes terminal statuses.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_booker_default_status_triplet(): void {
+        $futurestart = strtotime('+2 days 09:00:00');
+        $futureend = strtotime('+2 days 11:00:00');
+        $base = ['starttime' => $futurestart, 'endtime' => $futureend];
+        $events = [
+            (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
+            (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
+            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED], $base),
+            (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
+            (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
+        ];
+
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false);
+        $filtered = event_manager::filter_overview_events($events, ['bookingstatuses' => $resolved]);
+
+        $this->assertSame([1, 2, 3], array_map(static fn($event): int => (int)$event->id, $filtered));
+    }
+
+    /**
      * Reporting query must expose creator full name fields instead of numeric ids only.
      *
      * @return void

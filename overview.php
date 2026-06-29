@@ -53,13 +53,11 @@ $showreportfilters = $canmanageopenrequests || $isobserverrestricted;
 $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
 $hasexplicitstatusfilter = array_key_exists('bookingstatusfilter', $_GET);
-if ($showreportfilters) {
-    $selectedstatuses = $hasexplicitstatusfilter
-        ? optional_param_array('bookingstatusfilter', [], PARAM_INT)
-        : event_manager::get_reporting_default_booking_status_filter();
-} else {
-    $selectedstatus = optional_param('bookingstatusfilter', -1, PARAM_INT);
-}
+$rawstatusfilter = optional_param_array('bookingstatusfilter', [], PARAM_INT);
+$selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
+    $rawstatusfilter,
+    $hasexplicitstatusfilter
+);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $queuepage = max(1, optional_param('queuepage', 1, PARAM_INT));
@@ -99,19 +97,13 @@ if ($showreportfilters) {
     );
 }
 $overviewfilters = [
-    'bookingstatuses' => $showreportfilters
-        ? $selectedstatuses
-        : ($selectedstatus >= 0 ? [$selectedstatus] : []),
+    'bookingstatuses' => $selectedstatuses,
     'facultyids' => $selectedfacultyid > 0 ? [$selectedfacultyid] : [],
     'semesterids' => $selectedsemesterids,
 ];
 $overviewnavigationparams = [];
-if ($showreportfilters) {
-    if ($hasexplicitstatusfilter) {
-        $overviewnavigationparams['bookingstatusfilter'] = $selectedstatuses;
-    }
-} else if ($selectedstatus >= 0) {
-    $overviewnavigationparams['bookingstatusfilter'] = $selectedstatus;
+if ($hasexplicitstatusfilter) {
+    $overviewnavigationparams['bookingstatusfilter'] = $selectedstatuses;
 }
 if ($selectedfacultyid > 0) {
     $overviewnavigationparams['facultyid'] = $selectedfacultyid;
@@ -318,27 +310,12 @@ foreach (event_manager::get_faculties() as $value => $label) {
     ];
 }
 $statusfilteroptions = [];
-if ($showreportfilters) {
-    foreach ([0, 1, 2, 3, 4] as $statusvalue) {
-        $statusfilteroptions[] = [
-            'value' => (string)$statusvalue,
-            'label' => event_manager::get_booking_status_label($statusvalue),
-            'selected' => in_array($statusvalue, $selectedstatuses, true),
-        ];
-    }
-} else {
-    $statusfilteroptions = [[
-        'value' => '-1',
-        'label' => get_string('overview_filter_all_statuses', 'mod_bookit'),
-        'selected' => $selectedstatus < 0,
-    ]];
-    foreach ([0, 1, 2, 3, 4] as $statusvalue) {
-        $statusfilteroptions[] = [
-            'value' => (string)$statusvalue,
-            'label' => event_manager::get_booking_status_label($statusvalue),
-            'selected' => $statusvalue === $selectedstatus,
-        ];
-    }
+foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+    $statusfilteroptions[] = [
+        'value' => (string)$statusvalue,
+        'label' => event_manager::get_booking_status_label($statusvalue),
+        'selected' => in_array($statusvalue, $selectedstatuses, true),
+    ];
 }
 
 // Fetch master checklist ID directly (no entity = no JS side effects).
@@ -417,14 +394,16 @@ $templatecontext = [
     'requestpaginghtml' => $requestpaginghtml,
     'showoverviewfilters' => $currenttab !== 'openrequests',
     'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
-    'statusfiltermultiple' => $showreportfilters && $currenttab !== 'openrequests',
     'showcreatedbycolumn' => $showreportfilters && $canmanageopenrequests && $currenttab !== 'openrequests',
     'createdbycolumnlabel' => get_string('event_usermodified', 'mod_bookit'),
     'showprogresscolumn' => $checklistenabled || $resourcesenabled,
     'showchecklistcolumn' => $checklistenabled,
     'showresourcescolumn' => $resourcesenabled,
     'showcancelcolumn' => !$canmanage && !$isobserverrestricted && $currenttab === 'myevents',
+    'showreactivatecolumn' => $currenttab === 'history'
+        || ($isinrequestworkspace && $requestworkspacemode === 'rejectedrequests'),
     'overviewcancelcolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
+    'overviewreactivatecolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'overviewcolumndatetime' => get_string('overview_column_datetime', 'mod_bookit'),
     'reportinghelp' => $currenttab === 'history'
         ? get_string('overview_history_help', 'mod_bookit')
@@ -684,7 +663,15 @@ $prepareeventrow = function (
             && event_access_manager::can_participant_overview_cancel($ev, $context, (int)$USER->id),
         'cancelactionlabel' => get_string('overview_cancel_booking', 'mod_bookit'),
         'canceltargetstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-        'overviewtab' => $currenttab === 'history' ? 'history' : 'myevents',
+        'hasreactivateaction' => ($requesttab === 'history'
+                && event_access_manager::can_reactivate_from_history($ev, $context))
+            || ($requesttab === 'rejectedrequests'
+                && event_access_manager::can_restore_terminal_request($ev, $context)),
+        'reactivateactionlabel' => get_string('bookingstatus_action_reactivate', 'mod_bookit'),
+        'reactivatetargetstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        'overviewtab' => $isrequestworkspaceitem
+            ? $requesttab
+            : ($currenttab === 'history' ? 'history' : 'myevents'),
     ];
 };
 

@@ -105,12 +105,7 @@
             {{/showreportfilters}}
             <div class="form-group col-md-2">
                 <label for="bookit-bookingstatusfilter">{{statusfilterlabel}}</label>
-                {{#statusfiltermultiple}}
                 <select id="bookit-bookingstatusfilter" name="bookingstatusfilter[]" class="form-control" multiple size="5">
-                {{/statusfiltermultiple}}
-                {{^statusfiltermultiple}}
-                <select id="bookit-bookingstatusfilter" name="bookingstatusfilter" class="form-control">
-                {{/statusfiltermultiple}}
                     {{#statusfilteroptions}}
                     <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
                     {{/statusfilteroptions}}
@@ -170,6 +165,9 @@
                 {{#showcancelcolumn}}
                 <th class="align-middle">{{overviewcancelcolumnlabel}}</th>
                 {{/showcancelcolumn}}
+                {{#showreactivatecolumn}}
+                <th class="align-middle">{{overviewreactivatecolumnlabel}}</th>
+                {{/showreactivatecolumn}}
             </tr>
         </thead>
 
@@ -273,6 +271,22 @@
                         {{^hascancelaction}}-{{/hascancelaction}}
                     </td>
                     {{/showcancelcolumn}}
+                    {{#showreactivatecolumn}}
+                    <td class="align-middle">
+                        {{#hasreactivateaction}}
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-action="reactivate-booking-from-overview"
+                                data-eventid="{{id}}"
+                                data-cmid="{{cmid}}"
+                                data-status="{{reactivatetargetstatus}}"
+                                data-tab="{{overviewtab}}">
+                            {{reactivateactionlabel}}
+                        </button>
+                        {{/hasreactivateaction}}
+                        {{^hasreactivateaction}}-{{/hasreactivateaction}}
+                    </td>
+                    {{/showreactivatecolumn}}
                 </tr>
             {{/events}}
         </tbody>
@@ -432,6 +446,9 @@
                 <th class="align-middle">My role</th>
                 <th class="align-middle">Booking status</th>
                 <th class="align-middle">Date</th>
+                {{#showreactivatecolumn}}
+                <th class="align-middle">{{overviewreactivatecolumnlabel}}</th>
+                {{/showreactivatecolumn}}
             </tr>
         </thead>
         <tbody class="text-center">
@@ -455,6 +472,22 @@
                 <td class="align-middle">{{myrole}}</td>
                 {{{statuscellhtml}}}
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
+                {{#showreactivatecolumn}}
+                <td class="align-middle">
+                    {{#hasreactivateaction}}
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            data-action="reactivate-booking-from-overview"
+                            data-eventid="{{id}}"
+                            data-cmid="{{cmid}}"
+                            data-status="{{reactivatetargetstatus}}"
+                            data-tab="{{overviewtab}}">
+                        {{reactivateactionlabel}}
+                    </button>
+                    {{/hasreactivateaction}}
+                    {{^hasreactivateaction}}-{{/hasreactivateaction}}
+                </td>
+                {{/showreactivatecolumn}}
             </tr>
             {{/rejectedrequests}}
         </tbody>

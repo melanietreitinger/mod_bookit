@@ -1504,6 +1504,371 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Booking persons may reactivate their own canceled bookings from History.
+     *
+     * @return void
+     */
+    public function test_booking_person_can_reactivate_own_canceled(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_reactivate_canceled_request($event, $context));
+    }
+
+    /**
+     * Booking persons cannot reactivate non-canceled bookings via canceled helper.
+     *
+     * @return void
+     */
+    public function test_booking_person_cannot_reactivate_non_canceled(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+            ] as $status
+        ) {
+            $event = (object)[
+                'bookingstatus' => $status,
+                'personinchargeid' => 0,
+                'usermodified' => (int)$user->id,
+                'otherexaminers' => '',
+                'supportpersons' => '',
+            ];
+            $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+        }
+    }
+
+    /**
+     * Non-owners cannot reactivate canceled bookings.
+     *
+     * @return void
+     */
+    public function test_non_owner_cannot_reactivate_canceled(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $owner = $this->getDataGenerator()->create_user();
+        $other = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $other->id);
+        $this->setUser($other);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$owner->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+    }
+
+    /**
+     * Examiner-only users cannot reactivate canceled bookings as booking person.
+     *
+     * @return void
+     */
+    public function test_examiner_only_cannot_reactivate_canceled(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $examiner = $this->getDataGenerator()->create_user();
+        $owner = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $examiner->id);
+        $this->setUser($examiner);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => (int)$examiner->id,
+            'usermodified' => (int)$owner->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+    }
+
+    /**
+     * Service team without bookingperson role cannot use canceled reactivate helper.
+     *
+     * @return void
+     */
+    public function test_service_team_cannot_use_canceled_reactivate_helper(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice049cancel');
+        $user = $this->getDataGenerator()->create_user();
+        $booker = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice049cancel');
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$booker->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+    }
+
+    /**
+     * History reactivate helper allows booking persons on own terminal bookings.
+     *
+     * @return void
+     */
+    public function test_can_reactivate_from_history_booking_person_terminal(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            ] as $status
+        ) {
+            $event = (object)[
+                'bookingstatus' => $status,
+                'personinchargeid' => 0,
+                'usermodified' => (int)$user->id,
+                'otherexaminers' => '',
+                'supportpersons' => '',
+            ];
+            $this->assertTrue(event_access_manager::can_reactivate_from_history($event, $context));
+        }
+    }
+
+    /**
+     * History reactivate helper allows service team on terminal bookings.
+     *
+     * @return void
+     */
+    public function test_can_reactivate_from_history_service_team_terminal(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice049hist');
+        $user = $this->getDataGenerator()->create_user();
+        $booker = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice049hist');
+        $this->setUser($user);
+
+        foreach (
+            [
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            ] as $status
+        ) {
+            $event = (object)[
+                'bookingstatus' => $status,
+                'personinchargeid' => 0,
+                'usermodified' => (int)$booker->id,
+                'otherexaminers' => '',
+                'supportpersons' => '',
+            ];
+            $this->assertTrue(event_access_manager::can_reactivate_from_history($event, $context));
+        }
+    }
+
+    /**
+     * History reactivate helper denies non-terminal and unauthorized users.
+     *
+     * @return void
+     */
+    public function test_can_reactivate_from_history_denied_cases(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $owner = $this->getDataGenerator()->create_user();
+        $examiner = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $examiner->id);
+        $this->setUser($examiner);
+
+        $canceledother = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => (int)$examiner->id,
+            'usermodified' => (int)$owner->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertFalse(event_access_manager::can_reactivate_from_history($canceledother, $context));
+
+        $accepted = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$owner->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertFalse(event_access_manager::can_reactivate_from_history($accepted, $context));
+    }
+
+    /**
+     * Terminal restore helper allows service team on rejected requests.
+     *
+     * @return void
+     */
+    public function test_can_restore_terminal_request_rejected(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice050rej');
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice050rej');
+        $this->setUser($user);
+
+        $rejected = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertTrue(event_access_manager::can_restore_terminal_request($rejected, $context));
+    }
+
+    /**
+     * Terminal restore helper allows service team on booker-canceled requests.
+     *
+     * @return void
+     */
+    public function test_can_restore_terminal_request_booker_canceled(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice050can');
+        $serviceteam = $this->getDataGenerator()->create_user();
+        $booker = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $serviceteam->id, 'bookitservice050can');
+        $this->setUser($serviceteam);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Booker canceled terminal',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        event_manager::record_booking_history(
+            $eventid,
+            'status_changed',
+            (int)$booker->id,
+            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $this->assertTrue(event_access_manager::can_restore_terminal_request($event, $context));
+    }
+
+    /**
+     * Terminal restore helper denies non-managers, service-team cancels, and non-terminal statuses.
+     *
+     * @return void
+     */
+    public function test_can_restore_terminal_request_denied_cases(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $participant = $this->getDataGenerator()->create_user();
+        $booker = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $participant->id);
+        $this->setUser($participant);
+
+        $rejected = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$booker->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertFalse(event_access_manager::can_restore_terminal_request($rejected, $context));
+
+        $servicecontext = $this->create_bookit_context_with_service_role('bookitservice050deny');
+        $serviceteam = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($servicecontext, $serviceteam->id, 'bookitservice050deny');
+        $this->setUser($serviceteam);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Service canceled terminal',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        event_manager::record_booking_history(
+            $eventid,
+            'status_changed',
+            (int)$serviceteam->id,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+        $servicecanceled = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $this->assertFalse(event_access_manager::can_restore_terminal_request($servicecanceled, $servicecontext));
+
+        $accepted = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'personinchargeid' => 0,
+            'usermodified' => (int)$booker->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $this->assertFalse(event_access_manager::can_restore_terminal_request($accepted, $servicecontext));
+    }
+
+    /**
      * Modal footer mode follows the same editability rules as edit_event_form.
      *
      * @runInSeparateProcess

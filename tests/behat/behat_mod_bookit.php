@@ -294,9 +294,11 @@ class behat_mod_bookit extends behat_base {
         $params = [
             'id' => $cm->id,
             'tab' => $tab,
-            'bookingstatusfilter' => $status,
             'facultyid' => $faculty,
         ];
+        if ($status !== '' && $status !== '-1') {
+            $params['bookingstatusfilter'] = [(int)$status];
+        }
         $query = http_build_query($params);
         foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
             $query .= '&semesterids[]=' . rawurlencode($semester);
