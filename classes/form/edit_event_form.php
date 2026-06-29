@@ -66,6 +66,9 @@ class edit_event_form extends dynamic_form {
     /** @var bookit_event|stdClass|null An event, if an existing one is getting edited. */
     private bookit_event|stdClass|null $event = null;
 
+    /** @var bool Whether the editable-resources section marker was added to the form. */
+    private bool $resourcessectionmarkeradded = false;
+
     /**
      * Define the form
      */
@@ -939,36 +942,14 @@ class edit_event_form extends dynamic_form {
             }
         }
 
-        $mappings = [];
-        if ($resourcesenabled && $caneditpublic && !$statusonlyselfcancel) {
-            foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
-                // Rooms.
-                foreach ($categorygroup['resources'] as $resource) {
-                    $id = $resource['id'];
-                    if ($categorygroup['category']['name'] === 'Rooms') {
-                        if (($formdata->roomid ?? $formdata->room ?? null) == $id) {
-                            $mappings[] = (object) [
-                                    'resourceid' => (int)($formdata->roomid ?? $formdata->room),
-                                    'amount' => 1,
-                            ];
-                        }
-                    } else {
-                        // Other Resources.
-                        $checkboxname = 'checkbox_' . $id;
-                        if ($formdata->$checkboxname ?? false) {
-                            // Amountirrelevant resources have no amount input; store 1 as neutral value.
-                            $amount = $resource['amountirrelevant'] ? 1 : (int)($formdata->{'resource_' . $id} ?? 1);
-                            $mappings[] = (object) [
-                                    'resourceid' => $id,
-                                    'amount' => $amount,
-                            ];
-                        }
-                    }
-                }
-            }
-        } else if ($currentevent) {
-            $mappings = $currentevent->resources;
-        }
+        $mappings = $this->resolve_resource_mappings_from_submission(
+            $formdata,
+            $resourcesenabled,
+            $caneditpublic,
+            $statusonlyselfcancel,
+            $currentevent,
+            $currentrecord
+        );
         $formdata->resources = $mappings;
 
         if ($caneditpublic && !$statusonlyselfcancel) {
@@ -1117,6 +1098,99 @@ class edit_event_form extends dynamic_form {
     }
 
     /**
+     * Resolve resource mappings for save from form submission and permission context.
+     *
+     * @param stdClass $formdata Submitted form data
+     * @param bool $resourcesenabled Whether the resources module is enabled
+     * @param bool $caneditpublic Whether public event fields may be edited
+     * @param bool $statusonlyselfcancel Whether this is a self-cancel-only save
+     * @param bookit_event|null $currentevent Existing event entity, if any
+     * @param stdClass|null $currentrecord Existing event DB record, if any
+     * @return array List of mapping objects with resourceid and amount
+     * @throws dml_exception
+     */
+    private function resolve_resource_mappings_from_submission(
+        stdClass $formdata,
+        bool $resourcesenabled,
+        bool $caneditpublic,
+        bool $statusonlyselfcancel,
+        ?bookit_event $currentevent,
+        ?stdClass $currentrecord
+    ): array {
+        if (!$resourcesenabled) {
+            return $currentevent !== null ? $currentevent->resources : [];
+        }
+
+        if ($statusonlyselfcancel || !$caneditpublic) {
+            return $currentevent !== null ? $currentevent->resources : [];
+        }
+
+        if ($currentrecord !== null && (int)$currentrecord->bookingstatus >= 2) {
+            return $currentevent !== null ? $currentevent->resources : [];
+        }
+
+        $caneditresourcecheckboxes = (int)($formdata->editevent ?? 0) === 1;
+        if ($currentevent !== null && !$caneditresourcecheckboxes) {
+            return $currentevent->resources;
+        }
+
+        $hassection = !empty($formdata->bookit_resources_section);
+        if ($currentevent !== null && !$hassection) {
+            return $currentevent->resources;
+        }
+
+        if ($currentevent !== null && $hassection && !$this->submission_includes_resource_checkbox_fields()) {
+            return $currentevent->resources;
+        }
+
+        return $this->build_resource_mappings_from_checkbox_submission($formdata);
+    }
+
+    /**
+     * Whether the AJAX submission included any resource checkbox fields.
+     *
+     * Unchecked advcheckboxes still submit a hidden checkbox_*=0 entry; omitted keys mean
+     * the browser did not serialize the resource controls (e.g. disabled fields).
+     *
+     * @return bool
+     */
+    private function submission_includes_resource_checkbox_fields(): bool {
+        foreach (array_keys((array)($this->_ajaxformdata ?? [])) as $fieldname) {
+            if (str_starts_with($fieldname, 'checkbox_')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build resource mappings from submitted checkbox and amount fields.
+     *
+     * @param stdClass $formdata Submitted form data
+     * @return array List of mapping objects with resourceid and amount
+     * @throws dml_exception
+     */
+    private function build_resource_mappings_from_checkbox_submission(stdClass $formdata): array {
+        $mappings = [];
+        foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
+            foreach ($categorygroup['resources'] as $resource) {
+                $id = $resource['id'];
+                $checkboxname = 'checkbox_' . $id;
+                if ($formdata->$checkboxname ?? false) {
+                    $amount = $resource['amountirrelevant'] ? 1 : (int)($formdata->{'resource_' . $id} ?? 1);
+                    $mappings[] = (object) [
+                        'resourceid' => $id,
+                        'amount' => $amount,
+                    ];
+                }
+            }
+        }
+
+        return $mappings;
+    }
+
+    /**
      * Add resources fields grouped by category.
      *
      * @param \MoodleQuickForm $mform The form instance
@@ -1135,6 +1209,12 @@ class edit_event_form extends dynamic_form {
     ): void {
         if (empty($resourcesdata)) {
             return;
+        }
+
+        if (!$bookingcompleted && !$this->resourcessectionmarkeradded) {
+            $mform->addElement('hidden', 'bookit_resources_section', '1');
+            $mform->setType('bookit_resources_section', PARAM_RAW);
+            $this->resourcessectionmarkeradded = true;
         }
 
         // Load room data for room icons (shortname + color per resource).
