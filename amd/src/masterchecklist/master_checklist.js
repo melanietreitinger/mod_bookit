@@ -6,6 +6,7 @@ import Templates from 'core/templates';
 import * as Toast from 'core/toast';
 import {getString} from 'core/str';
 import ChecklistHelper from 'mod_bookit/helpers/checklist_helper';
+import {enhanceForm} from 'mod_bookit/form_multiselect_validation_bridge';
 
 export default class extends BaseComponent {
 
@@ -126,6 +127,12 @@ export default class extends BaseComponent {
 
         modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (response) => {
             this.reactive.dispatch('checklistitemCreated', response.detail);
+        });
+
+        modalForm.addEventListener(modalForm.events.LOADED, () => {
+            setTimeout(() => {
+                enhanceForm(modalForm.getFormNode());
+            }, 500);
         });
 
         modalForm.show();
