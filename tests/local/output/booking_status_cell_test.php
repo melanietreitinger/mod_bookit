@@ -90,6 +90,8 @@ final class booking_status_cell_test extends advanced_testcase {
 
         $itemdata = (object)[
             'id' => 7,
+            'eventid' => 3,
+            'cmid' => 12,
             'status' => 'requested',
         ];
 
@@ -101,6 +103,60 @@ final class booking_status_cell_test extends advanced_testcase {
         $this->assertFalse($data->canedit);
         $this->assertFalse($data->showoptions);
         $this->assertSame('resource', $data->mode);
+        $this->assertSame('update-status', $data->updateaction);
+        $this->assertSame('open', $data->statusgroupkey);
         $this->assertSame(get_string('event_bookingstatus_0', 'mod_bookit'), $data->statustext);
+    }
+
+    /**
+     * Resource rows export editable dropdowns for service team.
+     */
+    public function test_resource_row_exports_editable_dropdown_for_manage(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $itemdata = (object)[
+            'id' => 8,
+            'eventid' => 3,
+            'cmid' => 12,
+            'resourceid' => 5,
+            'status' => 'confirmed',
+        ];
+
+        $cell = booking_status_cell::for_resource_row($itemdata, true);
+        global $PAGE;
+        $output = $PAGE->get_renderer('mod_bookit');
+        $data = $cell->export_for_template($output);
+
+        $this->assertTrue($data->canedit);
+        $this->assertTrue($data->showoptions);
+        $this->assertSame('update-status', $data->updateaction);
+        $this->assertSame('confirmed', $data->statusgroupkey);
+        $this->assertSame(get_string('event_bookingstatus_2', 'mod_bookit'), $data->statustext);
+        $this->assertCount(4, $data->options);
+    }
+
+    /**
+     * Resource status maps to open / confirmed / closed groups.
+     */
+    public function test_resource_row_status_group_keys(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        global $PAGE;
+        $output = $PAGE->get_renderer('mod_bookit');
+
+        $cases = [
+            'requested' => 'open',
+            'inprogress' => 'open',
+            'confirmed' => 'confirmed',
+            'rejected' => 'closed',
+        ];
+
+        foreach ($cases as $status => $expectedgroup) {
+            $itemdata = (object)['id' => 1, 'status' => $status];
+            $cell = booking_status_cell::for_resource_row($itemdata, false);
+            $data = $cell->export_for_template($output);
+            $this->assertSame($expectedgroup, $data->statusgroupkey, "Status {$status} group key");
+        }
     }
 }

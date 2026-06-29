@@ -28,7 +28,9 @@ import Ajax from 'core/ajax';
 import {saveCancelPromise, exception} from 'core/notification';
 import {get_strings as getStrings} from 'core/str';
 
-const SELECTOR = 'select[data-action="update-booking-status"]';
+const BOOKING_STATUS_SELECTOR = 'select[data-action="update-booking-status"]';
+const RESOURCE_STATUS_SELECTOR = 'select[data-action="update-status"]';
+const STATUS_SELECTORS = `${BOOKING_STATUS_SELECTOR}, ${RESOURCE_STATUS_SELECTOR}`;
 const CANCEL_OVERVIEW_SELECTOR = 'button[data-action="cancel-booking-from-overview"]';
 const REACTIVATE_OVERVIEW_SELECTOR = 'button[data-action="reactivate-booking-from-overview"]';
 const REQUEST_COUNT_SELECTOR = '[data-region="request-queue-count"]';
@@ -222,7 +224,7 @@ const renderRequestRow = (item, readConfig, workspace) => {
  * @param {HTMLElement} root
  */
 const applyColorsIn = (root) => {
-    root.querySelectorAll(SELECTOR).forEach((select) => {
+    root.querySelectorAll(STATUS_SELECTORS).forEach((select) => {
         applyColor(select);
     });
 };
@@ -352,16 +354,69 @@ const refreshQueueFromGovernedRead = (readConfig, initialQueueResponse, redirect
 };
 
 /**
+ * Persist a resource status change from the event resources table.
+ *
+ * @param {HTMLSelectElement} select
+ */
+const handleResourceStatusChange = (select) => {
+    const cmid = parseInt(select.dataset.cmid, 10);
+    const eventid = parseInt(select.dataset.eventid, 10);
+    const row = select.closest('[data-region="event-resources-checklist-item-row"]');
+    const resourceid = row ? parseInt(row.dataset.itemResourceid, 10) : 0;
+    const status = select.value;
+    const previousstatus = row ? (row.dataset.itemStatus || status) : status;
+
+    select.disabled = true;
+
+    Ajax.call([{
+        methodname: 'mod_bookit_update_event_resource_status',
+        args: {cmid, eventid, resourceid, status},
+    }])[0]
+    .then(() => {
+        applyColor(select);
+        select.disabled = false;
+        if (row) {
+            row.dataset.itemStatus = status;
+            row.dispatchEvent(new CustomEvent('bookit-resource-status-saved', {
+                bubbles: true,
+                detail: {
+                    status,
+                    itemid: parseInt(row.dataset.itemid, 10),
+                },
+            }));
+        }
+        return null;
+    })
+    .catch((err) => {
+        select.value = previousstatus;
+        if (row) {
+            row.dataset.itemStatus = previousstatus;
+        }
+        applyColor(select);
+        select.disabled = false;
+        exception(err);
+    });
+};
+
+/**
  * Initialise the dropdown listener on the overview table.
  */
 export const init = () => {
-    // Apply initial colours to all existing dropdowns on the page.
-    document.querySelectorAll(SELECTOR).forEach((select) => {
-        applyColor(select);
-    });
+    applyColorsIn(document);
+
+    const resourcestable = document.getElementById('event-resources-checklist-table');
+    if (resourcestable) {
+        applyColorsIn(resourcestable);
+    }
 
     document.addEventListener('change', (e) => {
-        const select = e.target.closest(SELECTOR);
+        const resourceselect = e.target.closest(RESOURCE_STATUS_SELECTOR);
+        if (resourceselect) {
+            handleResourceStatusChange(resourceselect);
+            return;
+        }
+
+        const select = e.target.closest(BOOKING_STATUS_SELECTOR);
         if (!select) {
             return;
         }

@@ -178,6 +178,8 @@ class event_resources_checklist_catalog implements renderable, templatable {
             $itemdata->isrejected       = ($status === bookit_resource_status::REJECTED);
 
             $statuscell = booking_status_cell::for_resource_row($itemdata, $this->canmanage);
+            $celldata = $statuscell->export_for_template($bookitrenderer);
+            $itemdata->statusgroupkey = $celldata->statusgroupkey;
             $itemdata->statuscellhtml = $bookitrenderer->render($statuscell);
 
             $totalcount++;
