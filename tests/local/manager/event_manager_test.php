@@ -362,6 +362,107 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * History tab default status filter returns terminal pair.
+     *
+     * @return void
+     */
+    public function test_get_history_default_booking_status_filter_returns_terminal_pair(): void {
+        $this->assertSame(
+            [
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+            ],
+            event_manager::get_history_default_booking_status_filter()
+        );
+    }
+
+    /**
+     * History tab resolver returns terminal pair when filter param is absent.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_history_implicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true);
+
+        $this->assertSame(event_manager::get_history_default_booking_status_filter(), $resolved);
+    }
+
+    /**
+     * Overview tab resolver keeps triplet default when filter param is absent.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_overview_implicit_unchanged(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, false);
+
+        $this->assertSame(event_manager::get_reporting_default_booking_status_filter(), $resolved);
+    }
+
+    /**
+     * History tab resolver returns terminal pair when selection is explicitly empty.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_history_empty_explicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], true, true);
+
+        $this->assertSame(event_manager::get_history_default_booking_status_filter(), $resolved);
+    }
+
+    /**
+     * Overview tab resolver returns triplet when selection is explicitly empty.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_overview_empty_explicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], true, false);
+
+        $this->assertSame(event_manager::get_reporting_default_booking_status_filter(), $resolved);
+    }
+
+    /**
+     * Explicit status selection overrides history default.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_explicit_overrides_history_default(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids(
+            [event_access_manager::BOOKINGSTATUS_ACCEPTED],
+            true,
+            true
+        );
+
+        $this->assertSame([event_access_manager::BOOKINGSTATUS_ACCEPTED], $resolved);
+    }
+
+    /**
+     * History default status filter excludes active statuses from history list.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_history_default_excludes_active_statuses(): void {
+        $futurestart = strtotime('+2 days 09:00:00');
+        $futureend = strtotime('+2 days 11:00:00');
+        $base = ['starttime' => $futurestart, 'endtime' => $futureend];
+        $events = [
+            (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
+            (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
+            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED], $base),
+            (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
+            (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
+        ];
+
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true);
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            ['bookingstatuses' => $resolved],
+            true
+        );
+
+        $this->assertSame([4, 5], array_map(static fn($event): int => (int)$event->id, $filtered));
+    }
+
+    /**
      * Booker overview default status filter excludes terminal statuses.
      *
      * @return void

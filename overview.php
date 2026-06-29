@@ -54,10 +54,6 @@ $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
 $hasexplicitstatusfilter = array_key_exists('bookingstatusfilter', $_GET);
 $rawstatusfilter = optional_param_array('bookingstatusfilter', [], PARAM_INT);
-$selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
-    $rawstatusfilter,
-    $hasexplicitstatusfilter
-);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $queuepage = max(1, optional_param('queuepage', 1, PARAM_INT));
@@ -74,6 +70,11 @@ $currenttab = match (true) {
     $tab === 'history' => 'history',
     default => 'myevents',
 };
+$selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
+    $rawstatusfilter,
+    $hasexplicitstatusfilter,
+    $currenttab === 'history'
+);
 $tableid = match (true) {
     $isinrequestworkspace && $requestworkspacemode === 'rejectedrequests' => 'rejected-requests-table',
     $isinrequestworkspace && $requestworkspacemode === 'acceptedrequests' => 'accepted-requests-table',
