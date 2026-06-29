@@ -58,10 +58,10 @@ $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $queuepage = max(1, optional_param('queuepage', 1, PARAM_INT));
 $queueperpage = 25;
-$isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'acceptedrequests', 'rejectedrequests'], true);
+$isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'confirmedrequests', 'rejectedrequests'], true);
 $requestworkspacemode = match ($tab) {
     'rejectedrequests' => 'rejectedrequests',
-    'acceptedrequests' => 'acceptedrequests',
+    'confirmedrequests' => 'confirmedrequests',
     default => 'openrequests',
 };
 $currenttab = match (true) {
@@ -77,7 +77,7 @@ $selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
 );
 $tableid = match (true) {
     $isinrequestworkspace && $requestworkspacemode === 'rejectedrequests' => 'rejected-requests-table',
-    $isinrequestworkspace && $requestworkspacemode === 'acceptedrequests' => 'accepted-requests-table',
+    $isinrequestworkspace && $requestworkspacemode === 'confirmedrequests' => 'confirmed-requests-table',
     $isinrequestworkspace => 'open-requests-table',
     default => 'overview-table',
 };
@@ -222,7 +222,7 @@ $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode
     'reportstart' => $reportstartvalue,
     'reportend' => $reportendvalue,
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
-    'acceptedrequestsempty' => get_string('overview_accepted_requests_empty', 'mod_bookit'),
+    'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
 ]));
 
@@ -262,19 +262,19 @@ $openrequests = $canmanageopenrequests ? event_manager::get_open_requests() : []
 $openrequestcount = count($openrequests);
 $rejectedrequests = $canmanageopenrequests ? event_manager::get_rejected_requests() : [];
 $rejectedrequestcount = count($rejectedrequests);
-$acceptedrequests = $canmanageopenrequests ? event_manager::get_accepted_requests() : [];
-$acceptedrequestcount = count($acceptedrequests);
+$confirmedrequests = $canmanageopenrequests ? event_manager::get_confirmed_requests() : [];
+$confirmedrequestcount = count($confirmedrequests);
 $requestqueuecount = match ($requestworkspacemode) {
     'rejectedrequests' => $rejectedrequestcount,
-    'acceptedrequests' => $acceptedrequestcount,
+    'confirmedrequests' => $confirmedrequestcount,
     default => $openrequestcount,
 };
 $requesttotalpages = max(1, (int)ceil($requestqueuecount / $queueperpage));
 $queuepage = min($queuepage, $requesttotalpages);
 if ($requestworkspacemode === 'rejectedrequests') {
     $rejectedrequests = array_values(array_slice($rejectedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
-} else if ($requestworkspacemode === 'acceptedrequests') {
-    $acceptedrequests = array_values(array_slice($acceptedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
+} else if ($requestworkspacemode === 'confirmedrequests') {
+    $confirmedrequests = array_values(array_slice($confirmedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
 } else {
     $openrequests = array_values(array_slice($openrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
 }
@@ -359,7 +359,7 @@ $templatecontext = [
         )
         : '',
     'showopenrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
-    'showacceptedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'acceptedrequests',
+    'showconfirmedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'confirmedrequests',
     'showrejectedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
     'historyactive' => $currenttab === 'history',
@@ -368,7 +368,7 @@ $templatecontext = [
         : ($showreportfilters ? get_string('overview_all_events', 'mod_bookit') : get_string('overview_my_events', 'mod_bookit')),
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
-    'acceptedrequestsempty' => get_string('overview_accepted_requests_empty', 'mod_bookit'),
+    'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
     'requestpaginghtml' => $requestpaginghtml,
     'showoverviewfilters' => $currenttab !== 'openrequests',
     'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
@@ -402,11 +402,11 @@ $templatecontext = [
         ? get_string('observer_empty_state', 'mod_bookit')
         : get_string('overview_no_results', 'mod_bookit'),
     'hasopenrequests' => !empty($openrequests),
-    'hasacceptedrequests' => !empty($acceptedrequests),
+    'hasconfirmedrequests' => !empty($confirmedrequests),
     'hasrejectedrequests' => !empty($rejectedrequests),
     'events' => [],
     'openrequests' => [],
-    'acceptedrequests' => [],
+    'confirmedrequests' => [],
     'rejectedrequests' => [],
 ];
 
@@ -671,8 +671,8 @@ foreach ($openrequests as $ev) {
     $templatecontext['openrequests'][] = $prepareeventrow($ev, true, 'openrequests');
 }
 
-foreach ($acceptedrequests as $ev) {
-    $templatecontext['acceptedrequests'][] = $prepareeventrow($ev, true, 'acceptedrequests');
+foreach ($confirmedrequests as $ev) {
+    $templatecontext['confirmedrequests'][] = $prepareeventrow($ev, true, 'confirmedrequests');
 }
 
 foreach ($rejectedrequests as $ev) {
@@ -680,7 +680,7 @@ foreach ($rejectedrequests as $ev) {
 }
 
 $templatecontext['hasopenrequests'] = !empty($templatecontext['openrequests']);
-$templatecontext['hasacceptedrequests'] = !empty($templatecontext['acceptedrequests']);
+$templatecontext['hasconfirmedrequests'] = !empty($templatecontext['confirmedrequests']);
 $templatecontext['hasrejectedrequests'] = !empty($templatecontext['rejectedrequests']);
 
 // Render Mustache.

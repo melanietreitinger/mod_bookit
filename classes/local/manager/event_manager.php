@@ -104,7 +104,7 @@ class event_manager {
                 continue;
             }
 
-            if ($observerrestricted && (int)$record->bookingstatus !== event_access_manager::BOOKINGSTATUS_ACCEPTED) {
+            if ($observerrestricted && (int)$record->bookingstatus !== event_access_manager::BOOKINGSTATUS_CONFIRMED) {
                 continue;
             }
 
@@ -294,8 +294,8 @@ class event_manager {
 
         if ($workspace === 'openrequests') {
             $events = $canmanageopenrequests ? self::get_open_requests() : [];
-        } else if ($workspace === 'acceptedrequests') {
-            $events = $canmanageopenrequests ? self::get_accepted_requests() : [];
+        } else if ($workspace === 'confirmedrequests') {
+            $events = $canmanageopenrequests ? self::get_confirmed_requests() : [];
         } else if ($workspace === 'rejectedrequests') {
             $events = $canmanageopenrequests ? self::get_rejected_requests() : [];
         } else {
@@ -334,13 +334,13 @@ class event_manager {
         $rejectedrequestcount = $workspace === 'rejectedrequests' ? $totalcount : (
             $canmanageopenrequests ? count(self::get_rejected_requests()) : 0
         );
-        $acceptedrequestcount = $workspace === 'acceptedrequests' ? $totalcount : (
-            $canmanageopenrequests ? self::count_accepted_requests() : 0
+        $confirmedrequestcount = $workspace === 'confirmedrequests' ? $totalcount : (
+            $canmanageopenrequests ? self::count_confirmed_requests() : 0
         );
         $currentpage = 1;
         $totalpages = 1;
         $haspaging = false;
-        if (in_array($workspace, ['openrequests', 'acceptedrequests', 'rejectedrequests'], true)) {
+        if (in_array($workspace, ['openrequests', 'confirmedrequests', 'rejectedrequests'], true)) {
             $totalpages = max(1, (int)ceil($totalcount / $perpage));
             $currentpage = min($page, $totalpages);
             $offset = ($currentpage - 1) * $perpage;
@@ -369,7 +369,7 @@ class event_manager {
             'summary' => [
                 'count' => $totalcount,
                 'openrequestcount' => $openrequestcount,
-                'acceptedrequestcount' => $acceptedrequestcount,
+                'confirmedrequestcount' => $confirmedrequestcount,
                 'rejectedrequestcount' => $rejectedrequestcount,
             ],
             'paging' => [
@@ -538,7 +538,7 @@ class event_manager {
         return [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ];
     }
 
@@ -570,7 +570,7 @@ class event_manager {
         $allowed = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
             event_access_manager::BOOKINGSTATUS_REJECTED,
         ];
@@ -836,7 +836,7 @@ class event_manager {
      * @return array
      * @throws dml_exception
      */
-    public static function get_accepted_requests(?int $referencetime = null): array {
+    public static function get_confirmed_requests(?int $referencetime = null): array {
         global $DB;
 
         $sql = "
@@ -858,7 +858,7 @@ class event_manager {
         ";
 
         $records = $DB->get_records_sql($sql, [
-            'status' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'status' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]);
         $referencetime ??= time();
 
@@ -875,8 +875,8 @@ class event_manager {
      * @return int
      * @throws dml_exception
      */
-    public static function count_accepted_requests(?int $referencetime = null): int {
-        return count(self::get_accepted_requests($referencetime));
+    public static function count_confirmed_requests(?int $referencetime = null): int {
+        return count(self::get_confirmed_requests($referencetime));
     }
 
     /**
@@ -1512,7 +1512,7 @@ class event_manager {
         return match ($status) {
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'open',
-            event_access_manager::BOOKINGSTATUS_ACCEPTED => 'confirmed',
+            event_access_manager::BOOKINGSTATUS_CONFIRMED => 'confirmed',
             default => 'closed',
         };
     }
@@ -1577,7 +1577,7 @@ class event_manager {
     public static function get_resource_status_label(string $status): string {
         return match ($status) {
             'requested' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_NEW),
-            'confirmed' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_ACCEPTED),
+            'confirmed' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_CONFIRMED),
             'inprogress' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_IN_PROGRESS),
             'rejected' => self::get_booking_status_label(event_access_manager::BOOKINGSTATUS_REJECTED),
             default => $status,
@@ -1779,7 +1779,7 @@ class event_manager {
 
         return match ($newstatus) {
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'moved_to_in_progress',
-            event_access_manager::BOOKINGSTATUS_ACCEPTED => 'accepted',
+            event_access_manager::BOOKINGSTATUS_CONFIRMED => 'confirmed',
             event_access_manager::BOOKINGSTATUS_CANCELED => 'canceled',
             event_access_manager::BOOKINGSTATUS_REJECTED => 'rejected',
             default => 'updated',

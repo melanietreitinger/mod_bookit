@@ -45,8 +45,8 @@ class event_access_manager {
     /** Booking status: in progress (being processed by service team). */
     public const BOOKINGSTATUS_IN_PROGRESS = 1;
 
-    /** Booking status: accepted by service team. */
-    public const BOOKINGSTATUS_ACCEPTED = 2;
+    /** Booking status: confirmed by service team. */
+    public const BOOKINGSTATUS_CONFIRMED = 2;
 
     /** Booking status: canceled. */
     public const BOOKINGSTATUS_CANCELED = 3;
@@ -70,22 +70,22 @@ class event_access_manager {
     private const ALLOWED_TRANSITIONS = [
         self::BOOKINGSTATUS_NEW => [
             self::BOOKINGSTATUS_IN_PROGRESS,
-            self::BOOKINGSTATUS_ACCEPTED,
+            self::BOOKINGSTATUS_CONFIRMED,
             self::BOOKINGSTATUS_CANCELED,
             self::BOOKINGSTATUS_REJECTED,
         ],
         self::BOOKINGSTATUS_IN_PROGRESS => [
-            self::BOOKINGSTATUS_ACCEPTED,
+            self::BOOKINGSTATUS_CONFIRMED,
             self::BOOKINGSTATUS_CANCELED,
             self::BOOKINGSTATUS_REJECTED,
         ],
-        self::BOOKINGSTATUS_ACCEPTED => [
+        self::BOOKINGSTATUS_CONFIRMED => [
             self::BOOKINGSTATUS_CANCELED,
         ],
         self::BOOKINGSTATUS_CANCELED => [
             self::BOOKINGSTATUS_NEW,
             self::BOOKINGSTATUS_IN_PROGRESS,
-            self::BOOKINGSTATUS_ACCEPTED,
+            self::BOOKINGSTATUS_CONFIRMED,
         ],
         self::BOOKINGSTATUS_REJECTED => [
             self::BOOKINGSTATUS_NEW,
@@ -99,7 +99,7 @@ class event_access_manager {
      * @return bool
      */
     public static function is_booking_confirmed(stdClass $event): bool {
-        return (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_ACCEPTED;
+        return (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_CONFIRMED;
     }
 
     /**
@@ -113,7 +113,7 @@ class event_access_manager {
      */
     public static function is_booking_accessible(stdClass $event): bool {
         $status = (int)($event->bookingstatus ?? -1);
-        return $status === self::BOOKINGSTATUS_IN_PROGRESS || $status === self::BOOKINGSTATUS_ACCEPTED;
+        return $status === self::BOOKINGSTATUS_IN_PROGRESS || $status === self::BOOKINGSTATUS_CONFIRMED;
     }
 
     /**
@@ -129,7 +129,7 @@ class event_access_manager {
         return in_array((int)($event->bookingstatus ?? -1), [
             self::BOOKINGSTATUS_NEW,
             self::BOOKINGSTATUS_IN_PROGRESS,
-            self::BOOKINGSTATUS_ACCEPTED,
+            self::BOOKINGSTATUS_CONFIRMED,
         ], true);
     }
 
@@ -455,7 +455,7 @@ class event_access_manager {
                 if (in_array($status, self::OPEN_BOOKING_STATUSES, true)) {
                     return true;
                 }
-                if ($status === self::BOOKINGSTATUS_ACCEPTED) {
+                if ($status === self::BOOKINGSTATUS_CONFIRMED) {
                     return in_array($userid, self::parse_csv_ids($event->supportpersons ?? ''), true);
                 }
 
@@ -1074,7 +1074,7 @@ class event_access_manager {
             && in_array((int)($event->bookingstatus ?? -1), [
                 self::BOOKINGSTATUS_NEW,
                 self::BOOKINGSTATUS_IN_PROGRESS,
-                self::BOOKINGSTATUS_ACCEPTED,
+                self::BOOKINGSTATUS_CONFIRMED,
             ], true);
     }
 }

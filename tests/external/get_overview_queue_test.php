@@ -203,7 +203,7 @@ final class get_overview_queue_test extends advanced_testcase {
             'participantsamount' => 12,
             'timecompensation' => 0,
             'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'otherexaminers' => '',
             'coursetemplate' => null,
@@ -218,14 +218,14 @@ final class get_overview_queue_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $response = get_overview_queue::execute($bookit->cmid, 'acceptedrequests', [], [], [], 1, '', '');
+        $response = get_overview_queue::execute($bookit->cmid, 'confirmedrequests', [], [], [], 1, '', '');
 
         $this->assertSame('ok', $response['status']);
         $this->assertFalse($response['denied']);
-        $this->assertSame('acceptedrequests', $response['workspace']);
+        $this->assertSame('confirmedrequests', $response['workspace']);
         $this->assertCount(1, $response['items']);
         $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
-        $this->assertSame(1, (int)$response['summary']['acceptedrequestcount']);
+        $this->assertSame(1, (int)$response['summary']['confirmedrequestcount']);
         $this->assertSame(1, (int)$response['summary']['count']);
     }
 
@@ -270,7 +270,7 @@ final class get_overview_queue_test extends advanced_testcase {
             'participantsamount' => 12,
             'timecompensation' => 0,
             'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'otherexaminers' => '',
             'coursetemplate' => null,

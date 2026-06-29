@@ -187,14 +187,14 @@ final class event_access_manager_test extends advanced_testcase {
         ));
         $this->assertTrue(event_access_manager::can_transition_booking_status(
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         ));
         $this->assertTrue(event_access_manager::can_transition_booking_status(
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_REJECTED
         ));
         $this->assertTrue(event_access_manager::can_transition_booking_status(
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED
         ));
         $this->assertTrue(event_access_manager::can_transition_booking_status(
@@ -203,12 +203,12 @@ final class event_access_manager_test extends advanced_testcase {
         ));
 
         $this->assertFalse(event_access_manager::can_transition_booking_status(
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_NEW
         ));
         $this->assertFalse(event_access_manager::can_transition_booking_status(
             event_access_manager::BOOKINGSTATUS_REJECTED,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         ));
     }
 
@@ -224,7 +224,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event->bookingstatus = event_access_manager::BOOKINGSTATUS_IN_PROGRESS;
         $this->assertTrue(event_access_manager::is_open_request($event));
 
-        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
         $this->assertFalse(event_access_manager::is_open_request($event));
     }
 
@@ -276,7 +276,7 @@ final class event_access_manager_test extends advanced_testcase {
             'endtime' => strtotime('2026-05-01 12:00:00'),
         ];
         $accepted = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'endtime' => strtotime('2026-06-01 12:00:00'),
         ];
 
@@ -325,7 +325,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_participant_edit_event($event, 12));
         $this->assertFalse(event_access_manager::can_participant_edit_event($event, 13));
 
-        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
         $this->assertFalse(event_access_manager::can_participant_edit_event($event, 10));
     }
 
@@ -358,7 +358,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertFalse(event_access_manager::should_block_participant_past_edit($event, $participantcontext, $participant->id));
 
         $event->starttime = time() - 3600;
-        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
         $this->assertFalse(event_access_manager::should_block_participant_past_edit($event, $participantcontext, $participant->id));
 
         $servicecontext = $this->create_bookit_context_with_service_role('bookitservicepastedit');
@@ -417,7 +417,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
 
-        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
 
         $this->assertTrue(event_access_manager::can_user_view_event_details($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
@@ -511,7 +511,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($user);
 
         $event = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'usermodified' => 999,
             'otherexaminers' => '',
@@ -560,7 +560,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($user);
 
         $event = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'usermodified' => 999,
             'otherexaminers' => '',
@@ -609,7 +609,7 @@ final class event_access_manager_test extends advanced_testcase {
             [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             ] as $status
         ) {
             $event = (object)[
@@ -641,7 +641,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($observer);
 
         $accepted = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'usermodified' => 0,
             'otherexaminers' => '',
@@ -713,7 +713,7 @@ final class event_access_manager_test extends advanced_testcase {
 
         $this->assertFalse(event_access_manager::can_participant_cancel_only($event, $context, $user->id));
 
-        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
         $this->assertTrue(event_access_manager::can_cancel_event($event, $context, $user->id));
         $this->assertTrue(event_access_manager::can_participant_cancel_only($event, $context, $user->id));
     }
@@ -741,7 +741,7 @@ final class event_access_manager_test extends advanced_testcase {
         foreach (
             [
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
             event_access_manager::BOOKINGSTATUS_REJECTED,
             ] as $status
@@ -774,7 +774,7 @@ final class event_access_manager_test extends advanced_testcase {
 
         $this->assertTrue(event_access_manager::can_participant_overview_cancel($event, $context, $user->id));
 
-        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $event->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
         $this->assertTrue(event_access_manager::can_participant_overview_cancel($event, $context, $user->id));
 
         foreach (
@@ -800,7 +800,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_role_by_shortname($observercontext, $observer->id, 'bookitobserver');
 
         $acceptedevent = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
@@ -1016,7 +1016,7 @@ final class event_access_manager_test extends advanced_testcase {
         foreach (
             [
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             ] as $targetstatus
         ) {
             $event = event_manager::transition_booking_status(
@@ -1075,7 +1075,7 @@ final class event_access_manager_test extends advanced_testcase {
             10,
             0,
             '',
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             null,
             '',
             0,
@@ -1176,7 +1176,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($serviceuser);
         $event = event_manager::transition_booking_status(
             $event,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             (int)$serviceuser->id,
             $context
         );
@@ -1199,7 +1199,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($user);
 
         $event = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 999,
             'usermodified' => $user->id,
             'otherexaminers' => '',
@@ -1238,7 +1238,7 @@ final class event_access_manager_test extends advanced_testcase {
             'supportpersons' => '',
         ];
         $accepted = clone $canceled;
-        $accepted->bookingstatus = event_access_manager::BOOKINGSTATUS_ACCEPTED;
+        $accepted->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
 
         $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($canceled, $context, $serviceuser->id));
         $this->assertTrue(event_access_manager::can_user_view_event_details($canceled, $context, $serviceuser->id));
@@ -1340,7 +1340,7 @@ final class event_access_manager_test extends advanced_testcase {
             [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             ] as $status
         ) {
             $event = (object)[
@@ -1466,7 +1466,7 @@ final class event_access_manager_test extends advanced_testcase {
         foreach (
             [
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             ] as $status
         ) {
             $event = (object)[
@@ -1542,7 +1542,7 @@ final class event_access_manager_test extends advanced_testcase {
             [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_REJECTED,
             ] as $status
         ) {
@@ -1711,7 +1711,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertFalse(event_access_manager::can_reactivate_from_history($canceledother, $context));
 
         $accepted = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'usermodified' => (int)$owner->id,
             'otherexaminers' => '',
@@ -1786,7 +1786,7 @@ final class event_access_manager_test extends advanced_testcase {
             $eventid,
             'status_changed',
             (int)$booker->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
@@ -1859,7 +1859,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertFalse(event_access_manager::can_restore_terminal_request($servicecanceled, $servicecontext));
 
         $accepted = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'usermodified' => (int)$booker->id,
             'otherexaminers' => '',

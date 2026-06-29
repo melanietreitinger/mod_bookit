@@ -93,7 +93,7 @@ class update_event_booking_status extends external_api {
         $validstatuses = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
             event_access_manager::BOOKINGSTATUS_REJECTED,
         ];
@@ -158,7 +158,7 @@ class update_event_booking_status extends external_api {
         event_manager::transition_booking_status($event, $effectivestatus, (int)$USER->id, $context, (int)$params['cmid']);
 
         $redirecttab = match (true) {
-            in_array($params['tab'], ['openrequests', 'acceptedrequests', 'rejectedrequests'], true)
+            in_array($params['tab'], ['openrequests', 'confirmedrequests', 'rejectedrequests'], true)
                 && event_access_manager::can_manage_open_requests($context) => $params['tab'],
             $params['tab'] === 'history' => 'history',
             default => 'myevents',
@@ -171,7 +171,7 @@ class update_event_booking_status extends external_api {
 
         $queuepayload = null;
         if (
-            in_array($redirecttab, ['openrequests', 'acceptedrequests', 'rejectedrequests'], true)
+            in_array($redirecttab, ['openrequests', 'confirmedrequests', 'rejectedrequests'], true)
             && event_access_manager::can_manage_open_requests($context)
         ) {
             $queuepayload = event_manager::get_governed_overview_queue(

@@ -45,7 +45,7 @@ Feature: Process open booking requests
     And the Bookit main tabs should not contain "Rejected and cancelled requests"
     And the Bookit overview should show 1 activity tab row
     And the Bookit request workspace switch should contain "Open requests"
-    And the Bookit request workspace switch should contain "Accepted bookings"
+    And the Bookit request workspace switch should contain "Confirmed bookings"
     And the Bookit request workspace switch should contain "Rejected and cancelled requests"
     And the Bookit request workspace tab "Open requests" should be active
     And the Bookit overview should not show legacy inner navigation
@@ -62,10 +62,10 @@ Feature: Process open booking requests
     Then I should see "There are currently no open booking requests."
     And the Bookit main tabs should contain "Open requests"
     And the Bookit overview should show 1 activity tab row
-    When I open the Bookit overview "acceptedrequests" for "My BookIt Activity"
+    When I open the Bookit overview "confirmedrequests" for "My BookIt Activity"
     Then I should see "Exam Chemistry I"
     And I should see "Confirmed"
-    And the Bookit request workspace tab "Accepted bookings" should be active
+    And the Bookit request workspace tab "Confirmed bookings" should be active
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Exam Chemistry I"
     And I should see "Confirmed"
@@ -80,7 +80,7 @@ Feature: Process open booking requests
     And the Bookit main tabs should not contain "Rejected and cancelled requests"
     And the Bookit overview should show 1 activity tab row
     And the Bookit request workspace switch should contain "Open requests"
-    And the Bookit request workspace switch should contain "Accepted bookings"
+    And the Bookit request workspace switch should contain "Confirmed bookings"
     And the Bookit request workspace switch should contain "Rejected and cancelled requests"
     And the Bookit request workspace tab "Rejected and cancelled requests" should be active
     And the Bookit overview should not show legacy inner navigation
@@ -121,6 +121,6 @@ Feature: Process open booking requests
     When I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
     Then the Bookit main tabs should not contain "Open requests"
     And the Bookit request workspace switch should not contain "Rejected and cancelled requests"
-    When I open the Bookit overview "acceptedrequests" for "My BookIt Activity"
+    When I open the Bookit overview "confirmedrequests" for "My BookIt Activity"
     Then the Bookit main tabs should not contain "Open requests"
-    And the Bookit request workspace switch should not contain "Accepted bookings"
+    And the Bookit request workspace switch should not contain "Confirmed bookings"

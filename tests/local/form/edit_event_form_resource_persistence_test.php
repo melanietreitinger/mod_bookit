@@ -450,7 +450,7 @@ final class edit_event_form_resource_persistence_test extends advanced_testcase 
         $event = $this->create_event_with_resources(
             $context,
             (int)$editor->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             [$this->resourceid]
         );
 

@@ -358,11 +358,11 @@
     {{/hasopenrequests}}
     {{/showopenrequestworkspace}}
 
-    {{#showacceptedrequestworkspace}}
+    {{#showconfirmedrequestworkspace}}
     {{> mod_bookit/view/partials/overview_search_field }}
 
-    {{#hasacceptedrequests}}
-    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-accepted-requests-table">
+    {{#hasconfirmedrequests}}
+    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-confirmed-requests-table">
         <thead class="text-center">
             <tr style="background-color:#d4edda;">
                 <th class="align-middle">ID</th>
@@ -375,8 +375,8 @@
             </tr>
         </thead>
         <tbody class="text-center">
-            {{#acceptedrequests}}
-            <tr class="mod-bookit-accepted-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
+            {{#confirmedrequests}}
+            <tr class="mod-bookit-confirmed-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
                 <td class="align-middle">{{id}}</td>
                 <td class="align-middle">
                     {{#caneventdetails}}
@@ -396,17 +396,17 @@
                 {{{statuscellhtml}}}
                 <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
             </tr>
-            {{/acceptedrequests}}
+            {{/confirmedrequests}}
         </tbody>
     </table>
-    {{/hasacceptedrequests}}
+    {{/hasconfirmedrequests}}
 
-    {{^hasacceptedrequests}}
+    {{^hasconfirmedrequests}}
     <div class="alert alert-info mb-0">
-        {{acceptedrequestsempty}}
+        {{confirmedrequestsempty}}
     </div>
-    {{/hasacceptedrequests}}
-    {{/showacceptedrequestworkspace}}
+    {{/hasconfirmedrequests}}
+    {{/showconfirmedrequestworkspace}}
 
     {{#showrejectedrequestworkspace}}
     {{> mod_bookit/view/partials/overview_search_field }}

@@ -69,7 +69,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'participantsamount' => 12,
             'timecompensation' => 0,
             'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'otherexaminers' => '',
             'coursetemplate' => null,
@@ -115,7 +115,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             '2026-05-20T23:59:59',
             [$roomid],
             [],
-            [event_access_manager::BOOKINGSTATUS_ACCEPTED],
+            [event_access_manager::BOOKINGSTATUS_CONFIRMED],
             '',
             false
         );
@@ -125,7 +125,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $this->assertCount(1, $response['events']);
         $this->assert_is_canonical_calendar_event($response['events'][0]);
         $this->assertSame($visibleid, (int)$response['events'][0]['id']);
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $response['events'][0]['extendedProps']['bookingstatus']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, $response['events'][0]['extendedProps']['bookingstatus']);
         $this->assertSame('full', $response['events'][0]['extendedProps']['visibilitymode']);
         $this->assertStringContainsString('Calendar export parity', $response['events'][0]['title']);
     }
@@ -192,7 +192,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $this->setUser($serviceuser);
         event_manager::transition_booking_status(
             $event,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             (int)$serviceuser->id,
             $context
         );
@@ -261,7 +261,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             12,
             0,
             '',
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             0,
             '',
             null,
@@ -360,7 +360,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'participantsamount' => 12,
             'timecompensation' => 0,
             'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'otherexaminers' => '',
             'coursetemplate' => null,
@@ -743,7 +743,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'participantsamount' => 12,
             'timecompensation' => 0,
             'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'otherexaminers' => '',
             'coursetemplate' => null,

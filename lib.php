@@ -117,7 +117,7 @@ function bookit_extend_settings_navigation(
     $context = $PAGE->cm->context;
     $pageisoverview = $PAGE->url->compare(new moodle_url('/mod/bookit/overview.php'), URL_MATCH_BASE);
     $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
-    $isinrequestworkspace = $pageisoverview && in_array($tab, ['openrequests', 'acceptedrequests', 'rejectedrequests'], true);
+    $isinrequestworkspace = $pageisoverview && in_array($tab, ['openrequests', 'confirmedrequests', 'rejectedrequests'], true);
 
     if (has_capability('mod/bookit:viewownoverview', $context)) {
         $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'myevents']);

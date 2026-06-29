@@ -84,7 +84,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -127,7 +127,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -170,7 +170,7 @@ final class booking_notification_manager_test extends advanced_testcase {
      */
     public function test_localize_template_data_refreshes_status_time_and_bookingdate_placeholders(): void {
         $template = (object)[
-            'newstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'newstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'oldstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'starttimestamp' => strtotime('2026-05-08 09:00:00'),
             'endtimestamp' => strtotime('2026-05-08 11:00:00'),
@@ -207,12 +207,12 @@ final class booking_notification_manager_test extends advanced_testcase {
         $eventid = $this->create_test_event($booker->id, $personincharge->id, null, 'Configured Exam');
 
         set_config(
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject'),
+            install_helper::get_booking_status_notification_template_config_key('confirmed', 'subject'),
             'Shared accepted ###EVENTNAME###',
             'mod_bookit'
         );
         set_config(
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'body'),
+            install_helper::get_booking_status_notification_template_config_key('confirmed', 'body'),
             'Shared body ###EVENTNAME### ###BOOKINGDATE###',
             'mod_bookit'
         );
@@ -221,7 +221,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -253,15 +253,15 @@ final class booking_notification_manager_test extends advanced_testcase {
         $DB->set_field('user', 'lang', 'en', ['id' => $booker->id]);
         $eventid = $this->create_test_event($booker->id, null, null, 'Configured Exam');
 
-        unset_config('bookingstatus_subject_accepted', 'mod_bookit');
-        unset_config('bookingstatus_body_accepted', 'mod_bookit');
+        unset_config('bookingstatus_subject_confirmed', 'mod_bookit');
+        unset_config('bookingstatus_body_confirmed', 'mod_bookit');
 
         $sink = $this->redirectMessages();
         booking_notification_manager::notify_status_changed(
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -285,7 +285,7 @@ final class booking_notification_manager_test extends advanced_testcase {
         $booker = $this->getDataGenerator()->create_user();
         $eventid = $this->create_test_event($booker->id);
 
-        set_config('bookingstatus_enabled_accepted', 0, 'mod_bookit');
+        set_config('bookingstatus_enabled_confirmed', 0, 'mod_bookit');
 
         $messagesink = $this->redirectMessages();
         $emailsink = $this->redirectEmails();
@@ -293,7 +293,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $messagesink->get_messages();
         $emails = $emailsink->get_messages();
@@ -328,7 +328,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $messagesink->get_messages();
         $emails = $emailsink->get_messages();
@@ -361,7 +361,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -386,7 +386,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             $this->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
         $messages = $sink->get_messages();
         $sink->close();

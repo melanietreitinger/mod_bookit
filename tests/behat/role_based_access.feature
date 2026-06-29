@@ -141,4 +141,4 @@ Feature: Enforce role-based visibility and editing for booking requests
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview navigation should not contain "My booked events"
     And the Bookit overview navigation should not contain "History"
-    And I should see "No accepted bookings are currently available for your role."
+    And I should see "No confirmed bookings are currently available for your role."

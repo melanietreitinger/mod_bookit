@@ -116,7 +116,7 @@ class get_overview_queue extends external_api {
                 'summary' => [
                     'count' => 0,
                     'openrequestcount' => 0,
-                    'acceptedrequestcount' => 0,
+                    'confirmedrequestcount' => 0,
                     'rejectedrequestcount' => 0,
                 ],
                 'paging' => [
@@ -220,7 +220,7 @@ class get_overview_queue extends external_api {
             'summary' => new external_single_structure([
                 'count' => new external_value(PARAM_INT, 'Number of items in the current workspace'),
                 'openrequestcount' => new external_value(PARAM_INT, 'Open request count'),
-                'acceptedrequestcount' => new external_value(PARAM_INT, 'Accepted booking count'),
+                'confirmedrequestcount' => new external_value(PARAM_INT, 'Accepted booking count'),
                 'rejectedrequestcount' => new external_value(PARAM_INT, 'Rejected request count'),
             ]),
             'paging' => new external_single_structure([

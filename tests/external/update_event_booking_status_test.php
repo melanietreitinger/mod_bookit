@@ -77,12 +77,12 @@ final class update_event_booking_status_test extends advanced_testcase {
         $response = update_event_booking_status::execute(
             $bookit->cmid,
             $eventid,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'openrequests',
             1
         );
 
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$response['status']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$response['status']);
         $this->assertSame('openrequests', $response['tab']);
         $this->assertNotEmpty($response['queue']);
         $this->assertSame(0, (int)$response['queue']['summary']['openrequestcount']);
@@ -93,7 +93,7 @@ final class update_event_booking_status_test extends advanced_testcase {
         $this->assertSame([], $after['items']);
 
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$record->bookingstatus);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$record->bookingstatus);
     }
 
     /**
@@ -353,7 +353,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $eventid,
             'status_changed',
             (int)$bookingperson->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
@@ -481,7 +481,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $eventid,
             'status_changed',
             (int)$booker->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
 

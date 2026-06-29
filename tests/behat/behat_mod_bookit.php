@@ -1381,7 +1381,7 @@ class behat_mod_bookit extends behat_base {
         $js = <<<JS
             (function(actionLabel, eventLabel) {
                 var rows = document.querySelectorAll(
-                    'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row, tr.mod-bookit-accepted-request-row'
+                    'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row, tr.mod-bookit-confirmed-request-row'
                 );
                 var actionMap = {
                     'Accept': '2',

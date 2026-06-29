@@ -139,7 +139,7 @@ final class lifecycle_events_test extends advanced_testcase {
         $roomid = $this->create_room();
         $event = $this->build_event($roomid, (int)$user->id, [
             'name' => 'Cancelable audit event',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]);
         $event->save((int)$user->id);
 
@@ -155,7 +155,7 @@ final class lifecycle_events_test extends advanced_testcase {
         $this->assertCount(1, $events);
         $this->assertInstanceOf(booking_status_changed::class, $events[0]);
         $this->assertSame('canceled', $events[0]->other['action']);
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$events[0]->other['oldstatus']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$events[0]->other['oldstatus']);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, (int)$events[0]->other['newstatus']);
     }
 

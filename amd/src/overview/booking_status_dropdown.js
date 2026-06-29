@@ -34,7 +34,7 @@ const STATUS_SELECTORS = `${BOOKING_STATUS_SELECTOR}, ${RESOURCE_STATUS_SELECTOR
 const CANCEL_OVERVIEW_SELECTOR = 'button[data-action="cancel-booking-from-overview"]';
 const REACTIVATE_OVERVIEW_SELECTOR = 'button[data-action="reactivate-booking-from-overview"]';
 const REQUEST_PAGING_SELECTOR = '[data-region="request-paging"]';
-const REQUEST_WORKSPACES = ['openrequests', 'acceptedrequests', 'rejectedrequests'];
+const REQUEST_WORKSPACES = ['openrequests', 'confirmedrequests', 'rejectedrequests'];
 
 /**
  * Resolve the CSS row suffix for a request workspace.
@@ -46,8 +46,8 @@ const getRequestRowClass = (workspace) => {
     if (workspace === 'rejectedrequests') {
         return 'rejected';
     }
-    if (workspace === 'acceptedrequests') {
-        return 'accepted';
+    if (workspace === 'confirmedrequests') {
+        return 'confirmed';
     }
     return 'open';
 };
@@ -62,8 +62,8 @@ const getRequestTableSelector = (workspace) => {
     if (workspace === 'rejectedrequests') {
         return '#rejected-requests-table';
     }
-    if (workspace === 'acceptedrequests') {
-        return '#accepted-requests-table';
+    if (workspace === 'confirmedrequests') {
+        return '#confirmed-requests-table';
     }
     return '#open-requests-table';
 };
@@ -78,8 +78,8 @@ const getRequestEmptyMessage = (readConfig) => {
     if (readConfig.workspace === 'rejectedrequests') {
         return readConfig.rejectedrequestsempty || '';
     }
-    if (readConfig.workspace === 'acceptedrequests') {
-        return readConfig.acceptedrequestsempty || '';
+    if (readConfig.workspace === 'confirmedrequests') {
+        return readConfig.confirmedrequestsempty || '';
     }
     return readConfig.openrequestsempty || '';
 };

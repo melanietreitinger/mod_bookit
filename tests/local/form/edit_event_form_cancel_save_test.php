@@ -296,7 +296,7 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
         $event = $this->create_cancel_only_event(
             $context,
             (int)$bookingperson->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             $roomid
         );
 
@@ -304,11 +304,11 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
             $context,
             (int)$event->id,
             (int)$bookingperson->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
 
         $persisted = $DB->get_record('bookit_event', ['id' => $event->id], '*', MUST_EXIST);
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$persisted->bookingstatus);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$persisted->bookingstatus);
     }
 
     /**
@@ -364,7 +364,7 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
         $event = $this->create_cancel_only_event(
             $context,
             (int)$bookingperson->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             $roomid
         );
 
@@ -381,11 +381,11 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
             $context,
             (int)$event->id,
             (int)$supportuser->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
 
         $persisted = $DB->get_record('bookit_event', ['id' => $event->id], '*', MUST_EXIST);
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, (int)$persisted->bookingstatus);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$persisted->bookingstatus);
     }
 
     /**

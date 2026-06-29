@@ -244,12 +244,12 @@ final class install_helper_test extends advanced_testcase {
      */
     public function test_booking_status_notification_config_key_helpers_use_shared_shape(): void {
         $this->assertSame(
-            'bookingstatus_subject_accepted',
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'subject')
+            'bookingstatus_subject_confirmed',
+            install_helper::get_booking_status_notification_template_config_key('confirmed', 'subject')
         );
         $this->assertSame(
-            'bookingstatus_body_accepted',
-            install_helper::get_booking_status_notification_template_config_key('accepted', 'body')
+            'bookingstatus_body_confirmed',
+            install_helper::get_booking_status_notification_template_config_key('confirmed', 'body')
         );
     }
 
@@ -263,18 +263,18 @@ final class install_helper_test extends advanced_testcase {
 
         $this->resetAfterTest(true);
 
-        set_config('bookingstatus_subject_accepted', '', 'mod_bookit');
-        set_config('bookingstatus_body_accepted', " \n ", 'mod_bookit');
+        set_config('bookingstatus_subject_confirmed', '', 'mod_bookit');
+        set_config('bookingstatus_body_confirmed', " \n ", 'mod_bookit');
 
         install_helper::ensure_booking_status_notification_defaults();
 
         $this->assertFalse($DB->record_exists('config_plugins', [
             'plugin' => 'mod_bookit',
-            'name' => 'bookingstatus_subject_accepted',
+            'name' => 'bookingstatus_subject_confirmed',
         ]));
         $this->assertFalse($DB->record_exists('config_plugins', [
             'plugin' => 'mod_bookit',
-            'name' => 'bookingstatus_body_accepted',
+            'name' => 'bookingstatus_body_confirmed',
         ]));
     }
 

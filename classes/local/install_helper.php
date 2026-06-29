@@ -130,15 +130,15 @@ class install_helper {
                 'subjectstring' => 'bookingstatus_subject_inprogress',
                 'bodystring' => 'bookingstatus_body_inprogress',
             ],
-            'accepted' => [
-                'id' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
-                'key' => 'accepted',
-                'enabledconfig' => 'bookingstatus_enabled_accepted',
-                'subjectconfig' => 'bookingstatus_subject_accepted',
-                'bodyconfig' => 'bookingstatus_body_accepted',
-                'enabledstring' => 'bookingstatus_enabled_accepted',
-                'subjectstring' => 'bookingstatus_subject_accepted',
-                'bodystring' => 'bookingstatus_body_accepted',
+            'confirmed' => [
+                'id' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'key' => 'confirmed',
+                'enabledconfig' => 'bookingstatus_enabled_confirmed',
+                'subjectconfig' => 'bookingstatus_subject_confirmed',
+                'bodyconfig' => 'bookingstatus_body_confirmed',
+                'enabledstring' => 'bookingstatus_enabled_confirmed',
+                'subjectstring' => 'bookingstatus_subject_confirmed',
+                'bodystring' => 'bookingstatus_body_confirmed',
             ],
             'canceled' => [
                 'id' => event_access_manager::BOOKINGSTATUS_CANCELED,
@@ -339,8 +339,8 @@ class install_helper {
         string $field
     ): ?string {
         $legacy = [
-            'accepted' => [
-                'subject' => 'Booking request accepted: ###EVENTNAME### on ###BOOKINGDATE###',
+            'confirmed' => [
+                'subject' => 'Booking request confirmed: ###EVENTNAME### on ###BOOKINGDATE###',
             ],
         ];
 

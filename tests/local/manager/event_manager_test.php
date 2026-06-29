@@ -263,7 +263,7 @@ final class event_manager_test extends advanced_testcase {
         $events = [
             (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
             (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
-            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED], $base),
+            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
             (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
             (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
         ];
@@ -325,7 +325,7 @@ final class event_manager_test extends advanced_testcase {
             [
                 event_access_manager::BOOKINGSTATUS_NEW,
                 event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                event_access_manager::BOOKINGSTATUS_ACCEPTED,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
                 event_access_manager::BOOKINGSTATUS_CANCELED,
                 event_access_manager::BOOKINGSTATUS_REJECTED,
             ],
@@ -336,7 +336,7 @@ final class event_manager_test extends advanced_testcase {
             [
                 event_access_manager::BOOKINGSTATUS_NEW,
                 event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                event_access_manager::BOOKINGSTATUS_ACCEPTED,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
                 event_access_manager::BOOKINGSTATUS_CANCELED,
                 event_access_manager::BOOKINGSTATUS_REJECTED,
             ],
@@ -427,12 +427,12 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_overview_booking_status_filter_ids_explicit_overrides_history_default(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [event_access_manager::BOOKINGSTATUS_ACCEPTED],
+            [event_access_manager::BOOKINGSTATUS_CONFIRMED],
             true,
             true
         );
 
-        $this->assertSame([event_access_manager::BOOKINGSTATUS_ACCEPTED], $resolved);
+        $this->assertSame([event_access_manager::BOOKINGSTATUS_CONFIRMED], $resolved);
     }
 
     /**
@@ -447,7 +447,7 @@ final class event_manager_test extends advanced_testcase {
         $events = [
             (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
             (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
-            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED], $base),
+            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
             (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
             (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
         ];
@@ -474,7 +474,7 @@ final class event_manager_test extends advanced_testcase {
         $events = [
             (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
             (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
-            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED], $base),
+            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
             (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
             (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
         ];
@@ -515,7 +515,7 @@ final class event_manager_test extends advanced_testcase {
             'participantsamount' => 10,
             'timecompensation' => 0,
             'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
             'otherexaminers' => '',
             'coursetemplate' => null,
@@ -593,7 +593,7 @@ final class event_manager_test extends advanced_testcase {
             (int)$canceledid,
             'status_changed',
             (int)$booker->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
@@ -646,7 +646,7 @@ final class event_manager_test extends advanced_testcase {
             (int)$canceledid,
             'status_changed',
             (int)$serviceteam->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
@@ -700,7 +700,7 @@ final class event_manager_test extends advanced_testcase {
         ]);
         $acceptedid = $this->create_event_record([
             'name' => 'Observer accepted booking',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('2026-05-08 10:00:00'),
             'endtime' => strtotime('2026-05-08 11:00:00'),
         ]);
@@ -748,7 +748,7 @@ final class event_manager_test extends advanced_testcase {
             'name' => 'Governed Physics',
             'institutionid' => 1,
             'roomid' => $roomid,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('2026-05-20 09:00:00'),
             'endtime' => strtotime('2026-05-20 11:00:00'),
         ]);
@@ -768,7 +768,7 @@ final class event_manager_test extends advanced_testcase {
             '2026-05-20 23:59',
             [
                 'roomids' => [$roomid],
-                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_ACCEPTED],
+                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
                 'search' => 'Physics',
             ]
         );
@@ -777,7 +777,7 @@ final class event_manager_test extends advanced_testcase {
         $this->assert_is_canonical_calendar_event($events[0]);
         $this->assertSame($visibleid, (int)$events[0]['id']);
         $this->assertSame('full', $events[0]['extendedProps']['visibilitymode']);
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $events[0]['extendedProps']['bookingstatus']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, $events[0]['extendedProps']['bookingstatus']);
     }
 
     /**
@@ -803,7 +803,7 @@ final class event_manager_test extends advanced_testcase {
 
         $visibleid = $this->create_event_record([
             'name' => 'Admin visible booking',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('2026-05-09 10:00:00'),
             'endtime' => strtotime('2026-05-09 11:00:00'),
         ]);
@@ -827,7 +827,7 @@ final class event_manager_test extends advanced_testcase {
             'id' => 1,
             'semester' => 20261,
             'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('+1 day'),
             'endtime' => strtotime('+1 day +2 hours'),
         ];
@@ -835,7 +835,7 @@ final class event_manager_test extends advanced_testcase {
             'id' => 2,
             'semester' => 0,
             'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('+2 days'),
             'endtime' => strtotime('+2 days +2 hours'),
         ];
@@ -872,7 +872,7 @@ final class event_manager_test extends advanced_testcase {
             'id' => 11,
             'semester' => 20261,
             'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('2026-05-08 09:00:00'),
             'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
@@ -880,7 +880,7 @@ final class event_manager_test extends advanced_testcase {
             'id' => 12,
             'semester' => 20261,
             'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('2026-05-01 09:00:00'),
             'endtime' => strtotime('2026-05-01 11:00:00'),
         ];
@@ -894,12 +894,12 @@ final class event_manager_test extends advanced_testcase {
         ];
 
         $active = event_manager::filter_overview_events([$futureevent, $pastevent, $filteredout], [
-            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_ACCEPTED],
+            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
             'facultyids' => [1],
             'semesterids' => [20261],
         ], false, $referencetime);
         $history = event_manager::filter_overview_events([$futureevent, $pastevent, $filteredout], [
-            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_ACCEPTED],
+            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
             'facultyids' => [1],
             'semesterids' => [20261],
         ], true, $referencetime);
@@ -1020,7 +1020,7 @@ final class event_manager_test extends advanced_testcase {
 
         $this->setUser($bookingpersonid);
         $event = $this->build_bookit_event($roomid, $bookingpersonid, [
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'name' => 'Foreign save identity',
         ]);
         $saved = event_manager::save_event_with_lifecycle_tracking(
@@ -1122,7 +1122,7 @@ final class event_manager_test extends advanced_testcase {
 
         $this->setUser($bookingperson);
         $event = $this->build_bookit_event($roomid, (int)$bookingperson->id, [
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'name' => 'Self save identity',
         ]);
         $saved = event_manager::save_event_with_lifecycle_tracking(
@@ -1174,7 +1174,7 @@ final class event_manager_test extends advanced_testcase {
 
         event_manager::transition_booking_status(
             $event,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             (int)$serviceuser->id,
             $context
         );
@@ -1294,7 +1294,7 @@ final class event_manager_test extends advanced_testcase {
         $context = $this->create_bookit_context();
         $roomid = $this->create_room();
         $event = $this->build_bookit_event($roomid, (int)$user->id, [
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'name' => 'Reactivated notification',
         ]);
 
@@ -1415,7 +1415,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_accepted_requests_returns_operative_accepted_events(): void {
+    public function test_get_confirmed_requests_returns_operative_accepted_events(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1447,13 +1447,13 @@ final class event_manager_test extends advanced_testcase {
             'name' => 'Future accepted',
             'starttime' => strtotime('+2 days 09:00'),
             'endtime' => strtotime('+2 days 11:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]));
 
-        $accepted = array_values(event_manager::get_accepted_requests($referencetime));
+        $accepted = array_values(event_manager::get_confirmed_requests($referencetime));
         $this->assertCount(1, $accepted);
         $this->assertSame($acceptedid, (int)$accepted[0]->id);
-        $this->assertSame(1, event_manager::count_accepted_requests($referencetime));
+        $this->assertSame(1, event_manager::count_confirmed_requests($referencetime));
     }
 
     /**
@@ -1461,7 +1461,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_accepted_requests_excludes_canceled_and_history_events(): void {
+    public function test_get_confirmed_requests_excludes_canceled_and_history_events(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1493,7 +1493,7 @@ final class event_manager_test extends advanced_testcase {
             'name' => 'Past accepted',
             'starttime' => strtotime('-3 days 09:00'),
             'endtime' => strtotime('-3 days 11:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]));
         $DB->insert_record('bookit_event', (object)($common + [
             'name' => 'Canceled accepted',
@@ -1502,9 +1502,9 @@ final class event_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
         ]));
 
-        $accepted = array_values(event_manager::get_accepted_requests($referencetime));
+        $accepted = array_values(event_manager::get_confirmed_requests($referencetime));
         $this->assertCount(0, $accepted);
-        $this->assertSame(0, event_manager::count_accepted_requests($referencetime));
+        $this->assertSame(0, event_manager::count_confirmed_requests($referencetime));
     }
 
     /**
@@ -1551,7 +1551,7 @@ final class event_manager_test extends advanced_testcase {
         ]));
         $DB->insert_record('bookit_event', (object)($common + [
             'name' => 'Accepted request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]));
 
         $this->assertSame(2, event_manager::count_open_requests());
@@ -1597,7 +1597,7 @@ final class event_manager_test extends advanced_testcase {
         ]));
         $DB->insert_record('bookit_event', (object)($common + [
             'name' => 'Accepted request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]));
 
         $open = array_values(event_manager::get_open_requests());
@@ -1616,7 +1616,7 @@ final class event_manager_test extends advanced_testcase {
             'id' => 101,
             'semester' => 20261,
             'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => strtotime('2026-05-08 09:00:00'),
             'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
@@ -1806,14 +1806,14 @@ final class event_manager_test extends advanced_testcase {
             $eventid,
             'canceled',
             (int)$user->id,
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
             ['bookingstatus' => ['from' => 2, 'to' => 3]]
         );
 
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
         $this->assertSame(
-            event_access_manager::BOOKINGSTATUS_ACCEPTED,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_manager::resolve_requested_booking_status($event, event_access_manager::BOOKINGSTATUS_NEW)
         );
     }
@@ -2026,7 +2026,7 @@ final class event_manager_test extends advanced_testcase {
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS
         ));
         $this->assertSame('confirmed', event_manager::get_booking_status_group_key(
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         ));
         $this->assertSame('closed', event_manager::get_booking_status_group_key(
             event_access_manager::BOOKINGSTATUS_CANCELED
@@ -2050,7 +2050,7 @@ final class event_manager_test extends advanced_testcase {
         );
         $this->assertSame(
             get_string('overview_status_group_confirmed', 'mod_bookit'),
-            event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_ACCEPTED)
+            event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_CONFIRMED)
         );
     }
 
@@ -2063,10 +2063,10 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest();
 
         $definition = event_manager::get_booking_status_definition(
-            event_access_manager::BOOKINGSTATUS_ACCEPTED
+            event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
 
-        $this->assertSame(event_access_manager::BOOKINGSTATUS_ACCEPTED, $definition['value']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, $definition['value']);
         $this->assertSame('Confirmed', $definition['label']);
         $this->assertSame('confirmed', $definition['groupkey']);
         $this->assertNotEmpty($definition['grouplabel']);
