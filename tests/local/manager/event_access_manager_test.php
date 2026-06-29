@@ -1938,4 +1938,134 @@ final class event_access_manager_test extends advanced_testcase {
             event_access_manager::get_event_modal_footer_mode($openrequest, $servicecontext, $serviceuser->id)
         );
     }
+
+    /**
+     * Booking persons may open checklist/resources for New bookings (Spec 054).
+     *
+     * @return void
+     */
+    public function test_participant_can_view_checklist_and_resources_for_new_booking(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        set_config(install_helper::CONFIG_CHECKLIST_ENABLED, 1, 'mod_bookit');
+        set_config(install_helper::CONFIG_RESOURCES_ENABLED, 1, 'mod_bookit');
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::event_allows_checklist_resources_view($event));
+        $this->assertTrue(event_access_manager::can_view_event_checklist($event, $context, (int)$user->id));
+        $this->assertTrue(event_access_manager::can_view_event_resources($event, $context, (int)$user->id));
+    }
+
+    /**
+     * Canceled bookings must not expose checklist/resources to participants.
+     *
+     * @return void
+     */
+    public function test_participant_cannot_view_resources_for_canceled_booking(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        set_config(install_helper::CONFIG_RESOURCES_ENABLED, 1, 'mod_bookit');
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => 0,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::event_allows_checklist_resources_view($event));
+        $this->assertFalse(event_access_manager::can_view_event_resources($event, $context, (int)$user->id));
+    }
+
+    /**
+     * Service team retains checklist/resources access for New bookings.
+     *
+     * @return void
+     */
+    public function test_service_team_can_view_resources_for_new_booking(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice054');
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $serviceuser->id, 'bookitservice054');
+        $this->setUser($serviceuser);
+
+        set_config(install_helper::CONFIG_RESOURCES_ENABLED, 1, 'mod_bookit');
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_view_event_resources($event, $context, (int)$serviceuser->id));
+    }
+
+    /**
+     * Observer restricted mode must not open checklist/resources for In progress bookings.
+     *
+     * @return void
+     */
+    public function test_observer_cannot_view_resources_for_in_progress_booking(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_observer_role();
+        $observer = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $observer->id, 'bookitobserver');
+        $this->setUser($observer);
+
+        set_config(install_helper::CONFIG_RESOURCES_ENABLED, 1, 'mod_bookit');
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_view_event_resources($event, $context, (int)$observer->id));
+    }
+
+    /**
+     * Participant resource access implies an open checklist/resources booking status.
+     *
+     * @return void
+     */
+    public function test_participant_resource_access_requires_open_booking_status(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        set_config(install_helper::CONFIG_RESOURCES_ENABLED, 1, 'mod_bookit');
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'personinchargeid' => 0,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_view_event_resources($event, $context, (int)$user->id));
+        $this->assertTrue(event_access_manager::event_allows_checklist_resources_view($event));
+    }
 }

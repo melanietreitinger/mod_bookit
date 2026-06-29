@@ -47,17 +47,6 @@ if (!event_access_manager::is_checklist_enabled()) {
     redirect($backurl, get_string('optional_part_disabled', 'mod_bookit'), null, \core\output\notification::NOTIFY_WARNING);
 }
 
-$isadmin = has_capability('mod/bookit:managebasics', $context)
-    || has_capability('mod/bookit:viewalldetailsofevent', $context);
-if (!$isadmin && !event_access_manager::is_booking_accessible($event)) {
-    redirect(
-        $backurl,
-        get_string('overview_action_requires_confirmed_booking', 'mod_bookit'),
-        null,
-        \core\output\notification::NOTIFY_WARNING
-    );
-}
-
 if (!event_access_manager::can_view_event_checklist($event, $context, (int)$USER->id)) {
     throw new required_capability_exception($context, 'mod/bookit:viewalldetailsofownevent', 'nopermissions', '');
 }

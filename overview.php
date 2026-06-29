@@ -642,7 +642,7 @@ $prepareeventrow = function (
         'starttime' => (int)$ev->starttime,
         'cmid' => (int)$cm->id,
         'checklistprogress' => $progressmap[(int)$ev->id] ?? 0,
-        'checklistprogress_available' => $checklistenabled && $masterid > 0,
+        'checklistprogress_available' => $checklistenabled && $masterid > 0 && $canviewchecklist,
         'haschecklistaction' => $checklistenabled && !$isreservedprojection && $canviewchecklist,
         'checklistlabel' => get_string('checklist', 'mod_bookit'),
         'checklisturl' => (new moodle_url('/mod/bookit/view/event_checklist_view.php', [
@@ -656,7 +656,8 @@ $prepareeventrow = function (
             'eventid' => (int)$ev->id,
         ]))->out(false),
         'resourcesprogress' => $resourceprogressmap[(int)$ev->id]['percent'] ?? 0,
-        'resourcesprogress_available' => $resourcesenabled && (($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0),
+        'resourcesprogress_available' => $resourcesenabled && $canviewresources
+            && (($resourceprogressmap[(int)$ev->id]['total'] ?? 0) > 0),
         'hascancelaction' => !$isrequestworkspaceitem
             && !$canmanage
             && !$isreservedprojection
