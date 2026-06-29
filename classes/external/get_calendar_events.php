@@ -153,7 +153,7 @@ class get_calendar_events extends external_api {
                     'bookingstatus' => new external_value(PARAM_INT, 'Booking status'),
                     'semesterid' => new external_value(PARAM_INT, 'Semester id'),
                     'visibilitymode' => new external_value(PARAM_ALPHAEXT, 'Visibility mode'),
-                    'modalfootermode' => new external_value(PARAM_ALPHA, 'Modal footer mode'),
+                    'modalfootermode' => new external_value(PARAM_ALPHAEXT, 'Modal footer mode'),
                     'room' => new external_single_structure([
                         'roomid' => new external_value(PARAM_INT, 'Room id'),
                         'roomname' => new external_value(PARAM_RAW, 'Room name'),

@@ -216,7 +216,7 @@ class get_overview_queue extends external_api {
                 ]),
                 'statusgroupkey' => new external_value(PARAM_ALPHAEXT, 'Grouped status key for row accent'),
                 'statuscellhtml' => new external_value(PARAM_RAW, 'Pre-rendered status cell HTML'),
-                'modalfootermode' => new external_value(PARAM_ALPHA, 'Modal footer mode'),
+                'modalfootermode' => new external_value(PARAM_ALPHAEXT, 'Modal footer mode'),
             ])),
             'summary' => new external_single_structure([
                 'count' => new external_value(PARAM_INT, 'Number of items in the current workspace'),

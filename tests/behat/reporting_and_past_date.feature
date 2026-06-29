@@ -113,6 +113,9 @@ Feature: Filter reporting data and block past-date saves
       | Historical booking   | bookinguser | bookinguser             | ##-1 day 09:00##%Y-%m-%dT%H:%M:%S## | ##-1 day 11:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "history" for "My BookIt Activity"
+    And I set the Bookit overview booking status filter to "0"
+    And I apply the Bookit overview filters
+    Then I should see "Historical booking"
     And I open the Bookit event details for "Historical booking"
     Then the Bookit event details control "name" should be disabled
     And the Bookit event details control "starttime" should be disabled
@@ -125,6 +128,8 @@ Feature: Filter reporting data and block past-date saves
       | Historical examiner exam | bookinguser | examineruser            | ##-1 day 09:00##%Y-%m-%dT%H:%M:%S## | ##-1 day 11:00##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
     When I log in as "examineruser"
     And I open the Bookit overview "history" for "My BookIt Activity"
+    And I set the Bookit overview booking status filter to "0"
+    And I apply the Bookit overview filters
     And I open the Bookit event details for "Historical examiner exam"
     Then the Bookit event details control "name" should be disabled
     And the Bookit event details control "starttime" should be disabled

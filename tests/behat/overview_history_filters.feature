@@ -64,8 +64,8 @@ Feature: Complete overview defaults, history and role-specific columns
   Scenario: History tab shows date and time first with ascending order
     Given the following "mod_bookit > events" exist:
       | name            | username    | startdate                              | enddate                                | bookingstatus | institution |
-      | Older past exam | bookinguser | ##-3 days 09:00##%Y-%m-%dT%H:%M:%S##   | ##-3 days 11:00##%Y-%m-%dT%H:%M:%S##   | 2             | 1 |
-      | Recent past exam | bookinguser | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S## | ##yesterday 16:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+      | Older past exam | bookinguser | ##-3 days 09:00##%Y-%m-%dT%H:%M:%S##   | ##-3 days 11:00##%Y-%m-%dT%H:%M:%S##   | 3             | 1 |
+      | Recent past exam | bookinguser | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S## | ##yesterday 16:00##%Y-%m-%dT%H:%M:%S## | 3             | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "history" for "My BookIt Activity"
     Then the Bookit overview should show the datetime column as the first data column
@@ -87,7 +87,7 @@ Feature: Complete overview defaults, history and role-specific columns
     Given the following "mod_bookit > events" exist:
       | name             | username    | startdate                                | enddate                                  | bookingstatus | institution |
       | Future own exam  | bookinguser | ##tomorrow noon##%Y-%m-%dT%H:%M:%S##     | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S##    | 2             | 1 |
-      | Past own exam    | bookinguser | ##yesterday noon##%Y-%m-%dT%H:%M:%S##    | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S##   | 2             | 1 |
+      | Past own exam    | bookinguser | ##yesterday noon##%Y-%m-%dT%H:%M:%S##    | ##yesterday 14:00##%Y-%m-%dT%H:%M:%S##   | 3             | 1 |
     When I log in as "bookinguser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview inner tabs should contain "My booked events"

@@ -70,6 +70,89 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Opens the Bookit overview with an explicit booking-status filter only.
+     *
+     * @When I open the Bookit overview :tab for :activity with booking status filter :statuses
+     * @param string $tab
+     * @param string $activity
+     * @param string $statuses Comma-separated booking status ids.
+     */
+    public function i_open_the_bookit_overview_with_booking_status_filter_for(
+        string $tab,
+        string $activity,
+        string $statuses
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $statusids = array_map(
+            'intval',
+            array_values(array_filter(
+                array_map('trim', explode(',', $statuses)),
+                static fn(string $status): bool => $status !== ''
+            ))
+        );
+        $params = [
+            'id' => $cm->id,
+            'tab' => $tab,
+            'bookingstatusfilter' => $statusids,
+        ];
+        $query = http_build_query($params);
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Select booking-status values in the overview filter form.
+     *
+     * @When I set the Bookit overview booking status filter to :statuses
+     * @param string $statuses Comma-separated booking status ids.
+     */
+    public function i_set_the_bookit_overview_booking_status_filter_to(string $statuses): void {
+        $expectedvalues = array_map(
+            'strval',
+            array_map(
+                'intval',
+                array_values(array_filter(
+                    array_map('trim', explode(',', $statuses)),
+                    static fn(string $status): bool => $status !== ''
+                ))
+            )
+        );
+        $statusjson = json_encode($expectedvalues);
+        $js = <<<JS
+            (function(expected) {
+                var select = document.querySelector('#bookit-bookingstatusfilter');
+                if (!select) {
+                    return JSON.stringify({status: 'missing'});
+                }
+                Array.from(select.options).forEach(function(option) {
+                    option.selected = expected.indexOf(option.value) !== -1;
+                });
+                return JSON.stringify({status: 'ok'});
+            })($statusjson)
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not set the booking-status filter selection. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Submit the overview filter form.
+     *
+     * @When I apply the Bookit overview filters
+     */
+    public function i_apply_the_bookit_overview_filters(): void {
+        $this->getSession()->getPage()->pressButton(get_string('overview_apply_filters', 'mod_bookit'));
+    }
+
+    /**
      * Opens the direct event-export endpoint for the named activity.
      *
      * @When I open the Bookit export endpoint for :activity
@@ -296,10 +379,10 @@ class behat_mod_bookit extends behat_base {
             'tab' => $tab,
             'facultyid' => $faculty,
         ];
-        if ($status !== '' && $status !== '-1') {
-            $params['bookingstatusfilter'] = [(int)$status];
-        }
         $query = http_build_query($params);
+        if ($status !== '' && $status !== '-1') {
+            $query .= '&' . http_build_query(['bookingstatusfilter' => [(int)$status]]);
+        }
         foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
             $query .= '&semesterids[]=' . rawurlencode($semester);
         }
@@ -1313,6 +1396,16 @@ class behat_mod_bookit extends behat_base {
                     if (!link || link.textContent.trim() !== eventLabel) {
                         continue;
                     }
+                    if (actionLabel === 'Reactivate as new request') {
+                        var reactivateButton = rows[i].querySelector(
+                            'button[data-action="reactivate-booking-from-overview"]'
+                        );
+                        if (!reactivateButton) {
+                            return 'reactivate-button-not-found';
+                        }
+                        reactivateButton.click();
+                        return 'clicked-reactivate';
+                    }
                     var select = rows[i].querySelector('select[data-action="update-booking-status"]');
                     if (!select) {
                         return 'select-not-found';
@@ -1337,6 +1430,10 @@ class behat_mod_bookit extends behat_base {
         JS;
 
         $result = $this->getSession()->evaluateScript($js);
+        if ($result === 'clicked-reactivate') {
+            $this->i_confirm_the_bookit_overview_cancel_dialog();
+            return;
+        }
         if ($result !== 'clicked') {
             throw new ExpectationException(
                 "Could not click action \"$action\" for event \"$eventname\". Result: $result",
@@ -1553,6 +1650,68 @@ class behat_mod_bookit extends behat_base {
         if (mb_strpos($content, $text) !== false) {
             throw new ExpectationException(
                 'The Bookit overview navigation unexpectedly contained "' . $text . '".',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the selected booking-status options in the overview filter.
+     *
+     * @Then the Bookit overview booking status filter should select :statuses
+     * @param string $statuses Comma-separated booking status ids.
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_booking_status_filter_should_select(string $statuses): void {
+        $expectedvalues = array_map(
+            'strval',
+            array_map(
+                'intval',
+                array_values(array_filter(
+                    array_map('trim', explode(',', $statuses)),
+                    static fn(string $status): bool => $status !== ''
+                ))
+            )
+        );
+        $js = <<<'JS'
+            (function() {
+                var select = document.querySelector('#bookit-bookingstatusfilter');
+                var tabInput = document.querySelector('form[method="get"] input[name="tab"]');
+                var badge = document.querySelector('.badge.badge-info');
+                if (!select) {
+                    return JSON.stringify({status: 'missing'});
+                }
+                var values = Array.from(select.options)
+                    .filter(function(option) { return option.selected; })
+                    .map(function(option) { return option.value; });
+                return JSON.stringify({
+                    status: 'ok',
+                    values: values,
+                    url: window.location.href,
+                    formtab: tabInput ? tabInput.value : null,
+                    eventcount: badge ? badge.textContent : null
+                });
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect the booking-status filter selection. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        sort($expectedvalues);
+        $actualvalues = $result['values'] ?? [];
+        sort($actualvalues);
+        if ($actualvalues !== $expectedvalues) {
+            throw new ExpectationException(
+                'Unexpected booking-status selection. Expected ' . json_encode($expectedvalues)
+                    . ' but got ' . json_encode($actualvalues)
+                    . ' formtab=' . json_encode($result['formtab'] ?? null)
+                    . ' eventcount=' . json_encode($result['eventcount'] ?? null)
+                    . ' at ' . ($result['url'] ?? ''),
                 $this->getSession()
             );
         }
