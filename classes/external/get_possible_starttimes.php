@@ -242,10 +242,10 @@ class get_possible_starttimes extends external_api {
     /**
      * Keep the edited event starttime selectable when service-team past booking is allowed.
      *
-     * @param array<int, string> $starttimes
-     * @param int $excepteventid
-     * @param \DateTime $date
-     * @return array<int, string>
+     * @param array $starttimes Map of start timestamp to display time (H:i).
+     * @param int $excepteventid Event id currently being edited.
+     * @param DateTime $date Selected calendar day.
+     * @return array Map of start timestamp to display time (H:i).
      */
     private static function inject_editing_event_starttime(
         array $starttimes,
