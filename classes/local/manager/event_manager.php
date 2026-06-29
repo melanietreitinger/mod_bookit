@@ -371,11 +371,6 @@ class event_manager {
                 'openrequestcount' => $openrequestcount,
                 'acceptedrequestcount' => $acceptedrequestcount,
                 'rejectedrequestcount' => $rejectedrequestcount,
-                'workspacecounttext' => match ($workspace) {
-                    'rejectedrequests' => get_string('overview_rejected_request_count', 'mod_bookit', $totalcount),
-                    'acceptedrequests' => get_string('overview_accepted_request_count', 'mod_bookit', $totalcount),
-                    default => get_string('overview_open_request_count', 'mod_bookit', $totalcount),
-                },
             ],
             'paging' => [
                 'requestedpage' => $page,

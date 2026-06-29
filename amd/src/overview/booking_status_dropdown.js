@@ -33,7 +33,6 @@ const RESOURCE_STATUS_SELECTOR = 'select[data-action="update-status"]';
 const STATUS_SELECTORS = `${BOOKING_STATUS_SELECTOR}, ${RESOURCE_STATUS_SELECTOR}`;
 const CANCEL_OVERVIEW_SELECTOR = 'button[data-action="cancel-booking-from-overview"]';
 const REACTIVATE_OVERVIEW_SELECTOR = 'button[data-action="reactivate-booking-from-overview"]';
-const REQUEST_COUNT_SELECTOR = '[data-region="request-queue-count"]';
 const REQUEST_PAGING_SELECTOR = '[data-region="request-paging"]';
 const REQUEST_WORKSPACES = ['openrequests', 'acceptedrequests', 'rejectedrequests'];
 
@@ -230,18 +229,6 @@ const applyColorsIn = (root) => {
 };
 
 /**
- * Update the visible queue count text.
- *
- * @param {Object} queueResponse
- */
-const updateVisibleQueueCount = (queueResponse) => {
-    const countNode = document.querySelector(REQUEST_COUNT_SELECTOR);
-    if (countNode && queueResponse.summary) {
-        countNode.textContent = queueResponse.summary.workspacecounttext || '';
-    }
-};
-
-/**
  * Update the paging markup and browser URL for the current request workspace.
  *
  * @param {Object} readConfig
@@ -289,7 +276,6 @@ const renderQueueState = (readConfig, queueResponse) => {
     const table = document.querySelector(tableSelector);
     const emptyMessage = getRequestEmptyMessage(readConfig);
 
-    updateVisibleQueueCount(queueResponse);
     syncPaging(readConfig, queueResponse);
 
     if (table && queueResponse.items && queueResponse.items.length) {

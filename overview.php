@@ -362,36 +362,13 @@ $templatecontext = [
     'showacceptedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'acceptedrequests',
     'showrejectedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
-    'requestworkspacehelp' => get_string('overview_request_workspace_help', 'mod_bookit'),
-    'requestqueueswitchhelp' => get_string('overview_request_workspace_switch_help', 'mod_bookit'),
     'historyactive' => $currenttab === 'history',
     'sectiontitle' => $currenttab === 'history'
         ? get_string('overview_history', 'mod_bookit')
         : ($showreportfilters ? get_string('overview_all_events', 'mod_bookit') : get_string('overview_my_events', 'mod_bookit')),
-    'openrequeststitle' => get_string('overview_open_requests', 'mod_bookit'),
-    'openrequestshelp' => get_string('overview_open_requests_help', 'mod_bookit'),
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
-    'rejectedrequeststitle' => get_string('overview_rejected_requests', 'mod_bookit'),
-    'rejectedrequestshelp' => get_string('overview_rejected_requests_help', 'mod_bookit'),
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
-    'acceptedrequeststitle' => get_string('overview_accepted_requests', 'mod_bookit'),
-    'acceptedrequestshelp' => get_string('overview_accepted_requests_help', 'mod_bookit'),
     'acceptedrequestsempty' => get_string('overview_accepted_requests_empty', 'mod_bookit'),
-    'requestqueuecurrenttitle' => match ($requestworkspacemode) {
-        'rejectedrequests' => get_string('overview_rejected_requests', 'mod_bookit'),
-        'acceptedrequests' => get_string('overview_accepted_requests', 'mod_bookit'),
-        default => get_string('overview_open_requests', 'mod_bookit'),
-    },
-    'requestqueuecurrenthelp' => match ($requestworkspacemode) {
-        'rejectedrequests' => get_string('overview_rejected_requests_help', 'mod_bookit'),
-        'acceptedrequests' => get_string('overview_accepted_requests_help', 'mod_bookit'),
-        default => get_string('overview_open_requests_help', 'mod_bookit'),
-    },
-    'requestqueuecounttext' => match ($requestworkspacemode) {
-        'rejectedrequests' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
-        'acceptedrequests' => get_string('overview_accepted_request_count', 'mod_bookit', $acceptedrequestcount),
-        default => get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
-    },
     'requestpaginghtml' => $requestpaginghtml,
     'showoverviewfilters' => $currenttab !== 'openrequests',
     'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
@@ -406,9 +383,6 @@ $templatecontext = [
     'overviewcancelcolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'overviewreactivatecolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'overviewcolumndatetime' => get_string('overview_column_datetime', 'mod_bookit'),
-    'reportinghelp' => $currenttab === 'history'
-        ? get_string('overview_history_help', 'mod_bookit')
-        : get_string('overview_reporting_help', 'mod_bookit'),
     'reportstartvalue' => $reportstartvalue,
     'reportendvalue' => $reportendvalue,
     'reportstartlabel' => get_string('overview_filter_startdate', 'mod_bookit'),
@@ -708,11 +682,6 @@ foreach ($rejectedrequests as $ev) {
 $templatecontext['hasopenrequests'] = !empty($templatecontext['openrequests']);
 $templatecontext['hasacceptedrequests'] = !empty($templatecontext['acceptedrequests']);
 $templatecontext['hasrejectedrequests'] = !empty($templatecontext['rejectedrequests']);
-$templatecontext['requestqueuecounttext'] = match ($requestworkspacemode) {
-    'rejectedrequests' => get_string('overview_rejected_request_count', 'mod_bookit', $rejectedrequestcount),
-    'acceptedrequests' => get_string('overview_accepted_request_count', 'mod_bookit', $acceptedrequestcount),
-    default => get_string('overview_open_request_count', 'mod_bookit', $openrequestcount),
-};
 
 // Render Mustache.
 echo $OUTPUT->render_from_template('mod_bookit/view/examiner_overview', $templatecontext);

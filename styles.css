@@ -225,10 +225,6 @@
     margin-bottom: 0;
 }
 
-.mod-bookit-request-queue-count {
-    min-height: 1.25rem;
-}
-
 .mod-bookit-open-request-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(8.5rem, 1fr));

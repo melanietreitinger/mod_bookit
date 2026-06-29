@@ -258,7 +258,6 @@ class update_event_booking_status extends external_api {
                     'count' => new external_value(PARAM_INT, 'Number of items in the current workspace'),
                     'openrequestcount' => new external_value(PARAM_INT, 'Open request count'),
                     'rejectedrequestcount' => new external_value(PARAM_INT, 'Rejected request count'),
-                    'workspacecounttext' => new external_value(PARAM_RAW, 'Visible request total text for the current workspace'),
                 ]),
                 'paging' => new external_single_structure([
                     'requestedpage' => new external_value(PARAM_INT, 'Requested page number'),

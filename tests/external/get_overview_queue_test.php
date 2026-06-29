@@ -90,7 +90,7 @@ final class get_overview_queue_test extends advanced_testcase {
         $this->assertCount(1, $response['items']);
         $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
         $this->assertSame(1, (int)$response['summary']['openrequestcount']);
-        $this->assertSame('1 open requests', $response['summary']['workspacecounttext']);
+        $this->assertSame(1, (int)$response['summary']['count']);
         $this->assertSame(1, (int)$response['paging']['currentpage']);
         $this->assertFalse($response['paging']['adjusted']);
     }
@@ -157,10 +157,7 @@ final class get_overview_queue_test extends advanced_testcase {
         $this->assertCount(1, $response['items']);
         $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
         $this->assertSame(1, (int)$response['summary']['rejectedrequestcount']);
-        $this->assertSame(
-            get_string('overview_rejected_request_count', 'mod_bookit', 1),
-            $response['summary']['workspacecounttext']
-        );
+        $this->assertSame(1, (int)$response['summary']['count']);
         $this->assertSame(1, (int)$response['paging']['currentpage']);
         $this->assertFalse($response['paging']['adjusted']);
     }
@@ -229,10 +226,7 @@ final class get_overview_queue_test extends advanced_testcase {
         $this->assertCount(1, $response['items']);
         $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
         $this->assertSame(1, (int)$response['summary']['acceptedrequestcount']);
-        $this->assertSame(
-            get_string('overview_accepted_request_count', 'mod_bookit', 1),
-            $response['summary']['workspacecounttext']
-        );
+        $this->assertSame(1, (int)$response['summary']['count']);
     }
 
     /**

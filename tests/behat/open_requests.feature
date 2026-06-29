@@ -49,7 +49,7 @@ Feature: Process open booking requests
     And the Bookit request workspace switch should contain "Rejected and cancelled requests"
     And the Bookit request workspace tab "Open requests" should be active
     And the Bookit overview should not show legacy inner navigation
-    And I should see "1 open requests"
+    And I should not see "1 open requests"
     And I should see "Exam Physics II"
 
   Scenario: Service team accepts an open request directly from the list

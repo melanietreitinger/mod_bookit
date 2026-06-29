@@ -83,9 +83,6 @@
     {{/showoverviewnavigation}}
     <div class="mb-3">
         <h3 class="h5 mb-0">{{sectiontitle}}</h3>
-        {{#showoverviewfilters}}
-        <div class="text-muted small mt-1">{{reportinghelp}}</div>
-        {{/showoverviewfilters}}
     </div>
     {{> mod_bookit/view/partials/overview_search_field }}
     {{#showoverviewfilters}}
@@ -301,28 +298,17 @@
     {{/showmyeventssection}}
 
     {{#showrequestworkspacesection}}
-    <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
-        <div>
-            <h3 class="h5 mb-1">{{requestworkspacetitle}}</h3>
-            <div class="text-muted small">{{requestworkspacehelp}}</div>
-            <div class="text-muted small mt-1 mod-bookit-request-queue-count" data-region="request-queue-count">
-                {{requestqueuecounttext}}
-            </div>
-        </div>
+    <div class="mb-3">
+        <h3 class="h5 mb-1">{{requestworkspacetitle}}</h3>
     </div>
 
     {{#showrequestworkspacetabs}}
     <div class="mb-3">
-        <div class="text-muted small mb-2">{{requestqueueswitchhelp}}</div>
         {{{requestworkspacetabtree}}}
     </div>
     {{/showrequestworkspacetabs}}
 
     {{#showopenrequestworkspace}}
-    <div class="mb-3">
-        <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
-        <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
-    </div>
     {{> mod_bookit/view/partials/overview_search_field }}
 
     {{#hasopenrequests}}
@@ -373,10 +359,6 @@
     {{/showopenrequestworkspace}}
 
     {{#showacceptedrequestworkspace}}
-    <div class="mb-3">
-        <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
-        <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
-    </div>
     {{> mod_bookit/view/partials/overview_search_field }}
 
     {{#hasacceptedrequests}}
@@ -427,12 +409,6 @@
     {{/showacceptedrequestworkspace}}
 
     {{#showrejectedrequestworkspace}}
-    <div class="mb-3">
-        <div>
-            <h4 class="h6 mb-1">{{requestqueuecurrenttitle}}</h4>
-            <div class="text-muted small">{{requestqueuecurrenthelp}}</div>
-        </div>
-    </div>
     {{> mod_bookit/view/partials/overview_search_field }}
 
     {{#hasrejectedrequests}}
