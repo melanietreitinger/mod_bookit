@@ -138,7 +138,7 @@ export async function init(readconfig, capabilities, lang) {
                 const modalForm = new ModalForm({
                     formClass: "mod_bookit\\local\\form\\edit_blocker_form",
                     args: {
-                        id: info.event.id,
+                        id: info.event.id.split("-")[1],
                     },
                     modalConfig: {
                         title: getString('edit_blocker', 'mod_bookit'),
@@ -150,7 +150,7 @@ export async function init(readconfig, capabilities, lang) {
                 });
                 modalForm.addEventListener(modalForm.events.LOADED, () => {
                     modalForm.modal.getRoot().on(ModalEvents.delete, async() => {
-                        await deleteBlocker(info.event.id);
+                        await deleteBlocker(info.event.id.split("-")[1]);
                         calendar.refetchEvents();
                     });
                 });
