@@ -30,3 +30,5 @@ $plugin->release = '0.1.0';
 $plugin->requires = 2024100700; // Moodle 4.5 (LTS).
 $plugin->supported = [405, 406];
 $plugin->maturity = MATURITY_ALPHA;
+// mdc smoke
+// mdc smoke 2
