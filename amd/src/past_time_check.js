@@ -2,14 +2,16 @@ define(['jquery'], function($) {
     return {
         init: function(errorMessage) {
             var ERR_ID = 'bookit-past-time-error';
-            /*
-            This is an AMD/Moodle JavaScript module that prevents users from submitting a booking form if the selected start time is in the past. 
-            It runs a check every second (and on every dropdown change) comparing the selected timestamp against the current time, showing an error message and disabling the save/submit button when the time has already passed.
+            /**
+            This is an AMD/Moodle JavaScript module that prevents users from submitting a booking form if the
+            selected start time is in the past. It runs a check every second (and on every dropdown change)
+            comparing the selected timestamp against the current time, showing an error message and disabling the
+            save/submit button when the time has already passed.
             */
             function checkPastTime() {
                 var sel = $('select[name="starttime"]');
-                if (!sel.length) { 
-                    return; 
+                if (!sel.length) {
+                    return;
                 }
                 var val = parseInt(sel.val(), 10);
                 var now = Math.floor(Date.now() / 1000);

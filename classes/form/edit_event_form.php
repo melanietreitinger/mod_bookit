@@ -457,7 +457,7 @@ class edit_event_form extends dynamic_form {
      * @throws coding_exception|dml_exception
      */
     public function definition_after_data(): void {
-        global $DB, $USER, $PAGE;  //The $PAGE is needed for JS injection; $User for prefilling the Booking person.
+        global $DB, $USER, $PAGE;  // The $PAGE is needed for JS injection; $User for prefilling the Booking person.
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
 
