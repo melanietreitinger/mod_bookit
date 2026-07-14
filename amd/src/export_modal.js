@@ -40,8 +40,6 @@ define(['jquery', 'core/str'], function($, str) {
                  *
                  * @returns {{startDate: string, endDate: string}} Object with `YYYY-MM-DD` start and end dates.
                  */
-
-
                 function getCalendarDateRangeOrFallback() {
                     if (window.bookitCalendar && window.bookitCalendar.getView) {
                         const view = window.bookitCalendar.getView();
