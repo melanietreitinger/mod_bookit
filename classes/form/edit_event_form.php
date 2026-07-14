@@ -248,7 +248,7 @@ class edit_event_form extends dynamic_form {
         );
         $mform->disabledIf('personinchargeid', 'editevent', 'neq');
         $mform->setType('personinchargeid', PARAM_TEXT);
-        // The person in charge is by default the booking person. 
+        // The person in charge is by default the booking person.
         $mform->setDefault('personinchargeid', '');
         $mform->addRule('personinchargeid', null, 'required', null, 'client');
         $mform->addHelpButton('personinchargeid', 'event_personincharge', 'mod_bookit');
@@ -270,7 +270,7 @@ class edit_event_form extends dynamic_form {
         $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
 
         // The "compensationfordisadvantages" field; hidden for new bookings.
-          $mform->addElement(
+        $mform->addElement(
             'editor',
             'compensationfordisadvantages',
             get_string(
@@ -302,7 +302,7 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
         }
-        // Add the "refcourseid" field. Legacy Field, kept it for #85 if necessary. 
+        // Add the "refcourseid" field. Legacy Field, kept it for #85 if necessary.
          $mform->addElement('hidden', 'refcourseid');
         $mform->setType('refcourseid', PARAM_INT);
         $mform->setDefault('refcourseid', 0);
@@ -457,7 +457,7 @@ class edit_event_form extends dynamic_form {
      * @throws coding_exception|dml_exception
      */
     public function definition_after_data(): void {
-        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection; $User for prefilling the Booking person. 
+        global $DB, $USER, $PAGE;  //The $PAGE is needed for JS injection; $User for prefilling the Booking person.
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
 
@@ -515,7 +515,6 @@ class edit_event_form extends dynamic_form {
             ),
             'name'
         )->setType('editinternal', PARAM_BOOL);
-        
         // Disable submit button when user has no edit rights at all.
         if (!$caneditevent && !$caneditinternal) {
             $PAGE->requires->js_init_code("
@@ -614,7 +613,7 @@ class edit_event_form extends dynamic_form {
     /**
      * Load in existing data as form defaults
      */
-      public function set_data_for_dynamic_submission(): void {
+    public function set_data_for_dynamic_submission(): void {
         global $USER;
         $e = new StdClass();
         $id = $this->optional_param('id', null, PARAM_INT);
