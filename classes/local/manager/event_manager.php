@@ -726,6 +726,13 @@ class event_manager {
         $semesterids = self::normalise_filter_ids($filters['semesterids'] ?? []);
         $selectedsemesters = array_values(array_filter($semesterids, static fn(int $value): bool => $value !== 0));
         $includelegacysemester = in_array(0, $semesterids, true);
+        $explicitterminal = array_values(array_intersect(
+            $bookingstatuses,
+            [
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+            ]
+        ));
 
         return array_values(array_filter($events, static function (stdClass $event) use (
             $history,
@@ -733,13 +740,26 @@ class event_manager {
             $bookingstatuses,
             $facultyids,
             $selectedsemesters,
-            $includelegacysemester
+            $includelegacysemester,
+            $explicitterminal
         ): bool {
-            if (self::is_event_in_history($event, $referencetime) !== $history) {
-                return false;
+            $eventstatus = (int)($event->bookingstatus ?? -1);
+            $isinhistory = self::is_event_in_history($event, $referencetime);
+            if ($isinhistory !== $history) {
+                $explicitlyselectedterminal = !$history
+                    && !empty($explicitterminal)
+                    && in_array($eventstatus, $bookingstatuses, true)
+                    && in_array($eventstatus, $explicitterminal, true);
+                if (!$explicitlyselectedterminal) {
+                    return false;
+                }
             }
 
-            if (!$history && self::is_hidden_from_active_overview($event)) {
+            if (
+                !$history
+                && self::is_hidden_from_active_overview($event)
+                && (empty($bookingstatuses) || !in_array($eventstatus, $bookingstatuses, true))
+            ) {
                 return false;
             }
 

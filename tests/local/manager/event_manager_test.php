@@ -1634,6 +1634,372 @@ final class event_manager_test extends advanced_testcase {
         $this->assertCount(1, $active);
         $this->assertSame(101, (int)$active[0]->id);
         $this->assertTrue(event_manager::is_hidden_from_active_overview($rejected));
+
+        $explicitrejected = event_manager::filter_overview_events(
+            [$accepted, $rejected],
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+            false,
+            $referencetime
+        );
+        $this->assertCount(1, $explicitrejected);
+        $this->assertSame(102, (int)$explicitrejected[0]->id);
+    }
+
+    /**
+     * Explicit Canceled selection on the active tab must return canceled rows.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_explicit_canceled_on_active_tab(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $canceled = (object)[
+            'id' => 201,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$canceled],
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(201, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Explicit Rejected selection on the active tab must return rejected rows.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_explicit_rejected_on_active_tab(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $rejected = (object)[
+            'id' => 202,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'starttime' => strtotime('2026-05-08 12:00:00'),
+            'endtime' => strtotime('2026-05-08 14:00:00'),
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$rejected],
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(202, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Canceled-only filter must not return active operational statuses.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_canceled_only_excludes_active_statuses(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $events = [
+            (object)[
+                'id' => 301,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+            ],
+            (object)[
+                'id' => 302,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
+            ],
+            (object)[
+                'id' => 303,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 15:00:00'),
+                'endtime' => strtotime('2026-05-08 17:00:00'),
+            ],
+            (object)[
+                'id' => 304,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-08 18:00:00'),
+                'endtime' => strtotime('2026-05-08 20:00:00'),
+            ],
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(304, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Mixed New and Canceled selection returns both types on the active tab.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_new_and_canceled_mixed_on_active(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $newevent = (object)[
+            'id' => 311,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+        ];
+        $canceled = (object)[
+            'id' => 312,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('2026-05-08 12:00:00'),
+            'endtime' => strtotime('2026-05-08 14:00:00'),
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$newevent, $canceled],
+            [
+                'bookingstatuses' => [
+                    event_access_manager::BOOKINGSTATUS_NEW,
+                    event_access_manager::BOOKINGSTATUS_CANCELED,
+                ],
+            ],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(2, $filtered);
+        $this->assertEqualsCanonicalizing([311, 312], array_map(static fn($event): int => (int)$event->id, $filtered));
+    }
+
+    /**
+     * Rejected-only filter must not return active operational statuses.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_rejected_only_excludes_active_statuses(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $events = [
+            (object)[
+                'id' => 401,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+            ],
+            (object)[
+                'id' => 402,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
+            ],
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(402, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Selecting all five statuses returns active and terminal rows on the active tab.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_all_five_statuses_on_active(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $events = [
+            (object)[
+                'id' => 501,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 10:00:00'),
+            ],
+            (object)[
+                'id' => 502,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                'starttime' => strtotime('2026-05-08 10:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+            ],
+            (object)[
+                'id' => 503,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 11:00:00'),
+                'endtime' => strtotime('2026-05-08 12:00:00'),
+            ],
+            (object)[
+                'id' => 504,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 13:00:00'),
+            ],
+            (object)[
+                'id' => 505,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('2026-05-08 13:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
+            ],
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            [
+                'bookingstatuses' => [
+                    event_access_manager::BOOKINGSTATUS_NEW,
+                    event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                    event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                    event_access_manager::BOOKINGSTATUS_CANCELED,
+                    event_access_manager::BOOKINGSTATUS_REJECTED,
+                ],
+            ],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(5, $filtered);
+        $this->assertEqualsCanonicalizing(
+            [501, 502, 503, 504, 505],
+            array_map(static fn($event): int => (int)$event->id, $filtered)
+        );
+    }
+
+    /**
+     * Default triplet on the active tab must hide terminal rows.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_default_triplet_hides_terminal_on_active(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $events = [
+            (object)[
+                'id' => 601,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+            ],
+            (object)[
+                'id' => 602,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
+            ],
+            (object)[
+                'id' => 603,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 15:00:00'),
+                'endtime' => strtotime('2026-05-08 17:00:00'),
+            ],
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            [
+                'bookingstatuses' => [
+                    event_access_manager::BOOKINGSTATUS_NEW,
+                    event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                    event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                ],
+            ],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(603, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Terminal-only selection returns only canceled and rejected rows on the active tab.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_terminal_only_both_on_active(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $events = [
+            (object)[
+                'id' => 701,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+            ],
+            (object)[
+                'id' => 702,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
+            ],
+            (object)[
+                'id' => 703,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('2026-05-08 15:00:00'),
+                'endtime' => strtotime('2026-05-08 17:00:00'),
+            ],
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            [
+                'bookingstatuses' => [
+                    event_access_manager::BOOKINGSTATUS_CANCELED,
+                    event_access_manager::BOOKINGSTATUS_REJECTED,
+                ],
+            ],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(2, $filtered);
+        $this->assertEqualsCanonicalizing([702, 703], array_map(static fn($event): int => (int)$event->id, $filtered));
     }
 
     /**
