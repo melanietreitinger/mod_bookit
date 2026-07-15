@@ -2046,6 +2046,268 @@ final class event_access_manager_test extends advanced_testcase {
      * @runInSeparateProcess
      * @return void
      */
+    public function test_can_user_edit_booking_status_false_for_support_only(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$user->id,
+        ];
+
+        $this->assertTrue(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_edit_booking_status($event, $context, $user->id));
+    }
+
+    /**
+     * Service-team users with editinternal may change booking status.
+     *
+     * @return void
+     */
+    public function test_can_user_edit_booking_status_true_for_service_team(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice063status');
+        $user = $this->getDataGenerator()->create_user();
+        $role = $DB->get_record('role', ['shortname' => 'bookitservice063status'], 'id', MUST_EXIST);
+        \assign_capability('mod/bookit:editinternal', CAP_ALLOW, (int)$role->id, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice063status');
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_edit_booking_status($event, $context, $user->id));
+    }
+
+    /**
+     * Cancel-only participants may still edit booking status through the form.
+     *
+     * @return void
+     */
+    public function test_can_user_edit_booking_status_true_for_cancel_only_participant(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_participant_cancel_only($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_edit_booking_status($event, $context, $user->id));
+    }
+
+    /**
+     * Support role without assignment must not gain booking status edit rights.
+     *
+     * @return void
+     */
+    public function test_can_user_edit_booking_status_false_support_role_not_assigned(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_edit_booking_status($event, $context, $user->id));
+    }
+
+    /**
+     * Support-only users with notes access keep an editable modal footer.
+     *
+     * @return void
+     */
+    public function test_modal_footer_editable_for_support_notes_only(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$user->id,
+        ];
+
+        $this->assertTrue(event_access_manager::can_supportperson_edit_internal_notes($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_edit_booking_status($event, $context, $user->id));
+        $this->assertSame(
+            event_access_manager::MODAL_FOOTER_MODE_EDITABLE,
+            event_access_manager::get_event_modal_footer_mode($event, $context, $user->id)
+        );
+    }
+
+    /**
+     * Support-only users may not edit event resources.
+     *
+     * @return void
+     */
+    public function test_can_user_edit_event_resources_false_for_support_only(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$user->id,
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_edit_event_resources($event, $context, $user->id));
+    }
+
+    /**
+     * Service-team users with editevent may edit event resources.
+     *
+     * @return void
+     */
+    public function test_can_user_edit_event_resources_true_for_service_team(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservice064resources');
+        $user = $this->getDataGenerator()->create_user();
+        $role = $DB->get_record('role', ['shortname' => 'bookitservice064resources'], 'id', MUST_EXIST);
+        \assign_capability('mod/bookit:editevent', CAP_ALLOW, (int)$role->id, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice064resources');
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_edit_event_resources($event, $context, $user->id));
+    }
+
+    /**
+     * Participants may edit resources on New bookings.
+     *
+     * @return void
+     */
+    public function test_can_user_edit_event_resources_true_for_participant_new(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => time() + 3600,
+            'personinchargeid' => $user->id,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_edit_event_resources($event, $context, $user->id));
+    }
+
+    /**
+     * Support role without assignment may not edit event resources.
+     *
+     * @return void
+     */
+    public function test_can_user_edit_event_resources_false_support_role_not_assigned(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'starttime' => time() + 3600,
+            'personinchargeid' => 999,
+            'usermodified' => 998,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_supportperson_view_internal_fields($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_edit_event_resources($event, $context, $user->id));
+    }
+
+    /**
+     * Past participant read-only bookings expose a view-only modal footer.
+     *
+     * @return void
+     */
+    public function test_modal_footer_view_only_support_past_readonly(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => time() - 3600,
+            'personinchargeid' => $user->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertSame(
+            event_access_manager::MODAL_FOOTER_MODE_VIEW_ONLY,
+            event_access_manager::get_event_modal_footer_mode($event, $context, $user->id)
+        );
+    }
+
+    /**
+     * Modal footer mode follows the same editability rules as edit_event_form.
+     *
+     * @return void
+     */
     public function test_get_event_modal_footer_mode(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();

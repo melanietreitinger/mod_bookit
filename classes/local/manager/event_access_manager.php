@@ -26,7 +26,6 @@
 namespace mod_bookit\local\manager;
 
 use context_module;
-use mod_bookit\external\get_possible_starttimes;
 use mod_bookit\local\install_helper;
 use stdClass;
 
@@ -319,7 +318,7 @@ class event_access_manager {
             return false;
         }
 
-        return get_possible_starttimes::is_starttime_in_past((int)($event->starttime ?? 0));
+        return (int)($event->starttime ?? 0) < time();
     }
 
     /**
@@ -552,6 +551,52 @@ class event_access_manager {
     }
 
     /**
+     * Check whether the user may change the booking status via the event form.
+     *
+     * Support-on-site internal-field visibility does not imply status edit rights.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_user_edit_booking_status(stdClass $event, context_module $context, int $userid): bool {
+        if (has_capability('mod/bookit:editinternal', $context, $userid)) {
+            return true;
+        }
+
+        if (self::should_block_participant_past_edit($event, $context, $userid)) {
+            return false;
+        }
+
+        return self::can_participant_cancel_only($event, $context, $userid)
+            || self::can_self_cancel_new_request($event, $context, $userid);
+    }
+
+    /**
+     * Check whether the user may change resource checkboxes and quantities via the event form.
+     *
+     * Mirrors the effective {@see \mod_bookit\form\edit_event_form::definition()} `editevent` flag for
+     * resource controls: service roles with editevent, or participants while the booking is still New.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_user_edit_event_resources(stdClass $event, context_module $context, int $userid): bool {
+        if (has_capability('mod/bookit:editevent', $context, $userid)) {
+            return true;
+        }
+
+        if (self::should_block_participant_past_edit($event, $context, $userid)) {
+            return false;
+        }
+
+        return self::can_participant_edit_event($event, $userid);
+    }
+
+    /**
      * Resolve the event-detail modal footer profile for the current user.
      *
      * Mirrors the effective edit flags in edit_event_form::definition().
@@ -576,11 +621,7 @@ class event_access_manager {
         $caneditinternal = has_capability('mod/bookit:editinternal', $context, $userid);
         $caneditinternalnotes = $caneditinternal
             || self::can_supportperson_edit_internal_notes($event, $context, $userid);
-        $canselfcancelnew = !$participantpastreadonly
-            && self::can_self_cancel_new_request($event, $context, $userid);
-        $cancancelonly = !$participantpastreadonly
-            && self::can_participant_cancel_only($event, $context, $userid);
-        $caneditbookingstatus = $caneditinternal || $cancancelonly || $canselfcancelnew;
+        $caneditbookingstatus = self::can_user_edit_booking_status($event, $context, $userid);
 
         if ($caneditevent || $caneditinternalnotes || $caneditbookingstatus) {
             return self::MODAL_FOOTER_MODE_EDITABLE;

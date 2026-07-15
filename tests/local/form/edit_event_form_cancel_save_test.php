@@ -64,6 +64,43 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
     }
 
     /**
+     * Ensure bookit_supportonsite has required capabilities in the given context.
+     *
+     * @param context_module $context
+     * @return void
+     */
+    private function ensure_support_capabilities(context_module $context): void {
+        global $DB;
+
+        $role = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$role) {
+            $roleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $roleid = (int)$role->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+    }
+
+    /**
+     * Assign bookit_supportonsite to a user.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @return void
+     */
+    private function assign_support_role(context_module $context, int $userid): void {
+        global $DB;
+
+        $this->ensure_support_capabilities($context);
+        $role = $DB->get_record('role', ['shortname' => 'bookit_supportonsite'], 'id', MUST_EXIST);
+        \role_assign($role->id, $userid, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+    }
+
+    /**
      * Create a room for event persistence.
      *
      * @return int
@@ -353,12 +390,7 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
         $supportuser = $this->getDataGenerator()->create_user();
         $context = $this->create_participant_context((int)$bookingperson->id);
         $this->getDataGenerator()->enrol_user((int)$supportuser->id, $context->get_course_context()->instanceid);
-        \role_assign(
-            $DB->get_field('role', 'id', ['shortname' => 'bookitparticipantcancel'], MUST_EXIST),
-            (int)$supportuser->id,
-            $context->id
-        );
-        \accesslib_clear_all_caches_for_unit_testing();
+        $this->assign_support_role($context, (int)$supportuser->id);
 
         $roomid = $this->create_room();
         $event = $this->create_cancel_only_event(
@@ -400,12 +432,7 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
         $supportuser = $this->getDataGenerator()->create_user();
         $context = $this->create_participant_context((int)$bookingperson->id);
         $this->getDataGenerator()->enrol_user((int)$supportuser->id, $context->get_course_context()->instanceid);
-        \role_assign(
-            $DB->get_field('role', 'id', ['shortname' => 'bookitparticipantcancel'], MUST_EXIST),
-            (int)$supportuser->id,
-            $context->id
-        );
-        \accesslib_clear_all_caches_for_unit_testing();
+        $this->assign_support_role($context, (int)$supportuser->id);
 
         $roomid = $this->create_room();
         $event = $this->create_cancel_only_event(

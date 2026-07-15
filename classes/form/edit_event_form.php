@@ -109,7 +109,10 @@ class edit_event_form extends dynamic_form {
             && event_access_manager::can_self_cancel_new_request($existingevent, $context, (int)$USER->id);
         $cancancelonly = !$participantpastreadonly && $existingevent
             && event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
-        $showbookingstatus = $caneditinternal || $canviewrestrictedfields || $cancancelonly || $canselfcancelnew;
+        $caneditbookingstatus = $existingevent
+            ? event_access_manager::can_user_edit_booking_status($existingevent, $context, (int)$USER->id)
+            : ($caneditinternal || $cancancelonly || $canselfcancelnew);
+        $showbookingstatus = $caneditbookingstatus;
         $showbookingstatusreadonly = $existingevent
             && !$participantpastreadonly
             && !$showbookingstatus
@@ -137,7 +140,7 @@ class edit_event_form extends dynamic_form {
         $mform->setType('viewrestrictedfields', PARAM_BOOL);
         $mform->addElement('hidden', 'editinternalnotes', (int)$caneditinternalnotes);
         $mform->setType('editinternalnotes', PARAM_BOOL);
-        $mform->addElement('hidden', 'editbookingstatus', (int)($caneditinternal || $cancancelonly || $canselfcancelnew));
+        $mform->addElement('hidden', 'editbookingstatus', (int)$caneditbookingstatus);
         $mform->setType('editbookingstatus', PARAM_BOOL);
         $mform->addElement('hidden', 'cancelonly', (int)$cancancelonly);
         $mform->setType('cancelonly', PARAM_BOOL);
@@ -912,9 +915,11 @@ class edit_event_form extends dynamic_form {
                 && event_access_manager::can_participant_cancel_only($currentrecord, $context, (int)$USER->id);
             $canselfcancelnew = !$participantpastreadonly
                 && event_access_manager::can_self_cancel_new_request($currentrecord, $context, (int)$USER->id);
-            $caneditbookingstatus = $caneditinternal
-                || $cancancelonly
-                || $canselfcancelnew;
+            $caneditbookingstatus = event_access_manager::can_user_edit_booking_status(
+                $currentrecord,
+                $context,
+                (int)$USER->id
+            );
             $requestedstatus = (int)($formdata->bookingstatus ?? $currentrecord->bookingstatus);
             $statusonlyselfcancel = $canselfcancelnew
                 && $requestedstatus === event_access_manager::BOOKINGSTATUS_CANCELED;
@@ -948,7 +953,9 @@ class edit_event_form extends dynamic_form {
             $caneditpublic,
             $statusonlyselfcancel,
             $currentevent,
-            $currentrecord
+            $currentrecord,
+            $context,
+            (int)$USER->id
         );
         $formdata->resources = $mappings;
 
@@ -1106,6 +1113,8 @@ class edit_event_form extends dynamic_form {
      * @param bool $statusonlyselfcancel Whether this is a self-cancel-only save
      * @param bookit_event|null $currentevent Existing event entity, if any
      * @param stdClass|null $currentrecord Existing event DB record, if any
+     * @param module $context Module context for permission checks
+     * @param int $userid Acting user id
      * @return array List of mapping objects with resourceid and amount
      * @throws dml_exception
      */
@@ -1115,7 +1124,9 @@ class edit_event_form extends dynamic_form {
         bool $caneditpublic,
         bool $statusonlyselfcancel,
         ?bookit_event $currentevent,
-        ?stdClass $currentrecord
+        ?stdClass $currentrecord,
+        module $context,
+        int $userid
     ): array {
         if (!$resourcesenabled) {
             return $currentevent !== null ? $currentevent->resources : [];
@@ -1129,7 +1140,8 @@ class edit_event_form extends dynamic_form {
             return $currentevent !== null ? $currentevent->resources : [];
         }
 
-        $caneditresourcecheckboxes = (int)($formdata->editevent ?? 0) === 1;
+        $caneditresourcecheckboxes = $currentrecord === null
+            || event_access_manager::can_user_edit_event_resources($currentrecord, $context, $userid);
         if ($currentevent !== null && !$caneditresourcecheckboxes) {
             return $currentevent->resources;
         }
@@ -1285,7 +1297,6 @@ class edit_event_form extends dynamic_form {
                     ['group' => 1],
                     [0, 1]
                 );
-                $mform->disabledIf('checkbox_' . $resource['id'], 'editevent', 'neq');
 
                 // Info icon with popover (Moodle-native pattern: data-toggle=popover, trigger=focus).
                 $popoverparts = [];
@@ -1328,7 +1339,6 @@ class edit_event_form extends dynamic_form {
                         ['size' => '4', 'data-resource-max' => (int)$resource['amount']]
                     );
                     $mform->setType('resource_' . $resource['id'], PARAM_INT);
-                    $mform->disabledIf('resource_' . $resource['id'], 'checkbox_' . $resource['id']);
                     $mform->setDefault('resource_' . $resource['id'], 1);
 
                     // Add max amount as static text.
@@ -1350,6 +1360,11 @@ class edit_event_form extends dynamic_form {
                     [' '],
                     false
                 );
+                $mform->disabledIf('checkbox_' . $resource['id'], 'editevent', 'neq');
+                if (!$resource['amountirrelevant']) {
+                    $mform->disabledIf('resource_' . $resource['id'], 'editevent', 'neq');
+                    $mform->disabledIf('resource_' . $resource['id'], 'checkbox_' . $resource['id']);
+                }
             }
         }
     }
@@ -1460,7 +1475,10 @@ class edit_event_form extends dynamic_form {
             $errors['roomid'] = get_string('room_doesnt_have_enough_seats', 'mod_bookit');
         }
 
-        if ($resourcesenabled) {
+        $caneditresources = empty($data['id'])
+            || $existingevent === null
+            || event_access_manager::can_user_edit_event_resources($existingevent, $context, (int)$USER->id);
+        if ($resourcesenabled && $caneditresources) {
             foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
                 foreach ($categorygroup['resources'] as $resource) {
                     $id = $resource['id'];
