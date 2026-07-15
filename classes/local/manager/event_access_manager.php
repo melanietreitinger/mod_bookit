@@ -404,12 +404,12 @@ class event_access_manager {
      * @return bool
      */
     public static function can_user_view_event_in_overview(stdClass $event, context_module $context, int $userid): bool {
-        if (self::is_rejected_request($event)) {
-            return false;
-        }
-
         if (self::can_manage_open_requests($context) || has_capability('mod/bookit:viewalldetailsofevent', $context)) {
             return true;
+        }
+
+        if (self::is_rejected_request($event)) {
+            return false;
         }
 
         if (self::is_observer_restricted_mode($context)) {

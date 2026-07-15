@@ -917,7 +917,7 @@ final class event_access_manager_test extends advanced_testcase {
         $openrequest = clone $rejected;
         $openrequest->bookingstatus = event_access_manager::BOOKINGSTATUS_NEW;
 
-        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($rejected, $context, $serviceuser->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($rejected, $context, $serviceuser->id));
         $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($rejected, $context, $serviceuser->id));
         $this->assertTrue(event_access_manager::can_reactivate_rejected_request($rejected, $context));
 
