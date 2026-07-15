@@ -299,7 +299,11 @@ class event_manager {
         } else if ($workspace === 'rejectedrequests') {
             $events = $canmanageopenrequests ? self::get_rejected_requests() : [];
         } else {
-            [$defaultstart, $defaultend] = self::get_reporting_default_range(null, $canmanageopenrequests);
+            [$defaultstart, $defaultend] = self::get_reporting_default_range(
+                null,
+                $canmanageopenrequests,
+                $workspace === 'history'
+            );
             $reportstart ??= $defaultstart;
             $reportend ??= $defaultend;
             $semesterids = $filters['semesterids'];
@@ -512,19 +516,29 @@ class event_manager {
      *
      * @param int|null $referencetime
      * @param bool $serviceteam
+     * @param bool $ishistorytab
      * @return int[]
      */
-    public static function get_reporting_default_range(?int $referencetime = null, bool $serviceteam = false): array {
+    public static function get_reporting_default_range(
+        ?int $referencetime = null,
+        bool $serviceteam = false,
+        bool $ishistorytab = false
+    ): array {
         $timestamp = $referencetime ?? time();
         $date = (new DateTime())->setTimestamp($timestamp);
         $year = (int)$date->format('Y');
+        $yearend = (new DateTime())->setDate($year, 12, 31)->setTime(23, 59, 59)->getTimestamp();
 
-        if ($serviceteam) {
+        if ($serviceteam && $ishistorytab) {
+            $start = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
+            $end = (new DateTime())->setTimestamp(usergetmidnight($timestamp))->setTime(23, 59, 59)->getTimestamp();
+        } else if ($serviceteam) {
             $start = usergetmidnight($timestamp);
+            $end = $yearend;
         } else {
             $start = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
+            $end = $yearend;
         }
-        $end = (new DateTime())->setDate($year, 12, 31)->setTime(23, 59, 59)->getTimestamp();
 
         return [$start, $end];
     }

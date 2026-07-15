@@ -252,6 +252,33 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Service-team History tab defaults span year start through end of today.
+     *
+     * @return void
+     */
+    public function test_get_reporting_default_range_service_team_history_year_to_date(): void {
+        $reference = strtotime('2026-05-07 10:00:00');
+        [$start, $end] = event_manager::get_reporting_default_range($reference, true, true);
+
+        $this->assertSame(strtotime('2026-01-01 00:00:00'), $start);
+        $expectedend = (new \DateTime())->setTimestamp(usergetmidnight($reference))->setTime(23, 59, 59)->getTimestamp();
+        $this->assertSame($expectedend, $end);
+    }
+
+    /**
+     * Non-service-team reporting defaults stay full-year when History flag is set.
+     *
+     * @return void
+     */
+    public function test_get_reporting_default_range_non_service_team_unchanged_with_history_flag(): void {
+        $reference = strtotime('2026-05-07 10:00:00');
+        [$start, $end] = event_manager::get_reporting_default_range($reference, false, true);
+
+        $this->assertSame(strtotime('2026-01-01 00:00:00'), $start);
+        $this->assertSame(strtotime('2026-12-31 23:59:59'), $end);
+    }
+
+    /**
      * Default reporting status filter excludes terminal statuses.
      *
      * @return void

@@ -84,10 +84,13 @@ $tableid = match (true) {
 
 [$defaultreportstart, $defaultreportend] = event_manager::get_reporting_default_range(
     null,
-    $showreportfilters && $canmanageopenrequests
+    $showreportfilters && $canmanageopenrequests,
+    $currenttab === 'history'
 );
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
 $defaultreportendvalue = date('Y-m-d', $defaultreportend);
+$hasexplicitreportstart = array_key_exists('reportstart', $_GET);
+$hasexplicitreportend = array_key_exists('reportend', $_GET);
 $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT);
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
 $hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
@@ -112,8 +115,10 @@ if ($selectedfacultyid > 0) {
 if (!empty($selectedsemesterids) || $hasexplicitsemesterfilter) {
     $overviewnavigationparams['semesterids'] = $selectedsemesterids;
 }
-if ($showreportfilters) {
+if ($hasexplicitreportstart) {
     $overviewnavigationparams['reportstart'] = $reportstartvalue;
+}
+if ($hasexplicitreportend) {
     $overviewnavigationparams['reportend'] = $reportendvalue;
 }
 $requestnavigationparams = $overviewnavigationparams;
