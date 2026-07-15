@@ -56,6 +56,7 @@ Feature: Enforce role-based visibility and editing for booking requests
     And the Bookit event details control "starttime" should be disabled
     And the Bookit event details control "bookingstatus" should be disabled
     And the Bookit event details control "internalnotes" should be enabled
+    And I should see "Internal fields"
 
   Scenario: Booking person cancels a new request from the overview row
     Given the following "mod_bookit > events" exist:

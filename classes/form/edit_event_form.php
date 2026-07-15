@@ -424,24 +424,42 @@ class edit_event_form extends dynamic_form {
         }
 
         // Internal fields.
-        if ($caneditinternal) {
+        if ($caneditinternal || $canviewrestrictedfields) {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
         }
         if ($this->is_optional_field_enabled($config, 'refcourseid')) {
-            $mform->addElement(
-                'course',
-                'refcourseid',
-                get_string(
-                    'event_refcourseid',
-                    'mod_bookit'
-                ),
-                ['multiple' => false, 'showhidden' => true, 'exclude' => '']
-            );
-            $mform->setType('refcourseid', PARAM_INT);
-            $mform->setDefault('refcourseid', 0);
-            $mform->hideIf('refcourseid', 'editinternal', 'neq');
-            $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
+            if ($caneditinternal) {
+                $mform->addElement(
+                    'course',
+                    'refcourseid',
+                    get_string(
+                        'event_refcourseid',
+                        'mod_bookit'
+                    ),
+                    ['multiple' => false, 'showhidden' => true, 'exclude' => '']
+                );
+                $mform->setType('refcourseid', PARAM_INT);
+                $mform->setDefault('refcourseid', 0);
+                $mform->hideIf('refcourseid', 'editinternal', 'neq');
+                $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
+            } else if ($canviewrestrictedfields) {
+                $refcourselabel = get_string('event_refcourseid', 'mod_bookit');
+                $refcoursedisplay = '';
+                $refcoursevalue = 0;
+                if ($existingevent && !empty($existingevent->refcourseid)) {
+                    $refcoursevalue = (int)$existingevent->refcourseid;
+                    $refcourse = get_course($refcoursevalue, false);
+                    $refcoursedisplay = $refcourse ? format_string($refcourse->fullname) : '';
+                }
+                $mform->addElement('static', 'refcourseid_readonly', $refcourselabel, s($refcoursedisplay));
+                $mform->addHelpButton('refcourseid_readonly', 'event_refcourseid', 'mod_bookit');
+                $mform->addElement('hidden', 'refcourseid', $refcoursevalue);
+                $mform->setType('refcourseid', PARAM_INT);
+            } else {
+                $mform->addElement('hidden', 'refcourseid');
+                $mform->setType('refcourseid', PARAM_INT);
+            }
         } else {
             $mform->addElement('hidden', 'refcourseid');
             $mform->setType('refcourseid', PARAM_INT);
@@ -496,14 +514,37 @@ class edit_event_form extends dynamic_form {
         if ($canviewrestrictedfields) {
             // Don't use PARAM_INT, because it converts an empty text field to 0.
             // In our case, an empty field should mean be the inherited default.
-            $mform->addElement('text', 'extratimebefore', get_string('settings_extratime_before', 'mod_bookit'));
-            $mform->setType('extratimebefore', PARAM_ALPHANUM);
-            $mform->addRule('extratimebefore', null, 'numeric', null, 'client');
-            $mform->disabledIf('extratimebefore', 'editinternal', 'neq', 1);
-            $mform->addElement('text', 'extratimeafter', get_string('settings_extratime_after', 'mod_bookit'));
-            $mform->setType('extratimeafter', PARAM_ALPHANUM);
-            $mform->addRule('extratimeafter', null, 'numeric', null, 'client');
-            $mform->disabledIf('extratimeafter', 'editinternal', 'neq', 1);
+            if (!$caneditinternal && $existingevent) {
+                $extratimebeforelabel = get_string('settings_extratime_before', 'mod_bookit');
+                $extratimeafterlabel = get_string('settings_extratime_after', 'mod_bookit');
+                $extratimebeforevalue = $existingevent->extratimebefore ?? '';
+                $extratimeaftervalue = $existingevent->extratimeafter ?? '';
+                $mform->addElement(
+                    'static',
+                    'extratimebefore_readonly',
+                    $extratimebeforelabel,
+                    s((string)$extratimebeforevalue)
+                );
+                $mform->addElement('hidden', 'extratimebefore', $extratimebeforevalue);
+                $mform->setType('extratimebefore', PARAM_ALPHANUM);
+                $mform->addElement(
+                    'static',
+                    'extratimeafter_readonly',
+                    $extratimeafterlabel,
+                    s((string)$extratimeaftervalue)
+                );
+                $mform->addElement('hidden', 'extratimeafter', $extratimeaftervalue);
+                $mform->setType('extratimeafter', PARAM_ALPHANUM);
+            } else {
+                $mform->addElement('text', 'extratimebefore', get_string('settings_extratime_before', 'mod_bookit'));
+                $mform->setType('extratimebefore', PARAM_ALPHANUM);
+                $mform->addRule('extratimebefore', null, 'numeric', null, 'client');
+                $mform->disabledIf('extratimebefore', 'editinternal', 'neq', 1);
+                $mform->addElement('text', 'extratimeafter', get_string('settings_extratime_after', 'mod_bookit'));
+                $mform->setType('extratimeafter', PARAM_ALPHANUM);
+                $mform->addRule('extratimeafter', null, 'numeric', null, 'client');
+                $mform->disabledIf('extratimeafter', 'editinternal', 'neq', 1);
+            }
         } else {
             $mform->addElement('hidden', 'extratimebefore');
             $mform->setType('extratimebefore', PARAM_ALPHANUM);
@@ -1032,6 +1073,7 @@ class edit_event_form extends dynamic_form {
             $formdata->supportpersons = $currentevent->supportpersons;
             $formdata->extratimebefore = $currentevent->extratimebefore;
             $formdata->extratimeafter = $currentevent->extratimeafter;
+            $formdata->refcourseid = $currentevent->refcourseid;
             if (!$caneditbookingstatus) {
                 $formdata->bookingstatus = $currentevent->bookingstatus;
             }
