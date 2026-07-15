@@ -1,0 +1,162 @@
+{{!
+    @template mod_bookit/view/partials/workspace_event_table
+
+    Unified service-team request workspace event table.
+}}
+<table id="{{workspacetableprofile.tableid}}" class="generaltable table-striped table-hover w-100 {{workspacetableprofile.tablecssclass}}">
+    <thead class="text-center">
+        <tr style="background-color:{{workspacetableprofile.headerbackgroundcolor}};">
+            {{#workspacetableprofile.showidcolumn}}
+            <th class="align-middle" data-sort-key="id">ID</th>
+            {{/workspacetableprofile.showidcolumn}}
+            {{#workspacetableprofile.showdatetimecolumn}}
+            <th class="align-middle" data-sort-key="starttime">{{overviewcolumndatetime}}</th>
+            {{/workspacetableprofile.showdatetimecolumn}}
+            <th class="align-middle" data-sort-key="title">Title</th>
+            <th class="align-middle" data-sort-key="room">Room</th>
+            <th class="align-middle" data-sort-key="personincharge">Person in charge</th>
+            <th class="align-middle" data-sort-key="myrole">My role</th>
+            {{#workspacetableprofile.showcreatedbycolumn}}
+            <th class="align-middle" data-sort-key="createdby">{{createdbycolumnlabel}}</th>
+            {{/workspacetableprofile.showcreatedbycolumn}}
+            <th class="align-middle" data-sort-key="bookingstatus">Booking status</th>
+            {{#workspacetableprofile.showprogresscolumn}}
+            <th class="align-middle">Progress</th>
+            {{/workspacetableprofile.showprogresscolumn}}
+            {{#workspacetableprofile.showchecklistcolumn}}
+            <th class="align-middle">Checklist</th>
+            {{/workspacetableprofile.showchecklistcolumn}}
+            {{#workspacetableprofile.showresourcescolumn}}
+            <th class="align-middle">Resources</th>
+            {{/workspacetableprofile.showresourcescolumn}}
+            {{#workspacetableprofile.showcancelcolumn}}
+            <th class="align-middle">{{overviewcancelcolumnlabel}}</th>
+            {{/workspacetableprofile.showcancelcolumn}}
+            {{#workspacetableprofile.showreactivatecolumn}}
+            <th class="align-middle">{{overviewreactivatecolumnlabel}}</th>
+            {{/workspacetableprofile.showreactivatecolumn}}
+            {{#workspacetableprofile.showdatecolumn}}
+            <th class="align-middle" data-sort-key="starttime">Date</th>
+            {{/workspacetableprofile.showdatecolumn}}
+        </tr>
+    </thead>
+    <tbody class="text-center">
+        {{#workspacerows}}
+        <tr class="mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}{{#workspacetableprofile.rowcssclass}} {{workspacetableprofile.rowcssclass}}{{/workspacetableprofile.rowcssclass}}">
+            {{#workspacetableprofile.showidcolumn}}
+            <td class="align-middle" data-sort="{{id}}">{{id}}</td>
+            {{/workspacetableprofile.showidcolumn}}
+            {{#workspacetableprofile.showdatetimecolumn}}
+            <td class="align-middle" data-sort="{{starttime}}">{{datetimestr}}</td>
+            {{/workspacetableprofile.showdatetimecolumn}}
+            <td class="align-middle">
+                {{#is_reserved_projection}}
+                <span data-is-reserved-projection="1">{{name}}</span>
+                {{/is_reserved_projection}}
+                {{^is_reserved_projection}}
+                {{#caneventdetails}}
+                <a href="#"
+                   class="bookit-event-link"
+                   data-eventid="{{id}}"
+                   data-cmid="{{cmid}}"
+                   data-modal-footer-mode="{{modalfootermode}}"
+                   data-is-reserved-projection="{{#is_reserved_projection}}1{{/is_reserved_projection}}{{^is_reserved_projection}}0{{/is_reserved_projection}}">
+                   {{name}}
+                </a>
+                {{/caneventdetails}}
+                {{^caneventdetails}}{{name}}{{/caneventdetails}}
+                {{/is_reserved_projection}}
+            </td>
+            <td class="align-middle">{{room}}</td>
+            <td class="align-middle">{{personincharge}}</td>
+            <td class="align-middle">{{myrole}}</td>
+            {{#workspacetableprofile.showcreatedbycolumn}}
+            <td class="align-middle">{{createdby}}</td>
+            {{/workspacetableprofile.showcreatedbycolumn}}
+            {{{statuscellhtml}}}
+            {{#workspacetableprofile.showprogresscolumn}}
+            <td class="align-middle">
+                {{#checklistprogress_available}}
+                <div class="mb-1">
+                    <div class="small text-muted mb-1">Checklist</div>
+                    <div class="progress position-relative" style="min-width:80px;">
+                        <div class="progress-bar" role="progressbar"
+                             style="width:{{checklistprogress}}%;"
+                             aria-valuenow="{{checklistprogress}}"
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                        <span class="position-absolute w-100 text-center" style="font-size:0.75rem;line-height:1rem;">{{checklistprogress}}%</span>
+                    </div>
+                </div>
+                {{/checklistprogress_available}}
+                {{#resourcesprogress_available}}
+                <div>
+                    <div class="small text-muted mb-1">Resources</div>
+                    <div class="progress position-relative" style="min-width:80px;">
+                        <div class="progress-bar" role="progressbar"
+                             style="width:{{resourcesprogress}}%;"
+                             aria-valuenow="{{resourcesprogress}}"
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                        <span class="position-absolute w-100 text-center" style="font-size:0.75rem;line-height:1rem;">{{resourcesprogress}}%</span>
+                    </div>
+                </div>
+                {{/resourcesprogress_available}}
+                {{^checklistprogress_available}}{{^resourcesprogress_available}}--{{/resourcesprogress_available}}{{/checklistprogress_available}}
+            </td>
+            {{/workspacetableprofile.showprogresscolumn}}
+            {{#workspacetableprofile.showchecklistcolumn}}
+            <td class="align-middle">
+                {{#haschecklistaction}}
+                <a href="{{checklisturl}}" class="btn btn-sm btn-primary">{{checklistlabel}}</a>
+                {{/haschecklistaction}}
+                {{^haschecklistaction}}-{{/haschecklistaction}}
+            </td>
+            {{/workspacetableprofile.showchecklistcolumn}}
+            {{#workspacetableprofile.showresourcescolumn}}
+            <td class="align-middle">
+                {{#hasresourcesaction}}
+                <a href="{{resourceschecklisturl}}" class="btn btn-sm btn-primary">{{resourceschecklistlabel}}</a>
+                {{/hasresourcesaction}}
+                {{^hasresourcesaction}}-{{/hasresourcesaction}}
+            </td>
+            {{/workspacetableprofile.showresourcescolumn}}
+            {{#workspacetableprofile.showcancelcolumn}}
+            <td class="align-middle">
+                {{#hascancelaction}}
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        data-action="cancel-booking-from-overview"
+                        data-eventid="{{id}}"
+                        data-cmid="{{cmid}}"
+                        data-status="{{canceltargetstatus}}"
+                        data-tab="{{overviewtab}}">
+                    {{cancelactionlabel}}
+                </button>
+                {{/hascancelaction}}
+                {{^hascancelaction}}-{{/hascancelaction}}
+            </td>
+            {{/workspacetableprofile.showcancelcolumn}}
+            {{#workspacetableprofile.showreactivatecolumn}}
+            <td class="align-middle">
+                {{#hasreactivateaction}}
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        data-action="reactivate-booking-from-overview"
+                        data-eventid="{{id}}"
+                        data-cmid="{{cmid}}"
+                        data-status="{{reactivatetargetstatus}}"
+                        data-tab="{{overviewtab}}">
+                    {{reactivateactionlabel}}
+                </button>
+                {{/hasreactivateaction}}
+                {{^hasreactivateaction}}-{{/hasreactivateaction}}
+            </td>
+            {{/workspacetableprofile.showreactivatecolumn}}
+            {{#workspacetableprofile.showdatecolumn}}
+            <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
+            {{/workspacetableprofile.showdatecolumn}}
+        </tr>
+        {{/workspacerows}}
+    </tbody>
+</table>

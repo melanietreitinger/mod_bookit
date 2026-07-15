@@ -75,6 +75,11 @@
 }}
 
 <div class="mod_bookit-overview-examiner_overview">
+    {{#showrequestworkspacetabs}}
+    <div class="mb-3">
+        {{{requestworkspacetabtree}}}
+    </div>
+    {{/showrequestworkspacetabs}}
     {{#showmyeventssection}}
     {{#showoverviewnavigation}}
     <div class="mb-3">
@@ -88,7 +93,7 @@
     {{#showoverviewfilters}}
     <form method="get" class="mb-3">
         <input type="hidden" name="id" value="{{cmid}}">
-        <input type="hidden" name="tab" value="{{#historyactive}}history{{/historyactive}}{{^historyactive}}myevents{{/historyactive}}">
+        <input type="hidden" name="tab" value="{{activetabparam}}">
         <div class="form-row align-items-end">
             {{#showreportfilters}}
             <div class="form-group col-md-3">
@@ -100,6 +105,7 @@
                 <input type="date" id="bookit-reportend" name="reportend" class="form-control" value="{{reportendvalue}}">
             </div>
             {{/showreportfilters}}
+            {{#showstatusfilter}}
             <div class="form-group col-md-2">
                 <label for="bookit-bookingstatusfilter">{{statusfilterlabel}}</label>
                 <select id="bookit-bookingstatusfilter" name="bookingstatusfilter[]" class="form-control" multiple size="5">
@@ -108,6 +114,7 @@
                     {{/statusfilteroptions}}
                 </select>
             </div>
+            {{/showstatusfilter}}
             <div class="form-group col-md-2">
                 <label for="bookit-facultyid">{{facultyfilterlabel}}</label>
                 <select id="bookit-facultyid" name="facultyid" class="form-control">
@@ -116,6 +123,7 @@
                     {{/facultyoptions}}
                 </select>
             </div>
+            {{#showsemesterfilter}}
             <div class="form-group {{#showreportfilters}}col-md-2{{/showreportfilters}}{{^showreportfilters}}col-md-4{{/showreportfilters}}">
                 <label for="bookit-semesterids">{{semesterfilterlabel}}</label>
                 <select id="bookit-semesterids" name="semesterids[]" class="form-control" multiple size="4">
@@ -124,6 +132,17 @@
                     {{/semesteroptions}}
                 </select>
             </div>
+            {{/showsemesterfilter}}
+            {{#showassignmentfilter}}
+            <div class="form-group col-md-2">
+                <label for="bookit-assignmentfilter">{{assignmentfilterlabel}}</label>
+                <select id="bookit-assignmentfilter" name="assignmentfilter" class="form-control">
+                    {{#assignmentfilteroptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/assignmentfilteroptions}}
+                </select>
+            </div>
+            {{/showassignmentfilter}}
             <div class="form-group col-md-2">
                 <div class="d-flex flex-wrap">
                     <button type="submit" class="btn btn-primary mr-2 mb-1">{{reportapplylabel}}</button>
@@ -139,17 +158,17 @@
         <thead class="text-center">
             <tr style="background-color:#cfe2ff;">
                 {{#showidcolumn}}
-                <th class="align-middle">ID</th>
+                <th class="align-middle" data-sort-key="id">ID</th>
                 {{/showidcolumn}}
-                <th class="align-middle">{{overviewcolumndatetime}}</th>
-                <th class="align-middle">Title</th>
-                <th class="align-middle">Room</th>
-                <th class="align-middle">Person in charge</th>
-                <th class="align-middle">My role</th>
+                <th class="align-middle" data-sort-key="starttime">{{overviewcolumndatetime}}</th>
+                <th class="align-middle" data-sort-key="title">Title</th>
+                <th class="align-middle" data-sort-key="room">Room</th>
+                <th class="align-middle" data-sort-key="personincharge">Person in charge</th>
+                <th class="align-middle" data-sort-key="myrole">My role</th>
                 {{#showcreatedbycolumn}}
-                <th class="align-middle">{{createdbycolumnlabel}}</th>
+                <th class="align-middle" data-sort-key="createdby">{{createdbycolumnlabel}}</th>
                 {{/showcreatedbycolumn}}
-                <th class="align-middle">Booking status</th>
+                <th class="align-middle" data-sort-key="bookingstatus">Booking status</th>
                 {{#showprogresscolumn}}
                 <th class="align-middle">Progress</th>
                 {{/showprogresscolumn}}
@@ -172,7 +191,7 @@
             {{#events}}
                 <tr class="mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
                     {{#showidcolumn}}
-                    <td class="align-middle">{{id}}</td>
+                    <td class="align-middle" data-sort="{{id}}">{{id}}</td>
                     {{/showidcolumn}}
 
                     <td class="align-middle" data-sort="{{starttime}}">{{datetimestr}}</td>
@@ -294,190 +313,86 @@
     {{/hasevents}}
     {{/showmyeventssection}}
 
-    {{#showrequestworkspacesection}}
+    {{#showworkspacetable}}
     <div class="mb-3">
-        <h3 class="h5 mb-1">{{requestworkspacetitle}}</h3>
+        <h3 class="h5 mb-0">{{sectiontitle}}</h3>
     </div>
-
-    {{#showrequestworkspacetabs}}
-    <div class="mb-3">
-        {{{requestworkspacetabtree}}}
-    </div>
-    {{/showrequestworkspacetabs}}
-
-    {{#showopenrequestworkspace}}
+    {{#showoverviewfilters}}
+    <form method="get" class="mb-3">
+        <input type="hidden" name="id" value="{{cmid}}">
+        <input type="hidden" name="tab" value="{{activetabparam}}">
+        <div class="form-row align-items-end">
+            {{#showreportfilters}}
+            <div class="form-group col-md-3">
+                <label for="bookit-workspace-reportstart">{{reportstartlabel}}</label>
+                <input type="date" id="bookit-workspace-reportstart" name="reportstart" class="form-control" value="{{reportstartvalue}}">
+            </div>
+            <div class="form-group col-md-3">
+                <label for="bookit-workspace-reportend">{{reportendlabel}}</label>
+                <input type="date" id="bookit-workspace-reportend" name="reportend" class="form-control" value="{{reportendvalue}}">
+            </div>
+            {{/showreportfilters}}
+            {{#showstatusfilter}}
+            <div class="form-group col-md-2">
+                <label for="bookit-workspace-bookingstatusfilter">{{statusfilterlabel}}</label>
+                <select id="bookit-workspace-bookingstatusfilter" name="bookingstatusfilter[]" class="form-control" multiple size="5">
+                    {{#statusfilteroptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/statusfilteroptions}}
+                </select>
+            </div>
+            {{/showstatusfilter}}
+            <div class="form-group col-md-2">
+                <label for="bookit-workspace-facultyid">{{facultyfilterlabel}}</label>
+                <select id="bookit-workspace-facultyid" name="facultyid" class="form-control">
+                    {{#facultyoptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/facultyoptions}}
+                </select>
+            </div>
+            {{#showsemesterfilter}}
+            <div class="form-group {{#showreportfilters}}col-md-2{{/showreportfilters}}{{^showreportfilters}}col-md-4{{/showreportfilters}}">
+                <label for="bookit-workspace-semesterids">{{semesterfilterlabel}}</label>
+                <select id="bookit-workspace-semesterids" name="semesterids[]" class="form-control" multiple size="4">
+                    {{#semesteroptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/semesteroptions}}
+                </select>
+            </div>
+            {{/showsemesterfilter}}
+            {{#showassignmentfilter}}
+            <div class="form-group col-md-2">
+                <label for="bookit-workspace-assignmentfilter">{{assignmentfilterlabel}}</label>
+                <select id="bookit-workspace-assignmentfilter" name="assignmentfilter" class="form-control">
+                    {{#assignmentfilteroptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/assignmentfilteroptions}}
+                </select>
+            </div>
+            {{/showassignmentfilter}}
+            <div class="form-group col-md-2">
+                <div class="d-flex flex-wrap">
+                    <button type="submit" class="btn btn-primary mr-2 mb-1">{{reportapplylabel}}</button>
+                    <a href="{{reportreseturl}}" class="btn btn-outline-secondary mb-1" data-action="reset-report-filters">{{reportresetlabel}}</a>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="badge badge-info mb-3 p-2">{{eventcounttext}}</div>
+    {{/showoverviewfilters}}
+    {{#workspacetableprofile.showtablesearch}}
     {{> mod_bookit/view/partials/overview_search_field }}
-
-    {{#hasopenrequests}}
-    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-open-requests-table">
-        <thead class="text-center">
-            <tr style="background-color:#fff3cd;">
-                <th class="align-middle">ID</th>
-                <th class="align-middle">Title</th>
-                <th class="align-middle">Room</th>
-                <th class="align-middle">Person in charge</th>
-                <th class="align-middle">My role</th>
-                <th class="align-middle">Booking status</th>
-                <th class="align-middle">Date</th>
-            </tr>
-        </thead>
-        <tbody class="text-center">
-            {{#openrequests}}
-            <tr class="mod-bookit-open-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
-                <td class="align-middle">{{id}}</td>
-                <td class="align-middle">
-                    {{#caneventdetails}}
-                    <a href="#"
-                       class="bookit-event-link"
-                       data-eventid="{{id}}"
-                       data-cmid="{{cmid}}"
-                       data-modal-footer-mode="{{modalfootermode}}">
-                        {{name}}
-                    </a>
-                    {{/caneventdetails}}
-                    {{^caneventdetails}}{{name}}{{/caneventdetails}}
-                </td>
-                <td class="align-middle">{{room}}</td>
-                <td class="align-middle">{{personincharge}}</td>
-                <td class="align-middle">{{myrole}}</td>
-                {{{statuscellhtml}}}
-                <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
-            </tr>
-            {{/openrequests}}
-        </tbody>
-    </table>
-    {{/hasopenrequests}}
-
-    {{^hasopenrequests}}
-    <div class="alert alert-info mb-0">
-        {{openrequestsempty}}
-    </div>
-    {{/hasopenrequests}}
-    {{/showopenrequestworkspace}}
-
-    {{#showconfirmedrequestworkspace}}
-    {{> mod_bookit/view/partials/overview_search_field }}
-
-    {{#hasconfirmedrequests}}
-    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-confirmed-requests-table">
-        <thead class="text-center">
-            <tr style="background-color:#d4edda;">
-                <th class="align-middle">ID</th>
-                <th class="align-middle">Title</th>
-                <th class="align-middle">Room</th>
-                <th class="align-middle">Person in charge</th>
-                <th class="align-middle">My role</th>
-                <th class="align-middle">Booking status</th>
-                <th class="align-middle">Date</th>
-            </tr>
-        </thead>
-        <tbody class="text-center">
-            {{#confirmedrequests}}
-            <tr class="mod-bookit-confirmed-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
-                <td class="align-middle">{{id}}</td>
-                <td class="align-middle">
-                    {{#caneventdetails}}
-                    <a href="#"
-                       class="bookit-event-link"
-                       data-eventid="{{id}}"
-                       data-cmid="{{cmid}}"
-                       data-modal-footer-mode="{{modalfootermode}}">
-                        {{name}}
-                    </a>
-                    {{/caneventdetails}}
-                    {{^caneventdetails}}{{name}}{{/caneventdetails}}
-                </td>
-                <td class="align-middle">{{room}}</td>
-                <td class="align-middle">{{personincharge}}</td>
-                <td class="align-middle">{{myrole}}</td>
-                {{{statuscellhtml}}}
-                <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
-            </tr>
-            {{/confirmedrequests}}
-        </tbody>
-    </table>
-    {{/hasconfirmedrequests}}
-
-    {{^hasconfirmedrequests}}
-    <div class="alert alert-info mb-0">
-        {{confirmedrequestsempty}}
-    </div>
-    {{/hasconfirmedrequests}}
-    {{/showconfirmedrequestworkspace}}
-
-    {{#showrejectedrequestworkspace}}
-    {{> mod_bookit/view/partials/overview_search_field }}
-
-    {{#hasrejectedrequests}}
-    <table id="{{tableid}}" class="generaltable table-striped table-hover w-100 mod-bookit-rejected-requests-table">
-        <thead class="text-center">
-            <tr style="background-color:#f8d7da;">
-                <th class="align-middle">ID</th>
-                <th class="align-middle">Title</th>
-                <th class="align-middle">Room</th>
-                <th class="align-middle">Person in charge</th>
-                <th class="align-middle">My role</th>
-                <th class="align-middle">Booking status</th>
-                <th class="align-middle">Date</th>
-                {{#showreactivatecolumn}}
-                <th class="align-middle">{{overviewreactivatecolumnlabel}}</th>
-                {{/showreactivatecolumn}}
-            </tr>
-        </thead>
-        <tbody class="text-center">
-            {{#rejectedrequests}}
-            <tr class="mod-bookit-rejected-request-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
-                <td class="align-middle">{{id}}</td>
-                <td class="align-middle">
-                    {{#caneventdetails}}
-                    <a href="#"
-                       class="bookit-event-link"
-                       data-eventid="{{id}}"
-                       data-cmid="{{cmid}}"
-                       data-modal-footer-mode="{{modalfootermode}}">
-                        {{name}}
-                    </a>
-                    {{/caneventdetails}}
-                    {{^caneventdetails}}{{name}}{{/caneventdetails}}
-                </td>
-                <td class="align-middle">{{room}}</td>
-                <td class="align-middle">{{personincharge}}</td>
-                <td class="align-middle">{{myrole}}</td>
-                {{{statuscellhtml}}}
-                <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
-                {{#showreactivatecolumn}}
-                <td class="align-middle">
-                    {{#hasreactivateaction}}
-                    <button type="button"
-                            class="btn btn-sm btn-outline-primary"
-                            data-action="reactivate-booking-from-overview"
-                            data-eventid="{{id}}"
-                            data-cmid="{{cmid}}"
-                            data-status="{{reactivatetargetstatus}}"
-                            data-tab="{{overviewtab}}">
-                        {{reactivateactionlabel}}
-                    </button>
-                    {{/hasreactivateaction}}
-                    {{^hasreactivateaction}}-{{/hasreactivateaction}}
-                </td>
-                {{/showreactivatecolumn}}
-            </tr>
-            {{/rejectedrequests}}
-        </tbody>
-    </table>
-    {{/hasrejectedrequests}}
-
-    {{^hasrejectedrequests}}
-    <div class="alert alert-info mb-0">
-        {{rejectedrequestsempty}}
-    </div>
-    {{/hasrejectedrequests}}
-    {{/showrejectedrequestworkspace}}
-
+    {{/workspacetableprofile.showtablesearch}}
+    {{#hasworkspacerows}}
+    {{> mod_bookit/view/partials/workspace_event_table }}
+    {{/hasworkspacerows}}
+    {{^hasworkspacerows}}
+    <div class="alert alert-info mb-0">{{workspacetableemptymessage}}</div>
+    {{/hasworkspacerows}}
     {{#requestpaginghtml}}
     <div class="mod-bookit-request-pagination mt-3" data-region="request-paging">
         {{{requestpaginghtml}}}
     </div>
     {{/requestpaginghtml}}
-    {{/showrequestworkspacesection}}
+    {{/showworkspacetable}}
 </div>

@@ -49,51 +49,77 @@ global $USER, $DB;
 $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
 $canmanage = has_capability('mod/bookit:managebasics', $context);
 $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
+if ($canmanageopenrequests) {
+    $workspacetab = tabs::normalize_workspace_tab($tab, true);
+    $currenttab = $workspacetab;
+} else {
+    $workspacetab = null;
+    $currenttab = match (true) {
+        $isobserverrestricted => 'myevents',
+        $tab === 'history' => 'history',
+        default => 'myevents',
+    };
+}
+$isqueuetab = $canmanageopenrequests && in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true);
+$isreportingworkspacetab = $canmanageopenrequests && in_array($workspacetab, ['allrequests', 'history'], true);
+$isinrequestworkspace = $isqueuetab;
+$requestworkspacemode = $isqueuetab ? $workspacetab : 'openrequests';
+$activetabparam = $canmanageopenrequests ? $workspacetab : ($currenttab === 'history' ? 'history' : 'myevents');
+$historyactive = $activetabparam === 'history';
+$governedworkspace = match ($activetabparam) {
+    'allrequests' => 'myevents',
+    'rejectedcancelled' => 'rejectedrequests',
+    default => $activetabparam,
+};
+$filterprofile = $canmanageopenrequests
+    ? event_manager::get_workspace_filter_profile($workspacetab, true)
+    : event_manager::get_workspace_filter_profile('myevents', false);
+$tableprofile = $canmanageopenrequests
+    ? event_manager::get_workspace_table_profile($workspacetab)
+    : [];
+$ignorereportingurlparams = $canmanageopenrequests
+    && event_manager::queue_tab_ignores_reporting_params($workspacetab);
 $showreportfilters = $canmanageopenrequests || $isobserverrestricted;
 $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
-$hasexplicitstatusfilter = array_key_exists('bookingstatusfilter', $_GET);
-$rawstatusfilter = optional_param_array('bookingstatusfilter', [], PARAM_INT);
+$hasexplicitstatusfilter = !$ignorereportingurlparams && array_key_exists('bookingstatusfilter', $_GET);
+$rawstatusfilter = $ignorereportingurlparams ? [] : optional_param_array('bookingstatusfilter', [], PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $queuepage = max(1, optional_param('queuepage', 1, PARAM_INT));
 $queueperpage = 25;
-$isinrequestworkspace = $canmanageopenrequests && in_array($tab, ['openrequests', 'confirmedrequests', 'rejectedrequests'], true);
-$requestworkspacemode = match ($tab) {
-    'rejectedrequests' => 'rejectedrequests',
-    'confirmedrequests' => 'confirmedrequests',
-    default => 'openrequests',
-};
-$currenttab = match (true) {
-    $isobserverrestricted => 'myevents',
-    $isinrequestworkspace => 'openrequests',
-    $tab === 'history' => 'history',
-    default => 'myevents',
-};
 $selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
     $rawstatusfilter,
     $hasexplicitstatusfilter,
-    $currenttab === 'history'
+    $historyactive,
+    $historyactive && $canmanageopenrequests
 );
-$tableid = match (true) {
-    $isinrequestworkspace && $requestworkspacemode === 'rejectedrequests' => 'rejected-requests-table',
-    $isinrequestworkspace && $requestworkspacemode === 'confirmedrequests' => 'confirmed-requests-table',
-    $isinrequestworkspace => 'open-requests-table',
-    default => 'overview-table',
-};
+$tableid = $canmanageopenrequests
+    ? (string)($tableprofile['tableid'] ?? 'overview-table')
+    : match (true) {
+        $historyactive => 'overview-table',
+        default => 'overview-table',
+    };
 
 [$defaultreportstart, $defaultreportend] = event_manager::get_reporting_default_range(
     null,
     $showreportfilters && $canmanageopenrequests,
-    $currenttab === 'history'
+    $historyactive
 );
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
 $defaultreportendvalue = date('Y-m-d', $defaultreportend);
-$hasexplicitreportstart = array_key_exists('reportstart', $_GET);
-$hasexplicitreportend = array_key_exists('reportend', $_GET);
+$hasexplicitreportstart = !$ignorereportingurlparams && array_key_exists('reportstart', $_GET);
+$hasexplicitreportend = !$ignorereportingurlparams && array_key_exists('reportend', $_GET);
 $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT);
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
-$hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
+$hasexplicitsemesterfilter = !$ignorereportingurlparams && array_key_exists('semesterids', $_GET);
+$assignmentfilter = 'all';
+if ($canmanageopenrequests && !empty($filterprofile['show_assignment_filter'])) {
+    $assignmentfilter = optional_param('assignmentfilter', 'all', PARAM_ALPHA);
+    if (!in_array($assignmentfilter, ['all', 'assigned'], true)) {
+        $assignmentfilter = 'all';
+    }
+}
 if ($showreportfilters) {
     $selectedsemesterids = event_manager::resolve_effective_semester_filter_ids(
         $selectedsemesterids,
@@ -120,6 +146,17 @@ if ($hasexplicitreportstart) {
 }
 if ($hasexplicitreportend) {
     $overviewnavigationparams['reportend'] = $reportendvalue;
+}
+if ($canmanageopenrequests && !empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
+    $overviewnavigationparams['assignmentfilter'] = $assignmentfilter;
+}
+if ($ignorereportingurlparams) {
+    $overviewfilters = [
+        'bookingstatuses' => [],
+        'facultyids' => [],
+        'semesterids' => [],
+    ];
+    $overviewnavigationparams = [];
 }
 $requestnavigationparams = $overviewnavigationparams;
 if ($queuepage > 1) {
@@ -149,19 +186,22 @@ $buildoverviewurl = static function (string $targettab) use ($cm, $overviewnavig
     return tabs::build_overview_url((int)$cm->id, $targettab, $overviewnavigationparams);
 };
 
-$overviewtabrow = tabs::get_overview_inner_tabrow(
-    (int)$cm->id,
-    $overviewnavigationparams,
-    !$isobserverrestricted,
-    $canmanageopenrequests
-);
+$overviewtabrow = !$canmanageopenrequests
+    ? tabs::get_overview_inner_tabrow(
+        (int)$cm->id,
+        $overviewnavigationparams,
+        !$isobserverrestricted,
+        false
+    )
+    : [];
 $requestworkspacetabrow = $canmanageopenrequests
-    ? tabs::get_request_workspace_tabrow((int)$cm->id, $requestnavigationparams)
+    ? tabs::get_request_workspace_tabrow((int)$cm->id, [])
     : [];
 
 /* =======================================================================
    1.  Front-end requirements
    ======================================================================= */
+$PAGE->requires->css(new moodle_url('/mod/bookit/styles.css'));
 $PAGE->requires->jquery();
 
 /* ----- live search ---------------------------------------------------- */
@@ -177,49 +217,24 @@ $PAGE->requires->js_init_code("
 ");
 
 /* ----- sortable columns ---------------------------------------------- */
-$PAGE->requires->js_init_code("
-    require(['jquery'], function($) {
-        const table = $('#{$tableid}');
-        table.find('th').each(function(col) {
-            let asc = true;
-            $(this)
-              .css('cursor','pointer')
-              .append('<span class=\"sortarrow\"> ▲</span>')
-              .on('click', function () {
-                  const rows = table.find('tbody tr').get();
-                  rows.sort(function(a,b) {
-                    const tdA = $(a).children().eq(col);
-                    const tdB = $(b).children().eq(col);
-
-                    const sortA = tdA.data('sort');
-                    const sortB = tdB.data('sort');
-
-                    if (sortA !== undefined && sortB !== undefined) {
-                        return asc ? (sortA - sortB) : (sortB - sortA);
-                    }
-
-                    const A = tdA.text().trim().toLowerCase();
-                    const B = tdB.text().trim().toLowerCase();
-
-                    const cmp = ($.isNumeric(A) && $.isNumeric(B)) ? (A - B) : A.localeCompare(B);
-                    return asc ? cmp : -cmp;
-                });
-                  $.each(rows, (_, row) => table.children('tbody').append(row));
-                  asc = !asc;
-                  table.find('th .sortarrow').text('');
-                  $(this).find('.sortarrow').text(asc ? ' ▲' : ' ▼');
-              });
-        });
-    });
-");
+$overviewrawsort = get_user_preferences(event_manager::OVERVIEW_SORT_PREFERENCE, null);
+$overviewsortpreference = event_manager::parse_overview_sort_preference($overviewrawsort);
+$overviewsortconfig = [
+    'tableId' => $tableid,
+    'preferenceKey' => event_manager::OVERVIEW_SORT_PREFERENCE,
+    'defaultColumn' => 'starttime',
+    'defaultDirection' => 'desc',
+    'initialPreference' => $overviewsortpreference,
+];
 
 /* ----- inline ModalForm handler -------------------------------------- */
 $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
+$PAGE->requires->js_call_amd('mod_bookit/overview/overview_table_sort', 'init', [$overviewsortconfig]);
 $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode([
     'methodname' => 'mod_bookit_get_overview_queue',
     'cmid' => (int)$cm->id,
-    'workspace' => $currenttab === 'openrequests' ? $requestworkspacemode : $currenttab,
+    'workspace' => $governedworkspace,
     'bookingstatuses' => $overviewfilters['bookingstatuses'],
     'facultyids' => $overviewfilters['facultyids'],
     'semesterids' => $overviewfilters['semesterids'],
@@ -238,8 +253,8 @@ $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode
 $PAGE->set_url('/mod/bookit/overview.php', ['id' => $cm->id]);
 $PAGE->set_title(get_string('overview', 'mod_bookit'));
 $PAGE->set_heading($course->fullname);
-if ($currenttab === 'openrequests') {
-    $PAGE->set_secondary_active_tab('bookitopenrequests');
+if ($canmanageopenrequests) {
+    $PAGE->set_secondary_active_tab('bookitrequestworkspace');
 } else {
     $PAGE->set_secondary_active_tab('bookitoverview');
 }
@@ -249,38 +264,74 @@ echo $OUTPUT->header();
 /* =======================================================================
    3.  Fetch examiner’s events
    ======================================================================= */
-$events = $showreportfilters
-    ? event_manager::get_events_for_reporting(
+if ($canmanageopenrequests) {
+    if ($isreportingworkspacetab) {
+        $events = event_manager::get_events_for_reporting(
+            $context,
+            (int)$USER->id,
+            $reportstarttimestamp,
+            $reportendtimestamp,
+            $selectedsemesterids
+        );
+        $events = event_manager::filter_overview_events(
+            $events,
+            $overviewfilters,
+            $historyactive
+        );
+        if ($assignmentfilter === 'assigned') {
+            $events = event_manager::filter_events_by_assignment($events, (int)$USER->id, 'assigned');
+        }
+        $events = event_manager::sort_overview_events_by_starttime($events, true);
+    } else {
+        $events = [];
+    }
+} else if ($showreportfilters) {
+    $events = event_manager::get_events_for_reporting(
         $context,
         (int)$USER->id,
         $reportstarttimestamp,
         $reportendtimestamp,
         $selectedsemesterids
-    )
-    : event_manager::get_events_for_examiner($USER->id);
-$events = event_manager::filter_overview_events(
-    $events,
-    $overviewfilters,
-    $currenttab === 'history'
-);
-$openrequests = $canmanageopenrequests ? event_manager::get_open_requests() : [];
+    );
+    $events = event_manager::filter_overview_events(
+        $events,
+        $overviewfilters,
+        $currenttab === 'history'
+    );
+} else {
+    $events = event_manager::get_events_for_examiner($USER->id);
+    $events = event_manager::filter_overview_events(
+        $events,
+        $overviewfilters,
+        $currenttab === 'history'
+    );
+}
+$openrequests = [];
+$rejectedrequests = [];
+$confirmedrequests = [];
+if ($isqueuetab) {
+    match ($workspacetab) {
+        'rejectedcancelled' => $rejectedrequests = event_manager::get_rejected_requests(),
+        'confirmedrequests' => $confirmedrequests = event_manager::get_confirmed_requests(),
+        default => $openrequests = event_manager::get_open_requests(),
+    };
+}
 $openrequestcount = count($openrequests);
-$rejectedrequests = $canmanageopenrequests ? event_manager::get_rejected_requests() : [];
 $rejectedrequestcount = count($rejectedrequests);
-$confirmedrequests = $canmanageopenrequests ? event_manager::get_confirmed_requests() : [];
 $confirmedrequestcount = count($confirmedrequests);
-$requestqueuecount = match ($requestworkspacemode) {
-    'rejectedrequests' => $rejectedrequestcount,
+$requestqueuecount = match ($workspacetab) {
+    'rejectedcancelled' => $rejectedrequestcount,
     'confirmedrequests' => $confirmedrequestcount,
-    default => $openrequestcount,
+    'openrequests' => $openrequestcount,
+    default => 0,
 };
 $requesttotalpages = max(1, (int)ceil($requestqueuecount / $queueperpage));
 $queuepage = min($queuepage, $requesttotalpages);
-if ($requestworkspacemode === 'rejectedrequests') {
+if ($workspacetab === 'rejectedcancelled') {
     $rejectedrequests = array_values(array_slice($rejectedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
-} else if ($requestworkspacemode === 'confirmedrequests') {
+} else if ($workspacetab === 'confirmedrequests') {
     $confirmedrequests = array_values(array_slice($confirmedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
-} else {
+} else if ($workspacetab === 'openrequests') {
     $openrequests = array_values(array_slice($openrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
 }
 $requestpaginghtml = '';
@@ -291,18 +342,36 @@ if ($isinrequestworkspace && $requestqueuecount > $queueperpage) {
         $queueperpage,
         new moodle_url('/mod/bookit/overview.php', [
             'id' => $cm->id,
-            'tab' => $requestworkspacemode,
+            'tab' => $workspacetab,
         ])
     ));
 }
+$semesteroptionssource = $canmanageopenrequests && $isreportingworkspacetab
+    ? event_manager::get_reporting_semester_filter_options(
+        null,
+        !empty($filterprofile['include_legacy_semester_option'])
+    )
+    : event_manager::get_semester_filter_options();
 $semesteroptions = [];
-foreach (event_manager::get_semester_filter_options() as $value => $label) {
+foreach ($semesteroptionssource as $value => $label) {
     $semesteroptions[] = [
         'value' => (string)$value,
         'label' => $label,
         'selected' => in_array((int)$value, $selectedsemesterids, true),
     ];
 }
+$assignmentfilteroptions = [
+    [
+        'value' => 'all',
+        'label' => get_string('overview_filter_assignment_all', 'mod_bookit'),
+        'selected' => $assignmentfilter === 'all',
+    ],
+    [
+        'value' => 'assigned',
+        'label' => get_string('overview_filter_assignment_assigned', 'mod_bookit'),
+        'selected' => $assignmentfilter === 'assigned',
+    ],
+];
 $facultyoptions = [[
     'value' => '0',
     'label' => get_string('overview_filter_all_faculties', 'mod_bookit'),
@@ -337,10 +406,24 @@ $templatecontext = [
     'cmid' => $cm->id,
     'tableid' => (string)$tableid,
     'canmanage' => $canmanage,
-    'showidcolumn' => $canmanageopenrequests,
-    'showmyeventssection' => $currenttab !== 'openrequests',
+    'showidcolumn' => $canmanageopenrequests
+        ? !empty($tableprofile['showidcolumn'])
+        : $canmanageopenrequests,
+    'showworkspacetable' => $canmanageopenrequests,
+    'workspacetableprofile' => array_merge($tableprofile, [
+        'showprogresscolumn' => !empty($tableprofile['showprogresscolumn'])
+            && ($checklistenabled || $resourcesenabled),
+        'showchecklistcolumn' => !empty($tableprofile['showchecklistcolumn']) && $checklistenabled,
+        'showresourcescolumn' => !empty($tableprofile['showresourcescolumn']) && $resourcesenabled,
+    ]),
+    'workspacerows' => [],
+    'hasworkspacerows' => false,
+    'workspacetableemptymessage' => $canmanageopenrequests
+        ? get_string((string)($tableprofile['emptymessage'] ?? 'overview_no_results'), 'mod_bookit')
+        : '',
+    'showmyeventssection' => !$canmanageopenrequests,
     'showhistorytab' => !$isobserverrestricted,
-    'showoverviewnavigation' => count($overviewtabrow) > 1,
+    'showoverviewnavigation' => !$canmanageopenrequests && count($overviewtabrow) > 1,
     'overviewtabtree' => count($overviewtabrow) > 1
         ? html_writer::tag(
             'nav',
@@ -351,40 +434,59 @@ $templatecontext = [
             ]
         )
         : '',
-    'showrequestworkspacesection' => $currenttab === 'openrequests',
-    'showrequestworkspacetabs' => count($requestworkspacetabrow) > 1,
-    'requestworkspacetabtree' => count($requestworkspacetabrow) > 1
+    'showrequestworkspacesection' => false,
+    'showrequestworkspacetabs' => $canmanageopenrequests && count($requestworkspacetabrow) > 1,
+    'requestworkspacetabtree' => $canmanageopenrequests && count($requestworkspacetabrow) > 1
         ? html_writer::tag(
             'nav',
-            $OUTPUT->tabtree($requestworkspacetabrow, $requestworkspacemode),
+            $OUTPUT->tabtree($requestworkspacetabrow, $workspacetab),
             [
                 'class' => 'mod-bookit-request-workspace-tabs',
                 'aria-label' => get_string('overview_request_workspace_switch', 'mod_bookit'),
             ]
         )
         : '',
-    'showopenrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'openrequests',
-    'showconfirmedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'confirmedrequests',
-    'showrejectedrequestworkspace' => $currenttab === 'openrequests' && $requestworkspacemode === 'rejectedrequests',
+    'showopenrequestworkspace' => false,
+    'showconfirmedrequestworkspace' => false,
+    'showrejectedrequestworkspace' => false,
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
-    'historyactive' => $currenttab === 'history',
-    'sectiontitle' => $currenttab === 'history'
-        ? get_string('overview_history', 'mod_bookit')
-        : ($showreportfilters ? get_string('overview_all_events', 'mod_bookit') : get_string('overview_my_events', 'mod_bookit')),
+    'activetabparam' => $activetabparam,
+    'historyactive' => $historyactive,
+    'sectiontitle' => match (true) {
+        $canmanageopenrequests && $workspacetab === 'allrequests' => get_string('overview_all_requests', 'mod_bookit'),
+        $historyactive => get_string('overview_history', 'mod_bookit'),
+        $showreportfilters => get_string('overview_all_events', 'mod_bookit'),
+        default => get_string('overview_my_events', 'mod_bookit'),
+    },
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
     'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
     'requestpaginghtml' => $requestpaginghtml,
-    'showoverviewfilters' => $currenttab !== 'openrequests',
-    'showreportfilters' => $showreportfilters && $currenttab !== 'openrequests',
-    'showcreatedbycolumn' => $showreportfilters && $canmanageopenrequests && $currenttab !== 'openrequests',
+    'showoverviewfilters' => !$canmanageopenrequests || $isreportingworkspacetab,
+    'showstatusfilter' => !$canmanageopenrequests || !empty($filterprofile['show_status_filter']),
+    'showsemesterfilter' => !$canmanageopenrequests || !empty($filterprofile['show_semester_filter']),
+    'showassignmentfilter' => $canmanageopenrequests && !empty($filterprofile['show_assignment_filter']),
+    'showreportfilters' => $showreportfilters
+        && (!$canmanageopenrequests || !empty($filterprofile['show_reporting_filters'])),
+    'showcreatedbycolumn' => $canmanageopenrequests
+        ? !empty($tableprofile['showcreatedbycolumn'])
+        : ($showreportfilters && $canmanageopenrequests && $isreportingworkspacetab),
     'createdbycolumnlabel' => get_string('event_usermodified', 'mod_bookit'),
-    'showprogresscolumn' => $checklistenabled || $resourcesenabled,
-    'showchecklistcolumn' => $checklistenabled,
-    'showresourcescolumn' => $resourcesenabled,
-    'showcancelcolumn' => !$canmanage && !$isobserverrestricted && $currenttab === 'myevents',
-    'showreactivatecolumn' => $currenttab === 'history'
-        || ($isinrequestworkspace && $requestworkspacemode === 'rejectedrequests'),
+    'showprogresscolumn' => $canmanageopenrequests
+        ? (!empty($tableprofile['showprogresscolumn']) && ($checklistenabled || $resourcesenabled))
+        : ($checklistenabled || $resourcesenabled),
+    'showchecklistcolumn' => $canmanageopenrequests
+        ? (!empty($tableprofile['showchecklistcolumn']) && $checklistenabled)
+        : $checklistenabled,
+    'showresourcescolumn' => $canmanageopenrequests
+        ? (!empty($tableprofile['showresourcescolumn']) && $resourcesenabled)
+        : $resourcesenabled,
+    'showcancelcolumn' => !$canmanageopenrequests
+        && !$isobserverrestricted
+        && $currenttab === 'myevents',
+    'showreactivatecolumn' => $canmanageopenrequests
+        ? !empty($tableprofile['showreactivatecolumn'])
+        : ($historyactive || $workspacetab === 'rejectedcancelled'),
     'overviewcancelcolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'overviewreactivatecolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'overviewcolumndatetime' => get_string('overview_column_datetime', 'mod_bookit'),
@@ -395,9 +497,11 @@ $templatecontext = [
     'statusfilterlabel' => get_string('overview_filter_status', 'mod_bookit'),
     'facultyfilterlabel' => get_string('overview_filter_faculty', 'mod_bookit'),
     'semesterfilterlabel' => get_string('select_semester', 'mod_bookit'),
+    'assignmentfilterlabel' => get_string('overview_filter_assignment', 'mod_bookit'),
+    'assignmentfilteroptions' => $assignmentfilteroptions,
     'reportapplylabel' => get_string('overview_apply_filters', 'mod_bookit'),
     'reportresetlabel' => get_string('overview_reset_filters', 'mod_bookit'),
-    'reportreseturl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => $currenttab]))->out(false),
+    'reportreseturl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => $activetabparam]))->out(false),
     'facultyoptions' => $facultyoptions,
     'statusfilteroptions' => $statusfilteroptions,
     'semesteroptions' => $semesteroptions,
@@ -415,11 +519,19 @@ $templatecontext = [
     'rejectedrequests' => [],
 ];
 
-// Precompute checklist progress for all events in a single query.
+// Precompute checklist progress for displayed events in a single query.
+$displayevents = $canmanageopenrequests
+    ? match ($workspacetab) {
+        'openrequests' => $openrequests,
+        'confirmedrequests' => $confirmedrequests,
+        'rejectedcancelled' => $rejectedrequests,
+        default => $events,
+    }
+    : $events;
 $progressmap = [];
 $resourceprogressmap = [];
-if (!empty($events)) {
-    $eventids = array_map(fn($ev) => (int)$ev->id, $events);
+if (!empty($displayevents)) {
+    $eventids = array_map(static fn($ev): int => (int)$ev->id, $displayevents);
     if ($checklistenabled && $masterid > 0) {
         $progressmap = event_checklist_state_manager::get_progress_percent_for_events($eventids, $masterid);
     }
@@ -427,77 +539,8 @@ if (!empty($events)) {
         $resourceprogressmap = event_resource_manager::get_resource_progress_for_events($eventids);
     }
 }
-$historyeventids = array_unique(array_merge(
-    array_map(static fn($ev): int => (int)$ev->id, $events),
-    array_map(static fn($ev): int => (int)$ev->id, $openrequests),
-    array_map(static fn($ev): int => (int)$ev->id, $rejectedrequests),
-));
+$historyeventids = array_map(static fn($ev): int => (int)$ev->id, $displayevents);
 $latesthistorymap = event_manager::get_latest_booking_history_entries($historyeventids);
-$historyfieldlabels = [
-    'bookingstatus' => 'event_bookingstatus',
-    'institutionid' => 'event_department',
-    'internalnotes' => 'event_internalnotes',
-    'name' => 'event_name',
-    'notes' => 'event_notes',
-    'otherexaminers' => 'event_otherexaminers',
-    'participantsamount' => 'event_students',
-    'personinchargeid' => 'event_personincharge',
-    'roomid' => 'event_room',
-    'starttime' => 'event_start',
-];
-$resolvehistoryfieldlabel = static function (string $field) use ($historyfieldlabels): string {
-    if (!empty($historyfieldlabels[$field])) {
-        return get_string($historyfieldlabels[$field], 'mod_bookit');
-    }
-
-    return ucfirst(str_replace('_', ' ', $field));
-};
-$formathistoryvalue = static function (string $field, $value): string {
-    if ($value === null || $value === '') {
-        return '-';
-    }
-
-    return match ($field) {
-        'bookingstatus' => event_manager::get_booking_status_label((int)$value),
-        'starttime', 'endtime' => userdate((int)$value, get_string('strftimedatetime', 'langconfig')),
-        default => is_scalar($value) ? (string)$value : '-',
-    };
-};
-$buildhistorydetails = static function (int $eventid) use ($resolvehistoryfieldlabel, $formathistoryvalue): array {
-    $entries = [];
-    foreach (array_values(event_manager::get_booking_history($eventid, 10)) as $entry) {
-        $actorname = trim(($entry->firstname ?? '') . ' ' . ($entry->lastname ?? ''));
-        $summary = get_string('history_action_' . $entry->action, 'mod_bookit') . ' · '
-            . userdate((int)$entry->timecreated, get_string('strftimedatetime', 'langconfig'));
-        if ($actorname !== '') {
-            $summary .= ' · ' . $actorname;
-        }
-
-        $changes = [];
-        $rawchangedfields = json_decode((string)($entry->changedfields ?? ''), true);
-        if (is_array($rawchangedfields)) {
-            foreach ($rawchangedfields as $field => $change) {
-                $changes[] = [
-                    'text' => get_string('overview_workflow_history_change', 'mod_bookit', (object)[
-                        'field' => $resolvehistoryfieldlabel((string)$field),
-                        'from' => $formathistoryvalue((string)$field, $change['from'] ?? null),
-                        'to' => $formathistoryvalue((string)$field, $change['to'] ?? null),
-                    ]),
-                ];
-            }
-        }
-
-        $entries[] = [
-            'summary' => s($summary),
-            'haschanges' => !empty($changes),
-            'changes' => $changes,
-            'hasrecoverymarker' => !empty($entry->recoverymarker),
-            'recoverymarkertext' => get_string('overview_workflow_history_recovery', 'mod_bookit'),
-        ];
-    }
-
-    return $entries;
-};
 
 $prepareeventrow = function (
     stdClass $ev,
@@ -515,8 +558,9 @@ $prepareeventrow = function (
     $resourcesenabled,
     $resourceprogressmap,
     $latesthistorymap,
-    $buildhistorydetails,
     $currenttab,
+    $workspacetab,
+    $canmanageopenrequests,
     $PAGE
 ): array {
     $room = $ev->room ?: '-';
@@ -563,17 +607,10 @@ $prepareeventrow = function (
     $caneventdetails = !$isreservedprojection
         && event_access_manager::can_user_view_event_details($ev, $context, (int)$USER->id);
     $latesthistory = $latesthistorymap[(int)$ev->id] ?? null;
-    $latesthistorysummary = '';
-    if ($latesthistory) {
-        $actorname = trim(($latesthistory->firstname ?? '') . ' ' . ($latesthistory->lastname ?? ''));
-        $actionlabel = get_string('history_action_' . $latesthistory->action, 'mod_bookit');
-        $latesthistorysummary = $actionlabel . ' · '
-            . userdate((int)$latesthistory->timecreated, get_string('strftimedatetime', 'langconfig'));
-        if ($actorname !== '') {
-            $latesthistorysummary .= ' · ' . $actorname;
-        }
-    }
-    $historydetails = $isrequestworkspaceitem ? $buildhistorydetails((int)$ev->id) : [];
+    $latesthistorysummary = event_manager::build_overview_workflow_latest_summary($latesthistory);
+    $historydetails = $isrequestworkspaceitem
+        ? event_manager::build_overview_workflow_history((int)$ev->id)
+        : [];
 
     $createdby = '-';
     if (!empty($ev->usermodified)) {
@@ -646,47 +683,52 @@ $prepareeventrow = function (
         'canceltargetstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
         'hasreactivateaction' => ($requesttab === 'history'
                 && event_access_manager::can_reactivate_from_history($ev, $context))
-            || ($requesttab === 'rejectedrequests'
+            || (in_array($requesttab, ['rejectedrequests', 'rejectedcancelled'], true)
                 && event_access_manager::can_restore_terminal_request($ev, $context)),
         'reactivateactionlabel' => get_string('bookingstatus_action_reactivate', 'mod_bookit'),
         'reactivatetargetstatus' => event_access_manager::BOOKINGSTATUS_NEW,
         'overviewtab' => $isrequestworkspaceitem
-            ? $requesttab
+            ? ($canmanageopenrequests && $workspacetab !== null
+                ? $workspacetab
+                : $requesttab)
             : ($currenttab === 'history' ? 'history' : 'myevents'),
     ];
 };
 
-foreach ($events as $ev) {
-    $canviewevent = $currenttab === 'history'
-        ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)
-        : event_access_manager::can_user_view_event_in_overview($ev, $context, (int)$USER->id);
-    if ($canviewevent) {
-        $templatecontext['events'][] = $prepareeventrow(
-            $ev,
-            false,
-            $currenttab === 'history' ? 'history' : 'myevents'
-        );
+$workspacerequesttab = $canmanageopenrequests
+    ? event_manager::get_workspace_status_request_tab($workspacetab)
+    : 'openrequests';
+
+if ($canmanageopenrequests) {
+    foreach ($displayevents as $ev) {
+        $canviewevent = $historyactive
+            ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)
+            : ($isqueuetab
+                ? true
+                : event_access_manager::can_user_view_event_in_overview($ev, $context, (int)$USER->id));
+        if (!$canviewevent) {
+            continue;
+        }
+        $templatecontext['workspacerows'][] = $prepareeventrow($ev, true, $workspacerequesttab);
     }
+    $templatecontext['hasworkspacerows'] = !empty($templatecontext['workspacerows']);
+    $templatecontext['eventcounttext'] = get_string('overview_count', 'mod_bookit', count($templatecontext['workspacerows']));
+} else {
+    foreach ($displayevents as $ev) {
+        $canviewevent = $historyactive
+            ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)
+            : event_access_manager::can_user_view_event_in_overview($ev, $context, (int)$USER->id);
+        if ($canviewevent) {
+            $templatecontext['events'][] = $prepareeventrow(
+                $ev,
+                false,
+                $historyactive ? 'history' : 'myevents'
+            );
+        }
+    }
+    $templatecontext['hasevents'] = !empty($templatecontext['events']);
+    $templatecontext['eventcounttext'] = get_string('overview_count', 'mod_bookit', count($templatecontext['events']));
 }
-
-$templatecontext['hasevents'] = !empty($templatecontext['events']);
-$templatecontext['eventcounttext'] = get_string('overview_count', 'mod_bookit', count($templatecontext['events']));
-
-foreach ($openrequests as $ev) {
-    $templatecontext['openrequests'][] = $prepareeventrow($ev, true, 'openrequests');
-}
-
-foreach ($confirmedrequests as $ev) {
-    $templatecontext['confirmedrequests'][] = $prepareeventrow($ev, true, 'confirmedrequests');
-}
-
-foreach ($rejectedrequests as $ev) {
-    $templatecontext['rejectedrequests'][] = $prepareeventrow($ev, true, 'rejectedrequests');
-}
-
-$templatecontext['hasopenrequests'] = !empty($templatecontext['openrequests']);
-$templatecontext['hasconfirmedrequests'] = !empty($templatecontext['confirmedrequests']);
-$templatecontext['hasrejectedrequests'] = !empty($templatecontext['rejectedrequests']);
 
 // Render Mustache.
 echo $OUTPUT->render_from_template('mod_bookit/view/examiner_overview', $templatecontext);

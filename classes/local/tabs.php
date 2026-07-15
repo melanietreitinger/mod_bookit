@@ -38,6 +38,38 @@ use tabobject;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tabs {
+    /** @var string[] Canonical Request Workspace tab slugs (service team). */
+    private const WORKSPACE_TABS = [
+        'allrequests',
+        'openrequests',
+        'confirmedrequests',
+        'rejectedcancelled',
+        'history',
+    ];
+
+    /**
+     * Normalise overview tab query parameter to a canonical workspace or participant slug.
+     *
+     * @param string $tab Raw tab from the request.
+     * @param bool $ismanageworkspace Whether the viewer uses the Request Workspace (service team).
+     * @return string
+     */
+    public static function normalize_workspace_tab(string $tab, bool $ismanageworkspace): string {
+        if (!$ismanageworkspace) {
+            return match ($tab) {
+                'history' => 'history',
+                default => 'myevents',
+            };
+        }
+
+        return match ($tab) {
+            'myevents' => 'allrequests',
+            'rejectedrequests' => 'rejectedcancelled',
+            'allrequests', 'openrequests', 'confirmedrequests', 'rejectedcancelled', 'history' => $tab,
+            default => 'allrequests',
+        };
+    }
+
     /**
      * Generates a Moodle tabrow i.e. an array of tabs
      *
@@ -169,6 +201,11 @@ class tabs {
     public static function get_request_workspace_tabrow(int $cmid, array $navigationparams): array {
         return [
             new tabobject(
+                'allrequests',
+                self::build_overview_url($cmid, 'allrequests', $navigationparams),
+                get_string('overview_all_requests', 'mod_bookit')
+            ),
+            new tabobject(
                 'openrequests',
                 self::build_overview_url($cmid, 'openrequests', $navigationparams),
                 get_string('overview_open_requests', 'mod_bookit')
@@ -179,9 +216,14 @@ class tabs {
                 get_string('overview_confirmed_requests', 'mod_bookit')
             ),
             new tabobject(
-                'rejectedrequests',
-                self::build_overview_url($cmid, 'rejectedrequests', $navigationparams),
-                get_string('overview_rejected_requests', 'mod_bookit')
+                'rejectedcancelled',
+                self::build_overview_url($cmid, 'rejectedcancelled', $navigationparams),
+                get_string('overview_rejected_cancelled_requests', 'mod_bookit')
+            ),
+            new tabobject(
+                'history',
+                self::build_overview_url($cmid, 'history', $navigationparams),
+                get_string('overview_history', 'mod_bookit')
             ),
         ];
     }

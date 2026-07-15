@@ -131,7 +131,7 @@ class update_event_booking_status extends external_api {
             && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
         ) {
             if (
-                $params['tab'] === 'rejectedrequests'
+                in_array($params['tab'], ['rejectedrequests', 'rejectedcancelled'], true)
                 && event_access_manager::can_restore_terminal_request($event, $context)
             ) {
                 $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
@@ -158,9 +158,13 @@ class update_event_booking_status extends external_api {
         event_manager::transition_booking_status($event, $effectivestatus, (int)$USER->id, $context, (int)$params['cmid']);
 
         $redirecttab = match (true) {
-            in_array($params['tab'], ['openrequests', 'confirmedrequests', 'rejectedrequests'], true)
+            in_array($params['tab'], ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
                 && event_access_manager::can_manage_open_requests($context) => $params['tab'],
+            $params['tab'] === 'rejectedrequests'
+                && event_access_manager::can_manage_open_requests($context) => 'rejectedcancelled',
             $params['tab'] === 'history' => 'history',
+            $params['tab'] === 'myevents'
+                && event_access_manager::can_manage_open_requests($context) => 'allrequests',
             default => 'myevents',
         };
         $redirecturl = (new \moodle_url('/mod/bookit/overview.php', [
@@ -170,15 +174,19 @@ class update_event_booking_status extends external_api {
         ]))->out(false);
 
         $queuepayload = null;
+        $queueworkspace = match ($redirecttab) {
+            'rejectedcancelled' => 'rejectedrequests',
+            default => $redirecttab,
+        };
         if (
-            in_array($redirecttab, ['openrequests', 'confirmedrequests', 'rejectedrequests'], true)
+            in_array($redirecttab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
             && event_access_manager::can_manage_open_requests($context)
         ) {
             $queuepayload = event_manager::get_governed_overview_queue(
                 $context,
                 (int)$USER->id,
-                $redirecttab,
-                ['workspace' => $redirecttab],
+                $queueworkspace,
+                ['workspace' => $queueworkspace],
                 null,
                 null,
                 max(1, (int)$params['page'])

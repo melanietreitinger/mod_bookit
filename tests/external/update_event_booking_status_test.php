@@ -494,7 +494,7 @@ final class update_event_booking_status_test extends advanced_testcase {
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
-        $this->assertSame('rejectedrequests', $response['tab']);
+        $this->assertSame('rejectedcancelled', $response['tab']);
 
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
@@ -671,7 +671,7 @@ final class update_event_booking_status_test extends advanced_testcase {
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
-        $this->assertSame('rejectedrequests', $response['tab']);
+        $this->assertSame('rejectedcancelled', $response['tab']);
 
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);

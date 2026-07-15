@@ -244,7 +244,7 @@ class event_manager {
                 OR e.usermodified    = :uid2
                 OR $otherexamcond
                 OR $supportcond
-            ORDER BY e.starttime ASC
+            ORDER BY e.starttime DESC, e.id DESC
         ";
 
         $params = [
@@ -281,6 +281,12 @@ class event_manager {
         int $page = 1,
         int $perpage = 25
     ): array {
+        $workspace = match ($workspace) {
+            'allrequests' => 'myevents',
+            'rejectedcancelled' => 'rejectedrequests',
+            default => $workspace,
+        };
+
         $filters = event_access_manager::normalise_governed_read_filters(array_merge($filters, [
             'workspace' => $workspace,
         ]));
@@ -310,7 +316,8 @@ class event_manager {
             $bookingstatuses = self::resolve_overview_booking_status_filter_ids(
                 $filters['bookingstatuses'] ?? [],
                 !empty($filters['bookingstatuses']),
-                $workspace === 'history'
+                $workspace === 'history',
+                $canmanageopenrequests && $workspace === 'history'
             );
             if ($showreportfilters) {
                 $semesterids = self::resolve_effective_semester_filter_ids($semesterids, !empty($filters['semesterids']));
@@ -416,7 +423,7 @@ class event_manager {
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             WHERE e.bookingstatus $statussql
-            ORDER BY e.starttime ASC
+            ORDER BY e.starttime DESC, e.id DESC
         ";
 
         return $DB->get_records_sql($sql, $params);
@@ -429,10 +436,35 @@ class event_manager {
      * @throws dml_exception
      */
     public static function count_open_requests(): int {
+        return self::count_new_requests() + self::count_in_progress_requests();
+    }
+
+    /**
+     * Return the number of open booking requests in status New.
+     *
+     * @return int
+     * @throws dml_exception
+     */
+    public static function count_new_requests(): int {
         global $DB;
 
-        [$statussql, $params] = $DB->get_in_or_equal(event_access_manager::get_open_request_statuses(), SQL_PARAMS_NAMED);
-        return (int)$DB->count_records_select('bookit_event', "bookingstatus $statussql", $params);
+        return (int)$DB->count_records('bookit_event', [
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]);
+    }
+
+    /**
+     * Return the number of open booking requests in status In progress.
+     *
+     * @return int
+     * @throws dml_exception
+     */
+    public static function count_in_progress_requests(): int {
+        global $DB;
+
+        return (int)$DB->count_records('bookit_event', [
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+        ]);
     }
 
     /**
@@ -574,12 +606,14 @@ class event_manager {
      * @param int[] $rawids Raw status ids from bookingstatusfilter[].
      * @param bool $hasexplicitfilter Whether the request included bookingstatusfilter.
      * @param bool $ishistorytab Whether the active overview tab is History.
+     * @param bool $isreportinghistory Whether the user is on the service-team reporting History path.
      * @return int[]
      */
     public static function resolve_overview_booking_status_filter_ids(
         array $rawids,
         bool $hasexplicitfilter,
-        bool $ishistorytab = false
+        bool $ishistorytab = false,
+        bool $isreportinghistory = false
     ): array {
         $allowed = [
             event_access_manager::BOOKINGSTATUS_NEW,
@@ -589,9 +623,13 @@ class event_manager {
             event_access_manager::BOOKINGSTATUS_REJECTED,
         ];
 
-        $default = $ishistorytab
-            ? self::get_history_default_booking_status_filter()
-            : self::get_reporting_default_booking_status_filter();
+        if ($ishistorytab) {
+            $default = $isreportinghistory
+                ? self::get_history_default_booking_status_filter()
+                : [];
+        } else {
+            $default = self::get_reporting_default_booking_status_filter();
+        }
 
         if (!$hasexplicitfilter) {
             return $default;
@@ -656,6 +694,303 @@ class event_manager {
     }
 
     /**
+     * Whether a Request Workspace tab must ignore reporting URL parameters.
+     *
+     * @param string $workspacetab Canonical workspace tab slug.
+     * @return bool
+     */
+    public static function queue_tab_ignores_reporting_params(string $workspacetab): bool {
+        return in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true);
+    }
+
+    /**
+     * Return the filter profile for a Request Workspace tab (service team only).
+     *
+     * @param string $workspacetab Canonical workspace tab slug.
+     * @param bool $serviceteam Whether the viewer is on the service-team workspace path.
+     * @return array{
+     *     show_reporting_filters: bool,
+     *     show_status_filter: bool,
+     *     show_semester_filter: bool,
+     *     show_assignment_filter: bool,
+     *     include_legacy_semester_option: bool
+     * }
+     */
+    public static function get_workspace_filter_profile(string $workspacetab, bool $serviceteam): array {
+        if (!$serviceteam) {
+            return [
+                'show_reporting_filters' => true,
+                'show_status_filter' => true,
+                'show_semester_filter' => true,
+                'show_assignment_filter' => false,
+                'include_legacy_semester_option' => true,
+            ];
+        }
+
+        if (self::queue_tab_ignores_reporting_params($workspacetab)) {
+            return [
+                'show_reporting_filters' => false,
+                'show_status_filter' => false,
+                'show_semester_filter' => false,
+                'show_assignment_filter' => false,
+                'include_legacy_semester_option' => false,
+            ];
+        }
+
+        if ($workspacetab === 'history') {
+            return [
+                'show_reporting_filters' => true,
+                'show_status_filter' => true,
+                'show_semester_filter' => true,
+                'show_assignment_filter' => false,
+                'include_legacy_semester_option' => true,
+            ];
+        }
+
+        return [
+            'show_reporting_filters' => true,
+            'show_status_filter' => true,
+            'show_semester_filter' => true,
+            'show_assignment_filter' => true,
+            'include_legacy_semester_option' => false,
+        ];
+    }
+
+    /**
+     * Map a workspace tab slug to the booking-status cell request-tab identifier.
+     *
+     * @param string $workspacetab
+     * @return string
+     */
+    public static function get_workspace_status_request_tab(string $workspacetab): string {
+        return match ($workspacetab) {
+            'rejectedcancelled' => 'rejectedrequests',
+            default => $workspacetab,
+        };
+    }
+
+    /**
+     * Return the unified workspace table profile for the active service-team tab.
+     *
+     * @param string $workspacetab
+     * @return array{
+     *     workspacetab: string,
+     *     headerbackgroundcolor: string,
+     *     tableid: string,
+     *     tablecssclass: string,
+     *     rowcssclass: string,
+     *     showdatetimecolumn: bool,
+     *     showdatecolumn: bool,
+     *     showidcolumn: bool,
+     *     showcreatedbycolumn: bool,
+     *     showprogresscolumn: bool,
+     *     showchecklistcolumn: bool,
+     *     showresourcescolumn: bool,
+     *     showcancelcolumn: bool,
+     *     showreactivatecolumn: bool,
+     *     showtablesearch: bool,
+     *     enableworkflowhistory: bool,
+     *     emptymessage: string,
+     *     requesttab: string
+     * }
+     */
+    public static function get_workspace_table_profile(string $workspacetab): array {
+        $isreporting = in_array($workspacetab, ['allrequests', 'history'], true);
+        $isqueue = in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true);
+
+        $headercolors = [
+            'allrequests' => '#cfe2ff',
+            'history' => '#cfe2ff',
+            'openrequests' => '#fff3cd',
+            'confirmedrequests' => '#d4edda',
+            'rejectedcancelled' => '#f8d7da',
+        ];
+        $tableids = [
+            'allrequests' => 'overview-table',
+            'history' => 'overview-table',
+            'openrequests' => 'open-requests-table',
+            'confirmedrequests' => 'confirmed-requests-table',
+            'rejectedcancelled' => 'rejected-requests-table',
+        ];
+        $tablecssclasses = [
+            'openrequests' => 'mod-bookit-open-requests-table',
+            'confirmedrequests' => 'mod-bookit-confirmed-requests-table',
+            'rejectedcancelled' => 'mod-bookit-rejected-requests-table',
+        ];
+        $rowcssclasses = [
+            'openrequests' => 'mod-bookit-open-request-row',
+            'confirmedrequests' => 'mod-bookit-confirmed-request-row',
+            'rejectedcancelled' => 'mod-bookit-rejected-request-row',
+        ];
+        $emptymessages = [
+            'allrequests' => 'overview_no_results',
+            'history' => 'overview_no_results',
+            'openrequests' => 'overview_open_requests_empty',
+            'confirmedrequests' => 'overview_confirmed_requests_empty',
+            'rejectedcancelled' => 'overview_rejected_requests_empty',
+        ];
+
+        return [
+            'workspacetab' => $workspacetab,
+            'headerbackgroundcolor' => $headercolors[$workspacetab] ?? '#cfe2ff',
+            'tableid' => $tableids[$workspacetab] ?? 'overview-table',
+            'tablecssclass' => $tablecssclasses[$workspacetab] ?? '',
+            'rowcssclass' => $rowcssclasses[$workspacetab] ?? '',
+            'showdatetimecolumn' => $isreporting,
+            'showdatecolumn' => $isqueue,
+            'showidcolumn' => true,
+            'showcreatedbycolumn' => $isreporting,
+            'showprogresscolumn' => $isreporting,
+            'showchecklistcolumn' => $isreporting,
+            'showresourcescolumn' => $isreporting,
+            'showcancelcolumn' => false,
+            'showreactivatecolumn' => in_array($workspacetab, ['history', 'rejectedcancelled'], true),
+            'showtablesearch' => $isqueue,
+            'enableworkflowhistory' => true,
+            'emptymessage' => $emptymessages[$workspacetab] ?? 'overview_no_results',
+            'requesttab' => self::get_workspace_status_request_tab($workspacetab),
+        ];
+    }
+
+    /**
+     * Build a one-line summary for the latest booking workflow history entry.
+     *
+     * @param stdClass|null $latesthistory
+     * @return string
+     */
+    public static function build_overview_workflow_latest_summary(?stdClass $latesthistory): string {
+        if (!$latesthistory) {
+            return '';
+        }
+
+        $action = trim((string)($latesthistory->action ?? ''));
+        if ($action === '') {
+            return '';
+        }
+
+        $summary = get_string('history_action_' . $action, 'mod_bookit') . ' · '
+            . userdate((int)$latesthistory->timecreated, get_string('strftimedatetime', 'langconfig'));
+        $actorname = trim(($latesthistory->firstname ?? '') . ' ' . ($latesthistory->lastname ?? ''));
+        if ($actorname !== '') {
+            $summary .= ' · ' . $actorname;
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Build structured workflow history entries for the overview status cell expander.
+     *
+     * @param int $eventid
+     * @param int $limit
+     * @return array<int, array<string, mixed>>
+     */
+    public static function build_overview_workflow_history(int $eventid, int $limit = 10): array {
+        $historyfieldlabels = [
+            'bookingstatus' => 'event_bookingstatus',
+            'institutionid' => 'event_department',
+            'internalnotes' => 'event_internalnotes',
+            'name' => 'event_name',
+            'notes' => 'event_notes',
+            'otherexaminers' => 'event_otherexaminers',
+            'participantsamount' => 'event_students',
+            'personinchargeid' => 'event_personincharge',
+            'roomid' => 'event_room',
+            'starttime' => 'event_start',
+        ];
+        $resolvefieldlabel = static function (string $field) use ($historyfieldlabels): string {
+            if (!empty($historyfieldlabels[$field])) {
+                return get_string($historyfieldlabels[$field], 'mod_bookit');
+            }
+
+            return ucfirst(str_replace('_', ' ', $field));
+        };
+        $formathistoryvalue = static function (string $field, $value): string {
+            if ($value === null || $value === '') {
+                return '-';
+            }
+
+            return match ($field) {
+                'bookingstatus' => self::get_booking_status_label((int)$value),
+                'starttime', 'endtime' => userdate((int)$value, get_string('strftimedatetime', 'langconfig')),
+                default => is_scalar($value) ? (string)$value : '-',
+            };
+        };
+
+        $entries = [];
+        foreach (array_values(self::get_booking_history($eventid, $limit)) as $entry) {
+            $actorname = trim(($entry->firstname ?? '') . ' ' . ($entry->lastname ?? ''));
+            $summary = get_string('history_action_' . $entry->action, 'mod_bookit') . ' · '
+                . userdate((int)$entry->timecreated, get_string('strftimedatetime', 'langconfig'));
+            if ($actorname !== '') {
+                $summary .= ' · ' . $actorname;
+            }
+
+            $changes = [];
+            $rawchangedfields = json_decode((string)($entry->changedfields ?? ''), true);
+            if (is_array($rawchangedfields)) {
+                foreach ($rawchangedfields as $field => $change) {
+                    $changes[] = [
+                        'text' => get_string('overview_workflow_history_change', 'mod_bookit', (object)[
+                            'field' => $resolvefieldlabel((string)$field),
+                            'from' => $formathistoryvalue((string)$field, $change['from'] ?? null),
+                            'to' => $formathistoryvalue((string)$field, $change['to'] ?? null),
+                        ]),
+                    ];
+                }
+            }
+
+            $entries[] = [
+                'summary' => s($summary),
+                'haschanges' => !empty($changes),
+                'changes' => $changes,
+                'hasrecoverymarker' => !empty($entry->recoverymarker),
+                'recoverymarkertext' => get_string('overview_workflow_history_recovery', 'mod_bookit'),
+            ];
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Build semester filter options for reporting workspace tabs.
+     *
+     * @param int|null $referencetime
+     * @param bool $includelegacy Whether to prepend the legacy "Without semester" option.
+     * @return array<int, string>
+     */
+    public static function get_reporting_semester_filter_options(?int $referencetime = null, bool $includelegacy = true): array {
+        $options = self::get_semester_filter_options($referencetime);
+        if ($includelegacy) {
+            return $options;
+        }
+
+        unset($options[0]);
+        return $options;
+    }
+
+    /**
+     * Narrow overview events by support-person assignment (All requests only).
+     *
+     * @param stdClass[] $events
+     * @param int $userid
+     * @param string $assignmentfilter all|assigned
+     * @return stdClass[]
+     */
+    public static function filter_events_by_assignment(array $events, int $userid, string $assignmentfilter): array {
+        if ($assignmentfilter !== 'assigned') {
+            return $events;
+        }
+
+        return array_values(array_filter(
+            $events,
+            static function (stdClass $event) use ($userid): bool {
+                return in_array('supportperson', event_access_manager::get_user_roles_for_event($event, $userid), true);
+            }
+        ));
+    }
+
+    /**
      * Return reporting events filtered by range and semester and then reduced by the current user's access.
      *
      * @param context_module $context
@@ -705,7 +1040,7 @@ class event_manager {
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             LEFT JOIN {user} creator ON creator.id = e.usermodified
             WHERE " . implode(' AND ', $conditions) . "
-            ORDER BY e.starttime ASC
+            ORDER BY e.starttime DESC, e.id DESC
         ";
 
         $records = $DB->get_records_sql($sql, $params);
@@ -843,7 +1178,7 @@ class event_manager {
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             WHERE e.bookingstatus IN (:rejected, :canceled)
-            ORDER BY e.starttime ASC
+            ORDER BY e.starttime DESC, e.id DESC
         ";
 
         $records = $DB->get_records_sql($sql, [
@@ -888,7 +1223,7 @@ class event_manager {
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             WHERE e.bookingstatus = :status
-            ORDER BY e.starttime ASC
+            ORDER BY e.starttime DESC, e.id DESC
         ";
 
         $records = $DB->get_records_sql($sql, [
@@ -1842,5 +2177,82 @@ class event_manager {
         $candidate = clone $event;
         $candidate->bookingstatus = $oldstatus;
         return event_access_manager::can_self_cancel_new_request($candidate, $context, $userid);
+    }
+
+    /** @var string User preference key for overview table column sort. */
+    public const OVERVIEW_SORT_PREFERENCE = 'mod_bookit_overview_sort';
+
+    /** @var string[] Whitelisted overview sort column keys. */
+    private const OVERVIEW_SORT_COLUMNS = [
+        'id',
+        'starttime',
+        'title',
+        'room',
+        'personincharge',
+        'myrole',
+        'createdby',
+        'bookingstatus',
+    ];
+
+    /**
+     * Sort overview event rows by start time with id tie-break.
+     *
+     * @param stdClass[] $events
+     * @param bool $desc When true, newest start time first.
+     * @return stdClass[]
+     */
+    public static function sort_overview_events_by_starttime(array $events, bool $desc = true): array {
+        usort($events, static function (stdClass $a, stdClass $b) use ($desc): int {
+            $astart = (int)($a->starttime ?? 0);
+            $bstart = (int)($b->starttime ?? 0);
+            if ($astart !== $bstart) {
+                return $desc ? ($bstart <=> $astart) : ($astart <=> $bstart);
+            }
+
+            $aid = (int)($a->id ?? 0);
+            $bid = (int)($b->id ?? 0);
+
+            return $desc ? ($bid <=> $aid) : ($aid <=> $bid);
+        });
+
+        return array_values($events);
+    }
+
+    /**
+     * Parse persisted overview sort preference JSON into a safe column/direction pair.
+     *
+     * @param string|null $raw Raw JSON from user preference.
+     * @return array{column: string, direction: string}
+     */
+    public static function parse_overview_sort_preference(?string $raw): array {
+        $default = [
+            'column' => 'starttime',
+            'direction' => 'desc',
+        ];
+
+        if ($raw === null || $raw === '') {
+            return $default;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return $default;
+        }
+
+        $column = isset($decoded['column']) ? (string)$decoded['column'] : '';
+        $direction = isset($decoded['direction']) ? strtolower((string)$decoded['direction']) : '';
+
+        if (!in_array($column, self::OVERVIEW_SORT_COLUMNS, true)) {
+            return $default;
+        }
+
+        if (!in_array($direction, ['asc', 'desc'], true)) {
+            return $default;
+        }
+
+        return [
+            'column' => $column,
+            'direction' => $direction,
+        ];
     }
 }

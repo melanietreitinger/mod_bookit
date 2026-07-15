@@ -27,6 +27,7 @@
 import Ajax from 'core/ajax';
 import {saveCancelPromise, exception} from 'core/notification';
 import {get_strings as getStrings} from 'core/str';
+import * as OverviewTableSort from 'mod_bookit/overview/overview_table_sort';
 
 const BOOKING_STATUS_SELECTOR = 'select[data-action="update-booking-status"]';
 const RESOURCE_STATUS_SELECTOR = 'select[data-action="update-status"]';
@@ -282,6 +283,7 @@ const renderQueueState = (readConfig, queueResponse) => {
         const tbody = table.querySelector('tbody');
         tbody.innerHTML = queueResponse.items.map((item) => renderRequestRow(item, readConfig, readConfig.workspace)).join('');
         applyColorsIn(tbody);
+        OverviewTableSort.reapply(table);
         return;
     }
 

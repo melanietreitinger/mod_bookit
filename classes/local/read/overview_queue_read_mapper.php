@@ -78,7 +78,12 @@ class overview_queue_read_mapper {
             }
         }
 
-        $latesthistorysummary = self::map_latest_history_summary($latesthistory);
+        $requesttab = event_manager::get_workspace_status_request_tab($workspace);
+        if ($workspace === 'myevents') {
+            $requesttab = 'allrequests';
+        }
+        $latesthistorysummary = event_manager::build_overview_workflow_latest_summary($latesthistory);
+        $historyentries = event_manager::build_overview_workflow_history((int)$event->id);
         $canmanagebasics = has_capability('mod/bookit:managebasics', $context);
         $statuscell = booking_status_cell::for_booking_overview_row(
             $event,
@@ -87,14 +92,14 @@ class overview_queue_read_mapper {
             $cmid,
             $canmanagebasics,
             true,
-            $workspace,
+            $requesttab,
             $latesthistorysummary,
-            []
+            $historyentries
         );
         $bookitrenderer = $PAGE->get_renderer('mod_bookit');
         $statuscellhtml = $bookitrenderer->render($statuscell);
 
-        $hasreactivateaction = $workspace === 'rejectedrequests'
+        $hasreactivateaction = in_array($workspace, ['rejectedrequests', 'rejectedcancelled'], true)
             && event_access_manager::can_restore_terminal_request($event, $context);
 
         return [
@@ -120,33 +125,7 @@ class overview_queue_read_mapper {
             'hasreactivateaction' => $hasreactivateaction,
             'reactivateactionlabel' => get_string('bookingstatus_action_reactivate', 'mod_bookit'),
             'reactivatetargetstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'overviewtab' => $workspace,
+            'overviewtab' => $workspace === 'rejectedrequests' ? 'rejectedcancelled' : $workspace,
         ];
-    }
-
-    /**
-     * Convert the latest history entry into a short human-readable summary.
-     *
-     * @param stdClass|null $latesthistory
-     * @return string
-     */
-    private static function map_latest_history_summary(?stdClass $latesthistory): string {
-        if (!$latesthistory) {
-            return '';
-        }
-
-        $action = trim((string)($latesthistory->action ?? ''));
-        if ($action === '') {
-            return '';
-        }
-
-        $summary = get_string('history_action_' . $action, 'mod_bookit') . ' · '
-            . userdate((int)$latesthistory->timecreated, get_string('strftimedatetime', 'langconfig'));
-        $actorname = trim(($latesthistory->firstname ?? '') . ' ' . ($latesthistory->lastname ?? ''));
-        if ($actorname !== '') {
-            $summary .= ' · ' . $actorname;
-        }
-
-        return $summary;
     }
 }

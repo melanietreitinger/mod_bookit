@@ -404,14 +404,36 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * History tab resolver returns terminal pair when filter param is absent.
+     * History tab resolver returns terminal pair when filter param is absent (reporting path).
      *
      * @return void
      */
     public function test_resolve_overview_booking_status_filter_ids_history_implicit(): void {
-        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true);
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true, true);
 
         $this->assertSame(event_manager::get_history_default_booking_status_filter(), $resolved);
+    }
+
+    /**
+     * Participant History resolver returns empty default when filter param is absent.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_participant_history_implicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true, false);
+
+        $this->assertSame([], $resolved);
+    }
+
+    /**
+     * Participant History resolver returns empty default when selection is explicitly empty.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_participant_history_empty_explicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], true, true, false);
+
+        $this->assertSame([], $resolved);
     }
 
     /**
@@ -426,12 +448,12 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * History tab resolver returns terminal pair when selection is explicitly empty.
+     * History tab resolver returns terminal pair when selection is explicitly empty (reporting path).
      *
      * @return void
      */
     public function test_resolve_overview_booking_status_filter_ids_history_empty_explicit(): void {
-        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], true, true);
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], true, true, true);
 
         $this->assertSame(event_manager::get_history_default_booking_status_filter(), $resolved);
     }
@@ -479,7 +501,7 @@ final class event_manager_test extends advanced_testcase {
             (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
         ];
 
-        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true);
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true, true);
         $filtered = event_manager::filter_overview_events(
             $events,
             ['bookingstatuses' => $resolved],
@@ -487,6 +509,59 @@ final class event_manager_test extends advanced_testcase {
         );
 
         $this->assertSame([4, 5], array_map(static fn($event): int => (int)$event->id, $filtered));
+    }
+
+    /**
+     * Participant History with empty status filter does not restrict to terminal statuses only.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_history_empty_status_no_restriction(): void {
+        $paststart = strtotime('-5 days 09:00:00');
+        $pastend = strtotime('-5 days 11:00:00');
+        $futurestart = strtotime('+2 days 09:00:00');
+        $futureend = strtotime('+2 days 11:00:00');
+        $events = [
+            (object) [
+                'id' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => $futurestart,
+                'endtime' => $futureend,
+            ],
+            (object) [
+                'id' => 3,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => $paststart,
+                'endtime' => $pastend,
+            ],
+            (object) [
+                'id' => 4,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => $futurestart,
+                'endtime' => $futureend,
+            ],
+            (object) [
+                'id' => 5,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => $futurestart,
+                'endtime' => $futureend,
+            ],
+        ];
+
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true, false);
+        $this->assertSame([], $resolved);
+
+        $filtered = event_manager::filter_overview_events(
+            $events,
+            ['bookingstatuses' => $resolved],
+            true
+        );
+
+        $filteredids = array_map(static fn($event): int => (int)$event->id, $filtered);
+        $this->assertContains(3, $filteredids);
+        $this->assertContains(4, $filteredids);
+        $this->assertContains(5, $filteredids);
+        $this->assertNotSame([4, 5], $filteredids);
     }
 
     /**
@@ -576,6 +651,67 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame('Casey', $event->creatorfirstname);
         $this->assertSame('Creator', $event->creatorlastname);
         $this->assertSame(0, (int)$event->creatordeleted);
+    }
+
+    /**
+     * Reporting overview events must be ordered newest start time first.
+     *
+     * @return void
+     */
+    public function test_get_events_for_reporting_orders_by_starttime_desc(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Reporting order']);
+        $context = context_module::instance($bookit->cmid);
+
+        $common = [
+            'semester' => 20261,
+            'institutionid' => 1,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)get_admin()->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+
+        $olderid = (int)$DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Older reporting event',
+            'starttime' => strtotime('2026-05-10 09:00:00'),
+            'endtime' => strtotime('2026-05-10 11:00:00'),
+        ]));
+        $newerid = (int)$DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Newer reporting event',
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+        ]));
+
+        $events = event_manager::get_events_for_reporting(
+            $context,
+            (int)get_admin()->id,
+            strtotime('2026-05-01 00:00:00'),
+            strtotime('2026-05-31 23:59:59'),
+            []
+        );
+
+        $ids = array_map(static fn($event): int => (int)$event->id, $events);
+        $this->assertSame([$newerid, $olderid], array_values(array_intersect($ids, [$newerid, $olderid])));
     }
 
     /**
@@ -1582,6 +1718,108 @@ final class event_manager_test extends advanced_testcase {
         ]));
 
         $this->assertSame(2, event_manager::count_open_requests());
+        $this->assertSame(1, event_manager::count_new_requests());
+        $this->assertSame(1, event_manager::count_in_progress_requests());
+    }
+
+    /**
+     * New request counter only includes bookings in status New.
+     *
+     * @return void
+     */
+    public function test_count_new_requests_only_counts_new_status(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'starttime' => strtotime('+2 days 09:00'),
+            'endtime' => strtotime('+2 days 11:00'),
+        ];
+
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'New request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'In progress request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Accepted request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+        ]));
+
+        $this->assertSame(1, event_manager::count_new_requests());
+    }
+
+    /**
+     * In progress request counter only includes bookings in status In progress.
+     *
+     * @return void
+     */
+    public function test_count_in_progress_requests_only_counts_in_progress_status(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'starttime' => strtotime('+2 days 09:00'),
+            'endtime' => strtotime('+2 days 11:00'),
+        ];
+
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'New request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'In progress request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+        ]));
+        $DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Accepted request',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+        ]));
+
+        $this->assertSame(1, event_manager::count_in_progress_requests());
     }
 
     /**
@@ -1630,6 +1868,56 @@ final class event_manager_test extends advanced_testcase {
         $open = array_values(event_manager::get_open_requests());
         $this->assertCount(1, $open);
         $this->assertSame('Open request', $open[0]->name);
+    }
+
+    /**
+     * Open requests must be ordered newest start time first.
+     *
+     * @return void
+     */
+    public function test_get_open_requests_orders_by_starttime_desc(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $common = [
+            'semester' => 20261,
+            'institutionid' => null,
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ];
+
+        $olderid = (int)$DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Older request',
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+        ]));
+        $newerid = (int)$DB->insert_record('bookit_event', (object)($common + [
+            'name' => 'Newer request',
+            'starttime' => strtotime('2026-05-10 09:00:00'),
+            'endtime' => strtotime('2026-05-10 11:00:00'),
+        ]));
+
+        $open = array_values(event_manager::get_open_requests());
+        $this->assertCount(2, $open);
+        $this->assertSame($newerid, (int)$open[0]->id);
+        $this->assertSame($olderid, (int)$open[1]->id);
     }
 
     /**
@@ -2652,5 +2940,310 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame('Confirmed', event_manager::get_resource_status_label('confirmed'));
         $this->assertSame('In Progress', event_manager::get_resource_status_label('inprogress'));
         $this->assertSame('Rejected', event_manager::get_resource_status_label('rejected'));
+    }
+
+    /**
+     * All requests workspace profile exposes assignment and hides legacy semester option.
+     *
+     * @return void
+     */
+    public function test_get_workspace_filter_profile_allrequests_shows_assignment_and_no_legacy_semester(): void {
+        $profile = event_manager::get_workspace_filter_profile('allrequests', true);
+
+        $this->assertTrue($profile['show_assignment_filter']);
+        $this->assertFalse($profile['include_legacy_semester_option']);
+        $this->assertTrue($profile['show_status_filter']);
+    }
+
+    /**
+     * Queue workspace tabs must not expose reporting status multiselect.
+     *
+     * @return void
+     */
+    public function test_get_workspace_filter_profile_queue_tabs_hide_reporting_filters(): void {
+        foreach (['openrequests', 'confirmedrequests', 'rejectedcancelled'] as $tab) {
+            $profile = event_manager::get_workspace_filter_profile($tab, true);
+            $this->assertFalse($profile['show_status_filter'], $tab);
+            $this->assertFalse($profile['show_reporting_filters'], $tab);
+        }
+    }
+
+    /**
+     * Reporting semester options can omit the legacy Without-semester entry.
+     *
+     * @return void
+     */
+    public function test_get_reporting_semester_filter_options_excludes_legacy_when_requested(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $withlegacy = event_manager::get_reporting_semester_filter_options($referencetime, true);
+        $withoutlegacy = event_manager::get_reporting_semester_filter_options($referencetime, false);
+
+        $this->assertArrayHasKey(0, $withlegacy);
+        $this->assertArrayNotHasKey(0, $withoutlegacy);
+    }
+
+    /**
+     * History workspace keeps the legacy semester option for reporting tabs.
+     *
+     * @return void
+     */
+    public function test_get_workspace_filter_profile_history_keeps_legacy_semester_option(): void {
+        $profile = event_manager::get_workspace_filter_profile('history', true);
+
+        $this->assertTrue($profile['include_legacy_semester_option']);
+        $this->assertFalse($profile['show_assignment_filter']);
+    }
+
+    /**
+     * Explicit empty semester selection must include events from multiple semesters.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_explicit_empty_semester_includes_all_terms(): void {
+        $referencetime = strtotime('2026-05-07 10:00:00');
+        $summer = (object)[
+            'id' => 1001,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => strtotime('2026-06-10 09:00:00'),
+            'endtime' => strtotime('2026-06-10 11:00:00'),
+        ];
+        $winter = (object)[
+            'id' => 1002,
+            'semester' => 20262,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'starttime' => strtotime('2026-11-10 09:00:00'),
+            'endtime' => strtotime('2026-11-10 11:00:00'),
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$summer, $winter],
+            [
+                'bookingstatuses' => event_manager::get_reporting_default_booking_status_filter(),
+                'semesterids' => [],
+            ],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(2, $filtered);
+    }
+
+    /**
+     * Workspace semester options for All requests must not include legacy value 0.
+     *
+     * @return void
+     */
+    public function test_reporting_semester_options_allrequests_exclude_legacy_zero(): void {
+        $options = event_manager::get_reporting_semester_filter_options(strtotime('2026-05-07 10:00:00'), false);
+        $this->assertArrayNotHasKey(0, $options);
+    }
+
+    /**
+     * Assigned filter keeps only events where the user is a support person.
+     *
+     * @return void
+     */
+    public function test_filter_events_by_assignment_assigned_narrows_to_supportpersons(): void {
+        $userid = 42;
+        $assigned = (object)['id' => 1, 'supportpersons' => '41,42,43'];
+        $unassigned = (object)['id' => 2, 'supportpersons' => '99'];
+
+        $filtered = event_manager::filter_events_by_assignment([$assigned, $unassigned], $userid, 'assigned');
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(1, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Queue tabs must ignore reporting URL parameters.
+     *
+     * @return void
+     */
+    public function test_queue_tab_ignores_reporting_params(): void {
+        $this->assertTrue(event_manager::queue_tab_ignores_reporting_params('openrequests'));
+        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('allrequests'));
+    }
+
+    /**
+     * Service-team All requests defaults to the reporting triplet when implicit.
+     *
+     * @return void
+     */
+    public function test_workspace_allrequests_default_status_triplet(): void {
+        $this->assertSame(
+            event_manager::get_reporting_default_booking_status_filter(),
+            event_manager::resolve_overview_booking_status_filter_ids([], false, false, false)
+        );
+    }
+
+    /**
+     * Explicit terminal statuses on All requests must remain selectable.
+     *
+     * @return void
+     */
+    public function test_workspace_allrequests_explicit_terminal_status_includes_canceled_rejected(): void {
+        $referencetime = strtotime('2026-06-01 10:00:00');
+        $canceled = (object)[
+            'id' => 1101,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('2026-06-10 09:00:00'),
+            'endtime' => strtotime('2026-06-10 11:00:00'),
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$canceled],
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+    }
+
+    /**
+     * Service-team History defaults to terminal statuses and year-to-date range.
+     *
+     * @return void
+     */
+    public function test_workspace_history_default_status_and_dates(): void {
+        $referencetime = strtotime('2026-06-15 10:00:00');
+        $this->assertSame(
+            event_manager::get_history_default_booking_status_filter(),
+            event_manager::resolve_overview_booking_status_filter_ids([], false, true, true)
+        );
+        [$start, $end] = event_manager::get_reporting_default_range($referencetime, true, true);
+        $this->assertSame('2026-01-01', date('Y-m-d', $start));
+        $this->assertSame('2026-06-15', date('Y-m-d', $end));
+    }
+
+    /**
+     * Service-team All requests date range starts today and ends at year end.
+     *
+     * @return void
+     */
+    public function test_workspace_allrequests_default_date_range_today_to_year_end(): void {
+        $referencetime = strtotime('2026-06-15 10:00:00');
+        [$start, $end] = event_manager::get_reporting_default_range($referencetime, true, false);
+        $this->assertSame('2026-06-15', date('Y-m-d', $start));
+        $this->assertSame('2026-12-31', date('Y-m-d', $end));
+    }
+
+    /**
+     * Participant myevents path keeps triplet default after workspace profile exists.
+     *
+     * @return void
+     */
+    public function test_participant_myevents_default_status_triplet_unchanged(): void {
+        $profile = event_manager::get_workspace_filter_profile('myevents', false);
+        $this->assertFalse($profile['show_assignment_filter']);
+        $this->assertSame(
+            event_manager::get_reporting_default_booking_status_filter(),
+            event_manager::resolve_overview_booking_status_filter_ids([], false, false, false)
+        );
+    }
+
+    /**
+     * Open requests workspace table profile exposes queue layout and yellow header.
+     *
+     * @return void
+     */
+    public function test_get_workspace_table_profile_openrequests_header_and_columns(): void {
+        $profile = event_manager::get_workspace_table_profile('openrequests');
+
+        $this->assertSame('#fff3cd', $profile['headerbackgroundcolor']);
+        $this->assertTrue($profile['showdatecolumn']);
+        $this->assertFalse($profile['showdatetimecolumn']);
+        $this->assertTrue($profile['showtablesearch']);
+        $this->assertSame('openrequests', $profile['requesttab']);
+    }
+
+    /**
+     * All requests and history reporting tabs share blue header and datetime column.
+     *
+     * @return void
+     */
+    public function test_get_workspace_table_profile_allrequests_reporting_columns(): void {
+        foreach (['allrequests', 'history'] as $tab) {
+            $profile = event_manager::get_workspace_table_profile($tab);
+
+            $this->assertSame('#cfe2ff', $profile['headerbackgroundcolor'], $tab);
+            $this->assertTrue($profile['showdatetimecolumn'], $tab);
+            $this->assertFalse($profile['showdatecolumn'], $tab);
+            $this->assertTrue($profile['showcreatedbycolumn'], $tab);
+            $this->assertTrue($profile['showprogresscolumn'], $tab);
+            $this->assertFalse($profile['showtablesearch'], $tab);
+        }
+    }
+
+    /**
+     * Rejected workspace tab maps to rejectedrequests status cell and shows reactivate column.
+     *
+     * @return void
+     */
+    public function test_get_workspace_table_profile_rejected_shows_reactivate_column_flag(): void {
+        $profile = event_manager::get_workspace_table_profile('rejectedcancelled');
+
+        $this->assertTrue($profile['showreactivatecolumn']);
+        $this->assertSame('rejectedrequests', $profile['requesttab']);
+        $this->assertSame('#f8d7da', $profile['headerbackgroundcolor']);
+    }
+
+    /**
+     * Workflow history helper returns structured entries with field changes.
+     *
+     * @return void
+     */
+    public function test_build_overview_workflow_history_returns_entries_with_changes(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Workflow overview event',
+            'semester' => 20261,
+            'institutionid' => null,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        event_manager::record_booking_history(
+            $eventid,
+            'rejected',
+            (int)$user->id,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+            ['bookingstatus' => ['from' => 1, 'to' => 4]],
+            false
+        );
+
+        $entries = event_manager::build_overview_workflow_history($eventid);
+        $this->assertNotEmpty($entries);
+        $this->assertArrayHasKey('summary', $entries[0]);
+        $this->assertTrue($entries[0]['haschanges']);
+        $this->assertNotEmpty($entries[0]['changes']);
+        $this->assertArrayHasKey('text', $entries[0]['changes'][0]);
     }
 }

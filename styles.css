@@ -462,12 +462,26 @@
     gap: 0.5rem;
 }
 
-@media (max-width: 767.98px) {
-    .mod-bookit-open-request-actions {
-        grid-template-columns: 1fr;
-    }
 
-    .mod-bookit-request-pagination {
-        align-items: stretch;
-    }
+/* Request Workspace navigation badges (Spec 068). */
+.bookit-nav-badge {
+    display: inline-block;
+    min-width: 1.25rem;
+    margin-left: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.bookit-nav-badge--new {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+.bookit-nav-badge--inprogress {
+    background-color: #fff3cd;
+    color: #664d03;
 }
