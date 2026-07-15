@@ -927,6 +927,177 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Booking persons may see their own rejected bookings in overview when explicitly filtered.
+     *
+     * @return void
+     */
+    public function test_can_user_view_rejected_in_overview_as_booking_person(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
+    }
+
+    /**
+     * Examiners may see rejected bookings in overview when they are person in charge.
+     *
+     * @return void
+     */
+    public function test_can_user_view_rejected_in_overview_as_examiner(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $examiner = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $examiner->id);
+        $this->setUser($examiner);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => $examiner->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $examiner->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $examiner->id));
+    }
+
+    /**
+     * Non-participants must not see foreign rejected bookings in overview.
+     *
+     * @return void
+     */
+    public function test_can_user_view_rejected_in_overview_denied_for_non_participant(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $owner = $this->getDataGenerator()->create_user();
+        $stranger = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $stranger->id);
+        $this->setUser($stranger);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'usermodified' => $owner->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $stranger->id));
+    }
+
+    /**
+     * Default triplet filtering still hides terminal rows even when the overview gate allows rejected participants.
+     *
+     * @return void
+     */
+    public function test_can_user_view_rejected_in_overview_false_when_not_in_filter_selection(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $rejected = (object)[
+            'id' => 501,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'starttime' => strtotime('2026-06-10 09:00:00'),
+            'endtime' => strtotime('2026-06-10 11:00:00'),
+            'personinchargeid' => 0,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($rejected, $context, $user->id));
+
+        $defaulttriplet = event_manager::get_reporting_default_booking_status_filter();
+        $filtered = event_manager::filter_overview_events(
+            [$rejected],
+            ['bookingstatuses' => $defaulttriplet],
+            false,
+            strtotime('2026-06-01 10:00:00')
+        );
+
+        $this->assertSame([], $filtered);
+    }
+
+    /**
+     * Examiners may see canceled bookings in overview when they are person in charge.
+     *
+     * @return void
+     */
+    public function test_can_user_view_canceled_in_overview_as_examiner(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $examiner = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $examiner->id);
+        $this->setUser($examiner);
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'personinchargeid' => $examiner->id,
+            'usermodified' => 999,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $examiner->id));
+    }
+
+    /**
+     * Rejected rows survive the participant overview filter and render gate together.
+     *
+     * @return void
+     */
+    public function test_rejected_participant_overview_filter_and_render_gate(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_participant_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_participant_role($context, $user->id);
+        $this->setUser($user);
+
+        $rejected = (object)[
+            'id' => 601,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'starttime' => strtotime('2026-06-12 09:00:00'),
+            'endtime' => strtotime('2026-06-12 11:00:00'),
+            'personinchargeid' => 0,
+            'usermodified' => $user->id,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$rejected],
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+            false,
+            strtotime('2026-06-01 10:00:00')
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertTrue(
+            event_access_manager::can_user_view_event_in_overview($filtered[0], $context, $user->id)
+        );
+    }
+
+    /**
      * A full-detail role must still win over observer restrictions in mixed-role assignments.
      *
      * @return void
@@ -1405,7 +1576,7 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Rejected bookings stay hidden from the active overview for booking persons.
+     * Booking persons may see rejected bookings in overview when they are the booking person.
      *
      * @return void
      */
@@ -1425,7 +1596,8 @@ final class event_access_manager_test extends advanced_testcase {
             'endtime' => strtotime('2026-05-01 12:00:00'),
         ];
 
-        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_in_overview($event, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($event, $context, $user->id));
     }
 
     /**

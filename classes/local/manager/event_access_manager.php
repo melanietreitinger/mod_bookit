@@ -408,16 +408,16 @@ class event_access_manager {
             return true;
         }
 
-        if (self::is_rejected_request($event)) {
-            return false;
-        }
-
         if (self::is_observer_restricted_mode($context)) {
             return self::is_booking_confirmed($event);
         }
 
         if (!has_capability('mod/bookit:viewownoverview', $context)) {
             return false;
+        }
+
+        if (self::is_rejected_request($event)) {
+            return self::user_has_participant_visibility($event, $userid);
         }
 
         return self::user_has_participant_visibility($event, $userid);

@@ -2003,6 +2003,178 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Spec 062 alias: participant explicit Canceled on active tab.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_explicit_canceled_on_active(): void {
+        $this->test_filter_overview_events_explicit_canceled_on_active_tab();
+    }
+
+    /**
+     * Spec 062 alias: participant canceled-only filter excludes active statuses.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_canceled_only_excludes_active(): void {
+        $this->test_filter_overview_events_canceled_only_excludes_active_statuses();
+    }
+
+    /**
+     * Spec 062 alias: participant mixed New and Canceled selection.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_new_and_canceled_mixed(): void {
+        $this->test_filter_overview_events_new_and_canceled_mixed_on_active();
+    }
+
+    /**
+     * Spec 062 alias: participant rejected-only filter excludes active statuses.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_rejected_only_excludes_active(): void {
+        $this->test_filter_overview_events_rejected_only_excludes_active_statuses();
+    }
+
+    /**
+     * Spec 062 alias: participant all five statuses on active tab.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_all_five_statuses_on_active(): void {
+        $this->test_filter_overview_events_all_five_statuses_on_active();
+    }
+
+    /**
+     * Spec 062 alias: participant default triplet hides terminal statuses.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_default_triplet_hides_terminal(): void {
+        $this->test_filter_overview_events_default_triplet_hides_terminal_on_active();
+    }
+
+    /**
+     * Spec 062 alias: participant terminal-only combined filter.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_terminal_only_both(): void {
+        $this->test_filter_overview_events_terminal_only_both_on_active();
+    }
+
+    /**
+     * Examiner fixtures must return canceled rows when only Canceled is selected.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_examiner_explicit_canceled_on_active(): void {
+        $referencetime = strtotime('2026-06-01 10:00:00');
+        $canceled = (object)[
+            'id' => 801,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('2026-06-10 09:00:00'),
+            'endtime' => strtotime('2026-06-10 11:00:00'),
+            'personinchargeid' => 42,
+            'usermodified' => 99,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$canceled],
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(801, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Examiner fixtures must return rejected rows when only Rejected is selected.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_examiner_explicit_rejected_on_active(): void {
+        $referencetime = strtotime('2026-06-01 10:00:00');
+        $rejected = (object)[
+            'id' => 802,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'starttime' => strtotime('2026-06-11 09:00:00'),
+            'endtime' => strtotime('2026-06-11 11:00:00'),
+            'personinchargeid' => 42,
+            'usermodified' => 99,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$rejected],
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(802, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Explicit Canceled filter must still honour semester constraints.
+     *
+     * @return void
+     */
+    public function test_filter_overview_events_participant_canceled_outside_semester_hidden(): void {
+        $referencetime = strtotime('2026-06-01 10:00:00');
+        $insamesemester = (object)[
+            'id' => 901,
+            'semester' => 20261,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('2026-06-10 09:00:00'),
+            'endtime' => strtotime('2026-06-10 11:00:00'),
+        ];
+        $outsidesemester = (object)[
+            'id' => 902,
+            'semester' => 20262,
+            'institutionid' => 1,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'starttime' => strtotime('2026-11-10 09:00:00'),
+            'endtime' => strtotime('2026-11-10 11:00:00'),
+        ];
+
+        $filtered = event_manager::filter_overview_events(
+            [$insamesemester, $outsidesemester],
+            [
+                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED],
+                'semesterids' => [20261],
+            ],
+            false,
+            $referencetime
+        );
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame(901, (int)$filtered[0]->id);
+    }
+
+    /**
+     * Reset simulation: missing bookingstatusfilter resolves to default triplet.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_reset_to_triplet(): void {
+        $this->test_resolve_overview_booking_status_filter_ids_default_when_implicit();
+    }
+
+    /**
      * Reactivated requests move from the rejected queue back to the open queue counts.
      *
      * @return void
