@@ -54,7 +54,7 @@ Feature: Enforce role-based visibility and editing for booking requests
     Then the Bookit event details control "name" should be disabled
     And the Bookit event details control "institutionid" should be disabled
     And the Bookit event details control "starttime" should be disabled
-    And the Bookit event details control "bookingstatus" should be disabled
+    And the Bookit event details control "bookingstatus" should not be visible
     And the Bookit event details control "internalnotes" should be enabled
     And I should see "Internal fields"
 

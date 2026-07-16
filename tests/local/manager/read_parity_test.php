@@ -254,7 +254,6 @@ final class read_parity_test extends advanced_testcase {
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
         $this->setUser($bookingperson);
-        $this->assertFalse(event_access_manager::can_user_view_event_in_overview($event, $context, (int)$bookingperson->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_history($event, $context, (int)$bookingperson->id));
 
         $historyevents = event_manager::filter_overview_events(

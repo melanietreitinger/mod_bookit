@@ -38,7 +38,7 @@ final class lang_module_name_test extends advanced_testcase {
         global $CFG;
 
         $string = [];
-        require $CFG->dirroot . '/mod/bookit/lang/' . $lang . '/bookit.php';
+        require($CFG->dirroot . '/mod/bookit/lang/' . $lang . '/bookit.php');
 
         return $string;
     }

@@ -2,10 +2,51 @@
     @template mod_bookit/view/partials/workspace_event_table
 
     Unified service-team request workspace event table.
+
+    Example context (json):
+    {
+        "workspacetableprofile": {
+            "tableid": "open-requests-table",
+            "tablecssclass": "mod-bookit-open-requests-table",
+            "headerbackgroundcolor": "#fff3cd",
+            "showidcolumn": true,
+            "showdatetimecolumn": false,
+            "showdatecolumn": true,
+            "showcreatedbycolumn": false,
+            "showprogresscolumn": false,
+            "showchecklistcolumn": false,
+            "showresourcescolumn": false,
+            "showcancelcolumn": false,
+            "showreactivatecolumn": true,
+            "rowcssclass": "mod-bookit-open-request-row"
+        },
+        "overviewcolumndatetime": "Date and time",
+        "createdbycolumnlabel": "Created by",
+        "overviewcancelcolumnlabel": "Cancel",
+        "overviewreactivatecolumnlabel": "Reactivate",
+        "workspacerows": [
+            {
+                "id": 1,
+                "cmid": 42,
+                "name": "Exam A",
+                "room": "Room 1",
+                "personincharge": "Jane Doe",
+                "myrole": "Service team",
+                "statusgroupkey": "open",
+                "starttime": 1768425600,
+                "datetimestr": "14.01.2026 10:00",
+                "datestr": "14.01.2026",
+                "statuscellhtml": "<td class=\"mod-bookit-status-cell\">New</td>",
+                "caneventdetails": true,
+                "modalfootermode": "default",
+                "hasreactivateaction": false
+            }
+        ]
+    }
 }}
 <table id="{{workspacetableprofile.tableid}}" class="generaltable table-striped table-hover w-100 {{workspacetableprofile.tablecssclass}}">
     <thead class="text-center">
-        <tr style="background-color:{{workspacetableprofile.headerbackgroundcolor}};">
+        <tr style="background-color: {{workspacetableprofile.headerbackgroundcolor}};">
             {{#workspacetableprofile.showidcolumn}}
             <th class="align-middle" data-sort-key="id">ID</th>
             {{/workspacetableprofile.showidcolumn}}

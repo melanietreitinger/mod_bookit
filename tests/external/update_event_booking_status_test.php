@@ -822,7 +822,10 @@ final class update_event_booking_status_test extends advanced_testcase {
         $this->resetAfterTest(true);
 
         $course = $this->getDataGenerator()->create_course();
-        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Support reactivate deny']);
+        $bookit = $this->getDataGenerator()->create_module(
+            'bookit',
+            ['course' => $course->id, 'name' => 'Support reactivate deny']
+        );
         $context = \context_module::instance($bookit->cmid);
 
         \update_capabilities('mod_bookit');

@@ -221,6 +221,26 @@ class behat_mod_bookit extends behat_base {
     }
 
     /**
+     * Follow a link in the Bookit secondary activity navigation.
+     *
+     * @When I follow :link in the Bookit secondary navigation
+     * @param string $link
+     * @throws ExpectationException
+     */
+    public function i_follow_in_the_bookit_secondary_navigation(string $link): void {
+        $xpath = '//div[contains(concat(" ", normalize-space(@class), " "), " secondary-navigation ")]'
+            . '//a[contains(normalize-space(.), ' . behat_context_helper::escape($link) . ')]';
+        $node = $this->getSession()->getPage()->find('xpath', $xpath);
+        if ($node === null) {
+            throw new ExpectationException(
+                'Could not find Bookit secondary navigation link "' . $link . '".',
+                $this->getSession()
+            );
+        }
+        $node->click();
+    }
+
+    /**
      * Assert that the request-workspace queue switch contains the given text.
      *
      * @Then the Bookit request workspace switch should contain :text
@@ -1728,7 +1748,8 @@ class behat_mod_bookit extends behat_base {
         $expectedvalues = $this->resolve_semester_filter_values($semesters);
         $js = <<<'JS'
             (function() {
-                var select = document.querySelector('#bookit-semesterids');
+                var select = document.querySelector('#bookit-semesterids')
+                    || document.querySelector('#bookit-workspace-semesterids');
                 if (!select) {
                     return JSON.stringify({status: 'missing'});
                 }
@@ -2277,6 +2298,41 @@ class behat_mod_bookit extends behat_base {
         if ($sortvalues !== $sorted) {
             throw new ExpectationException(
                 'Expected ascending start-time order but got ' . json_encode($sortvalues),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that overview rows are rendered in descending start-time order.
+     *
+     * @Then the Bookit overview rows should be sorted descending by start time
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_rows_should_be_sorted_descending_by_start_time(): void {
+        $js = <<<'JS'
+            (function() {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(function(row) {
+                    var cell = row.querySelector('td[data-sort]');
+                    return cell ? Number(cell.getAttribute('data-sort') || 0) : 0;
+                });
+            })();
+        JS;
+
+        $sortvalues = $this->getSession()->evaluateScript($js);
+        if (!is_array($sortvalues) || $sortvalues === []) {
+            throw new ExpectationException(
+                'Expected sortable overview rows but found none.',
+                $this->getSession()
+            );
+        }
+
+        $sorted = $sortvalues;
+        rsort($sorted, SORT_NUMERIC);
+        if ($sortvalues !== $sorted) {
+            throw new ExpectationException(
+                'Expected descending start-time order but got ' . json_encode($sortvalues),
                 $this->getSession()
             );
         }

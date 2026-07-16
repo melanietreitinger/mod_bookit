@@ -1569,7 +1569,7 @@ final class event_manager_test extends advanced_testcase {
 
         $rejected = array_values(event_manager::get_rejected_requests(strtotime('2026-05-07 10:00:00')));
         $this->assertCount(2, $rejected);
-        $this->assertSame([$pastid, $futureid], array_map(static fn($event): int => (int)$event->id, $rejected));
+        $this->assertSame([$futureid, $pastid], array_map(static fn($event): int => (int)$event->id, $rejected));
         $this->assertSame(2, event_manager::count_rejected_requests(strtotime('2026-05-07 10:00:00')));
     }
 

@@ -28,15 +28,12 @@ namespace mod_bookit\local\overview;
 use advanced_testcase;
 use mod_bookit\local\manager\event_manager;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Tests for overview sort preference helpers.
  *
  * @covers \mod_bookit\local\manager\event_manager::parse_overview_sort_preference
  */
 final class overview_sort_preference_test extends advanced_testcase {
-
     /**
      * Empty preference must fall back to starttime desc.
      *

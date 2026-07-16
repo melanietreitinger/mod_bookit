@@ -21,8 +21,11 @@ use advanced_testcase;
 /**
  * Tests for Request Workspace tab normalisation.
  *
- * @package    mod_bookit
- * @covers     \mod_bookit\local\tabs::normalize_workspace_tab
+ * @package     mod_bookit
+ * @category    test
+ * @copyright   2026 ssystems GmbH <oss@ssystems.de>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers      \mod_bookit\local\tabs::normalize_workspace_tab
  */
 final class tabs_test extends advanced_testcase {
     /**

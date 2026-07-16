@@ -100,11 +100,11 @@ Feature: Filter reporting data and block past-date saves
       | name                    | username    | personincharge_username | startdate                      | enddate                        | bookingstatus | institution |
       | Historical service exam | susiservice | susiservice             | ##-1 day 09:00##%Y-%m-%dT%H:%M:%S## | ##-1 day 11:00##%Y-%m-%dT%H:%M:%S## | 4 | 1 |
     When I log in as "susiservice"
-    And I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
+    And I open the Bookit overview "rejectedcancelled" for "My BookIt Activity"
     And I open the Bookit event details for "Historical service exam"
     And I restore the Bookit event details starttime selection after slot refresh
     And I submit the Bookit event details modal
-    And I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
+    And I open the Bookit overview "rejectedcancelled" for "My BookIt Activity"
     Then I should see "Historical service exam"
 
   Scenario: Booking person sees a blocked historical modal instead of a free edit path

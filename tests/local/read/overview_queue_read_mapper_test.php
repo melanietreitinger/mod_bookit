@@ -30,8 +30,6 @@ use context_module;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Tests for overview_queue_read_mapper.
  *

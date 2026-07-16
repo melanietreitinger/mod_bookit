@@ -41,7 +41,7 @@ Feature: Complete overview defaults, history and role-specific columns
       | Summer review exam  | serviceteam | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
       | Winter review exam  | serviceteam | ##+180 days 09:00##%Y-%m-%dT%H:%M:%S## | ##+180 days 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
     When I log in as "serviceteam"
-    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    And I open the Bookit overview "allrequests" for "My BookIt Activity"
     Then the Bookit overview semester filter should select "current"
     Then I should see "Summer review exam"
     And I should not see "Winter review exam"
@@ -58,8 +58,8 @@ Feature: Complete overview defaults, history and role-specific columns
     And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit overview should show the datetime column as the first data column
     And the Bookit overview should not show the ID column
-    And the Bookit overview rows should be sorted ascending by start time
-    And the Bookit overview should list events in order "Earlier exam,Later exam"
+    And the Bookit overview rows should be sorted descending by start time
+    And the Bookit overview should list events in order "Later exam,Earlier exam"
 
   Scenario: History tab shows date and time first with ascending order
     Given the following "mod_bookit > events" exist:
@@ -69,16 +69,16 @@ Feature: Complete overview defaults, history and role-specific columns
     When I log in as "bookinguser"
     And I open the Bookit overview "history" for "My BookIt Activity"
     Then the Bookit overview should show the datetime column as the first data column
-    And the Bookit overview rows should be sorted ascending by start time
-    And the Bookit overview should list events in order "Older past exam,Recent past exam"
+    And the Bookit overview rows should be sorted descending by start time
+    And the Bookit overview should list events in order "Recent past exam,Older past exam"
 
   Scenario: Explicit non-default semester selection stays active
     Given the following "mod_bookit > events" exist:
       | name                 | username    | startdate                         | enddate                              | bookingstatus | institution |
       | Current semester exam | serviceteam | ##tomorrow 09:00##%Y-%m-%dT%H:%M:%S## | ##tomorrow 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
-      | Next semester exam    | serviceteam | ##+180 days 09:00##%Y-%m-%dT%H:%M:%S## | ##+180 days 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
+      | Next semester exam    | serviceteam | ##+120 days 09:00##%Y-%m-%dT%H:%M:%S## | ##+120 days 11:00##%Y-%m-%dT%H:%M:%S## | 2             | 1 |
     When I log in as "serviceteam"
-    And I open the filtered Bookit overview "myevents" for "My BookIt Activity" with status "-1" faculty "0" and semesters "next"
+    And I open the filtered Bookit overview "allrequests" for "My BookIt Activity" with status "-1" faculty "0" and semesters "next"
     Then the Bookit overview semester filter should select "next"
     And I should see "Next semester exam"
     And I should not see "Current semester exam"
@@ -119,6 +119,6 @@ Feature: Complete overview defaults, history and role-specific columns
     Then the Bookit event details control "bookingstatus" should not be visible
     And I should see "Canceled"
     When I log in as "serviceteam"
-    And I open the Bookit overview "rejectedrequests" for "My BookIt Activity"
+    And I open the Bookit overview "rejectedcancelled" for "My BookIt Activity"
     Then I should see "Self-cancel history"
     And I should see "Cancelled by requester"
