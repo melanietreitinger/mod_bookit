@@ -158,7 +158,7 @@ final class install_helper_test extends advanced_testcase {
 
         $course = $DB->get_record('course', ['shortname' => 'BOOKIT-DEMO'], 'id', MUST_EXIST);
         $bookit = $DB->get_record('bookit', ['course' => $course->id], 'id,name', MUST_EXIST);
-        $this->assertSame('BookIt Demo', $bookit->name);
+        $this->assertSame('Calendar Demo', $bookit->name);
 
         foreach (
             [

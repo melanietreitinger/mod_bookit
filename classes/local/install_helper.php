@@ -1771,10 +1771,10 @@ class install_helper {
         }
 
         $coursedata = new \stdClass();
-        $coursedata->fullname = 'BookIt Demo Course';
+        $coursedata->fullname = 'Calendar Demo Course';
         $coursedata->shortname = 'BOOKIT-DEMO';
         $coursedata->category = $categoryid;
-        $coursedata->summary = 'Demo course for testing BookIt resource booking.';
+        $coursedata->summary = 'Demo course for testing Calendar resource booking.';
         $coursedata->summaryformat = FORMAT_HTML;
         $coursedata->format = 'topics';
         $coursedata->newsitems = 0;
@@ -1790,8 +1790,8 @@ class install_helper {
         // Create the bookit module instance.
         $bookit = new \stdClass();
         $bookit->course = $course->id;
-        $bookit->name = 'BookIt Demo';
-        $bookit->intro = '<p>BookIt demo activity for testing resource booking.</p>';
+        $bookit->name = 'Calendar Demo';
+        $bookit->intro = '<p>Calendar demo activity for testing resource booking.</p>';
         $bookit->introformat = FORMAT_HTML;
         $bookit->timecreated = time();
         $bookit->timemodified = time();
@@ -1831,7 +1831,7 @@ class install_helper {
         rebuild_course_cache($course->id, true);
 
         if ($verbose) {
-            mtrace("Created BookIt activity: BookIt Demo (ID: $bookitid, cmid: $cmid)");
+            mtrace("Created Calendar activity: Calendar Demo (ID: $bookitid, cmid: $cmid)");
         }
 
         // Enrol demo users as students.
