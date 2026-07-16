@@ -294,20 +294,21 @@ class event_manager {
         $page = max(1, $page);
         $perpage = max(1, $perpage);
 
+        $canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
         $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
         $observerrestricted = event_access_manager::is_observer_restricted_mode($context);
-        $showreportfilters = $canmanageopenrequests || $observerrestricted;
+        $showreportfilters = $canviewrequestworkspace || $observerrestricted;
 
         if ($workspace === 'openrequests') {
-            $events = $canmanageopenrequests ? self::get_open_requests() : [];
+            $events = $canviewrequestworkspace ? self::get_open_requests() : [];
         } else if ($workspace === 'confirmedrequests') {
-            $events = $canmanageopenrequests ? self::get_confirmed_requests() : [];
+            $events = $canviewrequestworkspace ? self::get_confirmed_requests() : [];
         } else if ($workspace === 'rejectedrequests') {
-            $events = $canmanageopenrequests ? self::get_rejected_requests() : [];
+            $events = $canviewrequestworkspace ? self::get_rejected_requests() : [];
         } else {
             [$defaultstart, $defaultend] = self::get_reporting_default_range(
                 null,
-                $canmanageopenrequests,
+                $canviewrequestworkspace,
                 $workspace === 'history'
             );
             $reportstart ??= $defaultstart;
@@ -317,7 +318,7 @@ class event_manager {
                 $filters['bookingstatuses'] ?? [],
                 !empty($filters['bookingstatuses']),
                 $workspace === 'history',
-                $canmanageopenrequests && $workspace === 'history'
+                $canviewrequestworkspace && $workspace === 'history'
             );
             if ($showreportfilters) {
                 $semesterids = self::resolve_effective_semester_filter_ids($semesterids, !empty($filters['semesterids']));
@@ -340,13 +341,13 @@ class event_manager {
 
         $totalcount = count($events);
         $openrequestcount = $workspace === 'openrequests' ? $totalcount : (
-            $canmanageopenrequests ? count(self::get_open_requests()) : 0
+            $canviewrequestworkspace ? count(self::get_open_requests()) : 0
         );
         $rejectedrequestcount = $workspace === 'rejectedrequests' ? $totalcount : (
-            $canmanageopenrequests ? count(self::get_rejected_requests()) : 0
+            $canviewrequestworkspace ? count(self::get_rejected_requests()) : 0
         );
         $confirmedrequestcount = $workspace === 'confirmedrequests' ? $totalcount : (
-            $canmanageopenrequests ? self::count_confirmed_requests() : 0
+            $canviewrequestworkspace ? self::count_confirmed_requests() : 0
         );
         $currentpage = 1;
         $totalpages = 1;

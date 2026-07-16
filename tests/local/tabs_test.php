@@ -51,4 +51,18 @@ final class tabs_test extends advanced_testcase {
         $this->assertSame('history', tabs::normalize_workspace_tab('history', false));
         $this->assertSame('myevents', tabs::normalize_workspace_tab('allrequests', false));
     }
+
+    /**
+     * Request Workspace viewers (service team or support) resolve workspace slugs.
+     *
+     * @return void
+     */
+    public function test_normalize_workspace_tab_support_viewer(): void {
+        $this->resetAfterTest();
+
+        $this->assertSame('openrequests', tabs::normalize_workspace_tab('openrequests', true));
+        $this->assertSame('allrequests', tabs::normalize_workspace_tab('allrequests', true));
+        $this->assertSame('rejectedcancelled', tabs::normalize_workspace_tab('rejectedrequests', true));
+        $this->assertSame('allrequests', tabs::normalize_workspace_tab('myevents', true));
+    }
 }

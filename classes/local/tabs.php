@@ -51,11 +51,12 @@ class tabs {
      * Normalise overview tab query parameter to a canonical workspace or participant slug.
      *
      * @param string $tab Raw tab from the request.
-     * @param bool $ismanageworkspace Whether the viewer uses the Request Workspace (service team).
+     * @param bool $isrequestworkspaceviewer Whether the viewer may use Request Workspace tabs
+     *        ({@see event_access_manager::can_view_request_workspace()}, not manage-only).
      * @return string
      */
-    public static function normalize_workspace_tab(string $tab, bool $ismanageworkspace): string {
-        if (!$ismanageworkspace) {
+    public static function normalize_workspace_tab(string $tab, bool $isrequestworkspaceviewer): string {
+        if (!$isrequestworkspaceviewer) {
             return match ($tab) {
                 'history' => 'history',
                 default => 'myevents',

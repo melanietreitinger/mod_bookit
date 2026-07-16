@@ -99,7 +99,8 @@ class overview_queue_read_mapper {
         $bookitrenderer = $PAGE->get_renderer('mod_bookit');
         $statuscellhtml = $bookitrenderer->render($statuscell);
 
-        $hasreactivateaction = in_array($workspace, ['rejectedrequests', 'rejectedcancelled'], true)
+        $hasreactivateaction = event_access_manager::can_manage_open_requests($context)
+            && in_array($workspace, ['rejectedrequests', 'rejectedcancelled'], true)
             && event_access_manager::can_restore_terminal_request($event, $context);
 
         return [

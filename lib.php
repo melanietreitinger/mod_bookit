@@ -118,13 +118,14 @@ function bookit_extend_settings_navigation(
     $pageisoverview = $PAGE->url->compare(new moodle_url('/mod/bookit/overview.php'), URL_MATCH_BASE);
     $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
     $canmanagerequests = \mod_bookit\local\manager\event_access_manager::can_manage_open_requests($context);
+    $canviewrequestworkspace = \mod_bookit\local\manager\event_access_manager::can_view_request_workspace($context);
     $workspacetabs = ['allrequests', 'openrequests', 'confirmedrequests', 'rejectedcancelled', 'history'];
-    $isinrequestworkspace = $pageisoverview && $canmanagerequests && (
+    $isinrequestworkspace = $pageisoverview && $canviewrequestworkspace && (
         in_array($tab, $workspacetabs, true)
         || in_array($tab, ['rejectedrequests', 'myevents'], true)
     );
 
-    if (has_capability('mod/bookit:viewownoverview', $context) && !$canmanagerequests) {
+    if (has_capability('mod/bookit:viewownoverview', $context) && !$canviewrequestworkspace) {
         $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'myevents']);
         $overviewlabel = get_string('overview', 'bookit');
 
@@ -143,7 +144,7 @@ function bookit_extend_settings_navigation(
         }
     }
 
-    if ($canmanagerequests) {
+    if ($canviewrequestworkspace) {
         $newcount = \mod_bookit\local\manager\event_manager::count_new_requests();
         $inprogresscount = \mod_bookit\local\manager\event_manager::count_in_progress_requests();
         $badgeshtml = html_writer::tag(

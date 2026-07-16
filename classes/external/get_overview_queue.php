@@ -134,6 +134,35 @@ class get_overview_queue extends external_api {
             ];
         }
 
+        $requestworkspaces = ['openrequests', 'confirmedrequests', 'rejectedrequests', 'rejectedcancelled', 'allrequests'];
+        if (
+            in_array($params['workspace'], $requestworkspaces, true)
+            && !event_access_manager::can_view_request_workspace($context)
+        ) {
+            return event_access_manager::build_governed_denied_response('overviewqueue', $params) + [
+                'workspace' => $params['workspace'],
+                'items' => [],
+                'summary' => [
+                    'count' => 0,
+                    'openrequestcount' => 0,
+                    'confirmedrequestcount' => 0,
+                    'rejectedrequestcount' => 0,
+                ],
+                'paging' => [
+                    'requestedpage' => 1,
+                    'currentpage' => 1,
+                    'perpage' => 25,
+                    'totalpages' => 1,
+                    'totalcount' => 0,
+                    'hasprevious' => false,
+                    'hasnext' => false,
+                    'haspaging' => false,
+                    'adjusted' => false,
+                ],
+                'fragments' => ['paginghtml' => ''],
+            ];
+        }
+
         $filters = event_access_manager::normalise_governed_read_filters([
             'workspace' => $params['workspace'],
             'bookingstatuses' => $params['bookingstatuses'],

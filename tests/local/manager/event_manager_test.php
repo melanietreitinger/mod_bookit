@@ -3246,4 +3246,74 @@ final class event_manager_test extends advanced_testcase {
         $this->assertNotEmpty($entries[0]['changes']);
         $this->assertArrayHasKey('text', $entries[0]['changes'][0]);
     }
+
+    /**
+     * Support-only viewers receive governed queue items for open requests.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_returns_items_for_support_viewer(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Support queue viewer test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$supportrole) {
+            $supportroleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $supportroleid = (int)$supportrole->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $supportuser = $this->getDataGenerator()->create_user();
+        \role_assign($supportroleid, $supportuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($supportuser);
+
+        $DB->insert_record('bookit_event', (object)[
+            'name' => 'Support visible open request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$supportuser->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $payload = event_manager::get_governed_overview_queue(
+            $context,
+            (int)$supportuser->id,
+            'openrequests'
+        );
+
+        $this->assertSame(1, (int)$payload['summary']['openrequestcount']);
+        $this->assertCount(1, $payload['items']);
+        $this->assertSame('Support visible open request', $payload['items'][0]['name']);
+    }
 }

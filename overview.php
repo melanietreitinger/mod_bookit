@@ -49,7 +49,8 @@ global $USER, $DB;
 $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
 $canmanage = has_capability('mod/bookit:managebasics', $context);
 $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
-if ($canmanageopenrequests) {
+$canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
+if ($canviewrequestworkspace) {
     $workspacetab = tabs::normalize_workspace_tab($tab, true);
     $currenttab = $workspacetab;
 } else {
@@ -60,26 +61,26 @@ if ($canmanageopenrequests) {
         default => 'myevents',
     };
 }
-$isqueuetab = $canmanageopenrequests && in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true);
-$isreportingworkspacetab = $canmanageopenrequests && in_array($workspacetab, ['allrequests', 'history'], true);
+$isqueuetab = $canviewrequestworkspace && in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true);
+$isreportingworkspacetab = $canviewrequestworkspace && in_array($workspacetab, ['allrequests', 'history'], true);
 $isinrequestworkspace = $isqueuetab;
 $requestworkspacemode = $isqueuetab ? $workspacetab : 'openrequests';
-$activetabparam = $canmanageopenrequests ? $workspacetab : ($currenttab === 'history' ? 'history' : 'myevents');
+$activetabparam = $canviewrequestworkspace ? $workspacetab : ($currenttab === 'history' ? 'history' : 'myevents');
 $historyactive = $activetabparam === 'history';
 $governedworkspace = match ($activetabparam) {
     'allrequests' => 'myevents',
     'rejectedcancelled' => 'rejectedrequests',
     default => $activetabparam,
 };
-$filterprofile = $canmanageopenrequests
+$filterprofile = $canviewrequestworkspace
     ? event_manager::get_workspace_filter_profile($workspacetab, true)
     : event_manager::get_workspace_filter_profile('myevents', false);
-$tableprofile = $canmanageopenrequests
+$tableprofile = $canviewrequestworkspace
     ? event_manager::get_workspace_table_profile($workspacetab)
     : [];
-$ignorereportingurlparams = $canmanageopenrequests
+$ignorereportingurlparams = $canviewrequestworkspace
     && event_manager::queue_tab_ignores_reporting_params($workspacetab);
-$showreportfilters = $canmanageopenrequests || $isobserverrestricted;
+$showreportfilters = $canviewrequestworkspace || $isobserverrestricted;
 $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
 $hasexplicitstatusfilter = !$ignorereportingurlparams && array_key_exists('bookingstatusfilter', $_GET);
@@ -92,9 +93,9 @@ $selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
     $rawstatusfilter,
     $hasexplicitstatusfilter,
     $historyactive,
-    $historyactive && $canmanageopenrequests
+    $historyactive && $canviewrequestworkspace
 );
-$tableid = $canmanageopenrequests
+$tableid = $canviewrequestworkspace
     ? (string)($tableprofile['tableid'] ?? 'overview-table')
     : match (true) {
         $historyactive => 'overview-table',
@@ -103,7 +104,7 @@ $tableid = $canmanageopenrequests
 
 [$defaultreportstart, $defaultreportend] = event_manager::get_reporting_default_range(
     null,
-    $showreportfilters && $canmanageopenrequests,
+    $showreportfilters && $canviewrequestworkspace,
     $historyactive
 );
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
@@ -114,7 +115,7 @@ $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARA
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
 $hasexplicitsemesterfilter = !$ignorereportingurlparams && array_key_exists('semesterids', $_GET);
 $assignmentfilter = 'all';
-if ($canmanageopenrequests && !empty($filterprofile['show_assignment_filter'])) {
+if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter'])) {
     $assignmentfilter = optional_param('assignmentfilter', 'all', PARAM_ALPHA);
     if (!in_array($assignmentfilter, ['all', 'assigned'], true)) {
         $assignmentfilter = 'all';
@@ -147,7 +148,7 @@ if ($hasexplicitreportstart) {
 if ($hasexplicitreportend) {
     $overviewnavigationparams['reportend'] = $reportendvalue;
 }
-if ($canmanageopenrequests && !empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
+if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
     $overviewnavigationparams['assignmentfilter'] = $assignmentfilter;
 }
 if ($ignorereportingurlparams) {
@@ -186,7 +187,7 @@ $buildoverviewurl = static function (string $targettab) use ($cm, $overviewnavig
     return tabs::build_overview_url((int)$cm->id, $targettab, $overviewnavigationparams);
 };
 
-$overviewtabrow = !$canmanageopenrequests
+$overviewtabrow = !$canviewrequestworkspace
     ? tabs::get_overview_inner_tabrow(
         (int)$cm->id,
         $overviewnavigationparams,
@@ -194,7 +195,7 @@ $overviewtabrow = !$canmanageopenrequests
         false
     )
     : [];
-$requestworkspacetabrow = $canmanageopenrequests
+$requestworkspacetabrow = $canviewrequestworkspace
     ? tabs::get_request_workspace_tabrow((int)$cm->id, [])
     : [];
 
@@ -253,7 +254,7 @@ $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode
 $PAGE->set_url('/mod/bookit/overview.php', ['id' => $cm->id]);
 $PAGE->set_title(get_string('overview', 'mod_bookit'));
 $PAGE->set_heading($course->fullname);
-if ($canmanageopenrequests) {
+if ($canviewrequestworkspace) {
     $PAGE->set_secondary_active_tab('bookitrequestworkspace');
 } else {
     $PAGE->set_secondary_active_tab('bookitoverview');
@@ -264,7 +265,7 @@ echo $OUTPUT->header();
 /* =======================================================================
    3.  Fetch examiner’s events
    ======================================================================= */
-if ($canmanageopenrequests) {
+if ($canviewrequestworkspace) {
     if ($isreportingworkspacetab) {
         $events = event_manager::get_events_for_reporting(
             $context,
@@ -346,7 +347,7 @@ if ($isinrequestworkspace && $requestqueuecount > $queueperpage) {
         ])
     ));
 }
-$semesteroptionssource = $canmanageopenrequests && $isreportingworkspacetab
+$semesteroptionssource = $canviewrequestworkspace && $isreportingworkspacetab
     ? event_manager::get_reporting_semester_filter_options(
         null,
         !empty($filterprofile['include_legacy_semester_option'])
@@ -406,10 +407,10 @@ $templatecontext = [
     'cmid' => $cm->id,
     'tableid' => (string)$tableid,
     'canmanage' => $canmanage,
-    'showidcolumn' => $canmanageopenrequests
+    'showidcolumn' => $canviewrequestworkspace
         ? !empty($tableprofile['showidcolumn'])
-        : $canmanageopenrequests,
-    'showworkspacetable' => $canmanageopenrequests,
+        : false,
+    'showworkspacetable' => $canviewrequestworkspace,
     'workspacetableprofile' => array_merge($tableprofile, [
         'showprogresscolumn' => !empty($tableprofile['showprogresscolumn'])
             && ($checklistenabled || $resourcesenabled),
@@ -418,12 +419,12 @@ $templatecontext = [
     ]),
     'workspacerows' => [],
     'hasworkspacerows' => false,
-    'workspacetableemptymessage' => $canmanageopenrequests
+    'workspacetableemptymessage' => $canviewrequestworkspace
         ? get_string((string)($tableprofile['emptymessage'] ?? 'overview_no_results'), 'mod_bookit')
         : '',
-    'showmyeventssection' => !$canmanageopenrequests,
+    'showmyeventssection' => !$canviewrequestworkspace,
     'showhistorytab' => !$isobserverrestricted,
-    'showoverviewnavigation' => !$canmanageopenrequests && count($overviewtabrow) > 1,
+    'showoverviewnavigation' => !$canviewrequestworkspace && count($overviewtabrow) > 1,
     'overviewtabtree' => count($overviewtabrow) > 1
         ? html_writer::tag(
             'nav',
@@ -435,8 +436,8 @@ $templatecontext = [
         )
         : '',
     'showrequestworkspacesection' => false,
-    'showrequestworkspacetabs' => $canmanageopenrequests && count($requestworkspacetabrow) > 1,
-    'requestworkspacetabtree' => $canmanageopenrequests && count($requestworkspacetabrow) > 1
+    'showrequestworkspacetabs' => $canviewrequestworkspace && count($requestworkspacetabrow) > 1,
+    'requestworkspacetabtree' => $canviewrequestworkspace && count($requestworkspacetabrow) > 1
         ? html_writer::tag(
             'nav',
             $OUTPUT->tabtree($requestworkspacetabrow, $workspacetab),
@@ -453,7 +454,7 @@ $templatecontext = [
     'activetabparam' => $activetabparam,
     'historyactive' => $historyactive,
     'sectiontitle' => match (true) {
-        $canmanageopenrequests && $workspacetab === 'allrequests' => get_string('overview_all_requests', 'mod_bookit'),
+        $canviewrequestworkspace && $workspacetab === 'allrequests' => get_string('overview_all_requests', 'mod_bookit'),
         $historyactive => get_string('overview_history', 'mod_bookit'),
         $showreportfilters => get_string('overview_all_events', 'mod_bookit'),
         default => get_string('overview_my_events', 'mod_bookit'),
@@ -462,31 +463,31 @@ $templatecontext = [
     'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
     'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
     'requestpaginghtml' => $requestpaginghtml,
-    'showoverviewfilters' => !$canmanageopenrequests || $isreportingworkspacetab,
-    'showstatusfilter' => !$canmanageopenrequests || !empty($filterprofile['show_status_filter']),
-    'showsemesterfilter' => !$canmanageopenrequests || !empty($filterprofile['show_semester_filter']),
-    'showassignmentfilter' => $canmanageopenrequests && !empty($filterprofile['show_assignment_filter']),
+    'showoverviewfilters' => !$canviewrequestworkspace || $isreportingworkspacetab,
+    'showstatusfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_status_filter']),
+    'showsemesterfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_semester_filter']),
+    'showassignmentfilter' => $canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']),
     'showreportfilters' => $showreportfilters
-        && (!$canmanageopenrequests || !empty($filterprofile['show_reporting_filters'])),
-    'showcreatedbycolumn' => $canmanageopenrequests
+        && (!$canviewrequestworkspace || !empty($filterprofile['show_reporting_filters'])),
+    'showcreatedbycolumn' => $canviewrequestworkspace
         ? !empty($tableprofile['showcreatedbycolumn'])
-        : ($showreportfilters && $canmanageopenrequests && $isreportingworkspacetab),
+        : ($showreportfilters && $isreportingworkspacetab),
     'createdbycolumnlabel' => get_string('event_usermodified', 'mod_bookit'),
-    'showprogresscolumn' => $canmanageopenrequests
+    'showprogresscolumn' => $canviewrequestworkspace
         ? (!empty($tableprofile['showprogresscolumn']) && ($checklistenabled || $resourcesenabled))
         : ($checklistenabled || $resourcesenabled),
-    'showchecklistcolumn' => $canmanageopenrequests
+    'showchecklistcolumn' => $canviewrequestworkspace
         ? (!empty($tableprofile['showchecklistcolumn']) && $checklistenabled)
         : $checklistenabled,
-    'showresourcescolumn' => $canmanageopenrequests
+    'showresourcescolumn' => $canviewrequestworkspace
         ? (!empty($tableprofile['showresourcescolumn']) && $resourcesenabled)
         : $resourcesenabled,
-    'showcancelcolumn' => !$canmanageopenrequests
+    'showcancelcolumn' => !$canviewrequestworkspace
         && !$isobserverrestricted
         && $currenttab === 'myevents',
     'showreactivatecolumn' => $canmanageopenrequests
         ? !empty($tableprofile['showreactivatecolumn'])
-        : ($historyactive || $workspacetab === 'rejectedcancelled'),
+        : false,
     'overviewcancelcolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'overviewreactivatecolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
     'overviewcolumndatetime' => get_string('overview_column_datetime', 'mod_bookit'),
@@ -520,7 +521,7 @@ $templatecontext = [
 ];
 
 // Precompute checklist progress for displayed events in a single query.
-$displayevents = $canmanageopenrequests
+$displayevents = $canviewrequestworkspace
     ? match ($workspacetab) {
         'openrequests' => $openrequests,
         'confirmedrequests' => $confirmedrequests,
@@ -560,6 +561,7 @@ $prepareeventrow = function (
     $latesthistorymap,
     $currenttab,
     $workspacetab,
+    $canviewrequestworkspace,
     $canmanageopenrequests,
     $PAGE
 ): array {
@@ -681,25 +683,27 @@ $prepareeventrow = function (
             && event_access_manager::can_participant_overview_cancel($ev, $context, (int)$USER->id),
         'cancelactionlabel' => get_string('overview_cancel_booking', 'mod_bookit'),
         'canceltargetstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-        'hasreactivateaction' => ($requesttab === 'history'
+        'hasreactivateaction' => $canmanageopenrequests && (
+            ($requesttab === 'history'
                 && event_access_manager::can_reactivate_from_history($ev, $context))
             || (in_array($requesttab, ['rejectedrequests', 'rejectedcancelled'], true)
-                && event_access_manager::can_restore_terminal_request($ev, $context)),
+                && event_access_manager::can_restore_terminal_request($ev, $context))
+        ),
         'reactivateactionlabel' => get_string('bookingstatus_action_reactivate', 'mod_bookit'),
         'reactivatetargetstatus' => event_access_manager::BOOKINGSTATUS_NEW,
         'overviewtab' => $isrequestworkspaceitem
-            ? ($canmanageopenrequests && $workspacetab !== null
+            ? ($canviewrequestworkspace && $workspacetab !== null
                 ? $workspacetab
                 : $requesttab)
             : ($currenttab === 'history' ? 'history' : 'myevents'),
     ];
 };
 
-$workspacerequesttab = $canmanageopenrequests
+$workspacerequesttab = $canviewrequestworkspace
     ? event_manager::get_workspace_status_request_tab($workspacetab)
     : 'openrequests';
 
-if ($canmanageopenrequests) {
+if ($canviewrequestworkspace) {
     foreach ($displayevents as $ev) {
         $canviewevent = $historyactive
             ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)

@@ -894,6 +894,119 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
+     * Service team may view the Request Workspace through manage capabilities.
+     *
+     * @return void
+     */
+    public function test_can_view_request_workspace_true_for_service_team(): void {
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Bookit request workspace view test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        $servicerole = \create_role('Bookit service', 'bookitservicetest', 'manager');
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $servicerole, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        \role_assign($servicerole, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($serviceuser);
+        $this->assertTrue(event_access_manager::can_view_request_workspace($context));
+        $this->assertTrue(event_access_manager::can_manage_open_requests($context));
+    }
+
+    /**
+     * Support on site may view the Request Workspace without manage capabilities.
+     *
+     * @return void
+     */
+    public function test_can_view_request_workspace_true_for_support_only(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $this->assertTrue(event_access_manager::can_view_request_workspace($context));
+        $this->assertFalse(event_access_manager::can_manage_open_requests($context));
+    }
+
+    /**
+     * Booking persons must not see the Request Workspace.
+     *
+     * @return void
+     */
+    public function test_can_view_request_workspace_false_for_booker(): void {
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Bookit booker test']);
+        $context = context_module::instance($bookit->cmid);
+
+        $bookerrole = \create_role('Bookit booker', 'bookitbookertest', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $bookerrole, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $bookerrole, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $booker = $this->getDataGenerator()->create_user();
+        \role_assign($bookerrole, $booker->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($booker);
+        $this->assertFalse(event_access_manager::can_view_request_workspace($context));
+        $this->assertFalse(event_access_manager::can_manage_open_requests($context));
+    }
+
+    /**
+     * Dual role users keep manage semantics while still being allowed to view.
+     *
+     * @return void
+     */
+    public function test_dual_role_manage_implies_view_and_manage(): void {
+        $this->resetAfterTest(true);
+        global $DB;
+
+        $context = $this->create_bookit_context_with_service_role();
+        $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$supportrole) {
+            $supportroleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $supportroleid = (int)$supportrole->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_role_by_shortname($context, $user->id, 'bookitservice');
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $this->assertTrue(event_access_manager::can_view_request_workspace($context));
+        $this->assertTrue(event_access_manager::can_manage_open_requests($context));
+    }
+
+    /**
+     * Support-only users may view but not manage open requests.
+     *
+     * @return void
+     */
+    public function test_support_only_cannot_manage_open_requests(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_support_role();
+        $user = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($context, $user->id);
+        $this->setUser($user);
+
+        $this->assertTrue(event_access_manager::can_view_request_workspace($context));
+        $this->assertFalse(event_access_manager::can_manage_open_requests($context));
+    }
+
+    /**
      * Rejected requests leave active views, and unrelated open requests stay in the service queue instead
      * of leaking into the service-team calendar.
      *

@@ -740,4 +740,143 @@ final class update_event_booking_status_test extends advanced_testcase {
             1
         );
     }
+
+    /**
+     * Support-only viewers cannot change booking status via the API.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_support_only_denied_status_change(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Support status deny']);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$supportrole) {
+            $supportroleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $supportroleid = (int)$supportrole->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $supportuser = $this->getDataGenerator()->create_user();
+        \role_assign($supportroleid, $supportuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($supportuser->id, $course->id, 'student');
+        $this->setUser($supportuser);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Support read-only request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$supportuser->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->expectException(\required_capability_exception::class);
+        update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'openrequests',
+            1
+        );
+    }
+
+    /**
+     * Support-only viewers cannot reactivate rejected requests.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_support_only_denied_reactivate(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Support reactivate deny']);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$supportrole) {
+            $supportroleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $supportroleid = (int)$supportrole->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $supportuser = $this->getDataGenerator()->create_user();
+        \role_assign($supportroleid, $supportuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($supportuser->id, $course->id, 'student');
+        $this->setUser($supportuser);
+
+        $owner = $this->getDataGenerator()->create_user();
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Rejected support read-only',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$owner->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->expectException(\required_capability_exception::class);
+        update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            'rejectedrequests',
+            1
+        );
+    }
 }
