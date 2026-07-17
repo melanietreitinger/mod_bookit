@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
+use mod_bookit\local\tabs;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -90,6 +91,9 @@ class update_event_booking_status extends external_api {
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
 
+        $canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
+        $params['tab'] = tabs::validate_overview_tab($params['tab'], $canviewrequestworkspace);
+
         $validstatuses = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
@@ -131,7 +135,7 @@ class update_event_booking_status extends external_api {
             && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
         ) {
             if (
-                in_array($params['tab'], ['rejectedrequests', 'rejectedcancelled'], true)
+                $params['tab'] === 'rejectedcancelled'
                 && event_access_manager::can_restore_terminal_request($event, $context)
             ) {
                 $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
@@ -160,8 +164,6 @@ class update_event_booking_status extends external_api {
         $redirecttab = match (true) {
             in_array($params['tab'], ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
                 && event_access_manager::can_manage_open_requests($context) => $params['tab'],
-            $params['tab'] === 'rejectedrequests'
-                && event_access_manager::can_manage_open_requests($context) => 'rejectedcancelled',
             $params['tab'] === 'history' => 'history',
             $params['tab'] === 'myevents'
                 && event_access_manager::can_manage_open_requests($context) => 'allrequests',
@@ -174,10 +176,7 @@ class update_event_booking_status extends external_api {
         ]))->out(false);
 
         $queuepayload = null;
-        $queueworkspace = match ($redirecttab) {
-            'rejectedcancelled' => 'rejectedrequests',
-            default => $redirecttab,
-        };
+        $queueworkspace = $redirecttab;
         if (
             in_array($redirecttab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
             && event_access_manager::can_manage_open_requests($context)

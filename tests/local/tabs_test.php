@@ -19,53 +19,62 @@ namespace mod_bookit\local;
 use advanced_testcase;
 
 /**
- * Tests for Request Workspace tab normalisation.
+ * Tests for overview tab validation helpers.
  *
  * @package     mod_bookit
  * @category    test
  * @copyright   2026 ssystems GmbH <oss@ssystems.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \mod_bookit\local\tabs::normalize_workspace_tab
+ * @covers      \mod_bookit\local\tabs
  */
 final class tabs_test extends advanced_testcase {
     /**
-     * Service team legacy and canonical slugs resolve to workspace tabs.
+     * Request Workspace viewers accept canonical workspace slugs only.
      *
      * @return void
      */
-    public function test_normalize_workspace_tab_service_team(): void {
+    public function test_validate_overview_tab_workspace_viewer(): void {
         $this->resetAfterTest();
 
-        $this->assertSame('allrequests', tabs::normalize_workspace_tab('myevents', true));
-        $this->assertSame('rejectedcancelled', tabs::normalize_workspace_tab('rejectedrequests', true));
-        $this->assertSame('openrequests', tabs::normalize_workspace_tab('openrequests', true));
-        $this->assertSame('allrequests', tabs::normalize_workspace_tab('unknown-tab', true));
+        foreach (tabs::WORKSPACE_TABS as $slug) {
+            $this->assertSame($slug, tabs::validate_overview_tab($slug, true));
+        }
     }
 
     /**
-     * Participant tabs stay on participant slugs.
+     * Participants accept canonical participant slugs only.
      *
      * @return void
      */
-    public function test_normalize_workspace_tab_participant(): void {
+    public function test_validate_overview_tab_participant(): void {
         $this->resetAfterTest();
 
-        $this->assertSame('myevents', tabs::normalize_workspace_tab('myevents', false));
-        $this->assertSame('history', tabs::normalize_workspace_tab('history', false));
-        $this->assertSame('myevents', tabs::normalize_workspace_tab('allrequests', false));
+        $this->assertSame('myevents', tabs::validate_overview_tab('myevents', false));
+        $this->assertSame('history', tabs::validate_overview_tab('history', false));
     }
 
     /**
-     * Request Workspace viewers (service team or support) resolve workspace slugs.
+     * Role-aware defaults apply when the tab parameter is omitted.
      *
      * @return void
      */
-    public function test_normalize_workspace_tab_support_viewer(): void {
+    public function test_get_default_overview_tab(): void {
         $this->resetAfterTest();
 
-        $this->assertSame('openrequests', tabs::normalize_workspace_tab('openrequests', true));
-        $this->assertSame('allrequests', tabs::normalize_workspace_tab('allrequests', true));
-        $this->assertSame('rejectedcancelled', tabs::normalize_workspace_tab('rejectedrequests', true));
-        $this->assertSame('allrequests', tabs::normalize_workspace_tab('myevents', true));
+        $this->assertSame('allrequests', tabs::get_default_overview_tab(true));
+        $this->assertSame('myevents', tabs::get_default_overview_tab(false));
+    }
+
+    /**
+     * External queue reads accept canonical workspace slugs only.
+     *
+     * @return void
+     */
+    public function test_validate_workspace_tab(): void {
+        $this->resetAfterTest();
+
+        foreach (tabs::WORKSPACE_TABS as $slug) {
+            $this->assertSame($slug, tabs::validate_workspace_tab($slug));
+        }
     }
 }

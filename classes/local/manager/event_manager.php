@@ -35,6 +35,7 @@ use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\read\calendar_event_read_mapper;
 use mod_bookit\local\read\overview_queue_read_mapper;
 use mod_bookit\local\read\room_availability_read_mapper;
+use mod_bookit\local\tabs;
 use stdClass;
 
 /**
@@ -281,11 +282,7 @@ class event_manager {
         int $page = 1,
         int $perpage = 25
     ): array {
-        $workspace = match ($workspace) {
-            'allrequests' => 'myevents',
-            'rejectedcancelled' => 'rejectedrequests',
-            default => $workspace,
-        };
+        $workspace = tabs::validate_workspace_tab($workspace);
 
         $filters = event_access_manager::normalise_governed_read_filters(array_merge($filters, [
             'workspace' => $workspace,
@@ -303,7 +300,7 @@ class event_manager {
             $events = $canviewrequestworkspace ? self::get_open_requests() : [];
         } else if ($workspace === 'confirmedrequests') {
             $events = $canviewrequestworkspace ? self::get_confirmed_requests() : [];
-        } else if ($workspace === 'rejectedrequests') {
+        } else if ($workspace === 'rejectedcancelled') {
             $events = $canviewrequestworkspace ? self::get_rejected_requests() : [];
         } else {
             [$defaultstart, $defaultend] = self::get_reporting_default_range(
@@ -343,7 +340,7 @@ class event_manager {
         $openrequestcount = $workspace === 'openrequests' ? $totalcount : (
             $canviewrequestworkspace ? count(self::get_open_requests()) : 0
         );
-        $rejectedrequestcount = $workspace === 'rejectedrequests' ? $totalcount : (
+        $rejectedrequestcount = $workspace === 'rejectedcancelled' ? $totalcount : (
             $canviewrequestworkspace ? count(self::get_rejected_requests()) : 0
         );
         $confirmedrequestcount = $workspace === 'confirmedrequests' ? $totalcount : (
@@ -352,7 +349,7 @@ class event_manager {
         $currentpage = 1;
         $totalpages = 1;
         $haspaging = false;
-        if (in_array($workspace, ['openrequests', 'confirmedrequests', 'rejectedrequests'], true)) {
+        if (in_array($workspace, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)) {
             $totalpages = max(1, (int)ceil($totalcount / $perpage));
             $currentpage = min($page, $totalpages);
             $offset = ($currentpage - 1) * $perpage;
@@ -764,10 +761,7 @@ class event_manager {
      * @return string
      */
     public static function get_workspace_status_request_tab(string $workspacetab): string {
-        return match ($workspacetab) {
-            'rejectedcancelled' => 'rejectedrequests',
-            default => $workspacetab,
-        };
+        return $workspacetab;
     }
 
     /**

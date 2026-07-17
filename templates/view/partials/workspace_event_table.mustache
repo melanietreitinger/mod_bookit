@@ -48,27 +48,27 @@
     <thead class="text-center">
         <tr style="background-color: {{workspacetableprofile.headerbackgroundcolor}};">
             {{#workspacetableprofile.showidcolumn}}
-            <th class="align-middle" data-sort-key="id">ID</th>
+            <th class="align-middle" data-sort-key="id">{{overviewcolumnid}}</th>
             {{/workspacetableprofile.showidcolumn}}
             {{#workspacetableprofile.showdatetimecolumn}}
             <th class="align-middle" data-sort-key="starttime">{{overviewcolumndatetime}}</th>
             {{/workspacetableprofile.showdatetimecolumn}}
-            <th class="align-middle" data-sort-key="title">Title</th>
-            <th class="align-middle" data-sort-key="room">Room</th>
-            <th class="align-middle" data-sort-key="personincharge">Person in charge</th>
-            <th class="align-middle" data-sort-key="myrole">My role</th>
+            <th class="align-middle" data-sort-key="title">{{overviewcolumntitle}}</th>
+            <th class="align-middle" data-sort-key="room">{{overviewcolumnroom}}</th>
+            <th class="align-middle" data-sort-key="personincharge">{{overviewcolumnpersonincharge}}</th>
+            <th class="align-middle" data-sort-key="myrole">{{overviewcolumnmyrole}}</th>
             {{#workspacetableprofile.showcreatedbycolumn}}
             <th class="align-middle" data-sort-key="createdby">{{createdbycolumnlabel}}</th>
             {{/workspacetableprofile.showcreatedbycolumn}}
-            <th class="align-middle" data-sort-key="bookingstatus">Booking status</th>
+            <th class="align-middle" data-sort-key="bookingstatus">{{overviewcolumnbookingstatus}}</th>
             {{#workspacetableprofile.showprogresscolumn}}
-            <th class="align-middle">Progress</th>
+            <th class="align-middle">{{overviewcolumnprogress}}</th>
             {{/workspacetableprofile.showprogresscolumn}}
             {{#workspacetableprofile.showchecklistcolumn}}
-            <th class="align-middle">Checklist</th>
+            <th class="align-middle">{{overviewcolumnchecklist}}</th>
             {{/workspacetableprofile.showchecklistcolumn}}
             {{#workspacetableprofile.showresourcescolumn}}
-            <th class="align-middle">Resources</th>
+            <th class="align-middle">{{overviewcolumnresources}}</th>
             {{/workspacetableprofile.showresourcescolumn}}
             {{#workspacetableprofile.showcancelcolumn}}
             <th class="align-middle">{{overviewcancelcolumnlabel}}</th>
@@ -77,7 +77,7 @@
             <th class="align-middle">{{overviewreactivatecolumnlabel}}</th>
             {{/workspacetableprofile.showreactivatecolumn}}
             {{#workspacetableprofile.showdatecolumn}}
-            <th class="align-middle" data-sort-key="starttime">Date</th>
+            <th class="align-middle" data-sort-key="starttime">{{overviewcolumndate}}</th>
             {{/workspacetableprofile.showdatecolumn}}
         </tr>
     </thead>

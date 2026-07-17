@@ -111,12 +111,9 @@ Feature: Process open booking requests
       | name              | startdate                         | enddate                              | bookingstatus | institution |
       | Hidden service request | ##today noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | 0 | 1 |
     When I log in as "bertbooking"
-    And I open the Bookit overview "openrequests" for "My BookIt Activity"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
     Then the Bookit main tabs should not contain "Request workspace"
     And the Bookit request workspace switch should not contain "Rejected and cancelled"
-    When I open the Bookit overview "rejectedcancelled" for "My BookIt Activity"
+    When I open the Bookit overview "history" for "My BookIt Activity"
     Then the Bookit main tabs should not contain "Request workspace"
     And the Bookit request workspace switch should not contain "Rejected and cancelled"
-    When I open the Bookit overview "confirmedrequests" for "My BookIt Activity"
-    Then the Bookit main tabs should not contain "Request workspace"
-    And the Bookit request workspace switch should not contain "Confirmed bookings"

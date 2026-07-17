@@ -489,7 +489,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedrequests',
+            'rejectedcancelled',
             1
         );
 
@@ -666,7 +666,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedrequests',
+            'rejectedcancelled',
             1
         );
 
@@ -678,7 +678,7 @@ final class update_event_booking_status_test extends advanced_testcase {
     }
 
     /**
-     * Unauthorized users cannot restore from the rejected-requests tab.
+     * Participants cannot use workspace tabs such as rejectedcancelled.
      *
      * @runInSeparateProcess
      * @return void
@@ -731,12 +731,12 @@ final class update_event_booking_status_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $this->expectException(\required_capability_exception::class);
+        $this->expectException(\invalid_parameter_exception::class);
         update_event_booking_status::execute(
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedrequests',
+            'rejectedcancelled',
             1
         );
     }
@@ -878,7 +878,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedrequests',
+            'rejectedcancelled',
             1
         );
     }

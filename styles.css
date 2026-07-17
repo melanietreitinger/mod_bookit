@@ -231,6 +231,17 @@
     gap: 0.5rem;
 }
 
+@media (max-width: 767.98px) {
+    .mod-bookit-open-request-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .mod-bookit-request-pagination .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
 .mod-bookit-open-requests-table tr.mod-bookit-open-request-row td {
     vertical-align: middle;
 }

@@ -107,7 +107,7 @@ function bookit_extend_settings_navigation(
     settings_navigation $settingsnav,
     ?navigation_node $modnode = null
 ) {
-    global $PAGE;
+    global $PAGE, $OUTPUT;
     unset($settingsnav);
 
     if (!$modnode) {
@@ -116,14 +116,10 @@ function bookit_extend_settings_navigation(
 
     $context = $PAGE->cm->context;
     $pageisoverview = $PAGE->url->compare(new moodle_url('/mod/bookit/overview.php'), URL_MATCH_BASE);
-    $tab = optional_param('tab', 'myevents', PARAM_ALPHA);
-    $canmanagerequests = \mod_bookit\local\manager\event_access_manager::can_manage_open_requests($context);
     $canviewrequestworkspace = \mod_bookit\local\manager\event_access_manager::can_view_request_workspace($context);
-    $workspacetabs = ['allrequests', 'openrequests', 'confirmedrequests', 'rejectedcancelled', 'history'];
-    $isinrequestworkspace = $pageisoverview && $canviewrequestworkspace && (
-        in_array($tab, $workspacetabs, true)
-        || in_array($tab, ['rejectedrequests', 'myevents'], true)
-    );
+    $tab = optional_param('tab', \mod_bookit\local\tabs::get_default_overview_tab($canviewrequestworkspace), PARAM_ALPHANUMEXT);
+    $workspacetabs = \mod_bookit\local\tabs::WORKSPACE_TABS;
+    $isinrequestworkspace = $pageisoverview && $canviewrequestworkspace && in_array($tab, $workspacetabs, true);
 
     if (has_capability('mod/bookit:viewownoverview', $context) && !$canviewrequestworkspace) {
         $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'myevents']);
@@ -147,22 +143,8 @@ function bookit_extend_settings_navigation(
     if ($canviewrequestworkspace) {
         $newcount = \mod_bookit\local\manager\event_manager::count_new_requests();
         $inprogresscount = \mod_bookit\local\manager\event_manager::count_in_progress_requests();
-        $badgeshtml = html_writer::tag(
-            'span',
-            (string)$newcount,
-            [
-                'class' => 'bookit-nav-badge bookit-nav-badge--new',
-                'aria-label' => get_string('overview_nav_badge_new', 'mod_bookit', $newcount),
-            ]
-        ) . html_writer::tag(
-            'span',
-            (string)$inprogresscount,
-            [
-                'class' => 'bookit-nav-badge bookit-nav-badge--inprogress',
-                'aria-label' => get_string('overview_nav_badge_inprogress', 'mod_bookit', $inprogresscount),
-            ]
-        );
-        $label = get_string('overview_request_workspace', 'mod_bookit') . ' ' . $badgeshtml;
+        $bookitrenderer = $PAGE->get_renderer('mod_bookit');
+        $label = $bookitrenderer->render(new \mod_bookit\output\request_workspace_nav_label($newcount, $inprogresscount));
         $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'allrequests']);
         $requestworkspacenode = $modnode->add(
             $label,

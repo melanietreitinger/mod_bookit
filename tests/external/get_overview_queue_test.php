@@ -149,11 +149,11 @@ final class get_overview_queue_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $response = get_overview_queue::execute($bookit->cmid, 'rejectedrequests', [], [], [], 1, '', '');
+        $response = get_overview_queue::execute($bookit->cmid, 'rejectedcancelled', [], [], [], 1, '', '');
 
         $this->assertSame('ok', $response['status']);
         $this->assertFalse($response['denied']);
-        $this->assertSame('rejectedrequests', $response['workspace']);
+        $this->assertSame('rejectedcancelled', $response['workspace']);
         $this->assertCount(1, $response['items']);
         $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
         $this->assertSame(1, (int)$response['summary']['rejectedrequestcount']);

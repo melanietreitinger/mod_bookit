@@ -58,6 +58,6 @@ Feature: Governed overview queue reads keep request workspaces consistent
       | name              | startdate                               | enddate                                 | bookingstatus | institution |
       | Hidden request    | ##today noon##%Y-%m-%dT%H:%M:%S##       | ##tomorrow noon##%Y-%m-%dT%H:%M:%S##    | 0             | 1           |
     When I log in as "bertbooking"
-    And I open the Bookit overview "openrequests" for "My BookIt Activity"
-    Then the Bookit request workspace switch should not contain "Rejected and cancelled"
-    And the Bookit main tabs should not contain "Request workspace"
+    And I open the Bookit overview "myevents" for "My BookIt Activity"
+    Then the Bookit main tabs should not contain "Request workspace"
+    And the Bookit request workspace switch should not contain "Rejected and cancelled"

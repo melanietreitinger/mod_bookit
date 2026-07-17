@@ -27,6 +27,7 @@ namespace mod_bookit\local;
 use coding_exception;
 use context;
 use core\exception\moodle_exception;
+use invalid_parameter_exception;
 use moodle_url;
 use tabobject;
 
@@ -38,8 +39,8 @@ use tabobject;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tabs {
-    /** @var string[] Canonical Request Workspace tab slugs (service team). */
-    private const WORKSPACE_TABS = [
+    /** @var string[] Canonical Request Workspace tab slugs. */
+    public const WORKSPACE_TABS = [
         'allrequests',
         'openrequests',
         'confirmedrequests',
@@ -47,28 +48,62 @@ class tabs {
         'history',
     ];
 
+    /** @var string[] Canonical participant overview tab slugs. */
+    public const PARTICIPANT_TABS = [
+        'myevents',
+        'history',
+    ];
+
     /**
-     * Normalise overview tab query parameter to a canonical workspace or participant slug.
+     * Default overview tab when the query parameter is omitted.
      *
-     * @param string $tab Raw tab from the request.
-     * @param bool $isrequestworkspaceviewer Whether the viewer may use Request Workspace tabs
-     *        ({@see event_access_manager::can_view_request_workspace()}, not manage-only).
+     * @param bool $isrequestworkspaceviewer Whether the viewer may use Request Workspace tabs.
      * @return string
      */
-    public static function normalize_workspace_tab(string $tab, bool $isrequestworkspaceviewer): string {
-        if (!$isrequestworkspaceviewer) {
-            return match ($tab) {
-                'history' => 'history',
-                default => 'myevents',
-            };
+    public static function get_default_overview_tab(bool $isrequestworkspaceviewer): string {
+        return $isrequestworkspaceviewer ? 'allrequests' : 'myevents';
+    }
+
+    /**
+     * Validate an overview tab slug for the current viewer role.
+     *
+     * @param string $tab Raw tab from the request.
+     * @param bool $isrequestworkspaceviewer Whether the viewer may use Request Workspace tabs.
+     * @return string Canonical tab slug.
+     * @throws invalid_parameter_exception
+     */
+    public static function validate_overview_tab(string $tab, bool $isrequestworkspaceviewer): string {
+        $allowed = $isrequestworkspaceviewer ? self::WORKSPACE_TABS : self::PARTICIPANT_TABS;
+        if (!in_array($tab, $allowed, true)) {
+            throw new invalid_parameter_exception('tab');
         }
 
-        return match ($tab) {
-            'myevents' => 'allrequests',
-            'rejectedrequests' => 'rejectedcancelled',
-            'allrequests', 'openrequests', 'confirmedrequests', 'rejectedcancelled', 'history' => $tab,
-            default => 'allrequests',
-        };
+        return $tab;
+    }
+
+    /**
+     * Validate a governed workspace slug for external queue reads.
+     *
+     * @param string $workspace Workspace slug from an external API call.
+     * @return string Canonical workspace slug.
+     * @throws invalid_parameter_exception
+     */
+    public static function validate_workspace_tab(string $workspace): string {
+        if (!in_array($workspace, self::WORKSPACE_TABS, true)) {
+            throw new invalid_parameter_exception('workspace');
+        }
+
+        return $workspace;
+    }
+
+    /**
+     * Whether a slug is a canonical Request Workspace tab.
+     *
+     * @param string $tab
+     * @return bool
+     */
+    public static function is_workspace_tab(string $tab): bool {
+        return in_array($tab, self::WORKSPACE_TABS, true);
     }
 
     /**

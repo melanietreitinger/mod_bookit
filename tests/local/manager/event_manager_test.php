@@ -3181,7 +3181,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Rejected workspace tab maps to rejectedrequests status cell and shows reactivate column.
+     * Rejected workspace tab keeps canonical slug for status cell and shows reactivate column.
      *
      * @return void
      */
@@ -3189,7 +3189,7 @@ final class event_manager_test extends advanced_testcase {
         $profile = event_manager::get_workspace_table_profile('rejectedcancelled');
 
         $this->assertTrue($profile['showreactivatecolumn']);
-        $this->assertSame('rejectedrequests', $profile['requesttab']);
+        $this->assertSame('rejectedcancelled', $profile['requesttab']);
         $this->assertSame('#f8d7da', $profile['headerbackgroundcolor']);
     }
 

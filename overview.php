@@ -46,20 +46,19 @@ if (!$isobserverrestricted && !has_capability('mod/bookit:viewownoverview', $con
 }
 
 global $USER, $DB;
-$tab = optional_param('tab', 'myevents', PARAM_ALPHA);
 $canmanage = has_capability('mod/bookit:managebasics', $context);
 $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
 $canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
+$defaulttab = tabs::get_default_overview_tab($canviewrequestworkspace);
+$tab = optional_param('tab', $defaulttab, PARAM_ALPHANUMEXT);
 if ($canviewrequestworkspace) {
-    $workspacetab = tabs::normalize_workspace_tab($tab, true);
+    $workspacetab = tabs::validate_overview_tab($tab, true);
     $currenttab = $workspacetab;
 } else {
     $workspacetab = null;
-    $currenttab = match (true) {
-        $isobserverrestricted => 'myevents',
-        $tab === 'history' => 'history',
-        default => 'myevents',
-    };
+    $currenttab = $isobserverrestricted
+        ? 'myevents'
+        : tabs::validate_overview_tab($tab, false);
 }
 $isqueuetab = $canviewrequestworkspace && in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true);
 $isreportingworkspacetab = $canviewrequestworkspace && in_array($workspacetab, ['allrequests', 'history'], true);
@@ -67,11 +66,6 @@ $isinrequestworkspace = $isqueuetab;
 $requestworkspacemode = $isqueuetab ? $workspacetab : 'openrequests';
 $activetabparam = $canviewrequestworkspace ? $workspacetab : ($currenttab === 'history' ? 'history' : 'myevents');
 $historyactive = $activetabparam === 'history';
-$governedworkspace = match ($activetabparam) {
-    'allrequests' => 'myevents',
-    'rejectedcancelled' => 'rejectedrequests',
-    default => $activetabparam,
-};
 $filterprofile = $canviewrequestworkspace
     ? event_manager::get_workspace_filter_profile($workspacetab, true)
     : event_manager::get_workspace_filter_profile('myevents', false);
@@ -235,7 +229,7 @@ $PAGE->requires->js_call_amd('mod_bookit/overview/overview_table_sort', 'init', 
 $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode([
     'methodname' => 'mod_bookit_get_overview_queue',
     'cmid' => (int)$cm->id,
-    'workspace' => $governedworkspace,
+    'workspace' => $activetabparam,
     'bookingstatuses' => $overviewfilters['bookingstatuses'],
     'facultyids' => $overviewfilters['facultyids'],
     'semesterids' => $overviewfilters['semesterids'],
@@ -244,7 +238,7 @@ $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode
     'reportend' => $reportendvalue,
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
     'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
-    'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
+    'rejectedcancelledempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
 ]));
 
 
@@ -308,20 +302,20 @@ if ($canviewrequestworkspace) {
     );
 }
 $openrequests = [];
-$rejectedrequests = [];
+$rejectedcancelledqueue = [];
 $confirmedrequests = [];
 if ($isqueuetab) {
     match ($workspacetab) {
-        'rejectedcancelled' => $rejectedrequests = event_manager::get_rejected_requests(),
+        'rejectedcancelled' => $rejectedcancelledqueue = event_manager::get_rejected_requests(),
         'confirmedrequests' => $confirmedrequests = event_manager::get_confirmed_requests(),
         default => $openrequests = event_manager::get_open_requests(),
     };
 }
 $openrequestcount = count($openrequests);
-$rejectedrequestcount = count($rejectedrequests);
+$rejectedcancelledcount = count($rejectedcancelledqueue);
 $confirmedrequestcount = count($confirmedrequests);
 $requestqueuecount = match ($workspacetab) {
-    'rejectedcancelled' => $rejectedrequestcount,
+    'rejectedcancelled' => $rejectedcancelledcount,
     'confirmedrequests' => $confirmedrequestcount,
     'openrequests' => $openrequestcount,
     default => 0,
@@ -329,7 +323,7 @@ $requestqueuecount = match ($workspacetab) {
 $requesttotalpages = max(1, (int)ceil($requestqueuecount / $queueperpage));
 $queuepage = min($queuepage, $requesttotalpages);
 if ($workspacetab === 'rejectedcancelled') {
-    $rejectedrequests = array_values(array_slice($rejectedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
+    $rejectedcancelledqueue = array_values(array_slice($rejectedcancelledqueue, ($queuepage - 1) * $queueperpage, $queueperpage));
 } else if ($workspacetab === 'confirmedrequests') {
     $confirmedrequests = array_values(array_slice($confirmedrequests, ($queuepage - 1) * $queueperpage, $queueperpage));
 } else if ($workspacetab === 'openrequests') {
@@ -449,7 +443,7 @@ $templatecontext = [
         : '',
     'showopenrequestworkspace' => false,
     'showconfirmedrequestworkspace' => false,
-    'showrejectedrequestworkspace' => false,
+    'showrejectedcancelledworkspace' => false,
     'requestworkspacetitle' => get_string('overview_request_workspace', 'mod_bookit'),
     'activetabparam' => $activetabparam,
     'historyactive' => $historyactive,
@@ -460,7 +454,7 @@ $templatecontext = [
         default => get_string('overview_my_events', 'mod_bookit'),
     },
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
-    'rejectedrequestsempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
+    'rejectedcancelledempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
     'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
     'requestpaginghtml' => $requestpaginghtml,
     'showoverviewfilters' => !$canviewrequestworkspace || $isreportingworkspacetab,
@@ -489,8 +483,18 @@ $templatecontext = [
         ? !empty($tableprofile['showreactivatecolumn'])
         : false,
     'overviewcancelcolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
-    'overviewreactivatecolumnlabel' => get_string('overview_cancel_column', 'mod_bookit'),
+    'overviewreactivatecolumnlabel' => get_string('overview_reactivate_column', 'mod_bookit'),
     'overviewcolumndatetime' => get_string('overview_column_datetime', 'mod_bookit'),
+    'overviewcolumnid' => get_string('overview_column_id', 'mod_bookit'),
+    'overviewcolumntitle' => get_string('overview_column_title', 'mod_bookit'),
+    'overviewcolumnroom' => get_string('overview_column_room', 'mod_bookit'),
+    'overviewcolumnpersonincharge' => get_string('overview_column_personincharge', 'mod_bookit'),
+    'overviewcolumnmyrole' => get_string('overview_column_myrole', 'mod_bookit'),
+    'overviewcolumnbookingstatus' => get_string('overview_column_bookingstatus', 'mod_bookit'),
+    'overviewcolumnprogress' => get_string('overview_column_progress', 'mod_bookit'),
+    'overviewcolumnchecklist' => get_string('overview_column_checklist', 'mod_bookit'),
+    'overviewcolumnresources' => get_string('overview_column_resources', 'mod_bookit'),
+    'overviewcolumndate' => get_string('overview_column_date', 'mod_bookit'),
     'reportstartvalue' => $reportstartvalue,
     'reportendvalue' => $reportendvalue,
     'reportstartlabel' => get_string('overview_filter_startdate', 'mod_bookit'),
@@ -513,11 +517,11 @@ $templatecontext = [
         : get_string('overview_no_results', 'mod_bookit'),
     'hasopenrequests' => !empty($openrequests),
     'hasconfirmedrequests' => !empty($confirmedrequests),
-    'hasrejectedrequests' => !empty($rejectedrequests),
+    'hasrejectedcancelled' => !empty($rejectedcancelledqueue),
     'events' => [],
     'openrequests' => [],
     'confirmedrequests' => [],
-    'rejectedrequests' => [],
+    'rejectedcancelledqueue' => [],
 ];
 
 // Precompute checklist progress for displayed events in a single query.
@@ -525,7 +529,7 @@ $displayevents = $canviewrequestworkspace
     ? match ($workspacetab) {
         'openrequests' => $openrequests,
         'confirmedrequests' => $confirmedrequests,
-        'rejectedcancelled' => $rejectedrequests,
+        'rejectedcancelled' => $rejectedcancelledqueue,
         default => $events,
     }
     : $events;
@@ -686,7 +690,7 @@ $prepareeventrow = function (
         'hasreactivateaction' => $canmanageopenrequests && (
             ($requesttab === 'history'
                 && event_access_manager::can_reactivate_from_history($ev, $context))
-            || (in_array($requesttab, ['rejectedrequests', 'rejectedcancelled'], true)
+            || ($requesttab === 'rejectedcancelled'
                 && event_access_manager::can_restore_terminal_request($ev, $context))
         ),
         'reactivateactionlabel' => get_string('bookingstatus_action_reactivate', 'mod_bookit'),

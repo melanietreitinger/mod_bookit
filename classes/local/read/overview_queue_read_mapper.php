@@ -79,9 +79,6 @@ class overview_queue_read_mapper {
         }
 
         $requesttab = event_manager::get_workspace_status_request_tab($workspace);
-        if ($workspace === 'myevents') {
-            $requesttab = 'allrequests';
-        }
         $latesthistorysummary = event_manager::build_overview_workflow_latest_summary($latesthistory);
         $historyentries = event_manager::build_overview_workflow_history((int)$event->id);
         $canmanagebasics = has_capability('mod/bookit:managebasics', $context);
@@ -100,7 +97,7 @@ class overview_queue_read_mapper {
         $statuscellhtml = $bookitrenderer->render($statuscell);
 
         $hasreactivateaction = event_access_manager::can_manage_open_requests($context)
-            && in_array($workspace, ['rejectedrequests', 'rejectedcancelled'], true)
+            && $workspace === 'rejectedcancelled'
             && event_access_manager::can_restore_terminal_request($event, $context);
 
         return [
@@ -126,7 +123,7 @@ class overview_queue_read_mapper {
             'hasreactivateaction' => $hasreactivateaction,
             'reactivateactionlabel' => get_string('bookingstatus_action_reactivate', 'mod_bookit'),
             'reactivatetargetstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'overviewtab' => $workspace === 'rejectedrequests' ? 'rejectedcancelled' : $workspace,
+            'overviewtab' => $workspace,
         ];
     }
 }

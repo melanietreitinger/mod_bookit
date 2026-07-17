@@ -23,6 +23,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
+use mod_bookit\local\tabs;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -109,6 +110,8 @@ class get_overview_queue extends external_api {
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
 
+        $params['workspace'] = tabs::validate_workspace_tab($params['workspace']);
+
         if (!has_capability('mod/bookit:viewownoverview', $context) && !has_capability('mod/bookit:view', $context)) {
             return event_access_manager::build_governed_denied_response('overviewqueue', $params) + [
                 'workspace' => $workspace,
@@ -134,7 +137,7 @@ class get_overview_queue extends external_api {
             ];
         }
 
-        $requestworkspaces = ['openrequests', 'confirmedrequests', 'rejectedrequests', 'rejectedcancelled', 'allrequests'];
+        $requestworkspaces = tabs::WORKSPACE_TABS;
         if (
             in_array($params['workspace'], $requestworkspaces, true)
             && !event_access_manager::can_view_request_workspace($context)

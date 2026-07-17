@@ -123,7 +123,8 @@ class behat_mod_bookit extends behat_base {
         $statusjson = json_encode($expectedvalues);
         $js = <<<JS
             (function(expected) {
-                var select = document.querySelector('#bookit-bookingstatusfilter');
+                var select = document.querySelector('#bookit-bookingstatusfilter')
+                    || document.querySelector('#bookit-workspace-bookingstatusfilter');
                 if (!select) {
                     return JSON.stringify({status: 'missing'});
                 }
@@ -1695,7 +1696,8 @@ class behat_mod_bookit extends behat_base {
         );
         $js = <<<'JS'
             (function() {
-                var select = document.querySelector('#bookit-bookingstatusfilter');
+                var select = document.querySelector('#bookit-bookingstatusfilter')
+                    || document.querySelector('#bookit-workspace-bookingstatusfilter');
                 var tabInput = document.querySelector('form[method="get"] input[name="tab"]');
                 var badge = document.querySelector('.badge.badge-info');
                 if (!select) {
