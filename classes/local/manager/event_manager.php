@@ -33,7 +33,6 @@ use mod_bookit\event\booking_reactivated;
 use mod_bookit\event\booking_status_changed;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\read\calendar_event_read_mapper;
-use mod_bookit\local\read\overview_queue_read_mapper;
 use mod_bookit\local\read\room_availability_read_mapper;
 use mod_bookit\local\tabs;
 use stdClass;
@@ -259,77 +258,9 @@ class event_manager {
     }
 
     /**
-     * Clamp a zero-based overview page index to the available page range.
+     * Build the governed SQL contract used by the request workspace Core table.
      *
-     * @param int $requestedpage Zero-based page index from HTTP or API.
-     * @param int $totalpages Total number of pages (at least 1).
-     * @return int Effective zero-based page index.
-     */
-    public static function normalize_overview_page_index(int $requestedpage, int $totalpages): int {
-        if ($totalpages <= 1) {
-            return 0;
-        }
-
-        $requestedpage = max(0, $requestedpage);
-        return min($requestedpage, $totalpages - 1);
-    }
-
-    /**
-     * Clamp a zero-based queue page index to the available page range.
-     *
-     * @param int $requestedpage Zero-based page index from HTTP or API.
-     * @param int $totalpages Total number of pages (at least 1).
-     * @return int Effective zero-based page index.
-     */
-    public static function normalize_queue_page_index(int $requestedpage, int $totalpages): int {
-        return self::normalize_overview_page_index($requestedpage, $totalpages);
-    }
-
-    /**
-     * Build the effective page state for governed overview reads.
-     *
-     * @param int $requestedpage Zero-based requested page.
-     * @param int $totalcount Full logical match count before page limiting.
-     * @param int $perpage Page size.
-     * @return array
-     */
-    private static function build_overview_page_state(int $requestedpage, int $totalcount, int $perpage): array {
-        $requestedpage = max(0, $requestedpage);
-        $perpage = max(1, $perpage);
-        $totalpages = max(1, (int)ceil(max(0, $totalcount) / $perpage));
-        $currentpage = self::normalize_overview_page_index($requestedpage, $totalpages);
-        $offset = $currentpage * $perpage;
-
-        return [
-            'requestedpage' => $requestedpage,
-            'currentpage' => $currentpage,
-            'perpage' => $perpage,
-            'totalpages' => $totalpages,
-            'totalcount' => max(0, $totalcount),
-            'offset' => $offset,
-            'hasprevious' => $currentpage > 0,
-            'hasnext' => $currentpage < ($totalpages - 1),
-            'haspaging' => $totalcount > $perpage,
-            'adjusted' => $currentpage !== $requestedpage,
-        ];
-    }
-
-    /**
-     * Slice a non-manager governed result after existing access helpers have applied per-user rules.
-     *
-     * Service-Team reporting and queue tabs use SQL-bounded reads. This fallback is intentionally limited to
-     * non-manager overview paths whose predicates still depend on PHP access-helper semantics.
-     *
-     * @param array $events Filtered event rows.
-     * @param array $paging Effective page state.
-     * @return array Visible event rows.
-     */
-    private static function slice_non_manager_overview_events(array $events, array $paging): array {
-        return array_slice(array_values($events), (int)$paging['offset'], (int)$paging['perpage']);
-    }
-
-    /**
-     * Return the governed overview queue payload for the given workspace.
+     * The returned scope is complete before Core applies count, sorting, or paging.
      *
      * @param context_module $context
      * @param int $userid
@@ -337,159 +268,128 @@ class event_manager {
      * @param array $filters
      * @param int|null $reportstart
      * @param int|null $reportend
-     * @param int $page
-     * @param int $perpage
-     * @return array
-     * @throws dml_exception
+     * @return array{fields:string,from:string,where:string,params:array,countsql:string,countparams:array}
      */
-    public static function get_governed_overview_queue(
+    public static function get_request_workspace_query(
         context_module $context,
         int $userid,
         string $workspace,
         array $filters = [],
         ?int $reportstart = null,
-        ?int $reportend = null,
-        int $page = 0,
-        int $perpage = 25
+        ?int $reportend = null
     ): array {
+        global $DB;
+
         $workspace = tabs::validate_workspace_tab($workspace);
+        if (!event_access_manager::can_view_request_workspace($context)) {
+            throw new \required_capability_exception($context, 'mod/bookit:viewownoverview', 'nopermissions', '');
+        }
 
         $filters = event_access_manager::normalise_governed_read_filters(array_merge($filters, [
             'workspace' => $workspace,
         ]));
-        $workspace = $filters['workspace'] ?: $workspace;
         $assignmentfilter = $filters['assignmentfilter'] === 'assigned' ? 'assigned' : 'all';
-        $requestedpage = max(0, $page);
-        $perpage = max(1, $perpage);
-
-        $canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
-        $canmanageopenrequests = event_access_manager::can_manage_open_requests($context);
-        $observerrestricted = event_access_manager::is_observer_restricted_mode($context);
-        $showreportfilters = $canviewrequestworkspace || $observerrestricted;
+        $params = [];
+        $conditions = [];
 
         if ($workspace === 'openrequests') {
-            $totalcount = $canviewrequestworkspace ? self::count_open_requests() : 0;
-            $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
-            $events = $canviewrequestworkspace
-                ? self::get_open_requests_page($paging['offset'], $paging['perpage'])
-                : [];
+            [$statussql, $statusparams] = $DB->get_in_or_equal(
+                event_access_manager::get_open_request_statuses(),
+                SQL_PARAMS_NAMED,
+                'openstatus'
+            );
+            $conditions[] = "e.bookingstatus $statussql";
+            $params += $statusparams;
         } else if ($workspace === 'confirmedrequests') {
-            $totalcount = $canviewrequestworkspace ? self::count_confirmed_requests() : 0;
-            $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
-            $events = $canviewrequestworkspace
-                ? self::get_confirmed_requests_page($paging['offset'], $paging['perpage'])
-                : [];
+            $conditions[] = 'e.bookingstatus = :confirmedstatus';
+            $conditions[] = 'e.endtime >= :confirmedreferencetime';
+            $params['confirmedstatus'] = event_access_manager::BOOKINGSTATUS_CONFIRMED;
+            $params['confirmedreferencetime'] = time();
         } else if ($workspace === 'rejectedcancelled') {
-            $totalcount = $canviewrequestworkspace ? self::count_rejected_requests() : 0;
-            $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
-            $events = $canviewrequestworkspace
-                ? self::get_rejected_requests_page($paging['offset'], $paging['perpage'])
-                : [];
+            $conditions[] = self::get_rejected_requests_where_sql();
+            $params += self::get_rejected_requests_params();
         } else {
             [$defaultstart, $defaultend] = self::get_reporting_default_range(
                 null,
-                $canviewrequestworkspace,
+                true,
                 $workspace === 'history'
             );
             $reportstart ??= $defaultstart;
             $reportend ??= $defaultend;
-            $semesterids = $filters['semesterids'];
+            $semesterids = self::resolve_effective_semester_filter_ids(
+                $filters['semesterids'],
+                !empty($filters['semesterids'])
+            );
             $bookingstatuses = self::resolve_overview_booking_status_filter_ids(
-                $filters['bookingstatuses'] ?? [],
+                $filters['bookingstatuses'],
                 !empty($filters['bookingstatuses']),
                 $workspace === 'history',
-                $canviewrequestworkspace && $workspace === 'history'
-            );
-            if ($showreportfilters) {
-                $semesterids = self::resolve_effective_semester_filter_ids($semesterids, !empty($filters['semesterids']));
-                if ($canmanageopenrequests) {
-                    [$where, $queryparams] = self::build_reporting_overview_sql_filter(
-                        $workspace,
-                        $filters,
-                        $reportstart,
-                        $reportend,
-                        $semesterids,
-                        $bookingstatuses,
-                        $assignmentfilter,
-                        $userid
-                    );
-                    $totalcount = self::count_reporting_overview_events($where, $queryparams);
-                    $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
-                    $events = self::get_reporting_overview_events_page($where, $queryparams, $paging['offset'], $paging['perpage']);
-                } else {
-                    $events = self::get_events_for_reporting($context, $userid, $reportstart, $reportend, $semesterids);
-                }
-            } else {
-                $events = self::get_events_for_examiner($userid);
-            }
-            $filters['semesterids'] = $semesterids;
-            $filters['bookingstatuses'] = $bookingstatuses;
-            $events = self::filter_overview_events(
-                $events,
-                [
-                    'bookingstatuses' => $bookingstatuses,
-                    'facultyids' => $filters['facultyids'],
-                    'semesterids' => $filters['semesterids'],
-                ],
                 $workspace === 'history'
             );
-            if ($workspace === 'allrequests' && $assignmentfilter === 'assigned') {
-                if (!$canmanageopenrequests) {
-                    $events = self::filter_events_by_assignment($events, $userid, $assignmentfilter);
-                }
-            }
-            if (!$canmanageopenrequests) {
-                $events = self::sort_overview_events_by_starttime($events, true);
-            }
-        }
-        $filters['assignmentfilter'] = $assignmentfilter;
-
-        $totalcount ??= count($events);
-        $openrequestcount = $workspace === 'openrequests' ? $totalcount : (
-            $canviewrequestworkspace ? self::count_open_requests() : 0
-        );
-        $rejectedrequestcount = $workspace === 'rejectedcancelled' ? $totalcount : (
-            $canviewrequestworkspace ? self::count_rejected_requests() : 0
-        );
-        $confirmedrequestcount = $workspace === 'confirmedrequests' ? $totalcount : (
-            $canviewrequestworkspace ? self::count_confirmed_requests() : 0
-        );
-        $paging ??= self::build_overview_page_state($requestedpage, $totalcount, $perpage);
-        if (in_array($workspace, tabs::WORKSPACE_TABS, true)) {
-            if (
-                !in_array($workspace, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
-                    && !($canmanageopenrequests && in_array($workspace, ['allrequests', 'history'], true))
-            ) {
-                $events = self::slice_non_manager_overview_events($events, $paging);
-            }
+            [$where, $reportparams] = self::build_reporting_overview_sql_filter(
+                $workspace,
+                $filters,
+                $reportstart,
+                $reportend,
+                $semesterids,
+                $bookingstatuses,
+                $assignmentfilter,
+                $userid
+            );
+            $conditions[] = $where;
+            $params += $reportparams;
         }
 
-        $historyentries = self::get_latest_booking_history_entries(array_map(
-            static fn($event): int => (int)($event->id ?? 0),
-            $events
-        ));
+        $search = trim((string)($filters['search'] ?? ''));
+        if ($search !== '') {
+            $searchfields = [
+                'e.name',
+                "COALESCE(r.name, '')",
+                "COALESCE(pic.firstname, '')",
+                "COALESCE(pic.lastname, '')",
+                "COALESCE(creator.firstname, '')",
+                "COALESCE(creator.lastname, '')",
+            ];
+            $searchconditions = [];
+            foreach ($searchfields as $index => $field) {
+                $paramname = 'workspacesearch' . $index;
+                $searchconditions[] = $DB->sql_like($field, ':' . $paramname, false, false);
+                $params[$paramname] = '%' . $DB->sql_like_escape($search) . '%';
+            }
+            $conditions[] = '(' . implode(' OR ', $searchconditions) . ')';
+        }
+
+        $from = '{bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            LEFT JOIN {user} pic ON pic.id = e.personinchargeid
+            LEFT JOIN {user} creator ON creator.id = e.usermodified';
+        $where = $conditions ? implode(' AND ', $conditions) : '1 = 1';
+        $fields = "e.id,
+            e.name AS title,
+            e.name,
+            e.institutionid,
+            e.semester,
+            e.bookingstatus,
+            e.starttime,
+            e.endtime,
+            e.personinchargeid,
+            e.otherexaminers,
+            e.supportpersons,
+            e.usermodified,
+            creator.firstname AS creatorfirstname,
+            creator.lastname AS creatorlastname,
+            creator.deleted AS creatordeleted,
+            COALESCE(r.name, '') AS room,
+            " . $DB->sql_fullname('pic.firstname', 'pic.lastname') . " AS personincharge,
+            " . $DB->sql_fullname('creator.firstname', 'creator.lastname') . ' AS createdby';
+
         return [
-            'workspace' => $workspace,
-            'filters' => $filters,
-            'events' => array_values($events),
-            'items' => array_map(
-                static fn(stdClass $event): array => overview_queue_read_mapper::map(
-                    $event,
-                    $context,
-                    $userid,
-                    $historyentries[(int)$event->id] ?? null,
-                    $workspace,
-                    (int)$context->instanceid
-                ),
-                array_values($events)
-            ),
-            'summary' => [
-                'count' => $totalcount,
-                'openrequestcount' => $openrequestcount,
-                'confirmedrequestcount' => $confirmedrequestcount,
-                'rejectedrequestcount' => $rejectedrequestcount,
-            ],
-            'paging' => $paging,
+            'fields' => $fields,
+            'from' => $from,
+            'where' => $where,
+            'params' => $params,
+            'countsql' => "SELECT COUNT(1) FROM $from WHERE $where",
+            'countparams' => $params,
         ];
     }
 
@@ -523,40 +423,6 @@ class event_manager {
         ";
 
         return $DB->get_records_sql($sql, $params);
-    }
-
-    /**
-     * Return a bounded page of open booking requests for service-team overview.
-     *
-     * @param int $offset Zero-based SQL offset.
-     * @param int $limit Maximum number of records.
-     * @return array
-     * @throws dml_exception
-     */
-    private static function get_open_requests_page(int $offset, int $limit): array {
-        global $DB;
-
-        [$statussql, $params] = $DB->get_in_or_equal(event_access_manager::get_open_request_statuses(), SQL_PARAMS_NAMED);
-
-        $sql = "
-            SELECT
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.endtime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified,
-                r.name AS room
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE e.bookingstatus $statussql
-            ORDER BY e.starttime DESC, e.id DESC
-        ";
-
-        return $DB->get_records_sql($sql, $params, max(0, $offset), max(1, $limit));
     }
 
     /**
@@ -2563,21 +2429,6 @@ class event_manager {
         return event_access_manager::can_self_cancel_new_request($candidate, $context, $userid);
     }
 
-    /** @var string User preference key for overview table column sort. */
-    public const OVERVIEW_SORT_PREFERENCE = 'mod_bookit_overview_sort';
-
-    /** @var string[] Whitelisted overview sort column keys. */
-    private const OVERVIEW_SORT_COLUMNS = [
-        'id',
-        'starttime',
-        'title',
-        'room',
-        'personincharge',
-        'myrole',
-        'createdby',
-        'bookingstatus',
-    ];
-
     /**
      * Sort overview event rows by start time with id tie-break.
      *
@@ -2600,43 +2451,5 @@ class event_manager {
         });
 
         return array_values($events);
-    }
-
-    /**
-     * Parse persisted overview sort preference JSON into a safe column/direction pair.
-     *
-     * @param string|null $raw Raw JSON from user preference.
-     * @return array{column: string, direction: string}
-     */
-    public static function parse_overview_sort_preference(?string $raw): array {
-        $default = [
-            'column' => 'starttime',
-            'direction' => 'desc',
-        ];
-
-        if ($raw === null || $raw === '') {
-            return $default;
-        }
-
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return $default;
-        }
-
-        $column = isset($decoded['column']) ? (string)$decoded['column'] : '';
-        $direction = isset($decoded['direction']) ? strtolower((string)$decoded['direction']) : '';
-
-        if (!in_array($column, self::OVERVIEW_SORT_COLUMNS, true)) {
-            return $default;
-        }
-
-        if (!in_array($direction, ['asc', 'desc'], true)) {
-            return $default;
-        }
-
-        return [
-            'column' => $column,
-            'direction' => $direction,
-        ];
     }
 }

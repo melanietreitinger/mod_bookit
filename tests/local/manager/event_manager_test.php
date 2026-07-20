@@ -3386,11 +3386,112 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Support-only viewers receive governed queue items for open requests.
+     * Execute the canonical request workspace query with an optional SQL page.
+     *
+     * @param context_module $context
+     * @param int $userid
+     * @param string $workspace
+     * @param array $filters
+     * @param int|null $reportstart
+     * @param int|null $reportend
+     * @param int $offset
+     * @param int $limit
+     * @return array{events:array,count:int}
+     */
+    private function get_workspace_query_result(
+        context_module $context,
+        int $userid,
+        string $workspace,
+        array $filters = [],
+        ?int $reportstart = null,
+        ?int $reportend = null,
+        int $offset = 0,
+        int $limit = 0
+    ): array {
+        global $DB;
+
+        $query = event_manager::get_request_workspace_query(
+            $context,
+            $userid,
+            $workspace,
+            $filters,
+            $reportstart,
+            $reportend
+        );
+        $events = $DB->get_records_sql(
+            "SELECT {$query['fields']} FROM {$query['from']} WHERE {$query['where']} ORDER BY e.starttime DESC, e.id DESC",
+            $query['params'],
+            $offset,
+            $limit
+        );
+
+        return [
+            'events' => array_values($events),
+            'count' => (int)$DB->count_records_sql($query['countsql'], $query['countparams']),
+        ];
+    }
+
+    /**
+     * Active and historical events are separated entirely by the canonical SQL scope.
+     */
+    public function test_request_workspace_query_scopes_thirty_mixed_past_and_future_events(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id]);
+        $context = context_module::instance($bookit->cmid);
+        $now = time();
+
+        for ($i = 1; $i <= 30; $i++) {
+            $ispast = $i <= 15;
+            $starttime = $ispast ? $now - ($i * HOURSECS) : $now + ($i * HOURSECS);
+            $this->create_event_record([
+                'name' => sprintf('Mixed SQL scope %02d', $i),
+                'semester' => event_manager::get_current_semester($starttime),
+                'starttime' => $starttime,
+                'endtime' => $starttime + HOURSECS,
+                'bookingstatus' => $ispast
+                    ? event_access_manager::BOOKINGSTATUS_CANCELED
+                    : event_access_manager::BOOKINGSTATUS_NEW,
+                'usermodified' => (int)get_admin()->id,
+            ]);
+        }
+
+        $active = $this->get_workspace_query_result(
+            $context,
+            (int)get_admin()->id,
+            'allrequests',
+            [],
+            $now - (2 * DAYSECS),
+            $now + (2 * DAYSECS)
+        );
+        $history = $this->get_workspace_query_result(
+            $context,
+            (int)get_admin()->id,
+            'history',
+            [],
+            $now - (2 * DAYSECS),
+            $now + (2 * DAYSECS)
+        );
+
+        $this->assertSame(15, $active['count']);
+        $this->assertCount($active['count'], $active['events']);
+        $this->assertSame(15, $history['count']);
+        $this->assertCount($history['count'], $history['events']);
+        foreach ($active['events'] as $event) {
+            $this->assertGreaterThan($now, (int)$event->endtime);
+        }
+        foreach ($history['events'] as $event) {
+            $this->assertLessThanOrEqual($now, (int)$event->endtime);
+        }
+    }
+
+    /**
+     * Support-only viewers receive institutional open requests from the canonical SQL scope.
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_returns_items_for_support_viewer(): void {
+    public function test_request_workspace_query_returns_items_for_support_viewer(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -3444,15 +3545,15 @@ final class event_manager_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $payload = event_manager::get_governed_overview_queue(
+        $result = $this->get_workspace_query_result(
             $context,
             (int)$supportuser->id,
             'openrequests'
         );
 
-        $this->assertSame(1, (int)$payload['summary']['openrequestcount']);
-        $this->assertCount(1, $payload['items']);
-        $this->assertSame('Support visible open request', $payload['items'][0]['name']);
+        $this->assertSame(1, $result['count']);
+        $this->assertCount(1, $result['events']);
+        $this->assertSame('Support visible open request', $result['events'][0]->name);
     }
 
     /**
@@ -3460,7 +3561,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_support_history_is_scoped_and_read_only(): void {
+    public function test_request_workspace_query_support_history_is_institution_wide(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -3509,33 +3610,36 @@ final class event_manager_test extends advanced_testcase {
         }
 
         $filters = ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED]];
-        $pagezero = event_manager::get_governed_overview_queue(
+        $pagezero = $this->get_workspace_query_result(
             $context,
             (int)$supportuser->id,
             'history',
             $filters,
             $start,
             strtotime('+1 day 23:59:59'),
-            0
+            0,
+            25
         );
-        $pageone = event_manager::get_governed_overview_queue(
+        $pageone = $this->get_workspace_query_result(
             $context,
             (int)$supportuser->id,
             'history',
             $filters,
             $start,
             strtotime('+1 day 23:59:59'),
-            1
+            25,
+            25
         );
 
-        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
-        $this->assertCount(25, $pagezero['items']);
-        $this->assertCount(1, $pageone['items']);
-        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
-        foreach (array_merge($pagezero['items'], $pageone['items']) as $item) {
-            $this->assertStringContainsString('Support assigned history', $item['name']);
-            $this->assertStringNotContainsString('mod-bookit-status-select', $item['statuscellhtml']);
-        }
+        $this->assertSame(29, $pagezero['count']);
+        $this->assertCount(25, $pagezero['events']);
+        $this->assertCount(4, $pageone['events']);
+        $names = array_map(static fn($event): string => $event->name, array_merge(
+            $pagezero['events'],
+            $pageone['events']
+        ));
+        $this->assertContains('Support assigned history 01', $names);
+        $this->assertContains('Support hidden history 01', $names);
     }
 
     /**
@@ -3543,7 +3647,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_service_team_filters_and_queue_statuses(): void {
+    public function test_request_workspace_query_applies_assignment_and_status_scopes(): void {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
@@ -3594,28 +3698,29 @@ final class event_manager_test extends advanced_testcase {
             ]);
         }
 
-        $assigned = event_manager::get_governed_overview_queue(
+        $assigned = $this->get_workspace_query_result(
             $context,
             $adminid,
             'allrequests',
             ['assignmentfilter' => 'assigned'],
             $start,
             $start + (60 * HOURSECS),
-            1
+            25,
+            25
         );
-        $open = event_manager::get_governed_overview_queue($context, $adminid, 'openrequests');
-        $confirmed = event_manager::get_governed_overview_queue($context, $adminid, 'confirmedrequests');
-        $rejected = event_manager::get_governed_overview_queue($context, $adminid, 'rejectedcancelled');
+        $open = $this->get_workspace_query_result($context, $adminid, 'openrequests');
+        $confirmed = $this->get_workspace_query_result($context, $adminid, 'confirmedrequests');
+        $rejected = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled');
 
-        $this->assertSame(26, (int)$assigned['paging']['totalcount']);
-        $this->assertCount(1, $assigned['items']);
-        $this->assertStringContainsString('Service assigned request', $assigned['items'][0]['name']);
-        $this->assertSame(28, (int)$open['paging']['totalcount']);
-        foreach ($open['items'] as $item) {
-            $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$item['bookingstatus']);
+        $this->assertSame(26, $assigned['count']);
+        $this->assertCount(1, $assigned['events']);
+        $this->assertStringContainsString('Service assigned request', $assigned['events'][0]->name);
+        $this->assertSame(28, $open['count']);
+        foreach ($open['events'] as $event) {
+            $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$event->bookingstatus);
         }
-        $this->assertSame(2, (int)$confirmed['paging']['totalcount']);
-        $this->assertSame(2, (int)$rejected['paging']['totalcount']);
+        $this->assertSame(2, $confirmed['count']);
+        $this->assertSame(2, $rejected['count']);
     }
 
     /**
@@ -3623,7 +3728,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_pagination_slices_twenty_six_open_requests(): void {
+    public function test_request_workspace_query_pages_twenty_six_open_requests(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -3664,56 +3769,31 @@ final class event_manager_test extends advanced_testcase {
             ]);
         }
 
-        $pagezero = event_manager::get_governed_overview_queue(
+        $pagezero = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'openrequests',
             [],
             null,
             null,
-            0
+            0,
+            25
         );
-        $pageone = event_manager::get_governed_overview_queue(
+        $pageone = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'openrequests',
             [],
             null,
             null,
-            1
-        );
-        $clamped = event_manager::get_governed_overview_queue(
-            $context,
-            (int)get_admin()->id,
-            'openrequests',
-            [],
-            null,
-            null,
-            99
-        );
-        $negative = event_manager::get_governed_overview_queue(
-            $context,
-            (int)get_admin()->id,
-            'openrequests',
-            [],
-            null,
-            null,
-            -1
+            25,
+            25
         );
 
-        $this->assertCount(25, $pagezero['items']);
-        $this->assertSame(0, (int)$pagezero['paging']['currentpage']);
-        $this->assertTrue($pagezero['paging']['haspaging']);
-
-        $this->assertCount(1, $pageone['items']);
-        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
-        $this->assertNotSame($pagezero['items'][0]['name'], $pageone['items'][0]['name']);
-
-        $this->assertSame(1, (int)$clamped['paging']['currentpage']);
-        $this->assertTrue($clamped['paging']['adjusted']);
-
-        $this->assertSame(0, (int)$negative['paging']['currentpage']);
-        $this->assertSame(0, (int)$negative['paging']['requestedpage']);
+        $this->assertSame(26, $pagezero['count']);
+        $this->assertCount(25, $pagezero['events']);
+        $this->assertCount(1, $pageone['events']);
+        $this->assertNotSame($pagezero['events'][0]->name, $pageone['events'][0]->name);
     }
 
     /**
@@ -3721,7 +3801,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_pagination_allrequests_twenty_six_items(): void {
+    public function test_request_workspace_query_pages_twenty_six_all_requests(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -3763,53 +3843,31 @@ final class event_manager_test extends advanced_testcase {
             ]);
         }
 
-        $pagezero = event_manager::get_governed_overview_queue(
+        $pagezero = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'allrequests',
             [],
             $start,
             $start + (30 * DAYSECS),
-            0
+            0,
+            25
         );
-        $pageone = event_manager::get_governed_overview_queue(
+        $pageone = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'allrequests',
             [],
             $start,
             $start + (30 * DAYSECS),
-            1
-        );
-        $clamped = event_manager::get_governed_overview_queue(
-            $context,
-            (int)get_admin()->id,
-            'allrequests',
-            [],
-            $start,
-            $start + (30 * DAYSECS),
-            99
-        );
-        $negative = event_manager::get_governed_overview_queue(
-            $context,
-            (int)get_admin()->id,
-            'allrequests',
-            [],
-            $start,
-            $start + (30 * DAYSECS),
-            -1
+            25,
+            25
         );
 
-        $this->assertCount(25, $pagezero['items']);
-        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
-        $this->assertSame(0, (int)$pagezero['paging']['currentpage']);
-        $this->assertCount(1, $pageone['items']);
-        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
-        $this->assertNotSame($pagezero['items'][0]['name'], $pageone['items'][0]['name']);
-        $this->assertSame(1, (int)$clamped['paging']['currentpage']);
-        $this->assertTrue($clamped['paging']['adjusted']);
-        $this->assertSame(0, (int)$negative['paging']['currentpage']);
-        $this->assertSame(0, (int)$negative['paging']['requestedpage']);
+        $this->assertCount(25, $pagezero['events']);
+        $this->assertSame(26, $pagezero['count']);
+        $this->assertCount(1, $pageone['events']);
+        $this->assertNotSame($pagezero['events'][0]->name, $pageone['events'][0]->name);
     }
 
     /**
@@ -3817,7 +3875,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_pagination_history_twenty_six_items(): void {
+    public function test_request_workspace_query_pages_twenty_six_history_items(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -3859,39 +3917,39 @@ final class event_manager_test extends advanced_testcase {
             ]);
         }
 
-        $pagezero = event_manager::get_governed_overview_queue(
+        $pagezero = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'history',
             [],
             $end - (30 * DAYSECS),
             $end,
-            0
+            0,
+            25
         );
-        $pageone = event_manager::get_governed_overview_queue(
+        $pageone = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'history',
             [],
             $end - (30 * DAYSECS),
             $end,
-            1
+            25,
+            25
         );
 
-        $this->assertCount(25, $pagezero['items']);
-        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
-        $this->assertSame(0, (int)$pagezero['paging']['currentpage']);
-        $this->assertCount(1, $pageone['items']);
-        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
-        $this->assertNotSame($pagezero['items'][0]['name'], $pageone['items'][0]['name']);
+        $this->assertCount(25, $pagezero['events']);
+        $this->assertSame(26, $pagezero['count']);
+        $this->assertCount(1, $pageone['events']);
+        $this->assertNotSame($pagezero['events'][0]->name, $pageone['events'][0]->name);
     }
 
     /**
-     * Governed queue paging metadata must expose bounded-read page state for edge counts.
+     * Canonical count and data scopes stay identical at empty and multi-page boundaries.
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_paging_boundaries_expose_bounded_metadata(): void {
+    public function test_request_workspace_query_count_and_data_scope_match_at_boundaries(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -3904,21 +3962,14 @@ final class event_manager_test extends advanced_testcase {
         ]);
         $emptycontext = context_module::instance($emptybookit->cmid);
 
-        $empty = event_manager::get_governed_overview_queue(
+        $empty = $this->get_workspace_query_result(
             $emptycontext,
             (int)get_admin()->id,
-            'openrequests',
-            [],
-            null,
-            null,
-            5
+            'openrequests'
         );
 
-        $this->assertSame(0, (int)$empty['paging']['totalcount']);
-        $this->assertSame(0, (int)$empty['paging']['currentpage']);
-        $this->assertSame(0, (int)$empty['paging']['offset']);
-        $this->assertFalse($empty['paging']['haspaging']);
-        $this->assertTrue($empty['paging']['adjusted']);
+        $this->assertSame(0, $empty['count']);
+        $this->assertSame([], $empty['events']);
 
         $fullbookit = $this->getDataGenerator()->create_module('bookit', [
             'course' => $course->id,
@@ -3954,7 +4005,7 @@ final class event_manager_test extends advanced_testcase {
             ]);
         }
 
-        $firstpage = event_manager::get_governed_overview_queue(
+        $firstpage = $this->get_workspace_query_result(
             $fullcontext,
             (int)get_admin()->id,
             'openrequests',
@@ -3964,24 +4015,20 @@ final class event_manager_test extends advanced_testcase {
             0,
             25
         );
-        $secondpage = event_manager::get_governed_overview_queue(
+        $secondpage = $this->get_workspace_query_result(
             $fullcontext,
             (int)get_admin()->id,
             'openrequests',
             [],
             null,
             null,
-            1,
+            25,
             25
         );
 
-        $this->assertSame(26, (int)$firstpage['paging']['totalcount']);
-        $this->assertSame(0, (int)$firstpage['paging']['offset']);
-        $this->assertTrue($firstpage['paging']['haspaging']);
+        $this->assertSame(26, $firstpage['count']);
         $this->assertCount(25, $firstpage['events']);
-
-        $this->assertSame(1, (int)$secondpage['paging']['currentpage']);
-        $this->assertSame(25, (int)$secondpage['paging']['offset']);
+        $this->assertSame(26, $secondpage['count']);
         $this->assertCount(1, $secondpage['events']);
     }
 
@@ -3990,7 +4037,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_pagination_confirmedrequests_twenty_six_items(): void {
+    public function test_request_workspace_query_pages_twenty_six_confirmed_requests(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -4031,22 +4078,30 @@ final class event_manager_test extends advanced_testcase {
             ]);
         }
 
-        $pagezero = event_manager::get_governed_overview_queue($context, (int)get_admin()->id, 'confirmedrequests');
-        $pageone = event_manager::get_governed_overview_queue(
+        $pagezero = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'confirmedrequests',
             [],
             null,
             null,
-            1
+            0,
+            25
+        );
+        $pageone = $this->get_workspace_query_result(
+            $context,
+            (int)get_admin()->id,
+            'confirmedrequests',
+            [],
+            null,
+            null,
+            25,
+            25
         );
 
-        $this->assertCount(25, $pagezero['items']);
-        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
-        $this->assertCount(1, $pageone['items']);
-        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
-        $this->assertSame(25, (int)$pageone['paging']['offset']);
+        $this->assertCount(25, $pagezero['events']);
+        $this->assertSame(26, $pagezero['count']);
+        $this->assertCount(1, $pageone['events']);
     }
 
     /**
@@ -4054,7 +4109,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_governed_overview_queue_pagination_rejectedcancelled_twenty_six_items(): void {
+    public function test_request_workspace_query_pages_twenty_six_rejected_requests(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -4095,21 +4150,29 @@ final class event_manager_test extends advanced_testcase {
             ]);
         }
 
-        $pagezero = event_manager::get_governed_overview_queue($context, (int)get_admin()->id, 'rejectedcancelled');
-        $pageone = event_manager::get_governed_overview_queue(
+        $pagezero = $this->get_workspace_query_result(
             $context,
             (int)get_admin()->id,
             'rejectedcancelled',
             [],
             null,
             null,
-            1
+            0,
+            25
+        );
+        $pageone = $this->get_workspace_query_result(
+            $context,
+            (int)get_admin()->id,
+            'rejectedcancelled',
+            [],
+            null,
+            null,
+            25,
+            25
         );
 
-        $this->assertCount(25, $pagezero['items']);
-        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
-        $this->assertCount(1, $pageone['items']);
-        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
-        $this->assertSame(25, (int)$pageone['paging']['offset']);
+        $this->assertCount(25, $pagezero['events']);
+        $this->assertSame(26, $pagezero['count']);
+        $this->assertCount(1, $pageone['events']);
     }
 }

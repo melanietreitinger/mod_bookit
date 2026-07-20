@@ -22,7 +22,7 @@ use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 
 /**
- * Regression tests for booking-status updates during governed-read rollout.
+ * Regression tests for booking-status updates returning to the canonical workspace.
  *
  * @covers \mod_bookit\external\update_event_booking_status
  * @package mod_bookit
@@ -31,12 +31,12 @@ use mod_bookit\local\manager\event_manager;
  */
 final class update_event_booking_status_test extends advanced_testcase {
     /**
-     * Booking-status updates must coexist with governed queue refreshes.
+     * Booking-status updates return only the canonical redirect contract.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_execute_updates_status_and_refreshes_governed_queues(): void {
+    public function test_execute_updates_status_and_returns_canonical_redirect(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -71,39 +71,30 @@ final class update_event_booking_status_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $before = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
-        $this->assertSame(1, (int)$before['summary']['openrequestcount']);
-        $this->assertSame($eventid, (int)$before['items'][0]['eventid']);
-
         $response = update_event_booking_status::execute(
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'openrequests',
-            0
+            'openrequests'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$response['status']);
         $this->assertSame('openrequests', $response['tab']);
-        $this->assertNotEmpty($response['queue']);
-        $this->assertSame(0, (int)$response['queue']['summary']['openrequestcount']);
-        $this->assertSame([], $response['queue']['items']);
-
-        $after = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
-        $this->assertSame(0, (int)$after['summary']['openrequestcount']);
-        $this->assertSame([], $after['items']);
+        $this->assertStringContainsString('tab=openrequests', $response['redirecturl']);
+        $this->assertStringNotContainsString('&amp;', $response['redirecturl']);
+        $this->assertSame(['status', 'tab', 'redirecturl'], array_keys($response));
 
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$record->bookingstatus);
     }
 
     /**
-     * Status updates on page two must preserve page in redirect and queue payload.
+     * Status updates do not carry obsolete page state into the canonical redirect.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_execute_preserves_page_on_status_update(): void {
+    public function test_execute_redirect_does_not_include_page_state(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -148,23 +139,20 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $targeteventid,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            'openrequests',
-            1
+            'openrequests'
         );
 
-        $this->assertStringContainsString('page=1', $response['redirecturl']);
-        $this->assertStringNotContainsString('queuepage=', $response['redirecturl']);
-        $this->assertSame(1, (int)$response['queue']['paging']['currentpage']);
-        $this->assertCount(1, $response['queue']['items']);
+        $this->assertStringNotContainsString('page=', $response['redirecturl']);
+        $this->assertSame(['status', 'tab', 'redirecturl'], array_keys($response));
     }
 
     /**
-     * Status updates must correct the page when the active queue page becomes empty.
+     * Status updates use the same canonical redirect regardless of result count.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_execute_corrects_page_when_status_update_empties_current_page(): void {
+    public function test_execute_redirect_is_independent_of_result_count(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -212,14 +200,12 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $targeteventid,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'openrequests',
-            1
+            'openrequests'
         );
 
         $this->assertStringNotContainsString('page=1', $response['redirecturl']);
-        $this->assertSame(0, (int)$response['queue']['paging']['currentpage']);
-        $this->assertTrue($response['queue']['paging']['adjusted']);
-        $this->assertCount(25, $response['queue']['items']);
+        $this->assertSame('openrequests', $response['tab']);
+        $this->assertSame(['status', 'tab', 'redirecturl'], array_keys($response));
     }
 
     /**
@@ -280,8 +266,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_CANCELED,
-            'myevents',
-            1
+            'myevents'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, (int)$response['status']);
@@ -349,8 +334,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_CANCELED,
-            'myevents',
-            1
+            'myevents'
         );
     }
 
@@ -410,8 +394,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'history',
-            1
+            'history'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
@@ -488,8 +471,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'history',
-            1
+            'history'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
@@ -557,8 +539,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'history',
-            1
+            'history'
         );
     }
 
@@ -615,8 +596,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedcancelled',
-            1
+            'rejectedcancelled'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
@@ -675,8 +655,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'history',
-            1
+            'history'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
@@ -735,8 +714,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'history',
-            1
+            'history'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
@@ -792,8 +770,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedcancelled',
-            1
+            'rejectedcancelled'
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
@@ -862,8 +839,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedcancelled',
-            1
+            'rejectedcancelled'
         );
     }
 
@@ -931,8 +907,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'openrequests',
-            1
+            'openrequests'
         );
     }
 
@@ -1004,8 +979,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_NEW,
-            'rejectedcancelled',
-            1
+            'rejectedcancelled'
         );
     }
 
@@ -1178,12 +1152,12 @@ final class update_event_booking_status_test extends advanced_testcase {
     }
 
     /**
-     * Queue refresh payload retains reactivation fields after return cleaning.
+     * Return cleaning retains only status, tab and redirect URL.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_queue_payload_return_clean_retains_reactivate_fields(): void {
+    public function test_return_clean_keeps_canonical_redirect_contract(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1222,8 +1196,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $bookit->cmid,
             $eventid,
             event_access_manager::BOOKINGSTATUS_REJECTED,
-            'rejectedcancelled',
-            0
+            'rejectedcancelled'
         );
 
         $cleaned = external_api::clean_returnvalue(
@@ -1231,12 +1204,8 @@ final class update_event_booking_status_test extends advanced_testcase {
             $response
         );
 
-        $this->assertNotEmpty($cleaned['queue']['items']);
-        $item = $cleaned['queue']['items'][0];
-        $this->assertArrayHasKey('hasreactivateaction', $item);
-        $this->assertArrayHasKey('reactivateactionlabel', $item);
-        $this->assertArrayHasKey('reactivatetargetstatus', $item);
-        $this->assertArrayHasKey('overviewtab', $item);
-        $this->assertSame('rejectedcancelled', $item['overviewtab']);
+        $this->assertSame(['status', 'tab', 'redirecturl'], array_keys($cleaned));
+        $this->assertSame('rejectedcancelled', $cleaned['tab']);
+        $this->assertStringContainsString('tab=rejectedcancelled', $cleaned['redirecturl']);
     }
 }

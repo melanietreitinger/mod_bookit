@@ -117,3 +117,25 @@ Feature: Process open booking requests
     When I open the Bookit overview "history" for "My BookIt Activity"
     Then the Bookit main tabs should not contain "Request workspace"
     And the Bookit request workspace switch should not contain "Rejected and cancelled"
+
+  Scenario Outline: Queue workspaces sort complete title result before paging
+    Given 30 sortable Bookit request events exist for "<workspace>"
+    When I log in as "susiservice"
+    And I open the Bookit overview "<workspace>" for "My BookIt Activity"
+    And I sort the Bookit request workspace by "Title" ascending
+    And I capture the Bookit request workspace column "Title" across all pages
+    Then the captured Bookit request workspace column "Title" should be globally ascending
+
+    Examples:
+      | workspace          |
+      | openrequests       |
+      | confirmedrequests  |
+      | rejectedcancelled  |
+
+  Scenario: Open requests sort booking status globally before paging
+    Given 30 sortable Bookit request events exist for "openrequests"
+    When I log in as "susiservice"
+    And I open the Bookit overview "openrequests" for "My BookIt Activity"
+    And I sort the Bookit request workspace by "Booking status" ascending
+    And I capture the Bookit request workspace column "Booking status" across all pages
+    Then the captured Bookit request workspace column "Booking status" should be globally ascending

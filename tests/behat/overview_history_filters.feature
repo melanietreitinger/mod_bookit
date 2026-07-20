@@ -122,3 +122,41 @@ Feature: Complete overview defaults, history and role-specific columns
     And I open the Bookit overview "rejectedcancelled" for "My BookIt Activity"
     Then I should see "Self-cancel history"
     And I should see "Cancelled by requester"
+
+  Scenario Outline: Reporting workspaces sort the complete result before paging
+    Given 30 sortable Bookit request events exist for "<workspace>"
+    When I log in as "serviceteam"
+    And I open the Bookit overview "<workspace>" for "My BookIt Activity"
+    And I sort the Bookit request workspace by "Title" ascending
+    And I capture the Bookit request workspace column "Title" across all pages
+    Then the captured Bookit request workspace column "Title" should be globally ascending
+
+    Examples:
+      | workspace   |
+      | allrequests |
+      | history     |
+
+  Scenario: Core sort preference persists and unavailable columns fall back to the tab default
+    Given 30 sortable Bookit request events exist for "allrequests"
+    When I log in as "serviceteam"
+    And I open the Bookit overview "allrequests" for "My BookIt Activity"
+    And I sort the Bookit request workspace by "Title" descending
+    And I reload the page
+    Then the Bookit request workspace column "Title" should show Core direction "Descending"
+    When I sort the Bookit request workspace by "Created by user" ascending
+    Then the Bookit request workspace column "Created by user" should show Core direction "Ascending"
+    And I open the Bookit overview "openrequests" for "My BookIt Activity"
+    Then the Bookit request workspace column "Date" should show Core direction "Descending"
+
+  Scenario: History exposes keyboard-accessible Core controls only for SQL columns
+    Given 30 sortable Bookit request events exist for "history"
+    When I log in as "serviceteam"
+    And I open the Bookit overview "history" for "My BookIt Activity"
+    Then the Bookit request workspace column "Title" should have a Core sort control
+    And the Bookit request workspace column "My role" should not have a Core sort control
+    And the Bookit request workspace column "Progress" should not have a Core sort control
+    And the Bookit request workspace column "Checklist" should not have a Core sort control
+    And the Bookit request workspace column "Resources" should not have a Core sort control
+    And the Bookit request workspace column "Reactivate" should not have a Core sort control
+    When I activate the Bookit request workspace sort control "Title" with the keyboard
+    Then the Bookit request workspace column "Title" should show a Core direction indicator

@@ -1,8 +1,8 @@
 @mod @mod_bookit @javascript
-Feature: Governed overview queue reads keep request workspaces consistent
-  In order to trust operational request queues during the rollout
+Feature: Core request workspace navigation stays governed
+  In order to trust operational request workspaces
   As a service-team user
-  I need open and rejected request workspaces to remain permission-aware and internally consistent.
+  I need canonical Core-table pages to remain permission-aware and internally consistent.
 
   Background:
     Given the following "users" exist:
@@ -38,8 +38,8 @@ Feature: Governed overview queue reads keep request workspaces consistent
   Scenario: Service team can switch between governed request workspaces
     Given the following "mod_bookit > events" exist:
       | name                 | startdate                               | enddate                                 | bookingstatus | institution |
-      | Open queue exam      | ##today noon##%Y-%m-%dT%H:%M:%S##       | ##tomorrow noon##%Y-%m-%dT%H:%M:%S##    | 0             | 1           |
-      | Rejected queue exam  | ##+2 days noon##%Y-%m-%dT%H:%M:%S##     | ##+3 days noon##%Y-%m-%dT%H:%M:%S##     | 4             | 1           |
+      | Open workspace exam      | ##today noon##%Y-%m-%dT%H:%M:%S##       | ##tomorrow noon##%Y-%m-%dT%H:%M:%S##    | 0             | 1           |
+      | Rejected workspace exam  | ##+2 days noon##%Y-%m-%dT%H:%M:%S##     | ##+3 days noon##%Y-%m-%dT%H:%M:%S##     | 4             | 1           |
     When I log in as "susiservice"
     And I open the Bookit overview "openrequests" for "My BookIt Activity"
     Then the Bookit main tabs should contain "Request workspace"
@@ -47,11 +47,11 @@ Feature: Governed overview queue reads keep request workspaces consistent
     And the Bookit request workspace switch should contain "Rejected and cancelled"
     And the Bookit request workspace tab "Open requests" should be active
     And the Bookit overview should not show legacy inner navigation
-    And I should see "Open queue exam"
+    And I should see "Open workspace exam"
     When I open the Bookit overview "rejectedcancelled" for "My BookIt Activity"
-    Then I should see "Rejected queue exam"
+    Then I should see "Rejected workspace exam"
     And the Bookit request workspace tab "Rejected and cancelled" should be active
-    And I should not see "Open queue exam"
+    And I should not see "Open workspace exam"
 
   Scenario: Non-service users still do not gain request-workspace visibility
     Given the following "mod_bookit > events" exist:

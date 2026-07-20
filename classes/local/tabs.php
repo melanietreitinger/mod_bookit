@@ -293,6 +293,8 @@ class tabs {
             $params[$key] = $value;
         }
 
-        return (new moodle_url('/mod/bookit/overview.php'))->out(false) . '?' . http_build_query($params);
+        return (new moodle_url('/mod/bookit/overview.php'))->out(false)
+            . '?'
+            . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 }

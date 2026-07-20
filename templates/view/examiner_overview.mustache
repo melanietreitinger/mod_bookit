@@ -17,7 +17,7 @@
 {{!
     @template mod_bookit/overview/examiner_overview
 
-    Examiner overview table with live search and sortable columns.
+    Examiner overview with a Moodle Core SQL table for the Request Workspace.
     The title link opens the event details ModalForm (handled by existing AMD JS).
 
     Classes required for JS:
@@ -100,17 +100,17 @@
         <thead class="text-center">
             <tr style="background-color:#cfe2ff;">
                 {{#showidcolumn}}
-                <th class="align-middle" data-sort-key="id">ID</th>
+                <th class="align-middle">ID</th>
                 {{/showidcolumn}}
-                <th class="align-middle" data-sort-key="starttime">{{overviewcolumndatetime}}</th>
-                <th class="align-middle" data-sort-key="title">{{overviewcolumntitle}}</th>
-                <th class="align-middle" data-sort-key="room">{{overviewcolumnroom}}</th>
-                <th class="align-middle" data-sort-key="personincharge">{{overviewcolumnpersonincharge}}</th>
-                <th class="align-middle" data-sort-key="myrole">{{overviewcolumnmyrole}}</th>
+                <th class="align-middle">{{overviewcolumndatetime}}</th>
+                <th class="align-middle">{{overviewcolumntitle}}</th>
+                <th class="align-middle">{{overviewcolumnroom}}</th>
+                <th class="align-middle">{{overviewcolumnpersonincharge}}</th>
+                <th class="align-middle">{{overviewcolumnmyrole}}</th>
                 {{#showcreatedbycolumn}}
-                <th class="align-middle" data-sort-key="createdby">{{createdbycolumnlabel}}</th>
+                <th class="align-middle">{{createdbycolumnlabel}}</th>
                 {{/showcreatedbycolumn}}
-                <th class="align-middle" data-sort-key="bookingstatus">{{overviewcolumnbookingstatus}}</th>
+                <th class="align-middle">{{overviewcolumnbookingstatus}}</th>
                 {{#showprogresscolumn}}
                 <th class="align-middle">{{overviewcolumnprogress}}</th>
                 {{/showprogresscolumn}}
@@ -267,16 +267,6 @@
     {{#workspacetableprofile.showtablesearch}}
     {{> mod_bookit/view/partials/overview_search_field }}
     {{/workspacetableprofile.showtablesearch}}
-    {{#hasworkspacerows}}
-    {{> mod_bookit/view/partials/workspace_event_table }}
-    {{/hasworkspacerows}}
-    {{^hasworkspacerows}}
-    <div class="alert alert-info mb-0">{{workspacetableemptymessage}}</div>
-    {{/hasworkspacerows}}
-    {{#requestpaginghtml}}
-    <div class="mod-bookit-request-pagination mt-3" data-region="request-paging">
-        {{{requestpaginghtml}}}
-    </div>
-    {{/requestpaginghtml}}
+    {{{coretablehtml}}}
     {{/showworkspacetable}}
 </div>

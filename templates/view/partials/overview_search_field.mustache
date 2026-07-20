@@ -1,15 +1,35 @@
 {{!
     @template mod_bookit/view/partials/overview_search_field
 
-    Live-search control for overview tables. Requires #bookit-filter for overview.php jQuery init.
+    Search control for overview tables. Request Workspace searches submit to the governed SQL query;
+    participant overviews retain their existing page-local search.
 
     Context variables required for this template:
-    * none (uses core search string only)
+    * serversearch (bool) - when true, render a GET form for governed SQL search
+    * searchaction, cmid, activetabparam, searchvalue - used only when serversearch is true
 
     Example context (json):
-    {}
+    {
+        "serversearch": true,
+        "searchaction": "/mod/bookit/overview.php",
+        "cmid": 12,
+        "activetabparam": "allrequests",
+        "searchvalue": ""
+    }
 }}
 <div class="mb-3 mod-bookit-overview-search">
+    {{#serversearch}}
+    <form action="{{searchaction}}" method="get" class="form-inline">
+        <input type="hidden" name="id" value="{{cmid}}">
+        <input type="hidden" name="tab" value="{{activetabparam}}">
+        <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
+        <input type="search" id="bookit-filter" name="search" value="{{searchvalue}}"
+               class="form-control w-auto d-inline">
+        <button type="submit" class="btn btn-secondary ml-2">{{#str}}search, core{{/str}}</button>
+    </form>
+    {{/serversearch}}
+    {{^serversearch}}
     <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
-    <input type="text" id="bookit-filter" class="form-control w-auto d-inline">
+    <input type="search" id="bookit-filter" class="form-control w-auto d-inline">
+    {{/serversearch}}
 </div>

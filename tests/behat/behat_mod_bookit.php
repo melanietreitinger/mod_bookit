@@ -53,6 +53,9 @@ class behat_mod_bookit extends behat_base {
     /** @var string CSS selector matching removed legacy inner-navigation markup. */
     private const LEGACY_INNER_NAV_SELECTOR = '.mod-bookit-overview-nav, .mod-bookit-request-workspace-switch';
 
+    /** @var array Captured Core-table values and IDs for cross-page assertions. */
+    private array $capturedworkspacecolumns = [];
+
     /**
      * Opens the Bookit overview for the named activity and tab.
      *
@@ -1461,7 +1464,21 @@ class behat_mod_bookit extends behat_base {
                 $this->getSession()
             );
         }
-        $this->getSession()->wait(3000);
+        if (in_array($action, ['Accept', 'Reject'], true)) {
+            $eventjson = json_encode($eventname);
+            $this->getSession()->wait(10000, <<<JS
+                (function(eventLabel) {
+                    return !Array.from(document.querySelectorAll(
+                        'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row'
+                    )).some(function(row) {
+                        var title = row.querySelector('a.bookit-event-link');
+                        return title && title.textContent.trim() === eventLabel;
+                    });
+                })($eventjson)
+            JS);
+        } else {
+            $this->getSession()->wait(3000);
+        }
     }
 
     /**
@@ -2206,7 +2223,11 @@ class behat_mod_bookit extends behat_base {
                     return JSON.stringify({status: 'table-not-found'});
                 }
                 var headers = Array.from(table.querySelectorAll('thead th')).map(function(th) {
-                    return th.textContent.replace(/[▲▼]/g, '').trim();
+                    var clone = th.cloneNode(true);
+                    clone.querySelectorAll('.accesshide').forEach(function(node) {
+                        node.remove();
+                    });
+                    return clone.textContent.replace(/[▲▼]/g, '').trim();
                 });
                 return JSON.stringify({status: 'ok', headers: headers});
             })();
@@ -2906,5 +2927,336 @@ class behat_mod_bookit extends behat_base {
             );
         }
         $this->getSession()->wait(3000);
+    }
+
+    /**
+     * Create deterministic multi-page fixtures for a request workspace.
+     *
+     * @Given :count sortable Bookit request events exist for :workspace
+     * @param int $count
+     * @param string $workspace
+     */
+    public function sortable_bookit_request_events_exist_for(int $count, string $workspace): void {
+        global $DB;
+
+        $userid = (int)$DB->get_field('user', 'id', ['username' => 'susiservice']);
+        if ($userid === 0) {
+            $userid = (int)$DB->get_field('user', 'id', ['username' => 'serviceteam'], MUST_EXIST);
+        }
+        $now = time();
+        for ($i = $count; $i >= 1; $i--) {
+            $ispast = $workspace === 'history';
+            $starttime = $ispast ? $now - (($i + 1) * DAYSECS) : $now + (($i + 1) * HOURSECS);
+            $status = match ($workspace) {
+                'openrequests' => $i % 2 === 0
+                    ? \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_NEW
+                    : \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                'confirmedrequests' => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'rejectedcancelled' => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_REJECTED,
+                'history' => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_CANCELED,
+                default => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_NEW,
+            };
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Global sort %02d', $i),
+                'semester' => \mod_bookit\local\manager\event_manager::get_current_semester($starttime),
+                'institutionid' => 1,
+                'starttime' => $starttime,
+                'endtime' => $starttime + HOURSECS,
+                'duration' => 60,
+                'roomid' => null,
+                'participantsamount' => 1,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => $status,
+                'personinchargeid' => $userid,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => $userid,
+                'timecreated' => $now,
+                'timemodified' => $now,
+            ]);
+        }
+    }
+
+    /**
+     * Activate a Moodle Core table sort link by its visible column label.
+     *
+     * @When I sort the Bookit request workspace by :column :direction
+     * @param string $column
+     * @param string $direction
+     * @throws ExpectationException
+     */
+    public function i_sort_the_bookit_request_workspace_by(string $column, string $direction): void {
+        $expectedtitle = ucfirst(strtolower($direction));
+        $headerxpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]';
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $header = $this->getSession()->getPage()->find('xpath', $headerxpath);
+            if (
+                $header !== null && $header->find('xpath', './/i[@title='
+                    . behat_context_helper::escape($expectedtitle) . ']') !== null
+            ) {
+                return;
+            }
+            $link = $header?->find('xpath', './/a[@role="button"]');
+            if ($link === null) {
+                throw new ExpectationException(
+                    "Could not find the Core sort link for \"$column\".",
+                    $this->getSession()
+                );
+            }
+            $link->click();
+        }
+        throw new ExpectationException(
+            "Core did not activate $direction sorting for \"$column\".",
+            $this->getSession()
+        );
+    }
+
+    /**
+     * Focus a Moodle Core sort control for keyboard activation.
+     *
+     * @When I focus the Bookit request workspace sort control :column
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function i_focus_the_bookit_request_workspace_sort_control(string $column): void {
+        $columnjson = json_encode($column);
+        $focused = $this->getSession()->evaluateScript(<<<JS
+            (function(label) {
+                var headers = Array.from(document.querySelectorAll('table.generaltable thead th'));
+                var header = headers.find(function(node) {
+                    return node.textContent.trim().startsWith(label);
+                });
+                var link = header ? header.querySelector('a[role="button"]') : null;
+                if (!link) {
+                    return false;
+                }
+                link.focus({preventScroll: true});
+                return document.activeElement === link;
+            })($columnjson)
+        JS);
+        if (!$focused) {
+            throw new ExpectationException("Could not focus sort control \"$column\".", $this->getSession());
+        }
+    }
+
+    /**
+     * Activate a Core sort link with a keyboard Enter event.
+     *
+     * @When I activate the Bookit request workspace sort control :column with the keyboard
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function i_activate_the_bookit_request_workspace_sort_control_with_the_keyboard(string $column): void {
+        $columnjson = json_encode($column);
+        $this->getSession()->evaluateScript(<<<JS
+            (function(label) {
+                var header = Array.from(document.querySelectorAll('table.generaltable thead th')).find(function(node) {
+                    return node.textContent.trim().startsWith(label);
+                });
+                var link = header ? header.querySelector('a[role="button"]') : null;
+                if (link) {
+                    link.scrollIntoView({block: 'center'});
+                }
+            })($columnjson)
+        JS);
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]//a[@role="button"]';
+        $link = $this->getSession()->getPage()->find('xpath', $xpath);
+        if ($link === null) {
+            throw new ExpectationException("Could not activate sort control \"$column\".", $this->getSession());
+        }
+        $urlbefore = json_encode($this->getSession()->getCurrentUrl());
+        $link->focus();
+        behat_base::type_keys($this->getSession(), [behat_keys::ENTER]);
+        $this->getSession()->wait(10000, "document.location.href !== $urlbefore");
+    }
+
+    /**
+     * Assert whether a Core sort control is exposed for a column.
+     *
+     * @Then the Bookit request workspace column :column should have a Core sort control
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_have_a_core_sort_control(string $column): void {
+        $this->assert_workspace_column_sort_control($column, true);
+    }
+
+    /**
+     * Assert that no Core sort control is exposed for a calculated/action column.
+     *
+     * @Then the Bookit request workspace column :column should not have a Core sort control
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_not_have_a_core_sort_control(string $column): void {
+        $this->assert_workspace_column_sort_control($column, false);
+    }
+
+    /**
+     * Assert an active Core direction indicator.
+     *
+     * @Then the Bookit request workspace column :column should show Core direction :direction
+     * @param string $column
+     * @param string $direction
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_show_core_direction(
+        string $column,
+        string $direction
+    ): void {
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]'
+            . '//i[@title=' . behat_context_helper::escape(ucfirst(strtolower($direction))) . ']';
+        if ($this->getSession()->getPage()->find('xpath', $xpath) === null) {
+            throw new ExpectationException(
+                "Column \"$column\" does not show the Core $direction indicator.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that Core exposes an active direction indicator for a column.
+     *
+     * @Then the Bookit request workspace column :column should show a Core direction indicator
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_show_a_core_direction_indicator(
+        string $column
+    ): void {
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]'
+            . '//i[@title="Ascending" or @title="Descending"]';
+        if ($this->getSession()->getPage()->find('xpath', $xpath) === null) {
+            throw new ExpectationException(
+                "Column \"$column\" does not show a Core direction indicator.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Capture a visible Core-table column and row IDs across every result page.
+     *
+     * @When I capture the Bookit request workspace column :column across all pages
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function i_capture_the_bookit_request_workspace_column_across_all_pages(string $column): void {
+        $values = [];
+        $ids = [];
+
+        while (true) {
+            $table = $this->getSession()->getPage()->find('css', 'table.generaltable');
+            if ($table === null) {
+                throw new ExpectationException('Could not find the Core request workspace table.', $this->getSession());
+            }
+            $headers = $table->findAll('css', 'thead th');
+            $columnindex = null;
+            foreach ($headers as $index => $header) {
+                if (str_starts_with(trim($header->getText()), $column)) {
+                    $columnindex = $index;
+                    break;
+                }
+            }
+            if ($columnindex === null) {
+                throw new ExpectationException("Could not find column \"$column\".", $this->getSession());
+            }
+
+            foreach ($table->findAll('css', 'tbody tr') as $row) {
+                $cells = $row->findAll('css', 'td');
+                if ($cells === [] || trim($cells[0]->getText()) === '') {
+                    continue;
+                }
+                $ids[] = trim($cells[0]->getText());
+                $values[] = trim($cells[$columnindex]->getText());
+            }
+
+            $next = $this->getSession()->getPage()->find(
+                'xpath',
+                '//nav[@aria-label="Page"]//a[contains(normalize-space(.), "Next page")]'
+            );
+            if ($next === null) {
+                break;
+            }
+            $next->click();
+        }
+
+        $this->capturedworkspacecolumns[$column] = ['values' => $values, 'ids' => $ids];
+    }
+
+    /**
+     * Assert that a captured column is globally ordered without duplicate rows.
+     *
+     * @Then the captured Bookit request workspace column :column should be globally :direction
+     * @param string $column
+     * @param string $direction
+     * @throws ExpectationException
+     */
+    public function the_captured_bookit_request_workspace_column_should_be_globally(
+        string $column,
+        string $direction
+    ): void {
+        if (!isset($this->capturedworkspacecolumns[$column])) {
+            throw new ExpectationException("Column \"$column\" was not captured.", $this->getSession());
+        }
+        $capture = $this->capturedworkspacecolumns[$column];
+        $expected = $capture['values'];
+        if ($column === 'Booking status') {
+            $statusorder = ['New' => 0, 'In Progress' => 1, 'Confirmed' => 2, 'Canceled' => 3, 'Rejected' => 4];
+            usort($expected, static function (string $left, string $right) use ($statusorder): int {
+                $leftstatus = strtok($left, "\n");
+                $rightstatus = strtok($right, "\n");
+                return ($statusorder[$leftstatus] ?? PHP_INT_MAX) <=> ($statusorder[$rightstatus] ?? PHP_INT_MAX);
+            });
+        } else {
+            natcasesort($expected);
+        }
+        $expected = array_values($expected);
+        if (strtolower($direction) === 'descending') {
+            $expected = array_reverse($expected);
+        }
+
+        if ($capture['values'] !== $expected) {
+            throw new ExpectationException(
+                "Column \"$column\" is not globally $direction across pages.",
+                $this->getSession()
+            );
+        }
+        if (count($capture['ids']) !== count(array_unique($capture['ids']))) {
+            throw new ExpectationException(
+                "Column \"$column\" contains duplicate row IDs across pages.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert Core sort-link presence for a table column.
+     *
+     * @param string $column
+     * @param bool $expected
+     * @throws ExpectationException
+     */
+    private function assert_workspace_column_sort_control(string $column, bool $expected): void {
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]//a[@role="button"]';
+        $present = $this->getSession()->getPage()->find('xpath', $xpath) !== null;
+        if ($present !== $expected) {
+            throw new ExpectationException(
+                "Core sort control expectation failed for column \"$column\".",
+                $this->getSession()
+            );
+        }
     }
 }

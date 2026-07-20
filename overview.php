@@ -29,6 +29,7 @@ use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_checklist_state_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\event_resource_manager;
+use mod_bookit\local\table\request_workspace_table;
 use mod_bookit\output\booking_status_cell;
 
 /* =======================================================================
@@ -81,9 +82,7 @@ $hasexplicitstatusfilter = !$ignorereportingurlparams && array_key_exists('booki
 $rawstatusfilter = $ignorereportingurlparams ? [] : optional_param_array('bookingstatusfilter', [], PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
-$page = optional_param('page', 0, PARAM_INT);
-$page = max(0, $page);
-$queueperpage = 25;
+$search = optional_param('search', '', PARAM_RAW_TRIMMED);
 $selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
     $rawstatusfilter,
     $hasexplicitstatusfilter,
@@ -146,6 +145,9 @@ if ($hasexplicitreportend) {
 if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
     $overviewnavigationparams['assignmentfilter'] = $assignmentfilter;
 }
+if ($search !== '') {
+    $overviewnavigationparams['search'] = $search;
+}
 if ($ignorereportingurlparams) {
     $overviewfilters = [
         'bookingstatuses' => [],
@@ -194,33 +196,23 @@ $requestworkspacetabrow = $canviewrequestworkspace
 $PAGE->requires->css(new moodle_url('/mod/bookit/styles.css'));
 $PAGE->requires->jquery();
 
-/* ----- live search ---------------------------------------------------- */
-$PAGE->requires->js_init_code("
-    require(['jquery'], function($) {
-        $('#bookit-filter').on('keyup', function () {
-            const val = $(this).val().toLowerCase();
-            $('#{$tableid} tbody tr').each(function () {
-                $(this).toggle($(this).text().toLowerCase().indexOf(val) !== -1);
+if (!$canviewrequestworkspace) {
+    // Participant overviews retain their existing page-local search, but no custom sorting.
+    $PAGE->requires->js_init_code("
+        require(['jquery'], function($) {
+            $('#bookit-filter').on('keyup', function () {
+                const val = $(this).val().toLowerCase();
+                $('#{$tableid} tbody tr').each(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(val) !== -1);
+                });
             });
         });
-    });
-");
-
-/* ----- sortable columns ---------------------------------------------- */
-$overviewrawsort = get_user_preferences(event_manager::OVERVIEW_SORT_PREFERENCE, null);
-$overviewsortpreference = event_manager::parse_overview_sort_preference($overviewrawsort);
-$overviewsortconfig = [
-    'tableId' => $tableid,
-    'preferenceKey' => event_manager::OVERVIEW_SORT_PREFERENCE,
-    'defaultColumn' => 'starttime',
-    'defaultDirection' => 'desc',
-    'initialPreference' => $overviewsortpreference,
-];
+    ");
+}
 
 /* ----- inline ModalForm handler -------------------------------------- */
 $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
-$PAGE->requires->js_call_amd('mod_bookit/overview/overview_table_sort', 'init', [$overviewsortconfig]);
 /* =======================================================================
    2.  Page headings
    ======================================================================= */
@@ -238,20 +230,36 @@ if ($canviewrequestworkspace) {
    ======================================================================= */
 if ($canviewrequestworkspace) {
     $overviewfilters['assignmentfilter'] = $assignmentfilter;
-    $workspacepayload = event_manager::get_governed_overview_queue(
+    $overviewfilters['search'] = $search;
+    $workspacequery = event_manager::get_request_workspace_query(
         $context,
         (int)$USER->id,
         (string)$workspacetab,
         $overviewfilters,
         $reportstarttimestamp,
-        $reportendtimestamp,
-        $page,
-        $queueperpage
+        $reportendtimestamp
     );
-    $page = (int)$workspacepayload['paging']['currentpage'];
-    $events = in_array($workspacetab, ['allrequests', 'history'], true)
-        ? $workspacepayload['events']
-        : [];
+    $workspacecount = (int)$DB->count_records_sql($workspacequery['countsql'], $workspacequery['countparams']);
+    $workspacebaseurl = new moodle_url(tabs::build_overview_url(
+        (int)$cm->id,
+        (string)$workspacetab,
+        $overviewnavigationparams
+    ));
+    $workspacetable = new request_workspace_table(
+        $context,
+        (int)$USER->id,
+        (int)$cm->id,
+        (string)$workspacetab,
+        array_merge($tableprofile, [
+            'showprogresscolumn' => !empty($tableprofile['showprogresscolumn'])
+                && ($checklistenabled || $resourcesenabled),
+            'showchecklistcolumn' => !empty($tableprofile['showchecklistcolumn']) && $checklistenabled,
+            'showresourcescolumn' => !empty($tableprofile['showresourcescolumn']) && $resourcesenabled,
+        ]),
+        $workspacequery,
+        $workspacebaseurl
+    );
+    $events = [];
 } else if ($showreportfilters) {
     $events = event_manager::get_events_for_reporting(
         $context,
@@ -276,54 +284,6 @@ if ($canviewrequestworkspace) {
 $openrequests = [];
 $rejectedcancelledqueue = [];
 $confirmedrequests = [];
-if ($canviewrequestworkspace) {
-    match ($workspacetab) {
-        'rejectedcancelled' => $rejectedcancelledqueue = $workspacepayload['events'],
-        'confirmedrequests' => $confirmedrequests = $workspacepayload['events'],
-        'openrequests' => $openrequests = $workspacepayload['events'],
-        default => null,
-    };
-}
-$openrequestcount = $canviewrequestworkspace ? (int)$workspacepayload['summary']['openrequestcount'] : count($openrequests);
-$rejectedcancelledcount = $canviewrequestworkspace
-    ? (int)$workspacepayload['summary']['rejectedrequestcount']
-    : count($rejectedcancelledqueue);
-$confirmedrequestcount = $canviewrequestworkspace
-    ? (int)$workspacepayload['summary']['confirmedrequestcount']
-    : count($confirmedrequests);
-$requestqueuecount = match ($workspacetab) {
-    'allrequests', 'history', 'rejectedcancelled', 'confirmedrequests', 'openrequests' => $canviewrequestworkspace
-        ? (int)$workspacepayload['paging']['totalcount']
-        : 0,
-    default => 0,
-};
-$requestpaginghtml = '';
-if ($canviewrequestworkspace && !empty($workspacepayload['paging']['haspaging'])) {
-    $pagingbaseparams = in_array($workspacetab, ['allrequests', 'history'], true)
-        ? $overviewnavigationparams
-        : [];
-    $requestpaginghtml = $OUTPUT->render(new paging_bar(
-        (int)$workspacepayload['paging']['totalcount'],
-        (int)$workspacepayload['paging']['currentpage'],
-        (int)$workspacepayload['paging']['perpage'],
-        new moodle_url(tabs::build_overview_url((int)$cm->id, (string)$workspacetab, $pagingbaseparams))
-    ));
-}
-$PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode([
-    'methodname' => 'mod_bookit_get_overview_queue',
-    'cmid' => (int)$cm->id,
-    'workspace' => $activetabparam,
-    'bookingstatuses' => $overviewfilters['bookingstatuses'],
-    'facultyids' => $overviewfilters['facultyids'],
-    'semesterids' => $overviewfilters['semesterids'],
-    'page' => $page,
-    'reportstart' => $reportstartvalue,
-    'reportend' => $reportendvalue,
-    'assignmentfilter' => $assignmentfilter,
-    'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
-    'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
-    'rejectedcancelledempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
-]));
 $semesteroptionssource = event_manager::get_semester_filter_options();
 $semesteroptions = [];
 foreach ($semesteroptionssource as $value => $label) {
@@ -372,6 +332,13 @@ $masterid = $masterrecord ? (int)$masterrecord->id : 0;
 
 echo $OUTPUT->header();
 
+$coretablehtml = '';
+if ($canviewrequestworkspace) {
+    ob_start();
+    $workspacetable->out(25, false);
+    $coretablehtml = (string)ob_get_clean();
+}
+
 /* =======================================================================
    4+5.  Render via Mustache template (no HTML in PHP)
    ======================================================================= */
@@ -390,11 +357,7 @@ $templatecontext = [
         'showchecklistcolumn' => !empty($tableprofile['showchecklistcolumn']) && $checklistenabled,
         'showresourcescolumn' => !empty($tableprofile['showresourcescolumn']) && $resourcesenabled,
     ]),
-    'workspacerows' => [],
-    'hasworkspacerows' => false,
-    'workspacetableemptymessage' => $canviewrequestworkspace
-        ? get_string((string)($tableprofile['emptymessage'] ?? 'overview_no_results'), 'mod_bookit')
-        : '',
+    'coretablehtml' => $coretablehtml,
     'showmyeventssection' => !$canviewrequestworkspace,
     'showhistorytab' => !$isobserverrestricted,
     'showoverviewnavigation' => !$canviewrequestworkspace && count($overviewtabrow) > 1,
@@ -435,7 +398,9 @@ $templatecontext = [
     'openrequestsempty' => get_string('overview_open_requests_empty', 'mod_bookit'),
     'rejectedcancelledempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
     'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
-    'requestpaginghtml' => $requestpaginghtml,
+    'searchvalue' => $search,
+    'searchaction' => (new moodle_url('/mod/bookit/overview.php'))->out(false),
+    'serversearch' => $canviewrequestworkspace,
     'showoverviewfilters' => !$canviewrequestworkspace || $isreportingworkspacetab,
     'showstatusfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_status_filter']),
     'showsemesterfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_semester_filter']),
@@ -490,13 +455,17 @@ $templatecontext = [
     'statusfilteroptions' => $statusfilteroptions,
     'semesteroptions' => $semesteroptions,
     'hasevents' => false,
-    'eventcounttext' => get_string('overview_count', 'mod_bookit', 0),
+    'eventcounttext' => get_string(
+        'overview_count',
+        'mod_bookit',
+        $canviewrequestworkspace ? $workspacecount : 0
+    ),
     'noeventsmessage' => $isobserverrestricted
         ? get_string('observer_empty_state', 'mod_bookit')
         : get_string('overview_no_results', 'mod_bookit'),
-    'hasopenrequests' => !empty($openrequests),
-    'hasconfirmedrequests' => !empty($confirmedrequests),
-    'hasrejectedcancelled' => !empty($rejectedcancelledqueue),
+    'hasopenrequests' => false,
+    'hasconfirmedrequests' => false,
+    'hasrejectedcancelled' => false,
     'events' => [],
     'openrequests' => [],
     'confirmedrequests' => [],
@@ -504,14 +473,7 @@ $templatecontext = [
 ];
 
 // Precompute checklist progress for displayed events in a single query.
-$displayevents = $canviewrequestworkspace
-    ? match ($workspacetab) {
-        'openrequests' => $openrequests,
-        'confirmedrequests' => $confirmedrequests,
-        'rejectedcancelled' => $rejectedcancelledqueue,
-        default => $events,
-    }
-    : $events;
+$displayevents = $canviewrequestworkspace ? [] : $events;
 $progressmap = [];
 $resourceprogressmap = [];
 if (!empty($displayevents)) {
@@ -691,21 +653,7 @@ $workspacerequesttab = $canviewrequestworkspace
     ? event_manager::get_workspace_status_request_tab($workspacetab)
     : 'openrequests';
 
-if ($canviewrequestworkspace) {
-    foreach ($displayevents as $ev) {
-        $canviewevent = $historyactive
-            ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)
-            : ($isqueuetab
-                ? true
-                : event_access_manager::can_user_view_event_in_overview($ev, $context, (int)$USER->id));
-        if (!$canviewevent) {
-            continue;
-        }
-        $templatecontext['workspacerows'][] = $prepareeventrow($ev, true, $workspacerequesttab);
-    }
-    $templatecontext['hasworkspacerows'] = !empty($templatecontext['workspacerows']);
-    $templatecontext['eventcounttext'] = get_string('overview_count', 'mod_bookit', $requestqueuecount);
-} else {
+if (!$canviewrequestworkspace) {
     foreach ($displayevents as $ev) {
         $canviewevent = $historyactive
             ? event_access_manager::can_user_view_event_in_history($ev, $context, (int)$USER->id)
