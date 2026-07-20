@@ -134,7 +134,106 @@ final class overview_queue_read_mapper_test extends advanced_testcase {
             get_string('overview_workflow_history', 'mod_bookit'),
             $mapped['statuscellhtml']
         );
-        $this->assertNotEmpty(event_manager::build_overview_workflow_history((int)$event->id));
+        $this->assertNotEmpty(event_manager::build_overview_workflow_history(
+            $event,
+            $context,
+            (int)$serviceuser->id
+        ));
+    }
+
+    /**
+     * Create a support-on-site context for mapper tests.
+     *
+     * @param int $userid
+     * @return array{0: context_module, 1: int}
+     */
+    private function create_support_context(int $userid): array {
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id]);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit support mapper', 'bookit_supportonsite', 'student');
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $userid, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        return [$context, (int)$bookit->cmid];
+    }
+
+    /**
+     * Support mapper output omits restricted workflow-history content.
+     *
+     * @return void
+     */
+    public function test_map_omits_restricted_workflow_history_for_support(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $actor = $this->getDataGenerator()->create_user(['firstname' => 'Service', 'lastname' => 'Actor']);
+        $supportuser = $this->getDataGenerator()->create_user(['firstname' => 'Steven', 'lastname' => 'Support']);
+        [$context, $cmid] = $this->create_support_context((int)$supportuser->id);
+        $this->setUser($supportuser);
+
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Support mapper history event',
+            'semester' => 20261,
+            'institutionid' => null,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => 'secret',
+            'supportpersons' => (string)$supportuser->id,
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $actor->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        event_manager::record_booking_history(
+            $eventid,
+            'updated',
+            (int)$actor->id,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            [
+                'bookingstatus' => ['from' => 0, 'to' => 1],
+                'internalnotes' => ['from' => 'old secret', 'to' => 'secret'],
+            ],
+            false
+        );
+
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $history = array_values(event_manager::get_booking_history((int)$event->id));
+        $latest = $history[0] ?? null;
+
+        $mapped = overview_queue_read_mapper::map(
+            $event,
+            $context,
+            (int)$supportuser->id,
+            $latest,
+            'openrequests',
+            $cmid
+        );
+
+        $this->assertStringNotContainsString('secret', $mapped['statuscellhtml']);
+        $this->assertStringNotContainsString('Service Actor', $mapped['statuscellhtml']);
+        $this->assertStringContainsString(
+            get_string('event_bookingstatus', 'mod_bookit'),
+            $mapped['statuscellhtml']
+        );
     }
 
     /**

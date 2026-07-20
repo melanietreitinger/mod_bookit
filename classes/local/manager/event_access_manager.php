@@ -1085,6 +1085,135 @@ class event_access_manager {
     }
 
     /**
+     * Whether workflow history may show actor/editor identity for the current viewer.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    public static function can_user_view_workflow_history_actor_identity(
+        stdClass $event,
+        context_module $context,
+        int $userid
+    ): bool {
+        unset($event);
+
+        return has_capability('mod/bookit:managebasics', $context, $userid)
+            || has_capability('mod/bookit:viewalldetailsofevent', $context, $userid);
+    }
+
+    /**
+     * Whether a workflow-history changed field may be shown to the current viewer.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @param string $field
+     * @return bool
+     */
+    public static function can_user_view_workflow_history_field(
+        stdClass $event,
+        context_module $context,
+        int $userid,
+        string $field
+    ): bool {
+        $field = strtolower(trim($field));
+        if ($field === '') {
+            return false;
+        }
+
+        if (in_array($field, ['bookingstatus', 'oldstatus', 'newstatus'], true)) {
+            return true;
+        }
+
+        if ($field === 'internalnotes') {
+            return self::can_user_view_workflow_history_internal_fields($event, $context, $userid);
+        }
+
+        $detailfields = [
+            'name',
+            'starttime',
+            'endtime',
+            'roomid',
+            'institutionid',
+            'participantsamount',
+            'personinchargeid',
+            'otherexaminers',
+            'notes',
+        ];
+        if (in_array($field, $detailfields, true)) {
+            return self::can_user_view_workflow_history_event_details($event, $context, $userid);
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether workflow-history event-detail fields may be shown to the viewer.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    private static function can_user_view_workflow_history_event_details(
+        stdClass $event,
+        context_module $context,
+        int $userid
+    ): bool {
+        if (
+            has_capability('mod/bookit:managebasics', $context, $userid)
+            || has_capability('mod/bookit:viewalldetailsofevent', $context, $userid)
+        ) {
+            return true;
+        }
+
+        if (self::is_observer_restricted_mode($context)) {
+            return false;
+        }
+
+        if (!has_capability('mod/bookit:viewalldetailsofownevent', $context, $userid)) {
+            return false;
+        }
+
+        $roles = self::get_user_roles_for_event($event, $userid);
+        if (
+            in_array('supportperson', $roles, true)
+            && empty(array_intersect($roles, ['bookingperson', 'personincharge', 'otherexaminer']))
+            && (int)($event->bookingstatus ?? -1) === self::BOOKINGSTATUS_NEW
+        ) {
+            return false;
+        }
+
+        return self::user_has_participant_visibility($event, $userid);
+    }
+
+    /**
+     * Whether workflow-history internal fields may be shown to the viewer.
+     *
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
+     * @return bool
+     */
+    private static function can_user_view_workflow_history_internal_fields(
+        stdClass $event,
+        context_module $context,
+        int $userid
+    ): bool {
+        if (
+            has_capability('mod/bookit:managebasics', $context, $userid)
+            || has_capability('mod/bookit:viewalldetailsofevent', $context, $userid)
+        ) {
+            return true;
+        }
+
+        return in_array('supportperson', self::get_user_roles_for_event($event, $userid), true)
+            && self::can_user_view_workflow_history_event_details($event, $context, $userid);
+    }
+
+    /**
      * Check whether the user has the support-on-site module role without broader read grants.
      *
      * @param context_module $context

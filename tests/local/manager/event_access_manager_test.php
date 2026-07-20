@@ -2615,4 +2615,106 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assertTrue(event_access_manager::can_view_event_resources($event, $context, (int)$user->id));
         $this->assertTrue(event_access_manager::event_allows_checklist_resources_view($event));
     }
+
+    /**
+     * Workflow history actor identity is limited to service-team/full-detail viewers.
+     *
+     * @return void
+     */
+    public function test_workflow_history_actor_identity_permissions(): void {
+        $this->resetAfterTest(true);
+        $context = $this->create_bookit_context_with_service_role('bookitservicehistoryactor');
+        $supportcontext = $this->create_bookit_context_with_support_role();
+        $support = $this->getDataGenerator()->create_user(['firstname' => 'Steven', 'lastname' => 'Support']);
+        $service = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($supportcontext, (int)$support->id);
+        $this->assign_role_by_shortname($context, (int)$service->id, 'bookitservicehistoryactor');
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'personinchargeid' => 0,
+            'usermodified' => $service->id,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$support->id,
+        ];
+
+        $this->assertFalse(event_access_manager::can_user_view_workflow_history_actor_identity(
+            $event,
+            $supportcontext,
+            (int)$support->id
+        ));
+        $this->assertTrue(event_access_manager::can_user_view_workflow_history_actor_identity(
+            $event,
+            $context,
+            (int)$service->id
+        ));
+    }
+
+    /**
+     * Workflow history field visibility follows detail and internal-field rules.
+     *
+     * @return void
+     */
+    public function test_workflow_history_field_permissions_for_support_and_service_team(): void {
+        $this->resetAfterTest(true);
+        $supportcontext = $this->create_bookit_context_with_support_role();
+        $servicecontext = $this->create_bookit_context_with_service_role('bookitservicehistoryfields');
+        $support = $this->getDataGenerator()->create_user();
+        $service = $this->getDataGenerator()->create_user();
+        $this->assign_support_role($supportcontext, (int)$support->id);
+        $this->assign_role_by_shortname($servicecontext, (int)$service->id, 'bookitservicehistoryfields');
+
+        $event = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'usermodified' => $service->id,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$support->id,
+        ];
+
+        $this->assertTrue(event_access_manager::can_user_view_workflow_history_field(
+            $event,
+            $supportcontext,
+            (int)$support->id,
+            'bookingstatus'
+        ));
+        $this->assertFalse(event_access_manager::can_user_view_workflow_history_field(
+            $event,
+            $supportcontext,
+            (int)$support->id,
+            'notes'
+        ));
+        $this->assertFalse(event_access_manager::can_user_view_workflow_history_field(
+            $event,
+            $supportcontext,
+            (int)$support->id,
+            'internalnotes'
+        ));
+
+        $assignedprogress = (object)[
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'personinchargeid' => 0,
+            'usermodified' => $service->id,
+            'otherexaminers' => '',
+            'supportpersons' => (string)$support->id,
+        ];
+        $this->assertTrue(event_access_manager::can_user_view_workflow_history_field(
+            $assignedprogress,
+            $supportcontext,
+            (int)$support->id,
+            'internalnotes'
+        ));
+        $this->assertTrue(event_access_manager::can_user_view_workflow_history_field(
+            $assignedprogress,
+            $servicecontext,
+            (int)$service->id,
+            'internalnotes'
+        ));
+        $this->assertFalse(event_access_manager::can_user_view_workflow_history_field(
+            $event,
+            $supportcontext,
+            (int)$support->id,
+            'unknownfield'
+        ));
+    }
 }

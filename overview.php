@@ -597,9 +597,14 @@ $prepareeventrow = function (
     $caneventdetails = !$isreservedprojection
         && event_access_manager::can_user_view_event_details($ev, $context, (int)$USER->id);
     $latesthistory = $latesthistorymap[(int)$ev->id] ?? null;
-    $latesthistorysummary = event_manager::build_overview_workflow_latest_summary($latesthistory);
+    $latesthistorysummary = event_manager::build_overview_workflow_latest_summary(
+        $latesthistory,
+        $ev,
+        $context,
+        (int)$USER->id
+    );
     $historydetails = $isrequestworkspaceitem
-        ? event_manager::build_overview_workflow_history((int)$ev->id)
+        ? event_manager::build_overview_workflow_history($ev, $context, (int)$USER->id)
         : [];
 
     $createdby = '-';

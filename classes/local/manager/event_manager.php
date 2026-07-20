@@ -983,9 +983,17 @@ class event_manager {
      * Build a one-line summary for the latest booking workflow history entry.
      *
      * @param stdClass|null $latesthistory
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
      * @return string
      */
-    public static function build_overview_workflow_latest_summary(?stdClass $latesthistory): string {
+    public static function build_overview_workflow_latest_summary(
+        ?stdClass $latesthistory,
+        stdClass $event,
+        context_module $context,
+        int $userid
+    ): string {
         if (!$latesthistory) {
             return '';
         }
@@ -997,9 +1005,11 @@ class event_manager {
 
         $summary = get_string('history_action_' . $action, 'mod_bookit') . ' · '
             . userdate((int)$latesthistory->timecreated, get_string('strftimedatetime', 'langconfig'));
-        $actorname = trim(($latesthistory->firstname ?? '') . ' ' . ($latesthistory->lastname ?? ''));
-        if ($actorname !== '') {
-            $summary .= ' · ' . $actorname;
+        if (event_access_manager::can_user_view_workflow_history_actor_identity($event, $context, $userid)) {
+            $actorname = trim(($latesthistory->firstname ?? '') . ' ' . ($latesthistory->lastname ?? ''));
+            if ($actorname !== '') {
+                $summary .= ' · ' . $actorname;
+            }
         }
 
         return $summary;
@@ -1008,11 +1018,18 @@ class event_manager {
     /**
      * Build structured workflow history entries for the overview status cell expander.
      *
-     * @param int $eventid
+     * @param stdClass $event
+     * @param context_module $context
+     * @param int $userid
      * @param int $limit
      * @return array<int, array<string, mixed>>
      */
-    public static function build_overview_workflow_history(int $eventid, int $limit = 10): array {
+    public static function build_overview_workflow_history(
+        stdClass $event,
+        context_module $context,
+        int $userid,
+        int $limit = 10
+    ): array {
         $historyfieldlabels = [
             'bookingstatus' => 'event_bookingstatus',
             'institutionid' => 'event_department',
@@ -1045,18 +1062,21 @@ class event_manager {
         };
 
         $entries = [];
-        foreach (array_values(self::get_booking_history($eventid, $limit)) as $entry) {
-            $actorname = trim(($entry->firstname ?? '') . ' ' . ($entry->lastname ?? ''));
-            $summary = get_string('history_action_' . $entry->action, 'mod_bookit') . ' · '
-                . userdate((int)$entry->timecreated, get_string('strftimedatetime', 'langconfig'));
-            if ($actorname !== '') {
-                $summary .= ' · ' . $actorname;
-            }
-
+        foreach (array_values(self::get_booking_history((int)$event->id, $limit)) as $entry) {
             $changes = [];
             $rawchangedfields = json_decode((string)($entry->changedfields ?? ''), true);
             if (is_array($rawchangedfields)) {
                 foreach ($rawchangedfields as $field => $change) {
+                    if (
+                        !event_access_manager::can_user_view_workflow_history_field(
+                            $event,
+                            $context,
+                            $userid,
+                            (string)$field
+                        )
+                    ) {
+                        continue;
+                    }
                     $changes[] = [
                         'text' => get_string('overview_workflow_history_change', 'mod_bookit', (object)[
                             'field' => $resolvefieldlabel((string)$field),
@@ -1067,9 +1087,22 @@ class event_manager {
                 }
             }
 
+            if (empty($changes)) {
+                continue;
+            }
+
+            $summary = get_string('history_action_' . $entry->action, 'mod_bookit') . ' · '
+                . userdate((int)$entry->timecreated, get_string('strftimedatetime', 'langconfig'));
+            if (event_access_manager::can_user_view_workflow_history_actor_identity($event, $context, $userid)) {
+                $actorname = trim(($entry->firstname ?? '') . ' ' . ($entry->lastname ?? ''));
+                if ($actorname !== '') {
+                    $summary .= ' · ' . $actorname;
+                }
+            }
+
             $entries[] = [
                 'summary' => s($summary),
-                'haschanges' => !empty($changes),
+                'haschanges' => true,
                 'changes' => $changes,
                 'hasrecoverymarker' => !empty($entry->recoverymarker),
                 'recoverymarkertext' => get_string('overview_workflow_history_recovery', 'mod_bookit'),

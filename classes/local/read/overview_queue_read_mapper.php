@@ -79,8 +79,13 @@ class overview_queue_read_mapper {
         }
 
         $requesttab = event_manager::get_workspace_status_request_tab($workspace);
-        $latesthistorysummary = event_manager::build_overview_workflow_latest_summary($latesthistory);
-        $historyentries = event_manager::build_overview_workflow_history((int)$event->id);
+        $latesthistorysummary = event_manager::build_overview_workflow_latest_summary(
+            $latesthistory,
+            $event,
+            $context,
+            $userid
+        );
+        $historyentries = event_manager::build_overview_workflow_history($event, $context, $userid);
         $canmanagebasics = has_capability('mod/bookit:managebasics', $context);
         $statuscell = booking_status_cell::for_booking_overview_row(
             $event,

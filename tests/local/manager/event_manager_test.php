@@ -3202,7 +3202,15 @@ final class event_manager_test extends advanced_testcase {
         global $DB;
 
         $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id]);
+        $context = context_module::instance($bookit->cmid);
         $user = $this->getDataGenerator()->create_user();
+        $roleid = \create_role('Bookit service history', 'bookitservicehistory', 'manager');
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $user->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
         $eventid = $DB->insert_record('bookit_event', (object)[
             'name' => 'Workflow overview event',
             'semester' => 20261,
@@ -3239,12 +3247,143 @@ final class event_manager_test extends advanced_testcase {
             false
         );
 
-        $entries = event_manager::build_overview_workflow_history($eventid);
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $entries = event_manager::build_overview_workflow_history($event, $context, (int)$user->id);
         $this->assertNotEmpty($entries);
         $this->assertArrayHasKey('summary', $entries[0]);
         $this->assertTrue($entries[0]['haschanges']);
         $this->assertNotEmpty($entries[0]['changes']);
         $this->assertArrayHasKey('text', $entries[0]['changes'][0]);
+    }
+
+    /**
+     * Support viewers do not receive internal-note history details or actor names.
+     *
+     * @return void
+     */
+    public function test_build_overview_workflow_history_omits_restricted_fields_for_support(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id]);
+        $context = context_module::instance($bookit->cmid);
+        $actor = $this->getDataGenerator()->create_user(['firstname' => 'Service', 'lastname' => 'Actor']);
+        $support = $this->getDataGenerator()->create_user(['firstname' => 'Steven', 'lastname' => 'Support']);
+        $supportrole = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportrole, $context->id, true);
+        \role_assign($supportrole, $support->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Support history sanitization event',
+            'semester' => 20261,
+            'institutionid' => null,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => 'secret',
+            'supportpersons' => (string)$support->id,
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $actor->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        event_manager::record_booking_history(
+            $eventid,
+            'updated',
+            (int)$actor->id,
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            [
+                'bookingstatus' => ['from' => 0, 'to' => 1],
+                'internalnotes' => ['from' => 'old secret', 'to' => 'secret'],
+            ],
+            false
+        );
+
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $entries = event_manager::build_overview_workflow_history($event, $context, (int)$support->id);
+        $this->assertCount(1, $entries);
+        $this->assertStringNotContainsString('secret', $entries[0]['summary']);
+        $this->assertStringNotContainsString('Service Actor', $entries[0]['summary']);
+        $this->assertStringContainsString(
+            get_string('event_bookingstatus', 'mod_bookit'),
+            $entries[0]['changes'][0]['text']
+        );
+    }
+
+    /**
+     * All-restricted history entries are omitted for limited viewers.
+     *
+     * @return void
+     */
+    public function test_build_overview_workflow_history_omits_all_restricted_entries(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id]);
+        $context = context_module::instance($bookit->cmid);
+        $actor = $this->getDataGenerator()->create_user();
+        $booker = $this->getDataGenerator()->create_user();
+        $bookerrole = \create_role('Bookit booker history', 'bookitbookerhistory', 'student');
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $bookerrole, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $bookerrole, $context->id, true);
+        \role_assign($bookerrole, $booker->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Booker history sanitization event',
+            'semester' => 20261,
+            'institutionid' => null,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $booker->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        event_manager::record_booking_history(
+            $eventid,
+            'updated',
+            (int)$actor->id,
+            null,
+            null,
+            ['internalnotes' => ['from' => 'hidden', 'to' => 'still hidden']],
+            false
+        );
+
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $entries = event_manager::build_overview_workflow_history($event, $context, (int)$booker->id);
+        $this->assertSame([], $entries);
     }
 
     /**
