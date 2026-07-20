@@ -119,7 +119,7 @@
             <td class="align-middle">
                 {{#checklistprogress_available}}
                 <div class="mb-1">
-                    <div class="small text-muted mb-1">Checklist</div>
+                    <div class="small text-muted mb-1">{{overviewcolumnchecklist}}</div>
                     <div class="progress position-relative" style="min-width:80px;">
                         <div class="progress-bar" role="progressbar"
                              style="width:{{checklistprogress}}%;"
@@ -132,7 +132,7 @@
                 {{/checklistprogress_available}}
                 {{#resourcesprogress_available}}
                 <div>
-                    <div class="small text-muted mb-1">Resources</div>
+                    <div class="small text-muted mb-1">{{overviewcolumnresources}}</div>
                     <div class="progress position-relative" style="min-width:80px;">
                         <div class="progress-bar" role="progressbar"
                              style="width:{{resourcesprogress}}%;"

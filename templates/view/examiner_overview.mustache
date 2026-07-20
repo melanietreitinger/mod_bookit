@@ -103,22 +103,22 @@
                 <th class="align-middle" data-sort-key="id">ID</th>
                 {{/showidcolumn}}
                 <th class="align-middle" data-sort-key="starttime">{{overviewcolumndatetime}}</th>
-                <th class="align-middle" data-sort-key="title">Title</th>
-                <th class="align-middle" data-sort-key="room">Room</th>
-                <th class="align-middle" data-sort-key="personincharge">Person in charge</th>
-                <th class="align-middle" data-sort-key="myrole">My role</th>
+                <th class="align-middle" data-sort-key="title">{{overviewcolumntitle}}</th>
+                <th class="align-middle" data-sort-key="room">{{overviewcolumnroom}}</th>
+                <th class="align-middle" data-sort-key="personincharge">{{overviewcolumnpersonincharge}}</th>
+                <th class="align-middle" data-sort-key="myrole">{{overviewcolumnmyrole}}</th>
                 {{#showcreatedbycolumn}}
                 <th class="align-middle" data-sort-key="createdby">{{createdbycolumnlabel}}</th>
                 {{/showcreatedbycolumn}}
-                <th class="align-middle" data-sort-key="bookingstatus">Booking status</th>
+                <th class="align-middle" data-sort-key="bookingstatus">{{overviewcolumnbookingstatus}}</th>
                 {{#showprogresscolumn}}
-                <th class="align-middle">Progress</th>
+                <th class="align-middle">{{overviewcolumnprogress}}</th>
                 {{/showprogresscolumn}}
                 {{#showchecklistcolumn}}
-                <th class="align-middle">Checklist</th>
+                <th class="align-middle">{{overviewcolumnchecklist}}</th>
                 {{/showchecklistcolumn}}
                 {{#showresourcescolumn}}
-                <th class="align-middle">Resources</th>
+                <th class="align-middle">{{overviewcolumnresources}}</th>
                 {{/showresourcescolumn}}
                 {{#showcancelcolumn}}
                 <th class="align-middle">{{overviewcancelcolumnlabel}}</th>
@@ -170,7 +170,7 @@
                     <td class="align-middle">
                         {{#checklistprogress_available}}
                         <div class="mb-1">
-                            <div class="small text-muted mb-1">Checklist</div>
+                            <div class="small text-muted mb-1">{{overviewcolumnchecklist}}</div>
                             <div class="progress position-relative" style="min-width:80px;">
                                 <div class="progress-bar" role="progressbar"
                                      style="width:{{checklistprogress}}%;"
@@ -183,7 +183,7 @@
                         {{/checklistprogress_available}}
                         {{#resourcesprogress_available}}
                         <div>
-                            <div class="small text-muted mb-1">Resources</div>
+                            <div class="small text-muted mb-1">{{overviewcolumnresources}}</div>
                             <div class="progress position-relative" style="min-width:80px;">
                                 <div class="progress-bar" role="progressbar"
                                      style="width:{{resourcesprogress}}%;"
