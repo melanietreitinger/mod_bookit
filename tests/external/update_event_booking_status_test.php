@@ -70,7 +70,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $before = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
+        $before = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
         $this->assertSame(1, (int)$before['summary']['openrequestcount']);
         $this->assertSame($eventid, (int)$before['items'][0]['eventid']);
 
@@ -79,7 +79,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             $eventid,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'openrequests',
-            1
+            0
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$response['status']);
@@ -88,12 +88,137 @@ final class update_event_booking_status_test extends advanced_testcase {
         $this->assertSame(0, (int)$response['queue']['summary']['openrequestcount']);
         $this->assertSame([], $response['queue']['items']);
 
-        $after = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
+        $after = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
         $this->assertSame(0, (int)$after['summary']['openrequestcount']);
         $this->assertSame([], $after['items']);
 
         $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$record->bookingstatus);
+    }
+
+    /**
+     * Status updates on page two must preserve page in redirect and queue payload.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_preserves_page_on_status_update(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Queue page preserve']);
+
+        $targeteventid = 0;
+        for ($i = 1; $i <= 26; $i++) {
+            $eventid = (int)$DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Preserve page %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-05-20 09:00:00') + $i,
+                'endtime' => strtotime('2026-05-20 11:00:00') + $i,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+            if ($i === 26) {
+                $targeteventid = $eventid;
+            }
+        }
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $targeteventid,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'openrequests',
+            1
+        );
+
+        $this->assertStringContainsString('page=1', $response['redirecturl']);
+        $this->assertStringNotContainsString('queuepage=', $response['redirecturl']);
+        $this->assertSame(1, (int)$response['queue']['paging']['currentpage']);
+        $this->assertCount(1, $response['queue']['items']);
+    }
+
+    /**
+     * Status updates must correct the page when the active queue page becomes empty.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_corrects_page_when_status_update_empties_current_page(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Queue page correction',
+        ]);
+
+        $targeteventid = 0;
+        for ($i = 1; $i <= 26; $i++) {
+            $eventid = (int)$DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Correct page %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-06-20 09:00:00') + $i,
+                'endtime' => strtotime('2026-06-20 11:00:00') + $i,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+            if ($i === 1) {
+                $targeteventid = $eventid;
+            }
+        }
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $targeteventid,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'openrequests',
+            1
+        );
+
+        $this->assertStringNotContainsString('page=1', $response['redirecturl']);
+        $this->assertSame(0, (int)$response['queue']['paging']['currentpage']);
+        $this->assertTrue($response['queue']['paging']['adjusted']);
+        $this->assertCount(25, $response['queue']['items']);
     }
 
     /**

@@ -954,6 +954,7 @@ class event_access_manager {
             'semesterids' => self::normalise_governed_filter_ids($filters['semesterids'] ?? []),
             'search' => self::normalise_governed_text_filter($filters['search'] ?? null),
             'workspace' => self::normalise_governed_text_filter($filters['workspace'] ?? null),
+            'assignmentfilter' => self::normalise_governed_text_filter($filters['assignmentfilter'] ?? null),
             'exportmode' => !empty($filters['exportmode']),
         ];
     }

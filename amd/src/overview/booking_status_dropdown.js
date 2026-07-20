@@ -99,7 +99,7 @@ const getReadConfig = (workspace) => {
     return {
         ...window.bookitOverviewReadConfig,
         workspace: workspace,
-        page: Number(window.bookitOverviewReadConfig.page || 1),
+        page: Number(window.bookitOverviewReadConfig.page ?? 0),
     };
 };
 
@@ -256,12 +256,17 @@ const syncPaging = (readConfig, queueResponse) => {
     }
 
     if (queueResponse.paging) {
-        readConfig.page = Number(queueResponse.paging.currentpage || 1);
+        readConfig.page = Number(queueResponse.paging.currentpage ?? 0);
         if (window.bookitOverviewReadConfig) {
             window.bookitOverviewReadConfig.page = readConfig.page;
         }
         const url = new URL(window.location.href);
-        url.searchParams.set('queuepage', String(readConfig.page));
+        url.searchParams.delete('queuepage');
+        if (readConfig.page > 0) {
+            url.searchParams.set('page', String(readConfig.page));
+        } else {
+            url.searchParams.delete('page');
+        }
         window.history.replaceState({}, '', url);
     }
 };
@@ -328,7 +333,7 @@ const refreshQueueFromGovernedRead = (readConfig, initialQueueResponse, redirect
             bookingstatuses: readConfig.bookingstatuses || [],
             facultyids: readConfig.facultyids || [],
             semesterids: readConfig.semesterids || [],
-            page: readConfig.page || 1,
+            page: readConfig.page ?? 0,
             reportstart: readConfig.reportstart || '',
             reportend: readConfig.reportend || '',
         },
@@ -418,7 +423,7 @@ export const init = () => {
 
         Ajax.call([{
             methodname: 'mod_bookit_update_event_booking_status',
-            args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
+            args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page ?? 0)},
         }])[0]
         .then((response) => {
             applyColor(select);
@@ -461,7 +466,7 @@ export const init = () => {
 
             return Ajax.call([{
                 methodname: 'mod_bookit_update_event_booking_status',
-                args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
+                args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page ?? 0)},
             }])[0];
         })
         .then((response) => refreshQueueFromGovernedRead(
@@ -503,7 +508,7 @@ export const init = () => {
 
             return Ajax.call([{
                 methodname: 'mod_bookit_update_event_booking_status',
-                args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page || 1)},
+                args: {cmid, eventid, status, tab, page: Number((getReadConfig(tab) || {}).page ?? 0)},
             }])[0];
         })
         .then((response) => refreshQueueFromGovernedRead(

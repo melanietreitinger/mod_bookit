@@ -82,7 +82,7 @@ final class get_overview_queue_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $response = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
+        $response = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
 
         $this->assertSame('ok', $response['status']);
         $this->assertFalse($response['denied']);
@@ -91,7 +91,7 @@ final class get_overview_queue_test extends advanced_testcase {
         $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
         $this->assertSame(1, (int)$response['summary']['openrequestcount']);
         $this->assertSame(1, (int)$response['summary']['count']);
-        $this->assertSame(1, (int)$response['paging']['currentpage']);
+        $this->assertSame(0, (int)$response['paging']['currentpage']);
         $this->assertFalse($response['paging']['adjusted']);
     }
 
@@ -149,7 +149,7 @@ final class get_overview_queue_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $response = get_overview_queue::execute($bookit->cmid, 'rejectedcancelled', [], [], [], 1, '', '');
+        $response = get_overview_queue::execute($bookit->cmid, 'rejectedcancelled', [], [], [], 0, '', '');
 
         $this->assertSame('ok', $response['status']);
         $this->assertFalse($response['denied']);
@@ -158,7 +158,7 @@ final class get_overview_queue_test extends advanced_testcase {
         $this->assertSame($eventid, (int)$response['items'][0]['eventid']);
         $this->assertSame(1, (int)$response['summary']['rejectedrequestcount']);
         $this->assertSame(1, (int)$response['summary']['count']);
-        $this->assertSame(1, (int)$response['paging']['currentpage']);
+        $this->assertSame(0, (int)$response['paging']['currentpage']);
         $this->assertFalse($response['paging']['adjusted']);
     }
 
@@ -218,7 +218,7 @@ final class get_overview_queue_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $response = get_overview_queue::execute($bookit->cmid, 'confirmedrequests', [], [], [], 1, '', '');
+        $response = get_overview_queue::execute($bookit->cmid, 'confirmedrequests', [], [], [], 0, '', '');
 
         $this->assertSame('ok', $response['status']);
         $this->assertFalse($response['denied']);
@@ -285,10 +285,301 @@ final class get_overview_queue_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $response = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
+        $response = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
 
         $this->assertSame('openrequests', $response['workspace']);
         $this->assertCount(0, $response['items']);
         $this->assertSame(0, (int)$response['summary']['openrequestcount']);
+    }
+
+    /**
+     * Paginated queue fragments must emit Moodle page links for page two.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_paging_html_uses_page_param(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Paging queue']);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+
+        \update_capabilities('mod/bookit');
+        $roleid = \create_role('Bookit paging queue', 'bookitpagingqueue', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $this->setUser($serviceuser);
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Paging request %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-05-20 09:00:00') + $i,
+                'endtime' => strtotime('2026-05-20 11:00:00') + $i,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => $serviceuser->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pageone = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
+        $pagetwo = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 1, '', '');
+
+        $this->assertCount(25, $pageone['items']);
+        $this->assertCount(1, $pagetwo['items']);
+        $this->assertSame(1, (int)$pagetwo['paging']['currentpage']);
+        $this->assertStringContainsString('page=1', $pageone['fragments']['paginghtml']);
+        $this->assertStringContainsString('page=0', $pagetwo['fragments']['paginghtml']);
+        $this->assertStringNotContainsString('queuepage=', $pageone['fragments']['paginghtml']);
+    }
+
+    /**
+     * Confirmed and rejected/cancelled queue fragments must use page links and full counts.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_queue_paging_html_uses_page_param_for_confirmed_and_rejected(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Paging queue variants',
+        ]);
+        $context = \context_module::instance($bookit->cmid);
+        $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit paging variants', 'bookitpagingvariants', 'manager');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:managebasics', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofevent', CAP_ALLOW, $roleid, $context->id, true);
+        \role_assign($roleid, $serviceuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($serviceuser);
+
+        foreach (
+            [
+            'confirmedrequests' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'rejectedcancelled' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            ] as $workspace => $status
+        ) {
+            for ($i = 1; $i <= 26; $i++) {
+                $DB->insert_record('bookit_event', (object)[
+                    'name' => sprintf('%s paging %02d', $workspace, $i),
+                    'semester' => 20261,
+                    'institutionid' => 1,
+                    'starttime' => strtotime('+10 days 09:00:00') + $i,
+                    'endtime' => strtotime('+10 days 11:00:00') + $i,
+                    'duration' => 120,
+                    'roomid' => null,
+                    'participantsamount' => 12,
+                    'timecompensation' => 0,
+                    'compensationfordisadvantages' => '',
+                    'bookingstatus' => $status,
+                    'personinchargeid' => 0,
+                    'otherexaminers' => '',
+                    'coursetemplate' => null,
+                    'notes' => '',
+                    'internalnotes' => '',
+                    'supportpersons' => '',
+                    'extratimebefore' => 0,
+                    'extratimeafter' => 0,
+                    'refcourseid' => null,
+                    'usermodified' => $serviceuser->id,
+                    'timecreated' => time(),
+                    'timemodified' => time(),
+                ]);
+            }
+
+            $pageone = get_overview_queue::execute($bookit->cmid, $workspace, [], [], [], 0, '', '');
+            $pagetwo = get_overview_queue::execute($bookit->cmid, $workspace, [], [], [], 1, '', '');
+
+            $this->assertCount(25, $pageone['items'], $workspace);
+            $this->assertCount(1, $pagetwo['items'], $workspace);
+            $this->assertSame(26, (int)$pageone['paging']['totalcount'], $workspace);
+            $this->assertSame(1, (int)$pagetwo['paging']['currentpage'], $workspace);
+            $this->assertStringContainsString('page=1', $pageone['fragments']['paginghtml'], $workspace);
+            $this->assertStringContainsString('page=0', $pagetwo['fragments']['paginghtml'], $workspace);
+        }
+    }
+
+    /**
+     * All-requests fragments must use page links and preserve reporting filters.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_allrequests_paging_html_uses_page_param(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'All requests paging']);
+        $start = strtotime('+1 day 09:00:00');
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('All paging request %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => $start + ($i * DAYSECS),
+                'endtime' => $start + ($i * DAYSECS) + HOURSECS,
+                'duration' => 60,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => (string)get_admin()->id,
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pageone = get_overview_queue::execute(
+            $bookit->cmid,
+            'allrequests',
+            [],
+            [],
+            [20261],
+            0,
+            date('Y-m-d', $start),
+            date('Y-m-d', $start + (30 * DAYSECS)),
+            'assigned'
+        );
+        $pagetwo = get_overview_queue::execute(
+            $bookit->cmid,
+            'allrequests',
+            [],
+            [],
+            [20261],
+            1,
+            date('Y-m-d', $start),
+            date('Y-m-d', $start + (30 * DAYSECS)),
+            'assigned'
+        );
+
+        $this->assertCount(25, $pageone['items']);
+        $this->assertCount(1, $pagetwo['items']);
+        $this->assertSame(1, (int)$pagetwo['paging']['currentpage']);
+        $this->assertStringContainsString('page=1', $pageone['fragments']['paginghtml']);
+        $this->assertStringContainsString('semesterids', $pageone['fragments']['paginghtml']);
+        $this->assertStringContainsString('assignmentfilter=assigned', $pageone['fragments']['paginghtml']);
+        $this->assertStringNotContainsString('queuepage=', $pageone['fragments']['paginghtml']);
+    }
+
+    /**
+     * History fragments must use page links for terminal reporting results.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_execute_history_paging_html_uses_page_param(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'History paging']);
+        $end = strtotime('-1 day 11:00:00');
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('History paging request %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => $end - ($i * DAYSECS) - HOURSECS,
+                'endtime' => $end - ($i * DAYSECS),
+                'duration' => 60,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pageone = get_overview_queue::execute(
+            $bookit->cmid,
+            'history',
+            [],
+            [],
+            [20261],
+            0,
+            date('Y-m-d', $end - (30 * DAYSECS)),
+            date('Y-m-d', $end)
+        );
+        $pagetwo = get_overview_queue::execute(
+            $bookit->cmid,
+            'history',
+            [],
+            [],
+            [20261],
+            1,
+            date('Y-m-d', $end - (30 * DAYSECS)),
+            date('Y-m-d', $end)
+        );
+
+        $this->assertCount(25, $pageone['items']);
+        $this->assertCount(1, $pagetwo['items']);
+        $this->assertSame(1, (int)$pagetwo['paging']['currentpage']);
+        $this->assertStringContainsString('page=1', $pageone['fragments']['paginghtml']);
+        $this->assertStringNotContainsString('queuepage=', $pageone['fragments']['paginghtml']);
     }
 }

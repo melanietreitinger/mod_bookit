@@ -62,7 +62,7 @@ class update_event_booking_status extends external_api {
                 VALUE_DEFAULT,
                 'myevents'
             ),
-            'page' => new external_value(PARAM_INT, 'Request workspace page to preserve', VALUE_DEFAULT, 1),
+            'page' => new external_value(PARAM_INT, 'Request workspace page to preserve', VALUE_DEFAULT, 0),
         ]);
     }
 
@@ -76,7 +76,7 @@ class update_event_booking_status extends external_api {
      * @param int $page Request workspace page to return to
      * @return array
      */
-    public static function execute(int $cmid, int $eventid, int $status, string $tab = 'myevents', int $page = 1): array {
+    public static function execute(int $cmid, int $eventid, int $status, string $tab = 'myevents', int $page = 0): array {
         global $DB, $OUTPUT, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
@@ -169,11 +169,11 @@ class update_event_booking_status extends external_api {
                 && event_access_manager::can_manage_open_requests($context) => 'allrequests',
             default => 'myevents',
         };
-        $redirecturl = (new \moodle_url('/mod/bookit/overview.php', [
+        $redirectparams = [
             'id' => $cm->id,
             'tab' => $redirecttab,
-            'queuepage' => max(1, (int)$params['page']),
-        ]))->out(false);
+        ];
+        $page = max(0, (int)$params['page']);
 
         $queuepayload = null;
         $queueworkspace = $redirecttab;
@@ -188,14 +188,15 @@ class update_event_booking_status extends external_api {
                 ['workspace' => $queueworkspace],
                 null,
                 null,
-                max(1, (int)$params['page'])
+                $page
             );
+            $page = (int)$queuepayload['paging']['currentpage'];
 
             $paginghtml = '';
             if (!empty($queuepayload['paging']['haspaging'])) {
                 $pagingbar = new \paging_bar(
                     (int)$queuepayload['paging']['totalcount'],
-                    max(0, (int)$queuepayload['paging']['currentpage'] - 1),
+                    (int)$queuepayload['paging']['currentpage'],
                     (int)$queuepayload['paging']['perpage'],
                     new \moodle_url('/mod/bookit/overview.php', [
                         'id' => $cm->id,
@@ -204,8 +205,13 @@ class update_event_booking_status extends external_api {
                 );
                 $paginghtml = $OUTPUT->render($pagingbar);
             }
+            unset($queuepayload['events']);
             $queuepayload['fragments'] = ['paginghtml' => $paginghtml];
         }
+        if ($page > 0) {
+            $redirectparams['page'] = $page;
+        }
+        $redirecturl = (new \moodle_url('/mod/bookit/overview.php', $redirectparams))->out(false);
 
         $response = [
             'status' => $effectivestatus,
@@ -240,6 +246,7 @@ class update_event_booking_status extends external_api {
                     'semesterids' => new \core_external\external_multiple_structure(new external_value(PARAM_INT)),
                     'search' => new external_value(PARAM_RAW_TRIMMED, 'Search filter'),
                     'workspace' => new external_value(PARAM_ALPHAEXT, 'Workspace filter'),
+                    'assignmentfilter' => new external_value(PARAM_ALPHA, 'Assignment filter', VALUE_OPTIONAL),
                     'exportmode' => new external_value(PARAM_BOOL, 'Export mode'),
                 ]),
                 'items' => new \core_external\external_multiple_structure(new external_single_structure([

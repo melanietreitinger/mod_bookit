@@ -64,9 +64,10 @@ class get_overview_queue extends external_api {
                 VALUE_DEFAULT,
                 []
             ),
-            'page' => new external_value(PARAM_INT, 'Request workspace page', VALUE_DEFAULT, 1),
+            'page' => new external_value(PARAM_INT, 'Request workspace page', VALUE_DEFAULT, 0),
             'reportstart' => new external_value(PARAM_TEXT, 'Reporting range start', VALUE_DEFAULT, ''),
             'reportend' => new external_value(PARAM_TEXT, 'Reporting range end', VALUE_DEFAULT, ''),
+            'assignmentfilter' => new external_value(PARAM_ALPHA, 'Assignment filter for all requests', VALUE_DEFAULT, 'all'),
         ]);
     }
 
@@ -81,6 +82,7 @@ class get_overview_queue extends external_api {
      * @param int $page
      * @param string $reportstart
      * @param string $reportend
+     * @param string $assignmentfilter
      * @return array
      */
     public static function execute(
@@ -89,9 +91,10 @@ class get_overview_queue extends external_api {
         array $bookingstatuses = [],
         array $facultyids = [],
         array $semesterids = [],
-        int $page = 1,
+        int $page = 0,
         string $reportstart = '',
-        string $reportend = ''
+        string $reportend = '',
+        string $assignmentfilter = 'all'
     ): array {
         global $OUTPUT, $USER;
 
@@ -104,6 +107,7 @@ class get_overview_queue extends external_api {
             'page' => $page,
             'reportstart' => $reportstart,
             'reportend' => $reportend,
+            'assignmentfilter' => $assignmentfilter,
         ]);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
@@ -123,8 +127,8 @@ class get_overview_queue extends external_api {
                     'rejectedrequestcount' => 0,
                 ],
                 'paging' => [
-                    'requestedpage' => 1,
-                    'currentpage' => 1,
+                    'requestedpage' => 0,
+                    'currentpage' => 0,
                     'perpage' => 25,
                     'totalpages' => 1,
                     'totalcount' => 0,
@@ -152,8 +156,8 @@ class get_overview_queue extends external_api {
                     'rejectedrequestcount' => 0,
                 ],
                 'paging' => [
-                    'requestedpage' => 1,
-                    'currentpage' => 1,
+                    'requestedpage' => 0,
+                    'currentpage' => 0,
                     'perpage' => 25,
                     'totalpages' => 1,
                     'totalcount' => 0,
@@ -173,6 +177,7 @@ class get_overview_queue extends external_api {
             'semesterids' => $params['semesterids'],
             'start' => $params['reportstart'],
             'end' => $params['reportend'],
+            'assignmentfilter' => $params['assignmentfilter'],
         ]);
 
         $payload = event_manager::get_governed_overview_queue(
@@ -187,17 +192,26 @@ class get_overview_queue extends external_api {
 
         $paginghtml = '';
         if (!empty($payload['paging']['haspaging'])) {
+            $navigationparams = [];
+            if (in_array($params['workspace'], ['allrequests', 'history'], true)) {
+                $navigationparams = [
+                    'bookingstatusfilter' => $params['bookingstatuses'],
+                    'facultyid' => $params['facultyids'][0] ?? null,
+                    'semesterids' => $params['semesterids'],
+                    'reportstart' => $params['reportstart'] ?: null,
+                    'reportend' => $params['reportend'] ?: null,
+                    'assignmentfilter' => $params['workspace'] === 'allrequests' ? $params['assignmentfilter'] : null,
+                ];
+            }
             $pagingbar = new \paging_bar(
                 (int)$payload['paging']['totalcount'],
-                max(0, (int)$payload['paging']['currentpage'] - 1),
+                (int)$payload['paging']['currentpage'],
                 (int)$payload['paging']['perpage'],
-                new \moodle_url('/mod/bookit/overview.php', [
-                    'id' => $cm->id,
-                    'tab' => $params['workspace'],
-                ])
+                new \moodle_url(tabs::build_overview_url((int)$cm->id, $params['workspace'], $navigationparams))
             );
             $paginghtml = $OUTPUT->render($pagingbar);
         }
+        unset($payload['events']);
         $payload['fragments'] = ['paginghtml' => $paginghtml];
 
         return event_access_manager::build_governed_empty_response(
@@ -227,6 +241,7 @@ class get_overview_queue extends external_api {
                 'semesterids' => new external_multiple_structure(new external_value(PARAM_INT)),
                 'search' => new external_value(PARAM_RAW_TRIMMED, 'Search filter'),
                 'workspace' => new external_value(PARAM_ALPHAEXT, 'Workspace filter'),
+                'assignmentfilter' => new external_value(PARAM_ALPHA, 'Assignment filter', VALUE_OPTIONAL),
                 'exportmode' => new external_value(PARAM_BOOL, 'Export mode'),
             ]),
             'workspace' => new external_value(PARAM_ALPHA, 'Workspace name'),

@@ -3316,4 +3316,662 @@ final class event_manager_test extends advanced_testcase {
         $this->assertCount(1, $payload['items']);
         $this->assertSame('Support visible open request', $payload['items'][0]['name']);
     }
+
+    /**
+     * Support on Site history pagination must stay scoped to assigned read-only rows.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_support_history_is_scoped_and_read_only(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Support history pagination',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        $supportroleid = $supportrole
+            ? (int)$supportrole->id
+            : \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
+
+        $supportuser = $this->getDataGenerator()->create_user();
+        $otheruser = $this->getDataGenerator()->create_user();
+        \role_assign($supportroleid, $supportuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($supportuser);
+
+        $start = strtotime('-40 days 09:00:00');
+        for ($i = 1; $i <= 26; $i++) {
+            $this->create_event_record([
+                'name' => sprintf('Support assigned history %02d', $i),
+                'starttime' => $start + ($i * DAYSECS),
+                'endtime' => $start + ($i * DAYSECS) + HOURSECS,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'supportpersons' => (string)$supportuser->id,
+                'usermodified' => (int)$supportuser->id,
+            ]);
+        }
+        for ($i = 1; $i <= 3; $i++) {
+            $this->create_event_record([
+                'name' => sprintf('Support hidden history %02d', $i),
+                'starttime' => $start + (($i + 30) * DAYSECS),
+                'endtime' => $start + (($i + 30) * DAYSECS) + HOURSECS,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'supportpersons' => (string)$otheruser->id,
+                'usermodified' => (int)$otheruser->id,
+            ]);
+        }
+
+        $filters = ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED]];
+        $pagezero = event_manager::get_governed_overview_queue(
+            $context,
+            (int)$supportuser->id,
+            'history',
+            $filters,
+            $start,
+            strtotime('+1 day 23:59:59'),
+            0
+        );
+        $pageone = event_manager::get_governed_overview_queue(
+            $context,
+            (int)$supportuser->id,
+            'history',
+            $filters,
+            $start,
+            strtotime('+1 day 23:59:59'),
+            1
+        );
+
+        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
+        $this->assertCount(25, $pagezero['items']);
+        $this->assertCount(1, $pageone['items']);
+        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
+        foreach (array_merge($pagezero['items'], $pageone['items']) as $item) {
+            $this->assertStringContainsString('Support assigned history', $item['name']);
+            $this->assertStringNotContainsString('mod-bookit-status-select', $item['statuscellhtml']);
+        }
+    }
+
+    /**
+     * Service-Team bounded reads must preserve assignment filtering and queue status scopes.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_service_team_filters_and_queue_statuses(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Service queue visibility',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+        $adminid = (int)get_admin()->id;
+        $otheruser = $this->getDataGenerator()->create_user();
+        $start = strtotime('+5 days 09:00:00');
+
+        for ($i = 1; $i <= 26; $i++) {
+            $this->create_event_record([
+                'name' => sprintf('Service assigned request %02d', $i),
+                'starttime' => $start + ($i * HOURSECS),
+                'endtime' => $start + ($i * HOURSECS) + HOURSECS,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'supportpersons' => (string)$adminid,
+                'usermodified' => $adminid,
+            ]);
+        }
+        for ($i = 1; $i <= 2; $i++) {
+            $this->create_event_record([
+                'name' => sprintf('Service unassigned request %02d', $i),
+                'starttime' => $start + (($i + 30) * HOURSECS),
+                'endtime' => $start + (($i + 30) * HOURSECS) + HOURSECS,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'supportpersons' => (string)$otheruser->id,
+                'usermodified' => (int)$otheruser->id,
+            ]);
+            $this->create_event_record([
+                'name' => sprintf('Service confirmed request %02d', $i),
+                'starttime' => $start + (($i + 40) * HOURSECS),
+                'endtime' => $start + (($i + 40) * HOURSECS) + HOURSECS,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'supportpersons' => '',
+                'usermodified' => $adminid,
+            ]);
+            $this->create_event_record([
+                'name' => sprintf('Service rejected request %02d', $i),
+                'starttime' => $start + (($i + 50) * HOURSECS),
+                'endtime' => $start + (($i + 50) * HOURSECS) + HOURSECS,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'supportpersons' => '',
+                'usermodified' => $adminid,
+            ]);
+        }
+
+        $assigned = event_manager::get_governed_overview_queue(
+            $context,
+            $adminid,
+            'allrequests',
+            ['assignmentfilter' => 'assigned'],
+            $start,
+            $start + (60 * HOURSECS),
+            1
+        );
+        $open = event_manager::get_governed_overview_queue($context, $adminid, 'openrequests');
+        $confirmed = event_manager::get_governed_overview_queue($context, $adminid, 'confirmedrequests');
+        $rejected = event_manager::get_governed_overview_queue($context, $adminid, 'rejectedcancelled');
+
+        $this->assertSame(26, (int)$assigned['paging']['totalcount']);
+        $this->assertCount(1, $assigned['items']);
+        $this->assertStringContainsString('Service assigned request', $assigned['items'][0]['name']);
+        $this->assertSame(28, (int)$open['paging']['totalcount']);
+        foreach ($open['items'] as $item) {
+            $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$item['bookingstatus']);
+        }
+        $this->assertSame(2, (int)$confirmed['paging']['totalcount']);
+        $this->assertSame(2, (int)$rejected['paging']['totalcount']);
+    }
+
+    /**
+     * Governed queue pagination must slice 26 open requests across zero-based pages.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_pagination_slices_twenty_six_open_requests(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Queue pagination slice test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Queue slice %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-05-20 09:00:00') + $i,
+                'endtime' => strtotime('2026-05-20 11:00:00') + $i,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pagezero = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'openrequests',
+            [],
+            null,
+            null,
+            0
+        );
+        $pageone = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'openrequests',
+            [],
+            null,
+            null,
+            1
+        );
+        $clamped = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'openrequests',
+            [],
+            null,
+            null,
+            99
+        );
+        $negative = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'openrequests',
+            [],
+            null,
+            null,
+            -1
+        );
+
+        $this->assertCount(25, $pagezero['items']);
+        $this->assertSame(0, (int)$pagezero['paging']['currentpage']);
+        $this->assertTrue($pagezero['paging']['haspaging']);
+
+        $this->assertCount(1, $pageone['items']);
+        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
+        $this->assertNotSame($pagezero['items'][0]['name'], $pageone['items'][0]['name']);
+
+        $this->assertSame(1, (int)$clamped['paging']['currentpage']);
+        $this->assertTrue($clamped['paging']['adjusted']);
+
+        $this->assertSame(0, (int)$negative['paging']['currentpage']);
+        $this->assertSame(0, (int)$negative['paging']['requestedpage']);
+    }
+
+    /**
+     * Governed all-requests pagination must slice 26 reporting events across zero-based pages.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_pagination_allrequests_twenty_six_items(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'All requests pagination test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+        $start = strtotime('+1 day 09:00:00');
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('All requests slice %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => $start + ($i * DAYSECS),
+                'endtime' => $start + ($i * DAYSECS) + HOURSECS,
+                'duration' => 60,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pagezero = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'allrequests',
+            [],
+            $start,
+            $start + (30 * DAYSECS),
+            0
+        );
+        $pageone = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'allrequests',
+            [],
+            $start,
+            $start + (30 * DAYSECS),
+            1
+        );
+        $clamped = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'allrequests',
+            [],
+            $start,
+            $start + (30 * DAYSECS),
+            99
+        );
+        $negative = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'allrequests',
+            [],
+            $start,
+            $start + (30 * DAYSECS),
+            -1
+        );
+
+        $this->assertCount(25, $pagezero['items']);
+        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
+        $this->assertSame(0, (int)$pagezero['paging']['currentpage']);
+        $this->assertCount(1, $pageone['items']);
+        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
+        $this->assertNotSame($pagezero['items'][0]['name'], $pageone['items'][0]['name']);
+        $this->assertSame(1, (int)$clamped['paging']['currentpage']);
+        $this->assertTrue($clamped['paging']['adjusted']);
+        $this->assertSame(0, (int)$negative['paging']['currentpage']);
+        $this->assertSame(0, (int)$negative['paging']['requestedpage']);
+    }
+
+    /**
+     * Governed history pagination must slice 26 terminal reporting events across zero-based pages.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_pagination_history_twenty_six_items(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'History pagination test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+        $end = strtotime('-1 day 11:00:00');
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('History slice %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => $end - ($i * DAYSECS) - HOURSECS,
+                'endtime' => $end - ($i * DAYSECS),
+                'duration' => 60,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pagezero = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'history',
+            [],
+            $end - (30 * DAYSECS),
+            $end,
+            0
+        );
+        $pageone = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'history',
+            [],
+            $end - (30 * DAYSECS),
+            $end,
+            1
+        );
+
+        $this->assertCount(25, $pagezero['items']);
+        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
+        $this->assertSame(0, (int)$pagezero['paging']['currentpage']);
+        $this->assertCount(1, $pageone['items']);
+        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
+        $this->assertNotSame($pagezero['items'][0]['name'], $pageone['items'][0]['name']);
+    }
+
+    /**
+     * Governed queue paging metadata must expose bounded-read page state for edge counts.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_paging_boundaries_expose_bounded_metadata(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $emptybookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Empty paging boundary',
+        ]);
+        $emptycontext = context_module::instance($emptybookit->cmid);
+
+        $empty = event_manager::get_governed_overview_queue(
+            $emptycontext,
+            (int)get_admin()->id,
+            'openrequests',
+            [],
+            null,
+            null,
+            5
+        );
+
+        $this->assertSame(0, (int)$empty['paging']['totalcount']);
+        $this->assertSame(0, (int)$empty['paging']['currentpage']);
+        $this->assertSame(0, (int)$empty['paging']['offset']);
+        $this->assertFalse($empty['paging']['haspaging']);
+        $this->assertTrue($empty['paging']['adjusted']);
+
+        $fullbookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Full paging boundary',
+        ]);
+        $fullcontext = context_module::instance($fullbookit->cmid);
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Boundary open %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-06-20 09:00:00') + $i,
+                'endtime' => strtotime('2026-06-20 11:00:00') + $i,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $firstpage = event_manager::get_governed_overview_queue(
+            $fullcontext,
+            (int)get_admin()->id,
+            'openrequests',
+            [],
+            null,
+            null,
+            0,
+            25
+        );
+        $secondpage = event_manager::get_governed_overview_queue(
+            $fullcontext,
+            (int)get_admin()->id,
+            'openrequests',
+            [],
+            null,
+            null,
+            1,
+            25
+        );
+
+        $this->assertSame(26, (int)$firstpage['paging']['totalcount']);
+        $this->assertSame(0, (int)$firstpage['paging']['offset']);
+        $this->assertTrue($firstpage['paging']['haspaging']);
+        $this->assertCount(25, $firstpage['events']);
+
+        $this->assertSame(1, (int)$secondpage['paging']['currentpage']);
+        $this->assertSame(25, (int)$secondpage['paging']['offset']);
+        $this->assertCount(1, $secondpage['events']);
+    }
+
+    /**
+     * Governed confirmed requests pagination must page 26 accepted bookings.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_pagination_confirmedrequests_twenty_six_items(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Confirmed pagination test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Confirmed slice %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('+10 days 09:00:00') + $i,
+                'endtime' => strtotime('+10 days 11:00:00') + $i,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pagezero = event_manager::get_governed_overview_queue($context, (int)get_admin()->id, 'confirmedrequests');
+        $pageone = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'confirmedrequests',
+            [],
+            null,
+            null,
+            1
+        );
+
+        $this->assertCount(25, $pagezero['items']);
+        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
+        $this->assertCount(1, $pageone['items']);
+        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
+        $this->assertSame(25, (int)$pageone['paging']['offset']);
+    }
+
+    /**
+     * Governed rejected/cancelled pagination must page 26 rejected requests.
+     *
+     * @return void
+     */
+    public function test_get_governed_overview_queue_pagination_rejectedcancelled_twenty_six_items(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Rejected pagination test',
+        ]);
+        $context = context_module::instance($bookit->cmid);
+
+        for ($i = 1; $i <= 26; $i++) {
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Rejected slice %02d', $i),
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('-10 days 09:00:00') + $i,
+                'endtime' => strtotime('-10 days 11:00:00') + $i,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ]);
+        }
+
+        $pagezero = event_manager::get_governed_overview_queue($context, (int)get_admin()->id, 'rejectedcancelled');
+        $pageone = event_manager::get_governed_overview_queue(
+            $context,
+            (int)get_admin()->id,
+            'rejectedcancelled',
+            [],
+            null,
+            null,
+            1
+        );
+
+        $this->assertCount(25, $pagezero['items']);
+        $this->assertSame(26, (int)$pagezero['paging']['totalcount']);
+        $this->assertCount(1, $pageone['items']);
+        $this->assertSame(1, (int)$pageone['paging']['currentpage']);
+        $this->assertSame(25, (int)$pageone['paging']['offset']);
+    }
 }

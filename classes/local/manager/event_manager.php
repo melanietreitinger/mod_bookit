@@ -259,6 +259,76 @@ class event_manager {
     }
 
     /**
+     * Clamp a zero-based overview page index to the available page range.
+     *
+     * @param int $requestedpage Zero-based page index from HTTP or API.
+     * @param int $totalpages Total number of pages (at least 1).
+     * @return int Effective zero-based page index.
+     */
+    public static function normalize_overview_page_index(int $requestedpage, int $totalpages): int {
+        if ($totalpages <= 1) {
+            return 0;
+        }
+
+        $requestedpage = max(0, $requestedpage);
+        return min($requestedpage, $totalpages - 1);
+    }
+
+    /**
+     * Clamp a zero-based queue page index to the available page range.
+     *
+     * @param int $requestedpage Zero-based page index from HTTP or API.
+     * @param int $totalpages Total number of pages (at least 1).
+     * @return int Effective zero-based page index.
+     */
+    public static function normalize_queue_page_index(int $requestedpage, int $totalpages): int {
+        return self::normalize_overview_page_index($requestedpage, $totalpages);
+    }
+
+    /**
+     * Build the effective page state for governed overview reads.
+     *
+     * @param int $requestedpage Zero-based requested page.
+     * @param int $totalcount Full logical match count before page limiting.
+     * @param int $perpage Page size.
+     * @return array
+     */
+    private static function build_overview_page_state(int $requestedpage, int $totalcount, int $perpage): array {
+        $requestedpage = max(0, $requestedpage);
+        $perpage = max(1, $perpage);
+        $totalpages = max(1, (int)ceil(max(0, $totalcount) / $perpage));
+        $currentpage = self::normalize_overview_page_index($requestedpage, $totalpages);
+        $offset = $currentpage * $perpage;
+
+        return [
+            'requestedpage' => $requestedpage,
+            'currentpage' => $currentpage,
+            'perpage' => $perpage,
+            'totalpages' => $totalpages,
+            'totalcount' => max(0, $totalcount),
+            'offset' => $offset,
+            'hasprevious' => $currentpage > 0,
+            'hasnext' => $currentpage < ($totalpages - 1),
+            'haspaging' => $totalcount > $perpage,
+            'adjusted' => $currentpage !== $requestedpage,
+        ];
+    }
+
+    /**
+     * Slice a non-manager governed result after existing access helpers have applied per-user rules.
+     *
+     * Service-Team reporting and queue tabs use SQL-bounded reads. This fallback is intentionally limited to
+     * non-manager overview paths whose predicates still depend on PHP access-helper semantics.
+     *
+     * @param array $events Filtered event rows.
+     * @param array $paging Effective page state.
+     * @return array Visible event rows.
+     */
+    private static function slice_non_manager_overview_events(array $events, array $paging): array {
+        return array_slice(array_values($events), (int)$paging['offset'], (int)$paging['perpage']);
+    }
+
+    /**
      * Return the governed overview queue payload for the given workspace.
      *
      * @param context_module $context
@@ -279,7 +349,7 @@ class event_manager {
         array $filters = [],
         ?int $reportstart = null,
         ?int $reportend = null,
-        int $page = 1,
+        int $page = 0,
         int $perpage = 25
     ): array {
         $workspace = tabs::validate_workspace_tab($workspace);
@@ -288,7 +358,8 @@ class event_manager {
             'workspace' => $workspace,
         ]));
         $workspace = $filters['workspace'] ?: $workspace;
-        $page = max(1, $page);
+        $assignmentfilter = $filters['assignmentfilter'] === 'assigned' ? 'assigned' : 'all';
+        $requestedpage = max(0, $page);
         $perpage = max(1, $perpage);
 
         $canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
@@ -297,11 +368,23 @@ class event_manager {
         $showreportfilters = $canviewrequestworkspace || $observerrestricted;
 
         if ($workspace === 'openrequests') {
-            $events = $canviewrequestworkspace ? self::get_open_requests() : [];
+            $totalcount = $canviewrequestworkspace ? self::count_open_requests() : 0;
+            $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
+            $events = $canviewrequestworkspace
+                ? self::get_open_requests_page($paging['offset'], $paging['perpage'])
+                : [];
         } else if ($workspace === 'confirmedrequests') {
-            $events = $canviewrequestworkspace ? self::get_confirmed_requests() : [];
+            $totalcount = $canviewrequestworkspace ? self::count_confirmed_requests() : 0;
+            $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
+            $events = $canviewrequestworkspace
+                ? self::get_confirmed_requests_page($paging['offset'], $paging['perpage'])
+                : [];
         } else if ($workspace === 'rejectedcancelled') {
-            $events = $canviewrequestworkspace ? self::get_rejected_requests() : [];
+            $totalcount = $canviewrequestworkspace ? self::count_rejected_requests() : 0;
+            $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
+            $events = $canviewrequestworkspace
+                ? self::get_rejected_requests_page($paging['offset'], $paging['perpage'])
+                : [];
         } else {
             [$defaultstart, $defaultend] = self::get_reporting_default_range(
                 null,
@@ -319,7 +402,23 @@ class event_manager {
             );
             if ($showreportfilters) {
                 $semesterids = self::resolve_effective_semester_filter_ids($semesterids, !empty($filters['semesterids']));
-                $events = self::get_events_for_reporting($context, $userid, $reportstart, $reportend, $semesterids);
+                if ($canmanageopenrequests) {
+                    [$where, $queryparams] = self::build_reporting_overview_sql_filter(
+                        $workspace,
+                        $filters,
+                        $reportstart,
+                        $reportend,
+                        $semesterids,
+                        $bookingstatuses,
+                        $assignmentfilter,
+                        $userid
+                    );
+                    $totalcount = self::count_reporting_overview_events($where, $queryparams);
+                    $paging = self::build_overview_page_state($requestedpage, $totalcount, $perpage);
+                    $events = self::get_reporting_overview_events_page($where, $queryparams, $paging['offset'], $paging['perpage']);
+                } else {
+                    $events = self::get_events_for_reporting($context, $userid, $reportstart, $reportend, $semesterids);
+                }
             } else {
                 $events = self::get_events_for_examiner($userid);
             }
@@ -334,27 +433,35 @@ class event_manager {
                 ],
                 $workspace === 'history'
             );
+            if ($workspace === 'allrequests' && $assignmentfilter === 'assigned') {
+                if (!$canmanageopenrequests) {
+                    $events = self::filter_events_by_assignment($events, $userid, $assignmentfilter);
+                }
+            }
+            if (!$canmanageopenrequests) {
+                $events = self::sort_overview_events_by_starttime($events, true);
+            }
         }
+        $filters['assignmentfilter'] = $assignmentfilter;
 
-        $totalcount = count($events);
+        $totalcount ??= count($events);
         $openrequestcount = $workspace === 'openrequests' ? $totalcount : (
-            $canviewrequestworkspace ? count(self::get_open_requests()) : 0
+            $canviewrequestworkspace ? self::count_open_requests() : 0
         );
         $rejectedrequestcount = $workspace === 'rejectedcancelled' ? $totalcount : (
-            $canviewrequestworkspace ? count(self::get_rejected_requests()) : 0
+            $canviewrequestworkspace ? self::count_rejected_requests() : 0
         );
         $confirmedrequestcount = $workspace === 'confirmedrequests' ? $totalcount : (
             $canviewrequestworkspace ? self::count_confirmed_requests() : 0
         );
-        $currentpage = 1;
-        $totalpages = 1;
-        $haspaging = false;
-        if (in_array($workspace, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)) {
-            $totalpages = max(1, (int)ceil($totalcount / $perpage));
-            $currentpage = min($page, $totalpages);
-            $offset = ($currentpage - 1) * $perpage;
-            $events = array_slice(array_values($events), $offset, $perpage);
-            $haspaging = $totalcount > $perpage;
+        $paging ??= self::build_overview_page_state($requestedpage, $totalcount, $perpage);
+        if (in_array($workspace, tabs::WORKSPACE_TABS, true)) {
+            if (
+                !in_array($workspace, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
+                    && !($canmanageopenrequests && in_array($workspace, ['allrequests', 'history'], true))
+            ) {
+                $events = self::slice_non_manager_overview_events($events, $paging);
+            }
         }
 
         $historyentries = self::get_latest_booking_history_entries(array_map(
@@ -364,6 +471,7 @@ class event_manager {
         return [
             'workspace' => $workspace,
             'filters' => $filters,
+            'events' => array_values($events),
             'items' => array_map(
                 static fn(stdClass $event): array => overview_queue_read_mapper::map(
                     $event,
@@ -381,17 +489,7 @@ class event_manager {
                 'confirmedrequestcount' => $confirmedrequestcount,
                 'rejectedrequestcount' => $rejectedrequestcount,
             ],
-            'paging' => [
-                'requestedpage' => $page,
-                'currentpage' => $currentpage,
-                'perpage' => $perpage,
-                'totalpages' => $totalpages,
-                'totalcount' => $totalcount,
-                'hasprevious' => $currentpage > 1,
-                'hasnext' => $currentpage < $totalpages,
-                'haspaging' => $haspaging,
-                'adjusted' => $currentpage !== $page,
-            ],
+            'paging' => $paging,
         ];
     }
 
@@ -425,6 +523,40 @@ class event_manager {
         ";
 
         return $DB->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Return a bounded page of open booking requests for service-team overview.
+     *
+     * @param int $offset Zero-based SQL offset.
+     * @param int $limit Maximum number of records.
+     * @return array
+     * @throws dml_exception
+     */
+    private static function get_open_requests_page(int $offset, int $limit): array {
+        global $DB;
+
+        [$statussql, $params] = $DB->get_in_or_equal(event_access_manager::get_open_request_statuses(), SQL_PARAMS_NAMED);
+
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            WHERE e.bookingstatus $statussql
+            ORDER BY e.starttime DESC, e.id DESC
+        ";
+
+        return $DB->get_records_sql($sql, $params, max(0, $offset), max(1, $limit));
     }
 
     /**
@@ -1051,6 +1183,153 @@ class event_manager {
     }
 
     /**
+     * Build SQL filters for service-team governed reporting tabs.
+     *
+     * @param string $workspace
+     * @param array $filters
+     * @param int $reportstart
+     * @param int $reportend
+     * @param int[] $semesterids
+     * @param int[] $bookingstatuses
+     * @param string $assignmentfilter
+     * @param int $userid
+     * @return array
+     * @throws dml_exception
+     */
+    private static function build_reporting_overview_sql_filter(
+        string $workspace,
+        array $filters,
+        int $reportstart,
+        int $reportend,
+        array $semesterids,
+        array $bookingstatuses,
+        string $assignmentfilter,
+        int $userid
+    ): array {
+        global $DB;
+
+        $params = [
+            'reportstart' => $reportstart,
+            'reportend' => $reportend,
+            'referencetime' => time(),
+        ];
+        $conditions = [
+            'e.endtime >= :reportstart',
+            'e.starttime <= :reportend',
+        ];
+
+        if ($workspace === 'history') {
+            $conditions[] = '(e.bookingstatus IN (:historycanceled, :historyrejected) OR e.endtime < :referencetime)';
+            $params['historycanceled'] = event_access_manager::BOOKINGSTATUS_CANCELED;
+            $params['historyrejected'] = event_access_manager::BOOKINGSTATUS_REJECTED;
+        } else if (empty($bookingstatuses)) {
+            $conditions[] = 'e.bookingstatus NOT IN (:activecanceled, :activerejected)';
+            $conditions[] = 'e.endtime >= :referencetime';
+            $params['activecanceled'] = event_access_manager::BOOKINGSTATUS_CANCELED;
+            $params['activerejected'] = event_access_manager::BOOKINGSTATUS_REJECTED;
+        }
+
+        if (!empty($bookingstatuses)) {
+            [$statussql, $statusparams] = $DB->get_in_or_equal($bookingstatuses, SQL_PARAMS_NAMED, 'status');
+            $conditions[] = "e.bookingstatus $statussql";
+            $params += $statusparams;
+        }
+
+        $facultyids = self::normalise_filter_ids($filters['facultyids'] ?? []);
+        if (!empty($facultyids)) {
+            [$facultysql, $facultyparams] = $DB->get_in_or_equal($facultyids, SQL_PARAMS_NAMED, 'faculty');
+            $conditions[] = "e.institutionid $facultysql";
+            $params += $facultyparams;
+        }
+
+        $selectedsemesters = array_values(array_filter($semesterids, static fn(int $value): bool => $value !== 0));
+        $includelegacysemester = in_array(0, $semesterids, true);
+        if (!empty($selectedsemesters) || $includelegacysemester) {
+            $semesterconditions = [];
+            if (!empty($selectedsemesters)) {
+                [$semestersql, $semesterparams] = $DB->get_in_or_equal($selectedsemesters, SQL_PARAMS_NAMED, 'semester');
+                $semesterconditions[] = "e.semester $semestersql";
+                $params += $semesterparams;
+            }
+            if ($includelegacysemester) {
+                $semesterconditions[] = 'COALESCE(e.semester, 0) = 0';
+            }
+            $conditions[] = '(' . implode(' OR ', $semesterconditions) . ')';
+        }
+
+        if ($workspace === 'allrequests' && $assignmentfilter === 'assigned') {
+            $supportwrapped = $DB->sql_concat("','", "COALESCE(e.supportpersons, '')", "','");
+            $conditions[] = "(e.supportpersons IS NOT NULL AND e.supportpersons <> '' AND " .
+                $DB->sql_like($supportwrapped, ':supportuserid', false) . ")";
+            $params['supportuserid'] = '%,' . $userid . ',%';
+        }
+
+        return [implode(' AND ', $conditions), $params];
+    }
+
+    /**
+     * Count service-team reporting events for a governed overview filter.
+     *
+     * @param string $where
+     * @param array $params
+     * @return int
+     * @throws dml_exception
+     */
+    private static function count_reporting_overview_events(string $where, array $params): int {
+        global $DB;
+
+        return (int)$DB->get_field_sql(
+            "
+                SELECT COUNT(1)
+                  FROM {bookit_event} e
+             LEFT JOIN {user} creator ON creator.id = e.usermodified
+                 WHERE $where
+            ",
+            $params
+        );
+    }
+
+    /**
+     * Read a bounded page of service-team reporting events.
+     *
+     * @param string $where
+     * @param array $params
+     * @param int $offset
+     * @param int $limit
+     * @return array
+     * @throws dml_exception
+     */
+    private static function get_reporting_overview_events_page(string $where, array $params, int $offset, int $limit): array {
+        global $DB;
+
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.institutionid,
+                e.semester,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                creator.firstname AS creatorfirstname,
+                creator.lastname AS creatorlastname,
+                creator.deleted AS creatordeleted,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            LEFT JOIN {user} creator ON creator.id = e.usermodified
+            WHERE $where
+            ORDER BY e.starttime DESC, e.id DESC
+        ";
+
+        return $DB->get_records_sql($sql, $params, max(0, $offset), max(1, $limit));
+    }
+
+    /**
      * Filter overview events by active/history split and optional status, faculty and semester filters.
      *
      * @param stdClass[] $events
@@ -1157,6 +1436,7 @@ class event_manager {
      */
     public static function get_rejected_requests(?int $referencetime = null): array {
         global $DB;
+        unset($referencetime);
 
         $sql = "
             SELECT
@@ -1172,25 +1452,90 @@ class event_manager {
                 r.name AS room
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE e.bookingstatus IN (:rejected, :canceled)
+            WHERE " . self::get_rejected_requests_where_sql() . "
             ORDER BY e.starttime DESC, e.id DESC
         ";
 
-        $records = $DB->get_records_sql($sql, [
+        return $DB->get_records_sql($sql, self::get_rejected_requests_params());
+    }
+
+    /**
+     * Return a bounded page of rejected/cancelled requests in the dedicated service-team queue.
+     *
+     * @param int $offset Zero-based SQL offset.
+     * @param int $limit Maximum number of records.
+     * @return array
+     * @throws dml_exception
+     */
+    private static function get_rejected_requests_page(int $offset, int $limit): array {
+        global $DB;
+
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            WHERE " . self::get_rejected_requests_where_sql() . "
+            ORDER BY e.starttime DESC, e.id DESC
+        ";
+
+        return $DB->get_records_sql($sql, self::get_rejected_requests_params(), max(0, $offset), max(1, $limit));
+    }
+
+    /**
+     * SQL condition for rejected/cancelled queue membership.
+     *
+     * @return string
+     */
+    private static function get_rejected_requests_where_sql(): string {
+        return "
+            (
+                e.bookingstatus = :rejected
+                OR (
+                    e.bookingstatus = :canceled
+                    AND EXISTS (
+                        SELECT 1
+                          FROM {bookit_event_history} h
+                         WHERE h.eventid = e.id
+                           AND h.newstatus = :historycanceled
+                           AND (h.usermodified = 0 OR h.usermodified = e.usermodified)
+                           AND NOT EXISTS (
+                               SELECT 1
+                                 FROM {bookit_event_history} newer
+                                WHERE newer.eventid = e.id
+                                  AND newer.newstatus = :newerhistorycanceled
+                                  AND (
+                                      newer.timecreated > h.timecreated
+                                      OR (newer.timecreated = h.timecreated AND newer.id > h.id)
+                                  )
+                           )
+                    )
+                )
+            )
+        ";
+    }
+
+    /**
+     * SQL params for rejected/cancelled queue membership.
+     *
+     * @return array
+     */
+    private static function get_rejected_requests_params(): array {
+        return [
             'rejected' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'canceled' => event_access_manager::BOOKINGSTATUS_CANCELED,
-        ]);
-
-        return array_values(array_filter(
-            $records,
-            static function (stdClass $event): bool {
-                if ((int)($event->bookingstatus ?? -1) === event_access_manager::BOOKINGSTATUS_REJECTED) {
-                    return true;
-                }
-
-                return event_access_manager::is_booking_person_canceled($event);
-            }
-        ));
+            'historycanceled' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'newerhistorycanceled' => event_access_manager::BOOKINGSTATUS_CANCELED,
+        ];
     }
 
     /**
@@ -1233,6 +1578,44 @@ class event_manager {
     }
 
     /**
+     * Return a bounded page of accepted bookings for the service-team workspace.
+     *
+     * @param int $offset Zero-based SQL offset.
+     * @param int $limit Maximum number of records.
+     * @param int|null $referencetime
+     * @return array
+     * @throws dml_exception
+     */
+    private static function get_confirmed_requests_page(int $offset, int $limit, ?int $referencetime = null): array {
+        global $DB;
+
+        $referencetime ??= time();
+        $sql = "
+            SELECT
+                e.id,
+                e.name,
+                e.bookingstatus,
+                e.starttime,
+                e.endtime,
+                e.personinchargeid,
+                e.otherexaminers,
+                e.supportpersons,
+                e.usermodified,
+                r.name AS room
+            FROM {bookit_event} e
+            LEFT JOIN {bookit_room} r ON r.id = e.roomid
+            WHERE e.bookingstatus = :status
+              AND e.endtime >= :referencetime
+            ORDER BY e.starttime DESC, e.id DESC
+        ";
+
+        return $DB->get_records_sql($sql, [
+            'status' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            'referencetime' => $referencetime,
+        ], max(0, $offset), max(1, $limit));
+    }
+
+    /**
      * Return the number of accepted bookings in the dedicated service-team workspace.
      *
      * @param int|null $referencetime
@@ -1240,7 +1623,17 @@ class event_manager {
      * @throws dml_exception
      */
     public static function count_confirmed_requests(?int $referencetime = null): int {
-        return count(self::get_confirmed_requests($referencetime));
+        global $DB;
+
+        $referencetime ??= time();
+        return (int)$DB->count_records_select(
+            'bookit_event',
+            'bookingstatus = :status AND endtime >= :referencetime',
+            [
+                'status' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'referencetime' => $referencetime,
+            ]
+        );
     }
 
     /**
@@ -1251,9 +1644,16 @@ class event_manager {
      * @throws dml_exception
      */
     public static function count_rejected_requests(?int $referencetime = null): int {
+        global $DB;
         unset($referencetime);
 
-        return count(self::get_rejected_requests());
+        return (int)$DB->get_field_sql(
+            "
+                SELECT COUNT(1)
+                  FROM {bookit_event} e
+                 WHERE " . self::get_rejected_requests_where_sql(),
+            self::get_rejected_requests_params()
+        );
     }
 
     /**
