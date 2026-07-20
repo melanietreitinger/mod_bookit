@@ -213,8 +213,8 @@ const renderRequestRow = (item, readConfig, workspace) => {
     <td class="align-middle">${escapeHtml(item.personincharge || '-')}</td>
     <td class="align-middle">${escapeHtml(item.myrole || '-')}</td>
     ${statusCell}
-    <td class="align-middle" data-sort="${Number(item.starttime || 0)}">${escapeHtml(item.datestr || '')}</td>
     ${renderReactivateActionsCell(item, readConfig, workspace)}
+    <td class="align-middle" data-sort="${Number(item.starttime || 0)}">${escapeHtml(item.datestr || '')}</td>
 </tr>`;
 };
 

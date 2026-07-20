@@ -17,6 +17,7 @@
 namespace mod_bookit\external;
 
 use advanced_testcase;
+use core_external\external_api;
 use mod_bookit\local\manager\event_access_manager;
 
 /**
@@ -581,5 +582,181 @@ final class get_overview_queue_test extends advanced_testcase {
         $this->assertSame(1, (int)$pagetwo['paging']['currentpage']);
         $this->assertStringContainsString('page=1', $pageone['fragments']['paginghtml']);
         $this->assertStringNotContainsString('queuepage=', $pageone['fragments']['paginghtml']);
+    }
+
+    /**
+     * Return cleaning must preserve reactivation fields for rejected queue items.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_return_clean_retains_reactivate_fields_for_rejected_queue(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Rejected return clean']);
+
+        $DB->insert_record('bookit_event', (object)[
+            'name' => 'Rejected return clean item',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-22 09:00:00'),
+            'endtime' => strtotime('2026-05-22 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 9,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => get_admin()->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = get_overview_queue::execute($bookit->cmid, 'rejectedcancelled', [], [], [], 0, '', '');
+        $cleaned = external_api::clean_returnvalue(get_overview_queue::execute_returns(), $response);
+
+        $this->assertCount(1, $cleaned['items']);
+        $item = $cleaned['items'][0];
+        $this->assertArrayHasKey('hasreactivateaction', $item);
+        $this->assertArrayHasKey('reactivateactionlabel', $item);
+        $this->assertArrayHasKey('reactivatetargetstatus', $item);
+        $this->assertArrayHasKey('overviewtab', $item);
+        $this->assertTrue($item['hasreactivateaction']);
+        $this->assertSame('rejectedcancelled', $item['overviewtab']);
+    }
+
+    /**
+     * Open queue items without reactivation still declare all four reactivation fields.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_return_clean_declares_reactivate_fields_when_action_unavailable(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Open return clean']);
+
+        $DB->insert_record('bookit_event', (object)[
+            'name' => 'Open return clean item',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => get_admin()->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = get_overview_queue::execute($bookit->cmid, 'openrequests', [], [], [], 0, '', '');
+        $cleaned = external_api::clean_returnvalue(get_overview_queue::execute_returns(), $response);
+
+        $item = $cleaned['items'][0];
+        $this->assertArrayHasKey('hasreactivateaction', $item);
+        $this->assertArrayHasKey('reactivateactionlabel', $item);
+        $this->assertArrayHasKey('reactivatetargetstatus', $item);
+        $this->assertArrayHasKey('overviewtab', $item);
+        $this->assertFalse($item['hasreactivateaction']);
+    }
+
+    /**
+     * Support viewers receive reactivation fields but cannot reactivate queue items.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_support_return_clean_declares_reactivate_fields_without_action(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Support return clean']);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
+        if (!$supportrole) {
+            $supportroleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+        } else {
+            $supportroleid = (int)$supportrole->id;
+        }
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $supportuser = $this->getDataGenerator()->create_user(['username' => 'steven.support']);
+        \role_assign($supportroleid, $supportuser->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($supportuser->id, $course->id, 'student');
+        $this->setUser($supportuser);
+
+        $DB->insert_record('bookit_event', (object)[
+            'name' => 'Support rejected read-only',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-22 09:00:00'),
+            'endtime' => strtotime('2026-05-22 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 9,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => (int)$supportuser->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = get_overview_queue::execute($bookit->cmid, 'rejectedcancelled', [], [], [], 0, '', '');
+        $cleaned = external_api::clean_returnvalue(get_overview_queue::execute_returns(), $response);
+
+        $item = $cleaned['items'][0];
+        $this->assertArrayHasKey('hasreactivateaction', $item);
+        $this->assertArrayHasKey('reactivateactionlabel', $item);
+        $this->assertArrayHasKey('reactivatetargetstatus', $item);
+        $this->assertArrayHasKey('overviewtab', $item);
+        $this->assertFalse($item['hasreactivateaction']);
     }
 }

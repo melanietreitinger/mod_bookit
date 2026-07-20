@@ -279,7 +279,66 @@ final class overview_queue_read_mapper_test extends advanced_testcase {
 
             if ($workspace === 'rejectedcancelled') {
                 $this->assertSame('rejectedcancelled', $mapped['overviewtab']);
+                $this->assertArrayHasKey('hasreactivateaction', $mapped);
+                $this->assertArrayHasKey('reactivateactionlabel', $mapped);
+                $this->assertArrayHasKey('reactivatetargetstatus', $mapped);
             }
         }
+    }
+
+    /**
+     * Rejected queue mapper output includes all reactivation payload keys for service team.
+     *
+     * @return void
+     */
+    public function test_map_rejected_queue_includes_reactivation_payload_keys(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $serviceuser = $this->getDataGenerator()->create_user();
+        [$context, $cmid] = $this->create_service_team_context((int)$serviceuser->id);
+        $this->setUser($serviceuser);
+
+        $eventid = $DB->insert_record('bookit_event', (object)[
+            'name' => 'Mapper rejected reactivate',
+            'semester' => 20261,
+            'institutionid' => null,
+            'starttime' => strtotime('2026-05-08 09:00:00'),
+            'endtime' => strtotime('2026-05-08 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 10,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'personinchargeid' => null,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $serviceuser->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $mapped = overview_queue_read_mapper::map(
+            $event,
+            $context,
+            (int)$serviceuser->id,
+            null,
+            'rejectedcancelled',
+            $cmid
+        );
+
+        $this->assertTrue($mapped['hasreactivateaction']);
+        $this->assertNotEmpty($mapped['reactivateactionlabel']);
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$mapped['reactivatetargetstatus']);
+        $this->assertSame('rejectedcancelled', $mapped['overviewtab']);
     }
 }

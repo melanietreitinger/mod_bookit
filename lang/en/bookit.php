@@ -464,7 +464,6 @@ $string['overview_filter_assignment_all'] = 'All';
 $string['overview_filter_assignment_assigned'] = 'Assigned to me';
 $string['overview_filter_enddate'] = 'End date';
 $string['overview_filter_faculty'] = 'Faculty';
-$string['overview_filter_semester_legacy'] = 'Without semester';
 $string['overview_filter_startdate'] = 'Start date';
 $string['overview_filter_status'] = 'Booking status';
 $string['overview_history'] = 'History';

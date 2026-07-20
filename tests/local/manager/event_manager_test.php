@@ -981,11 +981,11 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Semester filtering must exclude legacy semester bookings unless the explicit legacy option is selected.
+     * Semester filtering ignores legacy semester value 0 and matches only explicit positive IDs.
      *
      * @return void
      */
-    public function test_filter_overview_events_handles_legacy_semester_explicitly(): void {
+    public function test_filter_overview_events_ignores_legacy_semester_zero(): void {
         $activeevent = (object)[
             'id' => 1,
             'semester' => 20261,
@@ -1010,18 +1010,18 @@ final class event_manager_test extends advanced_testcase {
         $this->assertCount(1, $filtered);
         $this->assertSame(1, (int)$filtered[0]->id);
 
-        $filteredwithlegacy = event_manager::filter_overview_events([$activeevent, $legacyevent], [
+        $filteredwithignoredzero = event_manager::filter_overview_events([$activeevent, $legacyevent], [
             'semesterids' => [20261, 0],
         ]);
 
-        $this->assertCount(2, $filteredwithlegacy);
+        $this->assertCount(1, $filteredwithignoredzero);
+        $this->assertSame(1, (int)$filteredwithignoredzero[0]->id);
 
         $legacyonly = event_manager::filter_overview_events([$activeevent, $legacyevent], [
             'semesterids' => [0],
         ]);
 
-        $this->assertCount(1, $legacyonly);
-        $this->assertSame(2, (int)$legacyonly[0]->id);
+        $this->assertCount(2, $legacyonly);
     }
 
     /**
@@ -2943,7 +2943,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * All requests workspace profile exposes assignment and hides legacy semester option.
+     * All requests workspace profile exposes assignment filter for service team.
      *
      * @return void
      */
@@ -2951,7 +2951,7 @@ final class event_manager_test extends advanced_testcase {
         $profile = event_manager::get_workspace_filter_profile('allrequests', true);
 
         $this->assertTrue($profile['show_assignment_filter']);
-        $this->assertFalse($profile['include_legacy_semester_option']);
+        $this->assertArrayNotHasKey('include_legacy_semester_option', $profile);
         $this->assertTrue($profile['show_status_filter']);
     }
 
@@ -2969,29 +2969,27 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Reporting semester options can omit the legacy Without-semester entry.
+     * History workspace profile exposes reporting filters without assignment filter.
      *
      * @return void
      */
-    public function test_get_reporting_semester_filter_options_excludes_legacy_when_requested(): void {
-        $referencetime = strtotime('2026-05-07 10:00:00');
-        $withlegacy = event_manager::get_reporting_semester_filter_options($referencetime, true);
-        $withoutlegacy = event_manager::get_reporting_semester_filter_options($referencetime, false);
+    public function test_get_workspace_filter_profile_history_exposes_reporting_filters(): void {
+        $profile = event_manager::get_workspace_filter_profile('history', true);
 
-        $this->assertArrayHasKey(0, $withlegacy);
-        $this->assertArrayNotHasKey(0, $withoutlegacy);
+        $this->assertArrayNotHasKey('include_legacy_semester_option', $profile);
+        $this->assertFalse($profile['show_assignment_filter']);
+        $this->assertTrue($profile['show_semester_filter']);
     }
 
     /**
-     * History workspace keeps the legacy semester option for reporting tabs.
+     * Semester filter options must not expose legacy value 0.
      *
      * @return void
      */
-    public function test_get_workspace_filter_profile_history_keeps_legacy_semester_option(): void {
-        $profile = event_manager::get_workspace_filter_profile('history', true);
-
-        $this->assertTrue($profile['include_legacy_semester_option']);
-        $this->assertFalse($profile['show_assignment_filter']);
+    public function test_get_semester_filter_options_excludes_legacy_zero_key(): void {
+        $options = event_manager::get_semester_filter_options(strtotime('2026-05-07 10:00:00'));
+        $this->assertArrayNotHasKey(0, $options);
+        $this->assertNotEmpty($options);
     }
 
     /**
@@ -3032,12 +3030,12 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Workspace semester options for All requests must not include legacy value 0.
+     * Workspace semester options must not include legacy value 0.
      *
      * @return void
      */
     public function test_reporting_semester_options_allrequests_exclude_legacy_zero(): void {
-        $options = event_manager::get_reporting_semester_filter_options(strtotime('2026-05-07 10:00:00'), false);
+        $options = event_manager::get_semester_filter_options(strtotime('2026-05-07 10:00:00'));
         $this->assertArrayNotHasKey(0, $options);
     }
 
@@ -3189,6 +3187,7 @@ final class event_manager_test extends advanced_testcase {
         $profile = event_manager::get_workspace_table_profile('rejectedcancelled');
 
         $this->assertTrue($profile['showreactivatecolumn']);
+        $this->assertTrue($profile['showdatecolumn']);
         $this->assertSame('rejectedcancelled', $profile['requesttab']);
         $this->assertSame('#f8d7da', $profile['headerbackgroundcolor']);
     }

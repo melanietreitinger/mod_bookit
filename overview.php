@@ -324,12 +324,7 @@ $PAGE->requires->js_init_code('window.bookitOverviewReadConfig = ' . json_encode
     'confirmedrequestsempty' => get_string('overview_confirmed_requests_empty', 'mod_bookit'),
     'rejectedcancelledempty' => get_string('overview_rejected_requests_empty', 'mod_bookit'),
 ]));
-$semesteroptionssource = $canviewrequestworkspace && $isreportingworkspacetab
-    ? event_manager::get_reporting_semester_filter_options(
-        null,
-        !empty($filterprofile['include_legacy_semester_option'])
-    )
-    : event_manager::get_semester_filter_options();
+$semesteroptionssource = event_manager::get_semester_filter_options();
 $semesteroptions = [];
 foreach ($semesteroptionssource as $value => $label) {
     $semesteroptions[] = [

@@ -17,6 +17,7 @@
 namespace mod_bookit\external;
 
 use advanced_testcase;
+use core_external\external_api;
 use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 
@@ -1006,5 +1007,236 @@ final class update_event_booking_status_test extends advanced_testcase {
             'rejectedcancelled',
             1
         );
+    }
+
+    /**
+     * Service-team status updates without tab default to allrequests.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_service_team_status_update_without_tab_defaults_to_allrequests(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Tab default service']);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Tab default open request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => get_admin()->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_IN_PROGRESS, (int)$response['status']);
+        $this->assertSame('allrequests', $response['tab']);
+    }
+
+    /**
+     * Participant status updates without tab default to myevents.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_participant_status_update_without_tab_defaults_to_myevents(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'Tab default participant',
+        ]);
+        $context = \context_module::instance($bookit->cmid);
+
+        \update_capabilities('mod_bookit');
+        $roleid = \create_role('Bookit participant tab default', 'bookitparticipanttabdefault', 'student');
+        \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
+        \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
+        \accesslib_clear_all_caches_for_unit_testing();
+
+        $user = $this->getDataGenerator()->create_user();
+        \role_assign($roleid, $user->id, $context->id);
+        \accesslib_clear_all_caches_for_unit_testing();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $this->setUser($user);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Participant tab default cancel',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('+1 day'),
+            'endtime' => strtotime('+1 day +2 hours'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => $user->id,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => $user->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, (int)$response['status']);
+        $this->assertSame('myevents', $response['tab']);
+    }
+
+    /**
+     * Explicit invalid tabs still fail validation for workspace viewers.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_invalid_explicit_tab_throws_for_workspace_viewer(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Invalid tab']);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Invalid tab event',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => get_admin()->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->expectException(\invalid_parameter_exception::class);
+        update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'myevents'
+        );
+    }
+
+    /**
+     * Queue refresh payload retains reactivation fields after return cleaning.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_queue_payload_return_clean_retains_reactivate_fields(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Queue reactivate clean']);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Reject for return clean',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => get_admin()->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $response = update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+            'rejectedcancelled',
+            0
+        );
+
+        $cleaned = external_api::clean_returnvalue(
+            update_event_booking_status::execute_returns(),
+            $response
+        );
+
+        $this->assertNotEmpty($cleaned['queue']['items']);
+        $item = $cleaned['queue']['items'][0];
+        $this->assertArrayHasKey('hasreactivateaction', $item);
+        $this->assertArrayHasKey('reactivateactionlabel', $item);
+        $this->assertArrayHasKey('reactivatetargetstatus', $item);
+        $this->assertArrayHasKey('overviewtab', $item);
+        $this->assertSame('rejectedcancelled', $item['overviewtab']);
     }
 }

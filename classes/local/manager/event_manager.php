@@ -813,7 +813,7 @@ class event_manager {
     public static function get_semester_filter_options(?int $referencetime = null): array {
         $currentsemester = self::get_current_semester($referencetime);
         $baseyear = (int)floor($currentsemester / 10);
-        $options = [0 => get_string('overview_filter_semester_legacy', 'mod_bookit')];
+        $options = [];
 
         for ($year = $baseyear - 1; $year <= $baseyear + 1; $year++) {
             $options[($year * 10) + 1] = get_string('summer_semester', 'mod_bookit') . ' ' . $year;
@@ -842,8 +842,7 @@ class event_manager {
      *     show_reporting_filters: bool,
      *     show_status_filter: bool,
      *     show_semester_filter: bool,
-     *     show_assignment_filter: bool,
-     *     include_legacy_semester_option: bool
+     *     show_assignment_filter: bool
      * }
      */
     public static function get_workspace_filter_profile(string $workspacetab, bool $serviceteam): array {
@@ -853,7 +852,6 @@ class event_manager {
                 'show_status_filter' => true,
                 'show_semester_filter' => true,
                 'show_assignment_filter' => false,
-                'include_legacy_semester_option' => true,
             ];
         }
 
@@ -863,7 +861,6 @@ class event_manager {
                 'show_status_filter' => false,
                 'show_semester_filter' => false,
                 'show_assignment_filter' => false,
-                'include_legacy_semester_option' => false,
             ];
         }
 
@@ -873,7 +870,6 @@ class event_manager {
                 'show_status_filter' => true,
                 'show_semester_filter' => true,
                 'show_assignment_filter' => false,
-                'include_legacy_semester_option' => true,
             ];
         }
 
@@ -882,7 +878,6 @@ class event_manager {
             'show_status_filter' => true,
             'show_semester_filter' => true,
             'show_assignment_filter' => true,
-            'include_legacy_semester_option' => false,
         ];
     }
 
@@ -1113,23 +1108,6 @@ class event_manager {
     }
 
     /**
-     * Build semester filter options for reporting workspace tabs.
-     *
-     * @param int|null $referencetime
-     * @param bool $includelegacy Whether to prepend the legacy "Without semester" option.
-     * @return array<int, string>
-     */
-    public static function get_reporting_semester_filter_options(?int $referencetime = null, bool $includelegacy = true): array {
-        $options = self::get_semester_filter_options($referencetime);
-        if ($includelegacy) {
-            return $options;
-        }
-
-        unset($options[0]);
-        return $options;
-    }
-
-    /**
      * Narrow overview events by support-person assignment (All requests only).
      *
      * @param stdClass[] $events
@@ -1276,18 +1254,10 @@ class event_manager {
         }
 
         $selectedsemesters = array_values(array_filter($semesterids, static fn(int $value): bool => $value !== 0));
-        $includelegacysemester = in_array(0, $semesterids, true);
-        if (!empty($selectedsemesters) || $includelegacysemester) {
-            $semesterconditions = [];
-            if (!empty($selectedsemesters)) {
-                [$semestersql, $semesterparams] = $DB->get_in_or_equal($selectedsemesters, SQL_PARAMS_NAMED, 'semester');
-                $semesterconditions[] = "e.semester $semestersql";
-                $params += $semesterparams;
-            }
-            if ($includelegacysemester) {
-                $semesterconditions[] = 'COALESCE(e.semester, 0) = 0';
-            }
-            $conditions[] = '(' . implode(' OR ', $semesterconditions) . ')';
+        if (!empty($selectedsemesters)) {
+            [$semestersql, $semesterparams] = $DB->get_in_or_equal($selectedsemesters, SQL_PARAMS_NAMED, 'semester');
+            $conditions[] = "e.semester $semestersql";
+            $params += $semesterparams;
         }
 
         if ($workspace === 'allrequests' && $assignmentfilter === 'assigned') {
@@ -1381,7 +1351,6 @@ class event_manager {
         $facultyids = self::normalise_filter_ids($filters['facultyids'] ?? []);
         $semesterids = self::normalise_filter_ids($filters['semesterids'] ?? []);
         $selectedsemesters = array_values(array_filter($semesterids, static fn(int $value): bool => $value !== 0));
-        $includelegacysemester = in_array(0, $semesterids, true);
         $explicitterminal = array_values(array_intersect(
             $bookingstatuses,
             [
@@ -1396,7 +1365,6 @@ class event_manager {
             $bookingstatuses,
             $facultyids,
             $selectedsemesters,
-            $includelegacysemester,
             $explicitterminal
         ): bool {
             $eventstatus = (int)($event->bookingstatus ?? -1);
@@ -1427,16 +1395,14 @@ class event_manager {
                 return false;
             }
 
-            if (empty($selectedsemesters) && !$includelegacysemester) {
-                return true;
+            if (!empty($selectedsemesters)) {
+                $semester = (int)($event->semester ?? 0);
+                if (!in_array($semester, $selectedsemesters, true)) {
+                    return false;
+                }
             }
 
-            $semester = (int)($event->semester ?? 0);
-            if (!empty($selectedsemesters) && in_array($semester, $selectedsemesters, true)) {
-                return true;
-            }
-
-            return $includelegacysemester && self::is_legacy_semester_value($event->semester ?? 0);
+            return true;
         }));
     }
 
@@ -2412,16 +2378,6 @@ class event_manager {
             $values,
             static fn(mixed $value): bool => $value !== '' && $value !== null
         ))));
-    }
-
-    /**
-     * Check whether the semester value represents a legacy booking without an explicit semester.
-     *
-     * @param mixed $semester
-     * @return bool
-     */
-    private static function is_legacy_semester_value(mixed $semester): bool {
-        return empty((int)$semester);
     }
 
     /**

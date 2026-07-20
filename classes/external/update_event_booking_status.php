@@ -60,7 +60,7 @@ class update_event_booking_status extends external_api {
                 PARAM_ALPHA,
                 'Overview tab to return to after the status update.',
                 VALUE_DEFAULT,
-                'myevents'
+                ''
             ),
             'page' => new external_value(PARAM_INT, 'Request workspace page to preserve', VALUE_DEFAULT, 0),
         ]);
@@ -72,26 +72,31 @@ class update_event_booking_status extends external_api {
      * @param int $cmid Course module ID
      * @param int $eventid Event ID
      * @param int $status New booking status
-     * @param string $tab Overview tab to return to
+     * @param string|null $tab Overview tab to return to
      * @param int $page Request workspace page to return to
      * @return array
      */
-    public static function execute(int $cmid, int $eventid, int $status, string $tab = 'myevents', int $page = 0): array {
+    public static function execute(int $cmid, int $eventid, int $status, ?string $tab = '', int $page = 0): array {
         global $DB, $OUTPUT, $USER;
 
-        $params = self::validate_parameters(self::execute_parameters(), [
-            'cmid'    => $cmid,
+        $rawparams = [
+            'cmid' => $cmid,
             'eventid' => $eventid,
-            'status'  => $status,
-            'tab' => $tab,
+            'status' => $status,
+            'tab' => $tab ?? '',
             'page' => $page,
-        ]);
+        ];
+
+        $params = self::validate_parameters(self::execute_parameters(), $rawparams);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
 
         $canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
+        if (empty($params['tab'])) {
+            $params['tab'] = tabs::get_default_overview_tab($canviewrequestworkspace);
+        }
         $params['tab'] = tabs::validate_overview_tab($params['tab'], $canviewrequestworkspace);
 
         $validstatuses = [
@@ -164,6 +169,8 @@ class update_event_booking_status extends external_api {
         $redirecttab = match (true) {
             in_array($params['tab'], ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
                 && event_access_manager::can_manage_open_requests($context) => $params['tab'],
+            $params['tab'] === 'allrequests'
+                && event_access_manager::can_manage_open_requests($context) => 'allrequests',
             $params['tab'] === 'history' => 'history',
             $params['tab'] === 'myevents'
                 && event_access_manager::can_manage_open_requests($context) => 'allrequests',
@@ -267,6 +274,10 @@ class update_event_booking_status extends external_api {
                     'statusgroupkey' => new external_value(PARAM_ALPHAEXT, 'Grouped status key for row accent'),
                     'statuscellhtml' => new external_value(PARAM_RAW, 'Pre-rendered status cell HTML'),
                     'modalfootermode' => new external_value(PARAM_ALPHAEXT, 'Modal footer mode'),
+                    'hasreactivateaction' => new external_value(PARAM_BOOL, 'Whether reactivation is allowed'),
+                    'reactivateactionlabel' => new external_value(PARAM_RAW, 'Reactivation button label'),
+                    'reactivatetargetstatus' => new external_value(PARAM_INT, 'Reactivation target status'),
+                    'overviewtab' => new external_value(PARAM_ALPHA, 'Overview tab for reactivation action'),
                 ])),
                 'summary' => new external_single_structure([
                     'count' => new external_value(PARAM_INT, 'Number of items in the current workspace'),
