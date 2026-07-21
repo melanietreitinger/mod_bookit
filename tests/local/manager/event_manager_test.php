@@ -389,13 +389,16 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * History tab default status filter returns terminal pair.
+     * History tab default status filter returns all five booking statuses.
      *
      * @return void
      */
-    public function test_get_history_default_booking_status_filter_returns_terminal_pair(): void {
+    public function test_get_history_default_booking_status_filter_returns_all_statuses(): void {
         $this->assertSame(
             [
+                event_access_manager::BOOKINGSTATUS_NEW,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
                 event_access_manager::BOOKINGSTATUS_CANCELED,
                 event_access_manager::BOOKINGSTATUS_REJECTED,
             ],
@@ -404,7 +407,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * History tab resolver returns terminal pair when filter param is absent (reporting path).
+     * History tab resolver returns full default when filter param is absent (reporting path).
      *
      * @return void
      */
@@ -448,7 +451,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * History tab resolver returns terminal pair when selection is explicitly empty (reporting path).
+     * History tab resolver returns full default when selection is explicitly empty (reporting path).
      *
      * @return void
      */
@@ -485,14 +488,14 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * History default status filter excludes active statuses from history list.
+     * History default status filter includes all statuses that History rules allow.
      *
      * @return void
      */
-    public function test_filter_overview_events_history_default_excludes_active_statuses(): void {
-        $futurestart = strtotime('+2 days 09:00:00');
-        $futureend = strtotime('+2 days 11:00:00');
-        $base = ['starttime' => $futurestart, 'endtime' => $futureend];
+    public function test_filter_overview_events_history_default_includes_all_statuses(): void {
+        $paststart = strtotime('-5 days 09:00:00');
+        $pastend = strtotime('-5 days 11:00:00');
+        $base = ['starttime' => $paststart, 'endtime' => $pastend];
         $events = [
             (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
             (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
@@ -502,13 +505,15 @@ final class event_manager_test extends advanced_testcase {
         ];
 
         $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true, true);
+        $this->assertSame(event_manager::get_history_default_booking_status_filter(), $resolved);
+
         $filtered = event_manager::filter_overview_events(
             $events,
             ['bookingstatuses' => $resolved],
             true
         );
 
-        $this->assertSame([4, 5], array_map(static fn($event): int => (int)$event->id, $filtered));
+        $this->assertSame([1, 2, 3, 4, 5], array_map(static fn($event): int => (int)$event->id, $filtered));
     }
 
     /**
@@ -3113,7 +3118,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Service-team History defaults to terminal statuses and year-to-date range.
+     * Service-team History defaults to all statuses and year-to-date range.
      *
      * @return void
      */

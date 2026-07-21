@@ -553,12 +553,17 @@ class event_manager {
     }
 
     /**
-     * Return the default history-tab status filter (terminal statuses).
+     * Return the default history-tab status filter for Request-Workspace reporting.
+     *
+     * All five booking statuses are selected so History is not limited to terminal statuses.
      *
      * @return int[]
      */
     public static function get_history_default_booking_status_filter(): array {
         return [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
             event_access_manager::BOOKINGSTATUS_REJECTED,
         ];
