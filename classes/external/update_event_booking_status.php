@@ -169,8 +169,6 @@ class update_event_booking_status extends external_api {
             $params['tab'] === 'allrequests'
                 && $canviewrequestworkspace => 'allrequests',
             $params['tab'] === 'history' => 'history',
-            $params['tab'] === 'myevents'
-                && $canviewrequestworkspace => 'allrequests',
             default => 'myevents',
         };
         return [

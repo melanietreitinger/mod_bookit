@@ -394,38 +394,6 @@ class event_manager {
     }
 
     /**
-     * Return all open booking requests for service-team overview.
-     *
-     * @return array
-     * @throws dml_exception
-     */
-    public static function get_open_requests(): array {
-        global $DB;
-
-        [$statussql, $params] = $DB->get_in_or_equal(event_access_manager::get_open_request_statuses(), SQL_PARAMS_NAMED);
-
-        $sql = "
-            SELECT
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.endtime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified,
-                r.name AS room
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE e.bookingstatus $statussql
-            ORDER BY e.starttime DESC, e.id DESC
-        ";
-
-        return $DB->get_records_sql($sql, $params);
-    }
-
-    /**
      * Return the number of open booking requests.
      *
      * @return int
@@ -748,16 +716,6 @@ class event_manager {
     }
 
     /**
-     * Map a workspace tab slug to the booking-status cell request-tab identifier.
-     *
-     * @param string $workspacetab
-     * @return string
-     */
-    public static function get_workspace_status_request_tab(string $workspacetab): string {
-        return $workspacetab;
-    }
-
-    /**
      * Return the unified workspace table profile for the active service-team tab.
      *
      * @param string $workspacetab
@@ -836,7 +794,7 @@ class event_manager {
             'showtablesearch' => $isqueue,
             'enableworkflowhistory' => true,
             'emptymessage' => $emptymessages[$workspacetab] ?? 'overview_no_results',
-            'requesttab' => self::get_workspace_status_request_tab($workspacetab),
+            'requesttab' => $workspacetab,
         ];
     }
 
@@ -1293,70 +1251,6 @@ class event_manager {
     }
 
     /**
-     * Return all rejected requests in the dedicated service-team trash queue.
-     *
-     * @param int|null $referencetime Deprecated compatibility parameter, ignored.
-     * @return array
-     * @throws dml_exception
-     */
-    public static function get_rejected_requests(?int $referencetime = null): array {
-        global $DB;
-        unset($referencetime);
-
-        $sql = "
-            SELECT
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.endtime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified,
-                r.name AS room
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE " . self::get_rejected_requests_where_sql() . "
-            ORDER BY e.starttime DESC, e.id DESC
-        ";
-
-        return $DB->get_records_sql($sql, self::get_rejected_requests_params());
-    }
-
-    /**
-     * Return a bounded page of rejected/cancelled requests in the dedicated service-team queue.
-     *
-     * @param int $offset Zero-based SQL offset.
-     * @param int $limit Maximum number of records.
-     * @return array
-     * @throws dml_exception
-     */
-    private static function get_rejected_requests_page(int $offset, int $limit): array {
-        global $DB;
-
-        $sql = "
-            SELECT
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.endtime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified,
-                r.name AS room
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE " . self::get_rejected_requests_where_sql() . "
-            ORDER BY e.starttime DESC, e.id DESC
-        ";
-
-        return $DB->get_records_sql($sql, self::get_rejected_requests_params(), max(0, $offset), max(1, $limit));
-    }
-
-    /**
      * SQL condition for rejected/cancelled queue membership.
      *
      * @return string
@@ -1404,83 +1298,6 @@ class event_manager {
     }
 
     /**
-     * Return accepted bookings that are still active for the service-team workspace.
-     *
-     * @param int|null $referencetime
-     * @return array
-     * @throws dml_exception
-     */
-    public static function get_confirmed_requests(?int $referencetime = null): array {
-        global $DB;
-
-        $sql = "
-            SELECT
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.endtime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified,
-                r.name AS room
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE e.bookingstatus = :status
-            ORDER BY e.starttime DESC, e.id DESC
-        ";
-
-        $records = $DB->get_records_sql($sql, [
-            'status' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-        ]);
-        $referencetime ??= time();
-
-        return array_values(array_filter(
-            $records,
-            static fn(stdClass $event): bool => !self::is_event_in_history($event, $referencetime)
-        ));
-    }
-
-    /**
-     * Return a bounded page of accepted bookings for the service-team workspace.
-     *
-     * @param int $offset Zero-based SQL offset.
-     * @param int $limit Maximum number of records.
-     * @param int|null $referencetime
-     * @return array
-     * @throws dml_exception
-     */
-    private static function get_confirmed_requests_page(int $offset, int $limit, ?int $referencetime = null): array {
-        global $DB;
-
-        $referencetime ??= time();
-        $sql = "
-            SELECT
-                e.id,
-                e.name,
-                e.bookingstatus,
-                e.starttime,
-                e.endtime,
-                e.personinchargeid,
-                e.otherexaminers,
-                e.supportpersons,
-                e.usermodified,
-                r.name AS room
-            FROM {bookit_event} e
-            LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            WHERE e.bookingstatus = :status
-              AND e.endtime >= :referencetime
-            ORDER BY e.starttime DESC, e.id DESC
-        ";
-
-        return $DB->get_records_sql($sql, [
-            'status' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'referencetime' => $referencetime,
-        ], max(0, $offset), max(1, $limit));
-    }
-
-    /**
      * Return the number of accepted bookings in the dedicated service-team workspace.
      *
      * @param int|null $referencetime
@@ -1504,13 +1321,11 @@ class event_manager {
     /**
      * Return the number of rejected requests in the dedicated trash queue.
      *
-     * @param int|null $referencetime Deprecated compatibility parameter, ignored.
      * @return int
      * @throws dml_exception
      */
-    public static function count_rejected_requests(?int $referencetime = null): int {
+    public static function count_rejected_requests(): int {
         global $DB;
-        unset($referencetime);
 
         return (int)$DB->get_field_sql(
             "

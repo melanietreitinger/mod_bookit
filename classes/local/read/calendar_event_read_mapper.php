@@ -25,27 +25,25 @@ namespace mod_bookit\local\read;
  */
 class calendar_event_read_mapper {
     /**
-     * Map a calendar event array to the canonical read model.
+     * Map a canonical calendar event array to the read model.
+     *
+     * Expected keys match the production calendar builder: id, title, start, end,
+     * backgroundColor, textColor, classNames, and extendedProps (CamelCase) with
+     * titlehtml, bookingstatus, semesterid, visibilitymode, modalfootermode, room, faculty.
      *
      * @param array $event
-     * @param array $facultylabels
+     * @param array $facultylabels Kept for caller compatibility; faculty comes from extendedProps.
      * @return array
      */
     public static function map(array $event, array $facultylabels = []): array {
-        $id = (int)($event['id'] ?? $event['eventid'] ?? 0);
-        $extendedprops = (array)($event['extendedProps'] ?? $event['extendedprops'] ?? []);
-        $room = (array)($extendedprops['room'] ?? $event['room'] ?? []);
-        $roomid = (int)($room['roomid'] ?? $event['roomid'] ?? 0);
-        $roomname = (string)($room['roomname'] ?? $event['roomname'] ?? '');
-        $location = (string)($room['location'] ?? $event['location'] ?? '');
-        $shortname = (string)($room['shortname'] ?? $event['shortname'] ?? '');
+        // Second argument retained for BC with the production calendar builder signature.
+        unset($facultylabels);
 
+        $extendedprops = (array)($event['extendedProps'] ?? []);
+        $room = (array)($extendedprops['room'] ?? []);
         $faculty = (array)($extendedprops['faculty'] ?? []);
-        $facultyid = (int)($faculty['facultyid'] ?? $event['facultyid'] ?? $event['institutionid'] ?? 0);
-        $facultylabel = (string)($faculty['label']
-            ?? $event['faculty']
-            ?? $event['department']
-            ?? ($facultylabels[$facultyid] ?? ''));
+        $facultyid = (int)($faculty['facultyid'] ?? 0);
+        $facultylabel = (string)($faculty['label'] ?? '');
 
         $visibilitymode = (string)($extendedprops['visibilitymode'] ?? '');
         if ($visibilitymode === '') {
@@ -54,16 +52,16 @@ class calendar_event_read_mapper {
         }
 
         $mappedextendedprops = [
-            'titlehtml' => (string)($extendedprops['titlehtml'] ?? $event['titlehtml'] ?? $event['titleHTML'] ?? ''),
-            'bookingstatus' => (int)($extendedprops['bookingstatus'] ?? $event['bookingstatus'] ?? -1),
-            'semesterid' => (int)($extendedprops['semesterid'] ?? $event['semesterid'] ?? $event['semester'] ?? 0),
+            'titlehtml' => (string)($extendedprops['titlehtml'] ?? ''),
+            'bookingstatus' => (int)($extendedprops['bookingstatus'] ?? -1),
+            'semesterid' => (int)($extendedprops['semesterid'] ?? 0),
             'visibilitymode' => $visibilitymode,
             'modalfootermode' => (string)($extendedprops['modalfootermode'] ?? ''),
             'room' => [
-                'roomid' => $roomid,
-                'roomname' => $roomname,
-                'location' => $location,
-                'shortname' => $shortname,
+                'roomid' => (int)($room['roomid'] ?? 0),
+                'roomname' => (string)($room['roomname'] ?? ''),
+                'location' => (string)($room['location'] ?? ''),
+                'shortname' => (string)($room['shortname'] ?? ''),
             ],
         ];
 
@@ -75,7 +73,7 @@ class calendar_event_read_mapper {
         }
 
         return [
-            'id' => $id,
+            'id' => (int)($event['id'] ?? 0),
             'title' => (string)($event['title'] ?? ''),
             'start' => self::normalise_datetime((string)($event['start'] ?? '')),
             'end' => self::normalise_datetime((string)($event['end'] ?? '')),

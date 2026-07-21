@@ -294,4 +294,20 @@ final class install_helper_test extends advanced_testcase {
         $this->assertSame('Configured rejected subject', get_config('mod_bookit', 'bookingstatus_subject_rejected'));
         $this->assertSame('Configured rejected body', get_config('mod_bookit', 'bookingstatus_body_rejected'));
     }
+
+    /**
+     * Former shipped default texts must not be rewritten when still stored as site config.
+     *
+     * @return void
+     */
+    public function test_ensure_booking_status_notification_defaults_does_not_rewrite_former_shipped_text(): void {
+        $this->resetAfterTest(true);
+
+        $formershipped = 'Booking request confirmed: ###EVENTNAME### on ###BOOKINGDATE###';
+        set_config('bookingstatus_subject_confirmed', $formershipped, 'mod_bookit');
+
+        install_helper::ensure_booking_status_notification_defaults();
+
+        $this->assertSame($formershipped, get_config('mod_bookit', 'bookingstatus_subject_confirmed'));
+    }
 }

@@ -30,8 +30,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/bookit/lib.php');
 
 if ($hassiteconfig) {
-    install_helper::ensure_booking_status_notification_defaults();
-
     // Add hidden bookit category to general section.
     $ADMIN->add('root', new admin_category('bookit_settings_category', '', true));
 
@@ -84,8 +82,6 @@ if ($hassiteconfig) {
         get_string('bookingstatus_notifications_heading', 'mod_bookit'),
         get_string('bookingstatus_notifications_desc', 'mod_bookit')
     ));
-
-    install_helper::ensure_booking_status_notification_defaults();
 
     $settings->add(new admin_setting_configtext(
         'mod_bookit/bookingstatus_service_addresses',

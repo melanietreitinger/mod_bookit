@@ -504,4 +504,33 @@ final class booking_notification_manager_test extends advanced_testcase {
 
         return $eventid;
     }
+
+    /**
+     * Placeholder replacement uses the canonical token set only (no legacy aliases).
+     *
+     * @return void
+     */
+    public function test_replace_placeholders_uses_canonical_tokens_only(): void {
+        $method = new \ReflectionMethod(booking_notification_manager::class, 'replace_placeholders');
+        $method->setAccessible(true);
+
+        $data = (object)[
+            'eventname' => 'Exam',
+            'bookingdate' => '08.05.2026',
+            'bookingstatus' => 'Confirmed',
+            'oldbookingstatus' => 'New',
+            'eventurl' => 'https://example.test/event',
+            'room' => 'Hall',
+            'starttime' => '09:00',
+            'endtime' => '11:00',
+            'bookingperson' => 'Booker',
+            'personincharge' => 'PIC',
+            'otherexaminers' => 'Other',
+        ];
+
+        $template = '###EVENTNAME### / ###BOOKINGDATE### / ###UNKNOWNTOKEN### / ###EVENT###';
+        $replaced = $method->invoke(null, $template, $data);
+
+        $this->assertSame('Exam / 08.05.2026 / ###UNKNOWNTOKEN### / ###EVENT###', $replaced);
+    }
 }

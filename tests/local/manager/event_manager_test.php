@@ -719,10 +719,11 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_rejected_requests_includes_booker_canceled(): void {
+    public function test_rejectedcancelled_workspace_includes_booker_canceled(): void {
         global $DB;
 
         $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
         $booker = $this->getDataGenerator()->create_user();
         $common = [
             'semester' => 20261,
@@ -760,7 +761,7 @@ final class event_manager_test extends advanced_testcase {
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
-        $requests = event_manager::get_rejected_requests();
+        $requests = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled')['events'];
         $ids = array_map(static fn($event): int => (int)$event->id, $requests);
 
         $this->assertContains((int)$canceledid, $ids);
@@ -771,10 +772,11 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_rejected_requests_excludes_service_team_canceled(): void {
+    public function test_rejectedcancelled_workspace_excludes_service_team_canceled(): void {
         global $DB;
 
         $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
         $booker = $this->getDataGenerator()->create_user();
         $serviceteam = $this->getDataGenerator()->create_user();
         $common = [
@@ -813,7 +815,7 @@ final class event_manager_test extends advanced_testcase {
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
-        $requests = event_manager::get_rejected_requests();
+        $requests = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled')['events'];
         $ids = array_map(static fn($event): int => (int)$event->id, $requests);
 
         $this->assertNotContains((int)$canceledid, $ids);
@@ -1527,10 +1529,11 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_rejected_requests_keeps_past_and_future_items(): void {
+    public function test_rejectedcancelled_workspace_keeps_past_and_future_items(): void {
         global $DB;
 
         $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
             'semester' => 20261,
@@ -1567,10 +1570,12 @@ final class event_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
         ]));
 
-        $rejected = array_values(event_manager::get_rejected_requests(strtotime('2026-05-07 10:00:00')));
+        $result = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled');
+        $rejected = $result['events'];
         $this->assertCount(2, $rejected);
         $this->assertSame([$futureid, $pastid], array_map(static fn($event): int => (int)$event->id, $rejected));
-        $this->assertSame(2, event_manager::count_rejected_requests(strtotime('2026-05-07 10:00:00')));
+        $this->assertSame(2, $result['count']);
+        $this->assertSame(2, event_manager::count_rejected_requests());
     }
 
     /**
@@ -1578,10 +1583,11 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_confirmed_requests_returns_operative_accepted_events(): void {
+    public function test_confirmedrequests_workspace_returns_operative_accepted_events(): void {
         global $DB;
 
         $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
             'semester' => 20261,
@@ -1613,7 +1619,7 @@ final class event_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]));
 
-        $accepted = array_values(event_manager::get_confirmed_requests($referencetime));
+        $accepted = $this->get_workspace_query_result($context, $adminid, 'confirmedrequests')['events'];
         $this->assertCount(1, $accepted);
         $this->assertSame($acceptedid, (int)$accepted[0]->id);
         $this->assertSame(1, event_manager::count_confirmed_requests($referencetime));
@@ -1624,10 +1630,11 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_confirmed_requests_excludes_canceled_and_history_events(): void {
+    public function test_confirmedrequests_workspace_excludes_canceled_and_history_events(): void {
         global $DB;
 
         $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
             'semester' => 20261,
@@ -1665,7 +1672,7 @@ final class event_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
         ]));
 
-        $accepted = array_values(event_manager::get_confirmed_requests($referencetime));
+        $accepted = $this->get_workspace_query_result($context, $adminid, 'confirmedrequests')['events'];
         $this->assertCount(0, $accepted);
         $this->assertSame(0, event_manager::count_confirmed_requests($referencetime));
     }
@@ -1827,10 +1834,11 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_open_requests_excludes_accepted_bookings(): void {
+    public function test_openrequests_workspace_excludes_accepted_bookings(): void {
         global $DB;
 
         $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
             'semester' => 20261,
@@ -1865,7 +1873,7 @@ final class event_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
         ]));
 
-        $open = array_values(event_manager::get_open_requests());
+        $open = $this->get_workspace_query_result($context, $adminid, 'openrequests')['events'];
         $this->assertCount(1, $open);
         $this->assertSame('Open request', $open[0]->name);
     }
@@ -1875,10 +1883,11 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_get_open_requests_orders_by_starttime_desc(): void {
+    public function test_openrequests_workspace_orders_by_starttime_desc(): void {
         global $DB;
 
         $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
             'semester' => 20261,
@@ -1914,7 +1923,7 @@ final class event_manager_test extends advanced_testcase {
             'endtime' => strtotime('2026-05-10 11:00:00'),
         ]));
 
-        $open = array_values(event_manager::get_open_requests());
+        $open = $this->get_workspace_query_result($context, $adminid, 'openrequests')['events'];
         $this->assertCount(2, $open);
         $this->assertSame($newerid, (int)$open[0]->id);
         $this->assertSame($olderid, (int)$open[1]->id);
@@ -2533,8 +2542,8 @@ final class event_manager_test extends advanced_testcase {
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
-        $this->assertSame(0, event_manager::count_open_requests($referencetime));
-        $this->assertSame(1, event_manager::count_rejected_requests($referencetime));
+        $this->assertSame(0, event_manager::count_open_requests());
+        $this->assertSame(1, event_manager::count_rejected_requests());
 
         event_manager::transition_booking_status(
             $event,
@@ -2543,8 +2552,8 @@ final class event_manager_test extends advanced_testcase {
             $context
         );
 
-        $this->assertSame(1, event_manager::count_open_requests($referencetime));
-        $this->assertSame(0, event_manager::count_rejected_requests($referencetime));
+        $this->assertSame(1, event_manager::count_open_requests());
+        $this->assertSame(0, event_manager::count_rejected_requests());
 
         $DB->set_field(
             'bookit_event',
@@ -2552,7 +2561,7 @@ final class event_manager_test extends advanced_testcase {
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             ['id' => $eventid]
         );
-        $this->assertSame(1, event_manager::count_open_requests($referencetime));
+        $this->assertSame(1, event_manager::count_open_requests());
     }
 
     /**
@@ -3383,6 +3392,19 @@ final class event_manager_test extends advanced_testcase {
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
         $entries = event_manager::build_overview_workflow_history($event, $context, (int)$booker->id);
         $this->assertSame([], $entries);
+    }
+
+    /**
+     * Create a Request-Workspace capable context for governed query tests.
+     *
+     * @return array{0:context_module,1:int}
+     */
+    private function create_admin_workspace_context(): array {
+        $this->setAdminUser();
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id]);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id);
+        return [context_module::instance($cm->id), (int)get_admin()->id];
     }
 
     /**

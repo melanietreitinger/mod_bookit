@@ -190,7 +190,7 @@ class booking_status_cell implements renderable, templatable {
                 $canedit = event_access_manager::can_manage_open_requests($context);
             } else if ($requesttab === 'rejectedcancelled' || $requesttab === 'confirmedrequests') {
                 $canedit = false;
-            } else if (in_array($requesttab, ['allrequests', 'history', 'myevents'], true)) {
+            } else if (in_array($requesttab, ['allrequests', 'history'], true)) {
                 $canedit = $canmanagebasics;
             }
         } else if ($requesttab === 'history') {

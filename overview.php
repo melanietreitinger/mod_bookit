@@ -650,7 +650,7 @@ $prepareeventrow = function (
 };
 
 $workspacerequesttab = $canviewrequestworkspace
-    ? event_manager::get_workspace_status_request_tab($workspacetab)
+    ? $workspacetab
     : 'openrequests';
 
 if (!$canviewrequestworkspace) {

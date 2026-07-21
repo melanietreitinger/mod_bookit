@@ -1208,4 +1208,57 @@ final class update_event_booking_status_test extends advanced_testcase {
         $this->assertSame('rejectedcancelled', $cleaned['tab']);
         $this->assertStringContainsString('tab=rejectedcancelled', $cleaned['redirecturl']);
     }
+
+    /**
+     * Service-team callers must not silently remap myevents to allrequests.
+     *
+     * @runInSeparateProcess
+     * @return void
+     */
+    public function test_service_team_myevents_tab_is_rejected(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $bookit = $this->getDataGenerator()->create_module('bookit', [
+            'course' => $course->id,
+            'name' => 'No myevents remap',
+        ]);
+
+        $eventid = (int)$DB->insert_record('bookit_event', (object)[
+            'name' => 'Open request',
+            'semester' => 20261,
+            'institutionid' => 1,
+            'starttime' => strtotime('2026-05-20 09:00:00'),
+            'endtime' => strtotime('2026-05-20 11:00:00'),
+            'duration' => 120,
+            'roomid' => null,
+            'participantsamount' => 12,
+            'timecompensation' => 0,
+            'compensationfordisadvantages' => '',
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'coursetemplate' => null,
+            'notes' => '',
+            'internalnotes' => '',
+            'supportpersons' => '',
+            'extratimebefore' => 0,
+            'extratimeafter' => 0,
+            'refcourseid' => null,
+            'usermodified' => get_admin()->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        $this->expectException(\invalid_parameter_exception::class);
+        update_event_booking_status::execute(
+            $bookit->cmid,
+            $eventid,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            'myevents'
+        );
+    }
 }

@@ -102,20 +102,6 @@ class event_access_manager {
     }
 
     /**
-     * Check whether the event booking is accessible for legacy support/calendar gates.
-     * Returns true when status is "In progress" (1) or "Accepted" (2).
-     *
-     * Checklist/resources view paths use {@see self::event_allows_checklist_resources_view()} instead.
-     *
-     * @param stdClass $event
-     * @return bool
-     */
-    public static function is_booking_accessible(stdClass $event): bool {
-        $status = (int)($event->bookingstatus ?? -1);
-        return $status === self::BOOKINGSTATUS_IN_PROGRESS || $status === self::BOOKINGSTATUS_CONFIRMED;
-    }
-
-    /**
      * Check whether checklist/resources pages may be opened for the given booking status.
      *
      * Participants with overview/detail access may open checklist/resources for open bookings

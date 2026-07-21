@@ -291,7 +291,10 @@ class install_helper {
     }
 
     /**
-     * Ensure one shared notification template field does not persist blank overrides.
+     * Ensure one shared notification template field for fresh installs.
+     *
+     * Missing keys receive shipped defaults. Blank overrides are cleared so shipped
+     * defaults remain visible. Non-empty stored values are never rewritten.
      *
      * @param string $statuskey
      * @param string $field
@@ -302,14 +305,6 @@ class install_helper {
         $currentvalue = get_config('mod_bookit', $configkey);
 
         if ($currentvalue !== false && trim((string)$currentvalue) !== '') {
-            $legacyshipped = self::get_legacy_booking_status_notification_shipped_text($statuskey, $field);
-            if ($legacyshipped !== null && (string)$currentvalue === $legacyshipped) {
-                set_config(
-                    $configkey,
-                    self::get_booking_status_notification_default_text($statuskey, $field),
-                    'mod_bookit'
-                );
-            }
             return;
         }
 
@@ -323,28 +318,6 @@ class install_helper {
             self::get_booking_status_notification_default_text($statuskey, $field),
             'mod_bookit'
         );
-    }
-
-    /**
-     * Legacy shipped defaults superseded by later language updates.
-     *
-     * When a site still stores an uncustomized previous shipped default, refresh it.
-     *
-     * @param string $statuskey
-     * @param string $field
-     * @return string|null
-     */
-    private static function get_legacy_booking_status_notification_shipped_text(
-        string $statuskey,
-        string $field
-    ): ?string {
-        $legacy = [
-            'confirmed' => [
-                'subject' => 'Booking request confirmed: ###EVENTNAME### on ###BOOKINGDATE###',
-            ],
-        ];
-
-        return $legacy[$statuskey][$field] ?? null;
     }
 
     /**
