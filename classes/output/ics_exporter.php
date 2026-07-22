@@ -126,9 +126,9 @@ class ics_exporter {
      * Build localized DESCRIPTION rows for one event.
      *
      * @param object $ev Event record with optional usercreated, personinchargeid, and related fields.
-     * @param array<int,string> $usernames Map of user id to display name.
-     * @param array<int,string> $institutionnames Map of institution id to display name.
-     * @return string[] Localized description rows for the ICS DESCRIPTION property.
+     * @param array $usernames Map of user id to display name.
+     * @param array $institutionnames Map of institution id to display name.
+     * @return array Localized description rows for the ICS DESCRIPTION property.
      */
     private static function build_description_rows(object $ev, array $usernames, array $institutionnames): array {
         $descrrows = [];
