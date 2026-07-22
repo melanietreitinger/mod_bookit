@@ -10,7 +10,7 @@ Feature: Manage booking status notification settings
 
   Scenario: Admin sees the concise intro and prefilled expressive templates
     Then I should see "Configure recipients and message templates for booking-status changes."
-    And I should see "Supported business placeholders:"
+    And I should see "Supported placeholders include"
     And the field "Message subject for New" matches value "Booking request received: ###EVENTNAME### on ###BOOKINGDATE###"
     And the Bookit editor field "Message body for New" should equal "Thank you for your booking request ""###EVENTNAME###"" for ###BOOKINGDATE###. We have received your request and will review it shortly."
     And the field "Message subject for In Progress" matches value "Booking request in review: ###EVENTNAME### on ###BOOKINGDATE###"

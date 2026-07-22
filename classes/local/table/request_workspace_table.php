@@ -98,7 +98,7 @@ final class request_workspace_table extends sql_table {
         ]);
         if (!empty($profile['showcreatedbycolumn'])) {
             $columns[] = 'createdby';
-            $headers[] = get_string('event_usermodified', 'mod_bookit');
+            $headers[] = get_string('event_usercreated', 'mod_bookit');
         }
         $columns[] = 'bookingstatus';
         $headers[] = get_string('overview_column_bookingstatus', 'mod_bookit');

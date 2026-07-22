@@ -193,6 +193,7 @@ $string['duedate'] = 'Fälligkeitsdatum';
 $string['duedate_after_event'] = 'Nach Veranstaltung';
 $string['duedate_before_event'] = 'Vor Veranstaltung';
 $string['duedate_help'] = "Das Fälligkeitsdatum für die Fertigstellung des Checklisten-Elements. Muss einer von 'none', 'before' oder 'after' der Prüfung sein. Ein Offset in Tagen muss gesetzt werden, wenn die Optionen 'before' oder 'after' ausgewählt werden.";
+$string['edit'] = 'Bearbeiten';
 $string['edit_blocker'] = 'Blocker bearbeiten';
 $string['edit_institution'] = 'Institution bearbeiten';
 $string['edit_room'] = 'Raum bearbeiten';
@@ -570,6 +571,7 @@ $string['settings_weekdaysvisible_desc'] = 'Wählen Sie aus, welche Wochentage i
          an diesen Tagen nicht mehr angezeigt werden.
      </span>';
 $string['shortname'] = 'Kurzname';
+$string['sort'] = 'Sortieren';
 $string['sortorder_must_be_positive'] = 'Die Sortierreihenfolge muss eine positive Zahl sein.';
 $string['start'] = 'Anfang';
 $string['start_of_period'] = 'Anfang des Zeitraums';

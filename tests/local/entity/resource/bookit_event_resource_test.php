@@ -40,6 +40,14 @@ use advanced_testcase;
  */
 final class bookit_event_resource_test extends advanced_testcase {
     /**
+     * Reset Moodle state between tests to avoid global $USER leakage under --fail-on-warning.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+    }
+
+    /**
      * Test status enum values are defined correctly.
      */
     public function test_status_enum_values(): void {

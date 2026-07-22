@@ -193,6 +193,7 @@ $string['duedate'] = 'Due date';
 $string['duedate_after_event'] = 'After event';
 $string['duedate_before_event'] = 'Before event';
 $string['duedate_help'] = "The due date for the completion of the checklist item. Must be one of 'none', 'before' or 'after' the exam. An offset in days must be set if the options 'before' or 'after' are selected.";
+$string['edit'] = 'Edit';
 $string['edit_blocker'] = 'Edit blocker';
 $string['edit_institution'] = 'Edit institution';
 $string['edit_room'] = 'Edit room';
@@ -571,6 +572,7 @@ $string['settings_weekdaysvisible_desc'] = 'Choose which weekdays appear in the 
          on those days will no longer be displayed.
      </span>';
 $string['shortname'] = 'Shortname';
+$string['sort'] = 'Sort';
 $string['sortorder_must_be_positive'] = 'Sort order must be a positive number.';
 $string['start'] = 'Start';
 $string['start_of_period'] = 'Start of period';
