@@ -410,7 +410,7 @@ $templatecontext = [
     'showcreatedbycolumn' => $canviewrequestworkspace
         ? !empty($tableprofile['showcreatedbycolumn'])
         : ($showreportfilters && $isreportingworkspacetab),
-    'createdbycolumnlabel' => get_string('event_usermodified', 'mod_bookit'),
+    'createdbycolumnlabel' => get_string('event_usercreated', 'mod_bookit'),
     'showprogresscolumn' => $canviewrequestworkspace
         ? (!empty($tableprofile['showprogresscolumn']) && ($checklistenabled || $resourcesenabled))
         : ($checklistenabled || $resourcesenabled),
@@ -565,14 +565,14 @@ $prepareeventrow = function (
         : [];
 
     $createdby = '-';
-    if (!empty($ev->usermodified)) {
+    if (!empty($ev->usercreated)) {
         if (!empty($ev->creatordeleted)) {
             $createdby = get_string('deleteduser', 'moodle');
         } else if (!empty($ev->creatorfirstname) || !empty($ev->creatorlastname)) {
             $createdby = trim(($ev->creatorfirstname ?? '') . ' ' . ($ev->creatorlastname ?? ''));
         } else {
-            $creator = core_user::get_user((int)$ev->usermodified);
-            $createdby = $creator ? fullname($creator) : (string)$ev->usermodified;
+            $creator = core_user::get_user((int)$ev->usercreated);
+            $createdby = $creator ? fullname($creator) : (string)$ev->usercreated;
         }
     }
 

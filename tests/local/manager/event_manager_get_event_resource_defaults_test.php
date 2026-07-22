@@ -129,6 +129,7 @@ final class event_manager_get_event_resource_defaults_test extends advanced_test
             0,
             null,
             (int) $editor->id,
+            (int) $editor->id,
             time(),
             time(),
             $mappings,

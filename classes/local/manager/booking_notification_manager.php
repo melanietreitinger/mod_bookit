@@ -190,7 +190,7 @@ class booking_notification_manager {
             return (int)$earliesteditor;
         }
 
-        return (int)($event->usermodified ?? 0);
+        return (int)($event->usercreated ?? 0);
     }
 
     /**

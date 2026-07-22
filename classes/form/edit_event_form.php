@@ -146,10 +146,10 @@ class edit_event_form extends dynamic_form {
         $mform->setType('cancelonly', PARAM_BOOL);
 
         // Show the user who created the entry.
-        $mform->addElement('text', 'usermodified', get_string('event_usermodified', 'mod_bookit'));
-        $mform->setType('usermodified', PARAM_TEXT);
-        $mform->disabledIf('usermodified', 'id', 'neq', 0);
-        $mform->hideIf('usermodified', 'id', 'eq', '');
+        $mform->addElement('text', 'usercreated', get_string('event_usercreated', 'mod_bookit'));
+        $mform->setType('usercreated', PARAM_TEXT);
+        $mform->disabledIf('usercreated', 'id', 'neq', 0);
+        $mform->hideIf('usercreated', 'id', 'eq', '');
 
         // Add the standard "name" field.
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), ['size' => '64']);
@@ -831,13 +831,13 @@ class edit_event_form extends dynamic_form {
 
         $this->inject_examiner_selector_labels($mform, $data);
 
-        // Re-apply after starttime setDefault(), which resets usermodified to the numeric id.
-        if ($existingevent && !empty($existingevent->usermodified) && $mform->elementExists('usermodified')) {
-            $user = $DB->get_record('user', ['id' => (int)$existingevent->usermodified]);
+        // Re-apply after starttime setDefault(), which resets usercreated to the numeric id.
+        if ($existingevent && !empty($existingevent->usercreated) && $mform->elementExists('usercreated')) {
+            $user = $DB->get_record('user', ['id' => (int)$existingevent->usercreated]);
             $displayname = $user
                 ? fullname($user, has_capability('moodle/site:viewfullnames', $context))
                 : get_string('deleteduser', 'moodle');
-            $mform->getElement('usermodified')->setValue($displayname);
+            $mform->getElement('usercreated')->setValue($displayname);
         }
     }
 
@@ -1056,9 +1056,9 @@ class edit_event_form extends dynamic_form {
             $formdata->refcourseid = $r[0];
         }
 
-        // Usermodified stores the booking person (created-by), not the last editor.
-        if (!is_int($formdata->usermodified)) {
-            unset($formdata->usermodified);
+        // Usercreated stores the booking person (created-by); do not clobber with display name.
+        if (!is_int($formdata->usercreated ?? null)) {
+            unset($formdata->usercreated);
         }
 
         if (!is_int($formdata->extratimebefore)) {

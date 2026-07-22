@@ -67,6 +67,7 @@ class bookit_event {
      * @param int $extratimebefore
      * @param int $extratimeafter
      * @param mixed $refcourseid
+     * @param int|null $usercreated
      * @param int|null $usermodified
      * @param int|null $timecreated
      * @param int|null $timemodified
@@ -115,7 +116,9 @@ class bookit_event {
         public int $extratimeafter,
         /** @var mixed $refcourseid */
         public mixed $refcourseid,
-        /** @var int|null $usermodified */
+        /** @var int|null $usercreated Booking person / original creator */
+        public ?int $usercreated,
+        /** @var int|null $usermodified Last editor */
         public ?int $usermodified,
         /** @var int|null $timecreated */
         public ?int $timecreated,
@@ -187,6 +190,7 @@ class bookit_event {
             $record->extratimebefore ?? $room?->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore'),
             $record->extratimeafter ?? $room?->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter'),
             $record->refcourseid ?? null,
+            $record->usercreated ?? null,
             $record->usermodified ?? null,
             $record->timecreated ?? null,
             $record->timemodified ?? null,
@@ -204,16 +208,19 @@ class bookit_event {
     final public function save(?int $userid = null): void {
         global $DB, $USER;
 
-        $actorid = (int)($userid ?? $USER->id);
-        if (!empty($this->id)) {
-            $existing = $DB->get_field('bookit_event', 'usermodified', ['id' => $this->id]);
-            if ($existing !== false && (int)$existing !== $actorid) {
-                $this->usermodified = (int)$existing;
-            } else {
-                $this->usermodified = $actorid;
+        $uid = (int)($userid ?? $USER->id);
+        // Last editor is always the actor performing this save.
+        $this->usermodified = $uid;
+
+        if (empty($this->id)) {
+            // INSERT: set creator now if not provided.
+            $this->usercreated = $this->usercreated ?? $uid;
+        } else if (empty($this->usercreated)) {
+            // UPDATE: preserve existing creator from DB so we never clobber it with null/0.
+            $existing = $DB->get_field('bookit_event', 'usercreated', ['id' => $this->id]);
+            if ($existing) {
+                $this->usercreated = (int)$existing;
             }
-        } else {
-            $this->usermodified = $actorid;
         }
         $this->timecreated  ??= time();
         $this->timemodified  = time();

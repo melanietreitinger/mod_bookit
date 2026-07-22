@@ -190,6 +190,7 @@ final class edit_event_form_support_status_test extends advanced_testcase {
             0,
             null,
             $bookingpersonid,
+            $bookingpersonid,
             time(),
             time(),
             [],

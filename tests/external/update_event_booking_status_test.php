@@ -66,6 +66,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -126,7 +127,8 @@ final class update_event_booking_status_test extends advanced_testcase {
                 'extratimebefore' => 0,
                 'extratimeafter' => 0,
                 'refcourseid' => null,
-                'usermodified' => get_admin()->id,
+                'usercreated' => 0,
+            'usermodified' => get_admin()->id,
                 'timecreated' => time(),
                 'timemodified' => time(),
             ]);
@@ -187,7 +189,8 @@ final class update_event_booking_status_test extends advanced_testcase {
                 'extratimebefore' => 0,
                 'extratimeafter' => 0,
                 'refcourseid' => null,
-                'usermodified' => get_admin()->id,
+                'usercreated' => 0,
+            'usermodified' => get_admin()->id,
                 'timecreated' => time(),
                 'timemodified' => time(),
             ]);
@@ -257,6 +260,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -324,6 +328,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => 999,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -384,6 +389,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -400,9 +406,9 @@ final class update_event_booking_status_test extends advanced_testcase {
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
         $this->assertSame('history', $response['tab']);
 
-        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus,usermodified', MUST_EXIST);
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus,usercreated,usermodified', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
-        $this->assertSame((int)$bookingperson->id, (int)$record->usermodified);
+        $this->assertSame((int)$bookingperson->id, (int)$record->usercreated);
     }
 
     /**
@@ -454,6 +460,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -477,9 +484,9 @@ final class update_event_booking_status_test extends advanced_testcase {
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$response['status']);
         $this->assertSame('history', $response['tab']);
 
-        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus,usermodified', MUST_EXIST);
+        $record = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus,usercreated,usermodified', MUST_EXIST);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$record->bookingstatus);
-        $this->assertSame((int)$bookingperson->id, (int)$record->usermodified);
+        $this->assertSame((int)$bookingperson->id, (int)$record->usercreated);
     }
 
     /**
@@ -528,6 +535,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$owner->id,
             'usermodified' => (int)$owner->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -580,6 +588,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -646,6 +655,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -705,6 +715,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -761,6 +772,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -829,6 +841,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$owner->id,
             'usermodified' => (int)$owner->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -897,6 +910,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => (int)$supportuser->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -969,6 +983,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$owner->id,
             'usermodified' => (int)$owner->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1019,6 +1034,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1086,6 +1102,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1137,6 +1154,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1187,6 +1205,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1248,6 +1267,7 @@ final class update_event_booking_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),

@@ -120,7 +120,7 @@ final class booking_notification_manager_test extends advanced_testcase {
         );
 
         $persisted = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
-        $this->assertSame((int)$booker->id, (int)$persisted->usermodified);
+        $this->assertSame((int)$booker->id, (int)$persisted->usercreated);
 
         $sink = $this->redirectMessages();
         $sent = booking_notification_manager::notify_status_changed(
@@ -486,6 +486,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $usermodified ?? $requesterid,
             'usermodified' => $usermodified ?? $requesterid,
             'timecreated' => $now,
             'timemodified' => $now,
@@ -498,6 +499,7 @@ final class booking_notification_manager_test extends advanced_testcase {
             'newstatus' => $bookingstatus,
             'changedfields' => null,
             'recoverymarker' => 0,
+            'usercreated' => $requesterid,
             'usermodified' => $requesterid,
             'timecreated' => $now - 60,
         ]);

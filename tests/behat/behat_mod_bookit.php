@@ -2977,6 +2977,7 @@ class behat_mod_bookit extends behat_base {
                 'extratimebefore' => 0,
                 'extratimeafter' => 0,
                 'refcourseid' => null,
+                'usercreated' => $userid,
                 'usermodified' => $userid,
                 'timecreated' => $now,
                 'timemodified' => $now,

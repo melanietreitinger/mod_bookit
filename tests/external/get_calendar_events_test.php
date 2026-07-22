@@ -79,6 +79,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -104,6 +105,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -183,6 +185,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -272,6 +275,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             0,
             null,
             (int)$bookingperson->id,
+            (int)$bookingperson->id,
             time(),
             time(),
             []
@@ -296,7 +300,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         );
 
         $persisted = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
-        $this->assertSame((int)$bookingperson->id, (int)$persisted->usermodified);
+        $this->assertSame((int)$bookingperson->id, (int)$persisted->usercreated);
 
         $this->setUser($bookingperson);
         $response = get_calendar_events::execute(
@@ -370,6 +374,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => 0,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -461,6 +466,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -545,6 +551,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => 0,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -626,6 +633,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => 0,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -651,6 +659,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => 0,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -727,6 +736,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -753,6 +763,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),

@@ -117,6 +117,7 @@ class mod_bookit_generator extends testing_module_generator {
             (int)($event['extratimeafter'] ?? 15),
             null,
             $userid,
+            $userid,
             time(),
             time(),
             [

@@ -85,6 +85,7 @@ final class update_event_resource_status_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),

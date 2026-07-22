@@ -166,7 +166,8 @@ final class request_workspace_table_test extends advanced_testcase {
                 'extratimebefore' => 0,
                 'extratimeafter' => 0,
                 'refcourseid' => null,
-                'usermodified' => $adminid,
+                'usercreated' => 0,
+            'usermodified' => $adminid,
                 'timecreated' => time(),
                 'timemodified' => time(),
             ]);
@@ -222,7 +223,8 @@ final class request_workspace_table_test extends advanced_testcase {
                 'extratimebefore' => 0,
                 'extratimeafter' => 0,
                 'refcourseid' => null,
-                'usermodified' => $adminid,
+                'usercreated' => 0,
+            'usermodified' => $adminid,
                 'timecreated' => time(),
                 'timemodified' => time(),
             ]);
@@ -299,7 +301,8 @@ final class request_workspace_table_test extends advanced_testcase {
                 'extratimebefore' => 0,
                 'extratimeafter' => 0,
                 'refcourseid' => null,
-                'usermodified' => $other->id,
+                'usercreated' => 0,
+            'usermodified' => $other->id,
                 'timecreated' => $now,
                 'timemodified' => $now,
             ]));
@@ -352,6 +355,7 @@ final class request_workspace_table_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => $adminid,
             'timecreated' => time(),
             'timemodified' => time(),

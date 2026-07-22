@@ -274,7 +274,7 @@ class event_access_manager {
             $roles[] = 'personincharge';
         }
 
-        if ((int)($event->usermodified ?? 0) === $userid) {
+        if ((int)($event->usercreated ?? 0) === $userid) {
             $roles[] = 'bookingperson';
         }
 
@@ -756,7 +756,7 @@ class event_access_manager {
             }
 
             $actorid = (int)($entry->usermodified ?? 0);
-            if ($actorid === (int)($event->usermodified ?? 0)) {
+            if ($actorid === (int)($event->usercreated ?? 0)) {
                 return true;
             }
 
@@ -825,7 +825,7 @@ class event_access_manager {
             return true;
         }
 
-        if ((int)($event->usermodified ?? 0) === $userid) {
+        if ((int)($event->usercreated ?? 0) === $userid) {
             return true;
         }
 

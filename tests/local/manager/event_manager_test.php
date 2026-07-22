@@ -128,7 +128,8 @@ final class event_manager_test extends advanced_testcase {
             $overrides['extratimebefore'] ?? 0,
             $overrides['extratimeafter'] ?? 0,
             $overrides['refcourseid'] ?? null,
-            $userid,
+            $overrides['usercreated'] ?? $userid,
+            $overrides['usermodified'] ?? $userid,
             time(),
             time(),
             $overrides['resources'] ?? [],
@@ -186,12 +187,18 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => 0,
             'timecreated' => time(),
             'timemodified' => time(),
         ];
 
-        return (int)$DB->insert_record('bookit_event', (object)array_merge($defaults, $overrides));
+        $record = array_merge($defaults, $overrides);
+        if (empty($record['usercreated']) && !empty($record['usermodified'])) {
+            $record['usercreated'] = $record['usermodified'];
+        }
+
+        return (int)$DB->insert_record('bookit_event', (object)$record);
     }
 
     /**
@@ -632,6 +639,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$creator->id,
             'usermodified' => (int)$creator->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -747,6 +755,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $booker->id,
             'usermodified' => $booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -801,6 +810,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $booker->id,
             'usermodified' => $booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1081,11 +1091,11 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Status transitions must not overwrite the booking person stored in usermodified.
+     * Status transitions preserve booking person in usercreated and set last editor to actor.
      *
      * @return void
      */
-    public function test_transition_booking_status_preserves_booking_person_usermodified(): void {
+    public function test_transition_booking_status_preserves_booking_person_usercreated(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1098,6 +1108,7 @@ final class event_manager_test extends advanced_testcase {
 
         $eventid = $this->create_event_record([
             'name' => 'Preserve booking person',
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
         ]);
@@ -1111,7 +1122,8 @@ final class event_manager_test extends advanced_testcase {
         );
 
         $updated = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
-        $this->assertSame((int)$bookingperson->id, (int)$updated->usermodified);
+        $this->assertSame((int)$bookingperson->id, (int)$updated->usercreated);
+        $this->assertSame((int)$serviceuser->id, (int)$updated->usermodified);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_IN_PROGRESS, (int)$updated->bookingstatus);
     }
 
@@ -1213,7 +1225,8 @@ final class event_manager_test extends advanced_testcase {
         );
 
         $persisted = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
-        $this->assertSame($bookingpersonid, (int)$persisted->usermodified);
+        $this->assertSame($bookingpersonid, (int)$persisted->usercreated);
+        $this->assertSame($actorid, (int)$persisted->usermodified);
 
         $this->setUser($bookingpersonid);
         $this->assertTrue(
@@ -1225,22 +1238,22 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Admin foreign saves must not overwrite the booking person stored in usermodified.
+     * Admin foreign saves must not overwrite the booking person stored in usercreated.
      *
      * @return void
      */
-    public function test_save_event_preserves_booking_person_usermodified_on_foreign_save(): void {
+    public function test_save_event_preserves_booking_person_usercreated_on_foreign_save(): void {
         $this->resetAfterTest(true);
         $admin = get_admin();
         $this->assert_foreign_save_preserves_booking_person((int)$admin->id);
     }
 
     /**
-     * Service-team foreign saves must not overwrite the booking person stored in usermodified.
+     * Service-team foreign saves must not overwrite the booking person stored in usercreated.
      *
      * @return void
      */
-    public function test_save_event_preserves_booking_person_usermodified_on_service_team_foreign_save(): void {
+    public function test_save_event_preserves_booking_person_usercreated_on_service_team_foreign_save(): void {
         $this->resetAfterTest(true);
 
         $serviceuser = $this->getDataGenerator()->create_user();
@@ -1256,11 +1269,11 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * New bookings must store the creating user as booking person in usermodified.
+     * New bookings must store the creating user as booking person in usercreated.
      *
      * @return void
      */
-    public function test_save_event_sets_booking_person_usermodified_on_insert(): void {
+    public function test_save_event_sets_booking_person_usercreated_on_insert(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1274,15 +1287,16 @@ final class event_manager_test extends advanced_testcase {
         event_manager::save_event_with_lifecycle_tracking($event, null, (int)$user->id, $context);
 
         $record = $DB->get_record('bookit_event', ['id' => $event->id], '*', MUST_EXIST);
+        $this->assertSame((int)$user->id, (int)$record->usercreated);
         $this->assertSame((int)$user->id, (int)$record->usermodified);
     }
 
     /**
-     * Booking-person self saves must keep usermodified aligned with the booking person.
+     * Booking-person self saves keep usercreated; usermodified stays the booking person on self-save.
      *
      * @return void
      */
-    public function test_save_event_preserves_booking_person_usermodified_on_self_save(): void {
+    public function test_save_event_preserves_booking_person_usercreated_on_self_save(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1314,6 +1328,7 @@ final class event_manager_test extends advanced_testcase {
         );
 
         $record = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
+        $this->assertSame((int)$bookingperson->id, (int)$record->usercreated);
         $this->assertSame((int)$bookingperson->id, (int)$record->usermodified);
     }
 
@@ -1335,6 +1350,7 @@ final class event_manager_test extends advanced_testcase {
 
         $eventid = $this->create_event_record([
             'name' => 'Overview after transition',
+            'usercreated' => (int)$bookingperson->id,
             'usermodified' => (int)$bookingperson->id,
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'starttime' => strtotime('2026-05-20 09:00:00'),
@@ -1394,6 +1410,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1557,6 +1574,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1611,6 +1629,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1658,6 +1677,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1709,6 +1729,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1761,6 +1782,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1811,6 +1833,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1862,6 +1885,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1911,6 +1935,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -2541,6 +2566,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -2606,6 +2632,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -2665,6 +2692,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -2717,6 +2745,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -2770,6 +2799,7 @@ final class event_manager_test extends advanced_testcase {
             'name' => 'Requester self cancel',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => $requester->id,
+            'usercreated' => $requester->id,
             'usermodified' => $requester->id,
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
@@ -3245,6 +3275,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -3379,6 +3410,7 @@ final class event_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $booker->id,
             'usermodified' => $booker->id,
             'timecreated' => time(),
             'timemodified' => time(),

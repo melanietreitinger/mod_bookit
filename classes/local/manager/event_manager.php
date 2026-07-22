@@ -89,7 +89,7 @@ class event_manager {
         $facultylabels = self::get_faculties();
         $sql = 'SELECT e.id, e.name, e.semester, e.institutionid, e.roomid, e.bookingstatus, e.starttime, e.endtime,
                     e.extratimebefore, e.extratimeafter, e.personinchargeid, e.otherexaminers, e.supportpersons,
-                    e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
+                    e.usercreated, e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
                 FROM {bookit_event} e
                 LEFT JOIN {bookit_room} r ON r.id = e.roomid
                 WHERE endtime >= :starttime AND starttime <= :endtime
@@ -235,13 +235,14 @@ class event_manager {
                 e.personinchargeid,
                 e.otherexaminers,
                 e.supportpersons,
+                e.usercreated,
                 e.usermodified,
                 r.name AS room
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             WHERE
                    e.personinchargeid = :uid1
-                OR e.usermodified    = :uid2
+                OR e.usercreated    = :uid2
                 OR $otherexamcond
                 OR $supportcond
             ORDER BY e.starttime DESC, e.id DESC
@@ -362,7 +363,7 @@ class event_manager {
         $from = '{bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             LEFT JOIN {user} pic ON pic.id = e.personinchargeid
-            LEFT JOIN {user} creator ON creator.id = e.usermodified';
+            LEFT JOIN {user} creator ON creator.id = e.usercreated';
         $where = $conditions ? implode(' AND ', $conditions) : '1 = 1';
         $fields = "e.id,
             e.name AS title,
@@ -375,6 +376,7 @@ class event_manager {
             e.personinchargeid,
             e.otherexaminers,
             e.supportpersons,
+            e.usercreated,
             e.usermodified,
             creator.firstname AS creatorfirstname,
             creator.lastname AS creatorlastname,
@@ -998,6 +1000,7 @@ class event_manager {
                 e.personinchargeid,
                 e.otherexaminers,
                 e.supportpersons,
+                e.usercreated,
                 e.usermodified,
                 creator.firstname AS creatorfirstname,
                 creator.lastname AS creatorlastname,
@@ -1005,7 +1008,7 @@ class event_manager {
                 r.name AS room
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            LEFT JOIN {user} creator ON creator.id = e.usermodified
+            LEFT JOIN {user} creator ON creator.id = e.usercreated
             WHERE " . implode(' AND ', $conditions) . "
             ORDER BY e.starttime DESC, e.id DESC
         ";
@@ -1114,7 +1117,7 @@ class event_manager {
             "
                 SELECT COUNT(1)
                   FROM {bookit_event} e
-             LEFT JOIN {user} creator ON creator.id = e.usermodified
+             LEFT JOIN {user} creator ON creator.id = e.usercreated
                  WHERE $where
             ",
             $params
@@ -1146,6 +1149,7 @@ class event_manager {
                 e.personinchargeid,
                 e.otherexaminers,
                 e.supportpersons,
+                e.usercreated,
                 e.usermodified,
                 creator.firstname AS creatorfirstname,
                 creator.lastname AS creatorlastname,
@@ -1153,7 +1157,7 @@ class event_manager {
                 r.name AS room
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
-            LEFT JOIN {user} creator ON creator.id = e.usermodified
+            LEFT JOIN {user} creator ON creator.id = e.usercreated
             WHERE $where
             ORDER BY e.starttime DESC, e.id DESC
         ";
@@ -1271,7 +1275,7 @@ class event_manager {
                           FROM {bookit_event_history} h
                          WHERE h.eventid = e.id
                            AND h.newstatus = :historycanceled
-                           AND (h.usermodified = 0 OR h.usermodified = e.usermodified)
+                           AND (h.usermodified = 0 OR h.usermodified = e.usercreated)
                            AND NOT EXISTS (
                                SELECT 1
                                  FROM {bookit_event_history} newer
@@ -1593,7 +1597,8 @@ class event_manager {
         $changed = $oldstatus !== $newstatus;
 
         $event->bookingstatus = $newstatus;
-        // Usermodified stores the booking person (created-by), not the actor performing the transition.
+        // Last editor is the actor performing the transition; booking person is usercreated.
+        $event->usermodified = $userid;
         $event->timemodified = time();
         $DB->update_record('bookit_event', $event);
 
@@ -1794,7 +1799,7 @@ class event_manager {
 
         $sql = 'SELECT e.id, e.name, e.semester, e.institutionid, e.roomid, e.bookingstatus, e.starttime, e.endtime,
                     e.extratimebefore, e.extratimeafter, e.personinchargeid, e.otherexaminers, e.supportpersons,
-                    e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
+                    e.usercreated, e.usermodified, r.eventcolor, r.name as roomname, r.shortname, r.location
                 FROM {bookit_event} e
                 LEFT JOIN {bookit_room} r ON r.id = e.roomid
                 WHERE e.bookingstatus = :status

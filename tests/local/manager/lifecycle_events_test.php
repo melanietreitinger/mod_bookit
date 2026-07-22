@@ -95,6 +95,7 @@ final class lifecycle_events_test extends advanced_testcase {
             $overrides['extratimeafter'] ?? 0,
             $overrides['refcourseid'] ?? null,
             $userid,
+            $userid,
             time(),
             time(),
             $overrides['resources'] ?? [],

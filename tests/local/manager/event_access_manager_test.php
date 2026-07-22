@@ -292,6 +292,7 @@ final class event_access_manager_test extends advanced_testcase {
     public function test_get_user_roles_for_event(): void {
         $event = new stdClass();
         $event->personinchargeid = 11;
+        $event->usercreated = 11;
         $event->usermodified = 11;
         $event->otherexaminers = '12,13';
         $event->supportpersons = '13,14';
@@ -315,6 +316,7 @@ final class event_access_manager_test extends advanced_testcase {
     public function test_can_participant_edit_event(): void {
         $event = new stdClass();
         $event->personinchargeid = 10;
+        $event->usercreated = 11;
         $event->usermodified = 11;
         $event->otherexaminers = '12';
         $event->supportpersons = '13';
@@ -347,6 +349,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'starttime' => time() - 3600,
             'personinchargeid' => $participant->id,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -370,6 +373,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'starttime' => time() - 3600,
             'personinchargeid' => $serviceuser->id,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -397,6 +401,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = new stdClass();
         $event->bookingstatus = event_access_manager::BOOKINGSTATUS_NEW;
         $event->personinchargeid = 999;
+        $event->usercreated = 998;
         $event->usermodified = 998;
         $event->otherexaminers = '';
         $event->supportpersons = (string)$user->id;
@@ -442,6 +447,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -466,6 +472,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -490,6 +497,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => (string)$user->id,
@@ -513,6 +521,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -536,6 +545,7 @@ final class event_access_manager_test extends advanced_testcase {
         $canceled = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -562,6 +572,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => (string)$user->id,
@@ -585,6 +596,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -615,6 +627,7 @@ final class event_access_manager_test extends advanced_testcase {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
+                'usercreated' => 999,
                 'usermodified' => 999,
                 'otherexaminers' => '',
                 'supportpersons' => (string)$user->id,
@@ -643,6 +656,7 @@ final class event_access_manager_test extends advanced_testcase {
         $accepted = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
+            'usercreated' => 0,
             'usermodified' => 0,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -680,6 +694,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = new stdClass();
         $event->bookingstatus = event_access_manager::BOOKINGSTATUS_IN_PROGRESS;
         $event->personinchargeid = 999;
+        $event->usercreated = 998;
         $event->usermodified = 998;
         $event->otherexaminers = (string)$user->id;
         $event->supportpersons = (string)$user->id;
@@ -706,6 +721,7 @@ final class event_access_manager_test extends advanced_testcase {
 
         $event = new stdClass();
         $event->personinchargeid = 999;
+        $event->usercreated = $user->id;
         $event->usermodified = $user->id;
         $event->otherexaminers = '';
         $event->supportpersons = '';
@@ -732,6 +748,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => $user->id,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -766,6 +783,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => $user->id,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -802,6 +820,7 @@ final class event_access_manager_test extends advanced_testcase {
         $acceptedevent = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 999,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1023,6 +1042,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'endtime' => strtotime('2026-05-01 12:00:00'),
             'personinchargeid' => 0,
+            'usercreated' => 0,
             'usermodified' => 0,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1054,6 +1074,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => 0,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1103,6 +1124,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => 0,
+            'usercreated' => $owner->id,
             'usermodified' => $owner->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1131,6 +1153,7 @@ final class event_access_manager_test extends advanced_testcase {
             'starttime' => strtotime('2026-06-10 09:00:00'),
             'endtime' => strtotime('2026-06-10 11:00:00'),
             'personinchargeid' => 0,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1164,6 +1187,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => $examiner->id,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1192,6 +1216,7 @@ final class event_access_manager_test extends advanced_testcase {
             'starttime' => strtotime('2026-06-12 09:00:00'),
             'endtime' => strtotime('2026-06-12 11:00:00'),
             'personinchargeid' => 0,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1234,6 +1259,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
+            'usercreated' => 0,
             'usermodified' => 0,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1290,6 +1316,7 @@ final class event_access_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $bookingperson->id,
             'usermodified' => $bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1309,7 +1336,7 @@ final class event_access_manager_test extends advanced_testcase {
                 (int)$serviceuser->id,
                 $context
             );
-            $this->assertSame((int)$bookingperson->id, (int)$event->usermodified);
+            $this->assertSame((int)$bookingperson->id, (int)$event->usercreated);
 
             $this->setUser($bookingperson);
             $this->assertTrue(
@@ -1370,6 +1397,7 @@ final class event_access_manager_test extends advanced_testcase {
             0,
             null,
             (int)$bookingperson->id,
+            (int)$bookingperson->id,
             time(),
             time(),
             []
@@ -1394,7 +1422,8 @@ final class event_access_manager_test extends advanced_testcase {
         );
 
         $persisted = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
-        $this->assertSame((int)$bookingperson->id, (int)$persisted->usermodified);
+        $this->assertSame((int)$bookingperson->id, (int)$persisted->usercreated);
+        $this->assertNotSame((int)$bookingperson->id, (int)$persisted->usermodified);
 
         $this->setUser($bookingperson);
         $this->assertTrue(
@@ -1451,6 +1480,7 @@ final class event_access_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => $bookingperson->id,
             'usermodified' => $bookingperson->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1485,6 +1515,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 999,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1517,6 +1548,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'endtime' => strtotime('2026-05-20 11:00:00'),
             'personinchargeid' => 0,
+            'usercreated' => 0,
             'usermodified' => 0,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1565,6 +1597,7 @@ final class event_access_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => 0,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -1599,6 +1632,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$user->id,
             'usermodified' => (int)$user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1630,7 +1664,8 @@ final class event_access_manager_test extends advanced_testcase {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
-                'usermodified' => (int)$user->id,
+                'usercreated' => (int)$user->id,
+            'usermodified' => (int)$user->id,
                 'otherexaminers' => '',
                 'supportpersons' => '',
             ];
@@ -1656,6 +1691,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
+            'usercreated' => 0,
             'usermodified' => 0,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1679,6 +1715,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$user->id,
             'usermodified' => (int)$user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1703,6 +1740,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$user->id,
             'usermodified' => (int)$user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1728,6 +1766,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$user->id,
             'usermodified' => (int)$user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1757,7 +1796,8 @@ final class event_access_manager_test extends advanced_testcase {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
-                'usermodified' => (int)$user->id,
+                'usercreated' => (int)$user->id,
+            'usermodified' => (int)$user->id,
                 'otherexaminers' => '',
                 'supportpersons' => '',
             ];
@@ -1803,6 +1843,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$user->id,
             'usermodified' => (int)$user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1834,7 +1875,8 @@ final class event_access_manager_test extends advanced_testcase {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
-                'usermodified' => (int)$user->id,
+                'usercreated' => (int)$user->id,
+            'usermodified' => (int)$user->id,
                 'otherexaminers' => '',
                 'supportpersons' => '',
             ];
@@ -1858,6 +1900,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$owner->id,
             'usermodified' => (int)$owner->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1882,6 +1925,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => (int)$examiner->id,
+            'usercreated' => (int)$owner->id,
             'usermodified' => (int)$owner->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1906,6 +1950,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1935,7 +1980,8 @@ final class event_access_manager_test extends advanced_testcase {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
-                'usermodified' => (int)$user->id,
+                'usercreated' => (int)$user->id,
+            'usermodified' => (int)$user->id,
                 'otherexaminers' => '',
                 'supportpersons' => '',
             ];
@@ -1965,7 +2011,8 @@ final class event_access_manager_test extends advanced_testcase {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
-                'usermodified' => (int)$booker->id,
+                'usercreated' => (int)$booker->id,
+            'usermodified' => (int)$booker->id,
                 'otherexaminers' => '',
                 'supportpersons' => '',
             ];
@@ -1989,6 +2036,7 @@ final class event_access_manager_test extends advanced_testcase {
         $canceledother = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => (int)$examiner->id,
+            'usercreated' => (int)$owner->id,
             'usermodified' => (int)$owner->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -1998,6 +2046,7 @@ final class event_access_manager_test extends advanced_testcase {
         $accepted = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$owner->id,
             'usermodified' => (int)$owner->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2063,6 +2112,7 @@ final class event_access_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -2097,6 +2147,7 @@ final class event_access_manager_test extends advanced_testcase {
         $rejected = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2129,6 +2180,7 @@ final class event_access_manager_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'timecreated' => time(),
             'timemodified' => time(),
@@ -2146,6 +2198,7 @@ final class event_access_manager_test extends advanced_testcase {
         $accepted = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
+            'usercreated' => (int)$booker->id,
             'usermodified' => (int)$booker->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2200,6 +2253,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'starttime' => time() + 3600,
             'personinchargeid' => 999,
+            'usercreated' => 998,
             'usermodified' => 998,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2224,6 +2278,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => time() + 3600,
             'personinchargeid' => 999,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2249,6 +2304,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'starttime' => time() + 3600,
             'personinchargeid' => 999,
+            'usercreated' => 998,
             'usermodified' => 998,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2274,6 +2330,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'starttime' => time() + 3600,
             'personinchargeid' => 999,
+            'usercreated' => 998,
             'usermodified' => 998,
             'otherexaminers' => '',
             'supportpersons' => (string)$user->id,
@@ -2303,6 +2360,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'starttime' => time() + 3600,
             'personinchargeid' => 999,
+            'usercreated' => 998,
             'usermodified' => 998,
             'otherexaminers' => '',
             'supportpersons' => (string)$user->id,
@@ -2332,6 +2390,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'starttime' => time() + 3600,
             'personinchargeid' => 999,
+            'usercreated' => 998,
             'usermodified' => 998,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2356,6 +2415,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'starttime' => time() + 3600,
             'personinchargeid' => $user->id,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2405,6 +2465,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'starttime' => time() - 3600,
             'personinchargeid' => $user->id,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2432,6 +2493,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'starttime' => time() + 3600,
             'personinchargeid' => $user->id,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2445,6 +2507,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'starttime' => time() + 3600,
             'personinchargeid' => 999,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2476,6 +2539,7 @@ final class event_access_manager_test extends advanced_testcase {
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'starttime' => time() + 7200,
             'personinchargeid' => 999,
+            'usercreated' => 998,
             'usermodified' => 998,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2504,6 +2568,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2531,6 +2596,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2557,6 +2623,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
+            'usercreated' => 999,
             'usermodified' => 999,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2582,6 +2649,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'personinchargeid' => 999,
+            'usercreated' => 998,
             'usermodified' => 998,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2607,6 +2675,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'personinchargeid' => 0,
+            'usercreated' => $user->id,
             'usermodified' => $user->id,
             'otherexaminers' => '',
             'supportpersons' => '',
@@ -2633,6 +2702,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'personinchargeid' => 0,
+            'usercreated' => $service->id,
             'usermodified' => $service->id,
             'otherexaminers' => '',
             'supportpersons' => (string)$support->id,
@@ -2667,6 +2737,7 @@ final class event_access_manager_test extends advanced_testcase {
         $event = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
+            'usercreated' => $service->id,
             'usermodified' => $service->id,
             'otherexaminers' => '',
             'supportpersons' => (string)$support->id,
@@ -2694,6 +2765,7 @@ final class event_access_manager_test extends advanced_testcase {
         $assignedprogress = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'personinchargeid' => 0,
+            'usercreated' => $service->id,
             'usermodified' => $service->id,
             'otherexaminers' => '',
             'supportpersons' => (string)$support->id,

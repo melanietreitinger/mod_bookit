@@ -72,6 +72,7 @@ final class toggle_event_checklist_item_test extends advanced_testcase {
             'extratimebefore' => 0,
             'extratimeafter' => 0,
             'refcourseid' => null,
+            'usercreated' => 0,
             'usermodified' => get_admin()->id,
             'timecreated' => time(),
             'timemodified' => time(),

@@ -188,7 +188,7 @@ if (!empty($ids)) {
                     FROM {bookit_event}
                     WHERE id $in
                     AND (
-                        usermodified = :uid
+                        usercreated = :uid
                         OR personinchargeid = :uid2
                         OR $like
                     )";
@@ -228,7 +228,7 @@ if (!empty($ids)) {
                         FROM {bookit_event}
                        WHERE id $idinsql
                          AND (
-                             usermodified = :uid
+                             usercreated = :uid
                              OR personinchargeid = :uid2
                              OR $like
                          )";
@@ -284,7 +284,7 @@ if ($events) {
 $alluserids = [];
 $allinstitutionids = [];
 foreach ($events as $event) {
-    $alluserids[] = (int)($event->usermodified ?? 0);
+    $alluserids[] = (int)($event->usercreated ?? 0);
     $alluserids[] = (int)($event->personinchargeid ?? 0);
     $alluserids = array_merge($alluserids, export_events_csv_user_ids($event->otherexaminers ?? ''));
     $allinstitutionids[] = (int)($event->institutionid ?? 0);
@@ -311,7 +311,7 @@ $institutionnames = export_events_institution_names($allinstitutionids);
 
         /* ------- human‑readable description ---------------------------- */
         $descrrows = [];
-        $bookingpersonid = (int)($ev->usermodified ?? 0);
+        $bookingpersonid = (int)($ev->usercreated ?? 0);
         $personinchargeid = (int)($ev->personinchargeid ?? 0);
         $institutionid = (int)($ev->institutionid ?? 0);
         $otherexaminerids = export_events_csv_user_ids($ev->otherexaminers ?? '');

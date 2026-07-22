@@ -204,6 +204,7 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
             (int)($internaloverrides['extratimeafter'] ?? 30),
             (int)($internaloverrides['refcourseid'] ?? $refcourse->id),
             $bookingpersonid,
+            $bookingpersonid,
             time(),
             time(),
             [],

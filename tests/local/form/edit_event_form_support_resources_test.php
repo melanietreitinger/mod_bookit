@@ -256,6 +256,7 @@ final class edit_event_form_support_resources_test extends advanced_testcase {
             0,
             null,
             $bookingpersonid,
+            $bookingpersonid,
             time(),
             time(),
             $mappings,
