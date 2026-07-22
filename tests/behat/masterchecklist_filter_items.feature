@@ -11,7 +11,11 @@ Feature: Filter master checklist items
       | serviceteam1 | Service   | Team     | serviceteam@example.com |
     And I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable checklist module"
+    And I press "Save changes"
     And I click on "Run install helper" "link"
+    And the Bookit default checklist data exists
+    And the Bookit legacy test rooms exist
     And the following "role assigns" exist:
       | user         | role               | contextlevel | reference |
       | serviceteam1 | bookit_serviceteam | System       |           |
@@ -28,7 +32,7 @@ Feature: Filter master checklist items
     And I set the field "roleids[]" to "BookIt_Observer"
     And I click on "button[data-action='save']" "css_element"
     And I wait "1" seconds
-    And I set the field "roomid" to "Computer Lab C"
+    And I set the field "roomid" to "Computer Lab"
     And I should not see "Reserve room"
     And I wait "1" seconds
     And I set the field "roomid" to "No selection"
@@ -40,7 +44,7 @@ Feature: Filter master checklist items
     And I set the field "roleid" to "BookIt_Observer"
     And I should see "Reserve room"
     And I wait "1" seconds
-    And I set the field "roomid" to "Computer Lab C"
+    And I set the field "roomid" to "Computer Lab"
     And I set the field "roleid" to "BookIt_Examiner"
     And I click on "add-checklist-item-button" "button"
     And I should see "Checklist item"
@@ -78,7 +82,7 @@ Feature: Filter master checklist items
     And I set the field "roleids[]" to "BookIt_Observer"
     And I click on "button[data-action='save']" "css_element"
     And I wait "1" seconds
-    And I set the field "roomid" to "Computer Lab C"
+    And I set the field "roomid" to "Computer Lab"
     And I should not see "Reserve room"
     And I wait "1" seconds
     And I set the field "roomid" to "No selection"
@@ -90,7 +94,7 @@ Feature: Filter master checklist items
     And I set the field "roleid" to "BookIt_Observer"
     And I should see "Reserve room"
     And I wait "1" seconds
-    And I set the field "roomid" to "Computer Lab C"
+    And I set the field "roomid" to "Computer Lab"
     And I set the field "roleid" to "BookIt_Examiner"
     And I click on "add-checklist-item-button" "button"
     And I should see "Checklist item"

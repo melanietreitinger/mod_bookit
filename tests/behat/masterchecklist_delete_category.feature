@@ -11,7 +11,10 @@ Feature: Delete master checklist category
       | serviceteam1 | Service   | Team     | serviceteam@example.com |
     And I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable checklist module"
+    And I press "Save changes"
     And I click on "Run install helper" "link"
+    And the Bookit default checklist data exists
     And the following "role assigns" exist:
       | user         | role               | contextlevel | reference |
       | serviceteam1 | bookit_serviceteam | System       |           |

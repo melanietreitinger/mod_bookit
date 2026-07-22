@@ -37,13 +37,18 @@ use mod_bookit\local\persistent\room;
  * @copyright   2024 Justus Dieckmann, Universität Münster
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class bookit_event {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Create a new instance of this class.
      *
      * @param int $id
      * @param string $name
-     * @param int $semester
+     * @param int|null $semester
      * @param int $institutionid
      * @param int $starttime
      * @param int $endtime
@@ -69,58 +74,57 @@ class bookit_event {
      * @param array $resources
      */
     public function __construct(
-        /** @var int id */
+        /** @var int $id */
         public int $id,
-        /** @var string name */
+        /** @var string $name */
         public string $name,
-        /** @var ?int semester */
-        public int $semester,
-        /** @var int institutionid */
+        /** @var int|null $semester */
+        public ?int $semester,
+        /** @var int $institutionid */
         public int $institutionid,
-        /** @var int starttime */
+        /** @var int $starttime */
         public int $starttime,
-        /** @var int $endtime endtime */
+        /** @var int $endtime */
         public int $endtime,
-        /** @var int $duration duration */
+        /** @var int|null $duration */
         public ?int $duration,
-        /** @var int roomid */
+        /** @var int $roomid */
         public int $roomid,
-        /** @var int $participantsamount participantsamount  */
+        /** @var int|null $participantsamount */
         public ?int $participantsamount,
-        /** @var int $timecompensation timecompensation */
+        /** @var int|null $timecompensation */
         public ?int $timecompensation,
-        /** @var  string $compensationfordisadvantages compensationfordisadvantages */
+        /** @var string|null $compensationfordisadvantages */
         public ?string $compensationfordisadvantages,
-        /** @var int $bookingstatus bookingstatus  */
+        /** @var int|null $bookingstatus */
         public ?int $bookingstatus,
-        /** @var int $personinchargeid personinchargeid  */
+        /** @var int|null $personinchargeid */
         public ?int $personinchargeid,
-        /** @var string $otherexaminers otherexaminers  */
+        /** @var string|null $otherexaminers */
         public ?string $otherexaminers,
-        /** @var int $coursetemplate coursetemplate  */
+        /** @var int|null $coursetemplate */
         public ?int $coursetemplate,
-        /** @var string $notes notes */
+        /** @var string|null $notes */
         public ?string $notes,
-        /** @var string $internalnotes internalnotes  */
+        /** @var string|null $internalnotes */
         public ?string $internalnotes,
-        /** @var string $supportpersons supportpersons  */
+        /** @var string|null $supportpersons */
         public ?string $supportpersons,
-        /** @var int $extratimebefore extratimebefore*/
+        /** @var int $extratimebefore */
         public int $extratimebefore,
-        /** @var int $extratimeafter extratimeafter*/
+        /** @var int $extratimeafter */
         public int $extratimeafter,
-        /** @var mixed $refcourseid refcourseid */
+        /** @var mixed $refcourseid */
         public mixed $refcourseid,
-        /** @var ?int usercreated */
+        /** @var int|null $usercreated Booking person / original creator */
         public ?int $usercreated,
-        /** @var int $usermodified usermodified  */
-        /** @var ?int usermodified */
+        /** @var int|null $usermodified Last editor */
         public ?int $usermodified,
-        /** @var int $timecreated timecreated  */
+        /** @var int|null $timecreated */
         public ?int $timecreated,
-        /** @var int $timemodified timemodified  */
+        /** @var int|null $timemodified */
         public ?int $timemodified,
-        /** @var array $resources resources */
+        /** @var array $resources */
         public array $resources,
     ) {
     }
@@ -160,7 +164,7 @@ class bookit_event {
     public static function from_record(array|object $record): self {
         $record = (object) $record;
 
-        $room = room::get_record(['id' => $record->roomid], MUST_EXIST);
+        $room = !empty($record->roomid) ? room::get_record(['id' => $record->roomid], IGNORE_MISSING) : null;
 
         return new self(
             $record->id ?? null,
@@ -183,8 +187,8 @@ class bookit_event {
             $record->notes ?? null,
             $record->internalnotes ?? null,
             $record->supportpersons ?? null,
-            $record->extratimebefore ?? $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore'),
-            $record->extratimeafter ?? $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter'),
+            $record->extratimebefore ?? $room?->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore'),
+            $record->extratimeafter ?? $room?->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter'),
             $record->refcourseid ?? null,
             $record->usercreated ?? null,
             $record->usermodified ?? null,
@@ -204,7 +208,8 @@ class bookit_event {
     final public function save(?int $userid = null): void {
         global $DB, $USER;
 
-        $uid = $userid ?? $USER->id;
+        $uid = (int)($userid ?? $USER->id);
+        // Last editor is always the actor performing this save.
         $this->usermodified = $uid;
 
         if (empty($this->id)) {
@@ -291,226 +296,5 @@ class bookit_event {
                 ]);
             }
         }
-    }
-    /**
-     * Fetch event metadata for a list of event ids.
-     *
-     * Returns a map of event id to a stdClass containing bookingstatus,
-     * institutionid, roomid and roomname. Used by the calendar feed to
-     * enrich events that were originally produced for FullCalendar.
-     *
-     * @param array $ids Event ids to look up.
-     * @return array Map of event id to stdClass with bookingstatus,
-     *               institutionid, roomid and roomname fields.
-     * @throws dml_exception
-     */
-    public static function get_metadata_for_ids(array $ids): array {
-        global $DB;
-
-        if (empty($ids)) {
-            return [];
-        }
-
-        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED);
-        $sql = "SELECT e.id,
-                       e.bookingstatus,
-                       e.institutionid,
-                       e.roomid,
-                       r.name AS roomname
-                  FROM {bookit_event} e
-             LEFT JOIN {bookit_room} r ON r.id = e.roomid
-                 WHERE e.id $insql";
-        return $DB->get_records_sql($sql, $inparams);
-    }
-
-    /**
-     * Add metadata fields to a list of calendar feed events.
-     *
-     * Mutates the passed events by setting bookingstatus, institutionid,
-     * roomid and roomname on each one based on a single batched query.
-     * Events without a matching record in the database are left untouched.
-     *
-     * @param array $events Events as produced by event_manager::get_events_in_timerange().
-     * @return array Same events with the four enrichment fields added.
-     * @throws dml_exception
-     */
-    public static function enrich_with_metadata(array $events): array {
-        if (empty($events)) {
-            return $events;
-        }
-
-        $ids = [];
-        foreach ($events as $ev) {
-            // Works for array or object.
-            $evid = is_array($ev) ? ($ev['id'] ?? null) : ($ev->id ?? null);
-            if ($evid) {
-                $ids[] = (int)$evid;
-            }
-        }
-        if (empty($ids)) {
-            return $events;
-        }
-
-        // Fetch all enrichment rows in a single query.
-        $rows = self::get_metadata_for_ids($ids);
-
-        foreach ($events as &$ev) {
-            $evid = is_array($ev) ? ($ev['id'] ?? null) : ($ev->id ?? null);
-            // Skip if nothing found.
-            if (!$evid || !isset($rows[$evid])) {
-                continue;
-            }
-            $row = $rows[$evid];
-
-            // Assign values safely for array or object.
-            if (is_array($ev)) {
-                $ev['bookingstatus'] = (int)($row->bookingstatus ?? 0);
-                $ev['institutionid']    = (string)($row->institutionid ?? '');
-                $ev['roomid']        = (int)($row->roomid ?? 0);
-                $ev['roomname']      = (string)($row->roomname ?? '');
-            } else {
-                $ev->bookingstatus = (int)($row->bookingstatus ?? 0);
-                $ev->institutionid    = (string)($row->institutionid ?? '');
-                $ev->roomid        = (int)($row->roomid ?? 0);
-                $ev->roomname      = (string)($row->roomname ?? '');
-            }
-        }
-        unset($ev);
-        return $events;
-    }
-
-    /**
-     * Fetch events for the export endpoint, scoped by capability.
-     *
-     * If a non-empty list of event ids is given, only those events are
-     * returned, still subject to the user's capability scope. Otherwise
-     * all events whose [starttime, endtime] window overlaps the given
-     * range are returned.
-     *
-     * Users with mod/bookit:viewalldetailsofevent receive every event in
-     * scope. Users with mod/bookit:viewalldetailsofownevent receive only
-     * events they created, are person in charge of, or are listed as other
-     * examiners on. Users with neither capability receive an empty array.
-     *
-     * @param \context_module $context Module context for the capability checks.
-     * @param int $userid User performing the export.
-     * @param array $ids Optional explicit event ids; empty means use the time range.
-     * @param int|null $startts Unix timestamp of range start, used when $ids is empty.
-     * @param int|null $endts Unix timestamp of range end, used when $ids is empty.
-     * @return array Event records keyed by id.
-     * @throws dml_exception
-     */
-    public static function get_for_export(
-        \context_module $context,
-        int $userid,
-        array $ids = [],
-        ?int $startts = null,
-        ?int $endts = null
-    ): array {
-        global $DB;
-
-        $viewall = has_capability('mod/bookit:viewalldetailsofevent', $context);
-        $viewown = has_capability('mod/bookit:viewalldetailsofownevent', $context);
-
-        if (!$viewall && !$viewown) {
-            // No details capability: nothing exportable.
-            return [];
-        }
-
-        if (!empty($ids)) {
-            // Export specific IDs, but only those the user is allowed to see in detail.
-            [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'e');
-            if ($viewall) {
-                $sql = "SELECT *
-                          FROM {bookit_event}
-                         WHERE id $insql";
-                return $DB->get_records_sql($sql, $inparams);
-            }
-            $like = $DB->sql_like('otherexaminers', ':otherex');
-            $sql = "SELECT *
-                      FROM {bookit_event}
-                     WHERE id $insql
-                       AND (
-                              usercreated = :uid
-                           OR personinchargeid = :uid2
-                           OR $like
-                       )";
-            $params = $inparams + ['uid' => $userid, 'uid2' => $userid, 'otherex' => $userid];
-            return $DB->get_records_sql($sql, $params);
-        }
-
-        // Time-range export, capability-safe.
-        $startts = $startts ?? 0;
-        $endts   = $endts ?? 4102444800; // 2100-01-01 UTC.
-
-        if ($viewall) {
-            $sql = "SELECT *
-                      FROM {bookit_event}
-                     WHERE endtime >= :starttime
-                       AND starttime <= :endtime";
-            return $DB->get_records_sql($sql, ['starttime' => $startts, 'endtime' => $endts]);
-        }
-
-        $like = $DB->sql_like('otherexaminers', ':otherex');
-        $sql = "SELECT *
-                  FROM {bookit_event}
-                 WHERE endtime >= :starttime
-                   AND starttime <= :endtime
-                   AND (
-                          usercreated = :uid
-                       OR personinchargeid = :uid2
-                       OR $like
-                   )";
-        $params = [
-            'starttime' => $startts,
-            'endtime'   => $endts,
-            'uid'       => $userid,
-            'uid2'      => $userid,
-            'otherex'   => $userid,
-        ];
-        return $DB->get_records_sql($sql, $params);
-    }
-
-    /**
-     * Resolve institutionid foreign keys to institution names for export.
-     *
-     * Replaces the integer institutionid field on each event with the
-     * institution's name. Events whose institutionid does not resolve to
-     * an existing record have their institutionid cleared to an empty string.
-     *
-     * @param array $events Events keyed by event id.
-     * @return array Same events with institutionid replaced by the institution name.
-     * @throws dml_exception
-     */
-    public static function resolve_institution_names(array $events): array {
-        global $DB;
-
-        if (empty($events)) {
-            return $events;
-        }
-
-        $ids = [];
-        foreach ($events as $ev) {
-            $iid = (int)($ev->institutionid ?? 0);
-            if ($iid > 0) {
-                $ids[$iid] = $iid;
-            }
-        }
-        if (empty($ids)) {
-            return $events;
-        }
-
-        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED);
-        $sql = "SELECT id, name
-                  FROM {bookit_institution}
-                 WHERE id $insql";
-        $names = $DB->get_records_sql_menu($sql, $inparams);
-
-        foreach ($events as &$ev) {
-            $iid = (int)($ev->institutionid ?? 0);
-            $ev->institutionid = $names[$iid] ?? '';
-        }
-        unset($ev);
-        return $events;
     }
 }

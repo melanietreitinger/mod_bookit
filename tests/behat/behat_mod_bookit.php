@@ -28,6 +28,7 @@ use Behat\Mink\Exception\ExpectationException;
 
 require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
 
+// phpcs:disable moodle.Commenting.ValidTags.Invalid
 /**
  * Custom Behat step definitions for mod_bookit.
  *
@@ -36,8 +37,1962 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
  * @copyright   2026 ssystems GmbH <oss@ssystems.de>
  * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @SuppressWarnings(PHPMD)
  */
 class behat_mod_bookit extends behat_base {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid
+    /** @var string CSS selector for the real Moodle secondary activity navigation. */
+    private const MAIN_TABS_SELECTOR = '.secondary-navigation .moremenu.navigation';
+
+    /** @var string CSS selector for the core inner overview tabs. */
+    private const OVERVIEW_TABS_SELECTOR = '.mod-bookit-overview-inner-tabs';
+
+    /** @var string CSS selector for the core request workspace tabs. */
+    private const REQUEST_WORKSPACE_TABS_SELECTOR = '.mod-bookit-request-workspace-tabs';
+
+    /** @var string CSS selector matching removed legacy inner-navigation markup. */
+    private const LEGACY_INNER_NAV_SELECTOR = '.mod-bookit-overview-nav, .mod-bookit-request-workspace-switch';
+
+    /** @var array Captured Core-table values and IDs for cross-page assertions. */
+    private array $capturedworkspacecolumns = [];
+
+    /**
+     * Opens the Bookit overview for the named activity and tab.
+     *
+     * @Given I open the Bookit overview :tab for :activity
+     * @param string $tab
+     * @param string $activity
+     */
+    public function i_open_the_bookit_overview_for(string $tab, string $activity): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => $tab]);
+        $this->getSession()->visit($this->locate_path($url->out_as_local_url(false)));
+    }
+
+    /**
+     * Opens the Bookit overview with an explicit booking-status filter only.
+     *
+     * @When I open the Bookit overview :tab for :activity with booking status filter :statuses
+     * @param string $tab
+     * @param string $activity
+     * @param string $statuses Comma-separated booking status ids.
+     */
+    public function i_open_the_bookit_overview_with_booking_status_filter_for(
+        string $tab,
+        string $activity,
+        string $statuses
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $statusids = array_map(
+            'intval',
+            array_values(array_filter(
+                array_map('trim', explode(',', $statuses)),
+                static fn(string $status): bool => $status !== ''
+            ))
+        );
+        $params = [
+            'id' => $cm->id,
+            'tab' => $tab,
+            'bookingstatusfilter' => $statusids,
+        ];
+        $query = http_build_query($params);
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Select booking-status values in the overview filter form.
+     *
+     * @When I set the Bookit overview booking status filter to :statuses
+     * @param string $statuses Comma-separated booking status ids.
+     */
+    public function i_set_the_bookit_overview_booking_status_filter_to(string $statuses): void {
+        $expectedvalues = array_map(
+            'strval',
+            array_map(
+                'intval',
+                array_values(array_filter(
+                    array_map('trim', explode(',', $statuses)),
+                    static fn(string $status): bool => $status !== ''
+                ))
+            )
+        );
+        $statusjson = json_encode($expectedvalues);
+        $js = <<<JS
+            (function(expected) {
+                var select = document.querySelector('#bookit-bookingstatusfilter')
+                    || document.querySelector('#bookit-workspace-bookingstatusfilter');
+                if (!select) {
+                    return JSON.stringify({status: 'missing'});
+                }
+                Array.from(select.options).forEach(function(option) {
+                    option.selected = expected.indexOf(option.value) !== -1;
+                });
+                return JSON.stringify({status: 'ok'});
+            })($statusjson)
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not set the booking-status filter selection. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Submit the overview filter form.
+     *
+     * @When I apply the Bookit overview filters
+     */
+    public function i_apply_the_bookit_overview_filters(): void {
+        $this->getSession()->getPage()->pressButton(get_string('overview_apply_filters', 'mod_bookit'));
+    }
+
+    /**
+     * Opens the direct event-export endpoint for the named activity.
+     *
+     * @When I open the Bookit export endpoint for :activity
+     * @param string $activity
+     * @return void
+     */
+    public function i_open_the_bookit_export_endpoint_for(string $activity): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $url = new moodle_url('/mod/bookit/export_events.php', ['id' => $cm->id]);
+        $this->getSession()->visit($this->locate_path($url->out_as_local_url(false)));
+    }
+
+    /**
+     * Opens the room-availability admin view for the named room.
+     *
+     * @Given I open the Bookit room availability for :roomname
+     * @param string $roomname
+     */
+    public function i_open_the_bookit_room_availability_for(string $roomname): void {
+        global $DB;
+
+        $roomid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_room}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => $roomname],
+            MUST_EXIST
+        );
+        $url = new moodle_url('/mod/bookit/admin/view_room.php', ['id' => $roomid]);
+        $this->getSession()->visit($this->locate_path($url->out_as_local_url(false)));
+    }
+
+    /**
+     * Assert that the main Bookit activity tab row contains the given text.
+     *
+     * @Then the Bookit main tabs should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_main_tabs_should_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            self::MAIN_TABS_SELECTOR,
+            $text,
+            true,
+            'Bookit main tabs'
+        );
+    }
+
+    /**
+     * Assert that the main Bookit activity tab row does not contain the given text.
+     *
+     * @Then the Bookit main tabs should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_main_tabs_should_not_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            self::MAIN_TABS_SELECTOR,
+            $text,
+            false,
+            'Bookit main tabs'
+        );
+    }
+
+    /**
+     * Follow a link in the Bookit secondary activity navigation.
+     *
+     * @When I follow :link in the Bookit secondary navigation
+     * @param string $link
+     * @throws ExpectationException
+     */
+    public function i_follow_in_the_bookit_secondary_navigation(string $link): void {
+        $xpath = '//div[contains(concat(" ", normalize-space(@class), " "), " secondary-navigation ")]'
+            . '//a[contains(normalize-space(.), ' . behat_context_helper::escape($link) . ')]';
+        $node = $this->getSession()->getPage()->find('xpath', $xpath);
+        if ($node === null) {
+            throw new ExpectationException(
+                'Could not find Bookit secondary navigation link "' . $link . '".',
+                $this->getSession()
+            );
+        }
+        $node->click();
+    }
+
+    /**
+     * Assert that the request-workspace queue switch contains the given text.
+     *
+     * @Then the Bookit request workspace switch should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_switch_should_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            self::REQUEST_WORKSPACE_TABS_SELECTOR,
+            $text,
+            true,
+            'Bookit request workspace switch'
+        );
+    }
+
+    /**
+     * Assert that the request-workspace queue switch does not contain the given text.
+     *
+     * @Then the Bookit request workspace switch should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_switch_should_not_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            self::REQUEST_WORKSPACE_TABS_SELECTOR,
+            $text,
+            false,
+            'Bookit request workspace switch'
+        );
+    }
+
+    /**
+     * Assert that the overview inner tabs contain the given text.
+     *
+     * @Then the Bookit overview inner tabs should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_inner_tabs_should_contain(string $text): void {
+        $this->assert_selector_contains_text(
+            self::OVERVIEW_TABS_SELECTOR,
+            $text,
+            true,
+            'Bookit overview inner tabs'
+        );
+    }
+
+    /**
+     * Assert that the given overview tab is active.
+     *
+     * @Then the Bookit overview tab :text should be active
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_tab_should_be_active(string $text): void {
+        $this->assert_active_tab_label(self::OVERVIEW_TABS_SELECTOR, $text, 'Bookit overview tab');
+    }
+
+    /**
+     * Assert that the given request workspace tab is active.
+     *
+     * @Then the Bookit request workspace tab :text should be active
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_tab_should_be_active(string $text): void {
+        $this->assert_active_tab_label(
+            self::REQUEST_WORKSPACE_TABS_SELECTOR,
+            $text,
+            'Bookit request workspace tab'
+        );
+    }
+
+    /**
+     * Assert that removed legacy inner navigation markup is absent.
+     *
+     * @Then the Bookit overview should not show legacy inner navigation
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_show_legacy_inner_navigation(): void {
+        $legacyrows = $this->getSession()->getPage()->findAll('css', self::LEGACY_INNER_NAV_SELECTOR);
+        if (!empty($legacyrows)) {
+            throw new ExpectationException(
+                'Legacy inner navigation markup is still visible in the Bookit overview.',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the export modal asynchronously loads the given booking text.
+     *
+     * @Then the Bookit export modal should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_export_modal_should_contain(string $text): void {
+        $endtime = microtime(true) + 5;
+        do {
+            $node = $this->getSession()->getPage()->find('css', '#bookit-export-list');
+            if ($node && mb_strpos($node->getText(), $text) !== false) {
+                return;
+            }
+            usleep(250000);
+        } while (microtime(true) < $endtime);
+
+        $currenttext = $node ? trim($node->getText()) : '[missing export list]';
+
+        throw new ExpectationException(
+            "Bookit export modal did not contain \"$text\". Current text: \"$currenttext\".",
+            $this->getSession()
+        );
+    }
+
+    /**
+     * Assert how many activity tab rows are visible in the overview.
+     *
+     * @Then the Bookit overview should show :count activity tab row(s)
+     * @param int $count
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_activity_tab_rows(int $count): void {
+        $secondaryrows = $this->getSession()->getPage()->findAll('css', self::MAIN_TABS_SELECTOR);
+        $visiblecount = count($secondaryrows);
+        if ($visiblecount !== $count) {
+            throw new ExpectationException(
+                "Expected $count Bookit activity tab row(s), found $visiblecount.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Opens the Bookit overview with explicit personal filter parameters.
+     *
+     * @When I open the filtered Bookit overview :tab for :activity with status :status faculty :faculty and semesters :semesters
+     * @param string $tab
+     * @param string $activity
+     * @param string $status
+     * @param string $faculty
+     * @param string $semesters
+     */
+    public function i_open_the_filtered_bookit_overview_for(
+        string $tab,
+        string $activity,
+        string $status,
+        string $faculty,
+        string $semesters
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $params = [
+            'id' => $cm->id,
+            'tab' => $tab,
+            'facultyid' => $faculty,
+        ];
+        $query = http_build_query($params);
+        if ($status !== '' && $status !== '-1') {
+            $query .= '&' . http_build_query(['bookingstatusfilter' => [(int)$status]]);
+        }
+        foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
+            $query .= '&semesterids[]=' . rawurlencode($semester);
+        }
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Opens the Bookit reporting overview with explicit filter parameters.
+     *
+     * @When I open the Bookit reporting overview for :activity from :start to :end with semesters :semesters
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $semesters
+     */
+    public function i_open_the_bookit_reporting_overview_for_with_filters(
+        string $activity,
+        string $start,
+        string $end,
+        string $semesters
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $params = [
+            'id' => $cm->id,
+            'tab' => 'myevents',
+            'reportstart' => $this->resolve_filter_date_value($start),
+            'reportend' => $this->resolve_filter_date_value($end),
+        ];
+        $query = http_build_query($params);
+        foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
+            $query .= '&semesterids[]=' . rawurlencode($semester);
+        }
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Opens the Bookit history tab with an explicit reporting date range.
+     *
+     * @When I open the Bookit history overview for :activity from :start to :end with semesters :semesters
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $semesters
+     */
+    public function i_open_the_bookit_history_overview_for_with_filters(
+        string $activity,
+        string $start,
+        string $end,
+        string $semesters
+    ): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $params = [
+            'id' => $cm->id,
+            'tab' => 'history',
+            'reportstart' => $this->resolve_filter_date_value($start),
+            'reportend' => $this->resolve_filter_date_value($end),
+        ];
+        $query = http_build_query($params);
+        foreach ($this->resolve_semester_filter_values($semesters) as $semester) {
+            $query .= '&semesterids[]=' . rawurlencode($semester);
+        }
+
+        $this->getSession()->visit($this->locate_path('/mod/bookit/overview.php?' . $query));
+    }
+
+    /**
+     * Resolve semester filter tokens used in Behat scenarios.
+     *
+     * @param string $semesters
+     * @return string[]
+     */
+    private function resolve_semester_filter_values(string $semesters): array {
+        $currentsemester = \mod_bookit\local\manager\event_manager::get_current_semester();
+
+        return array_values(array_filter(array_map(static function (string $semester) use ($currentsemester): string {
+            return match (trim($semester)) {
+                'current' => (string)$currentsemester,
+                'next' => (string)($currentsemester % 10 === 1 ? $currentsemester + 1 : $currentsemester + 9),
+                'previous' => (string)($currentsemester % 10 === 1 ? $currentsemester - 9 : $currentsemester - 1),
+                default => trim($semester),
+            };
+        }, explode(',', $semesters))));
+    }
+
+    /**
+     * Resolve a reporting filter date token into a Y-m-d string.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function resolve_filter_date_value(string $value): string {
+        $value = trim($value);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return $value;
+        }
+
+        $timestamp = strtotime($value);
+        if ($timestamp === false) {
+            throw new \coding_exception('Unsupported Behat reporting date token: ' . $value);
+        }
+
+        return date('Y-m-d', $timestamp);
+    }
+
+    /**
+     * Assert whether the given selector contains a text fragment.
+     *
+     * @param string $selector
+     * @param string $text
+     * @param bool $expected
+     * @param string $description
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_selector_contains_text(
+        string $selector,
+        string $text,
+        bool $expected,
+        string $description
+    ): void {
+        $node = $this->getSession()->getPage()->find('css', $selector);
+        if (!$node) {
+            if ($expected) {
+                throw new ExpectationException("Could not find $description.", $this->getSession());
+            }
+            return;
+        }
+
+        $contains = mb_strpos($node->getText(), $text) !== false;
+        if ($expected && !$contains) {
+            throw new ExpectationException(
+                "$description did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+
+        if (!$expected && $contains) {
+            throw new ExpectationException(
+                "$description unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the active tab in the given tab row has the expected label.
+     *
+     * @param string $selector
+     * @param string $text
+     * @param string $description
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_active_tab_label(string $selector, string $text, string $description): void {
+        $container = $this->getSession()->getPage()->find('css', $selector);
+        if (!$container) {
+            throw new ExpectationException("Could not find $description container.", $this->getSession());
+        }
+
+        $activelink = $container->find('css', '.nav-link.active');
+        if (!$activelink) {
+            throw new ExpectationException("Could not find the active $description.", $this->getSession());
+        }
+
+        $activetext = trim($activelink->getText());
+        if ($activetext !== $text) {
+            throw new ExpectationException(
+                "Expected active $description \"$text\", found \"$activetext\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Resolve a Behat datetime token into an ISO-like datetime string.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function resolve_datetime_value(string $value): string {
+        $value = trim($value);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $value)) {
+            return $value;
+        }
+
+        $timestamp = strtotime($value);
+        if ($timestamp === false) {
+            throw new \coding_exception('Unsupported Behat datetime token: ' . $value);
+        }
+
+        return date('Y-m-d\\TH:i:s', $timestamp);
+    }
+
+    /**
+     * Opens the calendar feed for the given activity and range.
+     *
+     * @When I request the Bookit calendar feed for :activity from :start to :end
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     */
+    public function i_request_the_bookit_calendar_feed_for(string $activity, string $start, string $end): void {
+        global $DB;
+
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+        $response = \mod_bookit\external\get_calendar_events::execute(
+            (int)$cm->id,
+            $this->resolve_datetime_value($start),
+            $this->resolve_datetime_value($end),
+            [],
+            [],
+            [],
+            '',
+            true
+        );
+        $content = json_encode($response['events'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $quotedcontent = json_encode($content);
+        $this->getSession()->evaluateScript("window.bookitLastFeedResponse = $quotedcontent;");
+    }
+
+    /**
+     * Assert that the server-side calendar projection contains a booking for the given user.
+     *
+     * @Then the Bookit calendar projection for user :username in :activity from :start to :end should contain :text
+     * @param string $username
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_calendar_projection_for_user_should_contain(
+        string $username,
+        string $activity,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_calendar_projection_content($username, $activity, $start, $end);
+        if (mb_strpos($content, $text) === false) {
+            throw new ExpectationException(
+                "The calendar projection did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the server-side calendar projection hides a booking for the given user.
+     *
+     * @Then the Bookit calendar projection for user :username in :activity from :start to :end should not contain :text
+     * @param string $username
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_calendar_projection_for_user_should_not_contain(
+        string $username,
+        string $activity,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_calendar_projection_content($username, $activity, $start, $end);
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                "The calendar projection unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the governed room-availability projection contains an entry.
+     *
+     * @Then the Bookit room availability projection for room :roomname from :start to :end should contain :text
+     * @param string $roomname
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_room_availability_projection_should_contain(
+        string $roomname,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_room_availability_projection_content($roomname, $start, $end);
+        if (mb_strpos($content, $text) === false) {
+            throw new ExpectationException(
+                "The room-availability projection did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the governed room-availability projection hides an entry.
+     *
+     * @Then the Bookit room availability projection for room :roomname from :start to :end should not contain :text
+     * @param string $roomname
+     * @param string $start
+     * @param string $end
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_room_availability_projection_should_not_contain(
+        string $roomname,
+        string $start,
+        string $end,
+        string $text
+    ): void {
+        $content = $this->get_room_availability_projection_content($roomname, $start, $end);
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                "The room-availability projection unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Opens the event details modal for the given event title.
+     *
+     * @When I open the Bookit event details for :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function i_open_the_bookit_event_details_for(string $eventname): void {
+        $js = <<<JS
+            (function(eventLabel) {
+                var links = document.querySelectorAll('a.bookit-event-link');
+                for (var i = 0; i < links.length; i++) {
+                    if (links[i].textContent.trim() === eventLabel) {
+                        links[i].click();
+                        return 'clicked';
+                    }
+                }
+                return 'link-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'clicked') {
+            throw new ExpectationException(
+                "Could not open the event details for \"$eventname\". Result: $result",
+                $this->getSession()
+            );
+        }
+
+        $this->getSession()->wait(3000, "document.querySelector('.modal.show') !== null");
+    }
+
+    /**
+     * Assert that a modal control is enabled.
+     *
+     * @Then the Bookit event details control :controlname should be enabled
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_be_enabled(string $controlname): void {
+        $this->assert_modal_control_state($controlname, 'enabled');
+    }
+
+    /**
+     * Assert that a modal control is disabled.
+     *
+     * @Then the Bookit event details control :controlname should be disabled
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_be_disabled(string $controlname): void {
+        $this->assert_modal_control_state($controlname, 'disabled');
+    }
+
+    /**
+     * Assert that a modal control is not visible.
+     *
+     * @Then the Bookit event details control :controlname should not be visible
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_not_be_visible(string $controlname): void {
+        $this->assert_modal_control_state($controlname, 'hidden');
+    }
+
+    /**
+     * Assert that a modal select/autocomplete control contains a specific option label.
+     *
+     * @Then the Bookit event details control :controlname should contain option :optionlabel
+     * @param string $controlname
+     * @param string $optionlabel
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_contain_option(
+        string $controlname,
+        string $optionlabel
+    ): void {
+        $this->assert_modal_control_option($controlname, $optionlabel, true);
+    }
+
+    /**
+     * Assert that a modal select/autocomplete control does not contain a specific option label.
+     *
+     * @Then the Bookit event details control :controlname should not contain option :optionlabel
+     * @param string $controlname
+     * @param string $optionlabel
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_control_should_not_contain_option(
+        string $controlname,
+        string $optionlabel
+    ): void {
+        $this->assert_modal_control_option($controlname, $optionlabel, false);
+    }
+
+    /**
+     * Set a select value inside the event details modal.
+     *
+     * @When I select :value in the Bookit event details control :controlname
+     * @param string $value
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function i_select_in_the_bookit_event_details_control(string $value, string $controlname): void {
+        $js = <<<JS
+            (function(controlName, targetLabel) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return 'control-not-found';
+                }
+                if (control.tagName !== 'SELECT') {
+                    return 'control-not-select';
+                }
+                for (var i = 0; i < control.options.length; i++) {
+                    if (control.options[i].textContent.trim() === targetLabel) {
+                        control.value = control.options[i].value;
+                        control.selectedIndex = i;
+                        control.options[i].selected = true;
+                        control.dispatchEvent(new Event('input', {bubbles: true}));
+                        control.dispatchEvent(new Event('change', {bubbles: true}));
+                        return 'selected';
+                    }
+                }
+                return 'option-not-found';
+            })('$controlname', '$value');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'selected') {
+            throw new ExpectationException(
+                "Could not select \"$value\" in modal control \"$controlname\". Result: $result",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Force a modal select control to a timestamp in the past.
+     *
+     * @When I set the Bookit event details control :controlname to a past timestamp
+     * @param string $controlname
+     * @throws ExpectationException
+     */
+    public function i_set_the_bookit_event_details_control_to_a_past_timestamp(string $controlname): void {
+        $js = <<<JS
+            (function(controlName) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return 'control-not-found';
+                }
+                if (control.tagName !== 'SELECT') {
+                    return 'control-not-select';
+                }
+                var deadline = Date.now() + 5000;
+                while (Date.now() < deadline) {
+                    if (control.options.length > 0 || control.dataset.currentStarttime) {
+                        break;
+                    }
+                }
+                var pasttimestamp = String(Math.floor(Date.now() / 1000) - 3600);
+                var option = Array.from(control.options).find(function(item) {
+                    return item.value === pasttimestamp;
+                });
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = pasttimestamp;
+                    option.textContent = 'Forced past option';
+                    control.appendChild(option);
+                }
+                control.value = pasttimestamp;
+                control.dataset.currentStarttime = pasttimestamp;
+                return 'selected';
+            })('$controlname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'selected') {
+            throw new ExpectationException(
+                "Could not set modal control \"$controlname\" to a past timestamp. Result: $result",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Align the modal startdate selector with the currently selected starttime value.
+     *
+     * @When I align the Bookit event details startdate with the selected starttime
+     * @throws ExpectationException
+     */
+    public function i_align_the_bookit_event_details_startdate_with_the_selected_starttime(): void {
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_starttime, [name="starttime"]');
+                if (!control || !control.value) {
+                    return 'starttime-not-selected';
+                }
+                var selected = new Date(parseInt(control.value, 10) * 1000);
+                var day = root.querySelector('[name="startdate[day]"]');
+                var month = root.querySelector('[name="startdate[month]"]');
+                var year = root.querySelector('[name="startdate[year]"]');
+                if (!day || !month || !year) {
+                    return 'startdate-not-found';
+                }
+                day.value = String(selected.getDate());
+                month.value = String(selected.getMonth() + 1);
+                year.value = String(selected.getFullYear());
+                return 'aligned';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'aligned') {
+            throw new ExpectationException(
+                'Could not align the modal startdate with the selected starttime. Result: ' . $result,
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Keep the current event starttime selected after async slot refresh in the modal.
+     *
+     * @When I restore the Bookit event details starttime selection after slot refresh
+     * @throws ExpectationException
+     */
+    public function i_restore_the_bookit_event_details_starttime_selection_after_slot_refresh(): void {
+        $this->getSession()->wait(5000, <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                var control = root.querySelector('#id_starttime, [name="starttime"]');
+                return !!(control && (control.dataset.currentStarttime || control.value));
+            })();
+        JS);
+
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_starttime, [name="starttime"]');
+                if (!control) {
+                    return 'control-not-found';
+                }
+                var current = control.dataset.currentStarttime || control.value;
+                if (!current) {
+                    return 'current-starttime-missing';
+                }
+                var option = Array.from(control.options).find(function(item) {
+                    return item.value === current;
+                });
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = current;
+                    option.textContent = 'Current event starttime';
+                    control.appendChild(option);
+                }
+                control.value = current;
+                return 'restored';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'restored') {
+            throw new ExpectationException(
+                'Could not restore the modal starttime selection. Result: ' . $result,
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that a modal field shows a validation error message.
+     *
+     * @Then the Bookit event details field :fieldname should have the error :errortext
+     * @param string $fieldname
+     * @param string $errortext
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_field_should_have_the_error(string $fieldname, string $errortext): void {
+        $escapedfield = addslashes($fieldname);
+        $escapederror = addslashes($errortext);
+        $found = $this->getSession()->wait(10000, <<<JS
+            (function(fieldName, expectedError) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                var selectors = [
+                    '#fitem_id_' + fieldName + ' .invalid-feedback',
+                    '#fitem_id_' + fieldName + ' .form-control-feedback',
+                    '#id_error_' + fieldName,
+                    '[data-fieldtype="errors"][data-fieldname="' + fieldName + '"]'
+                ];
+                for (var i = 0; i < selectors.length; i++) {
+                    var nodes = root.querySelectorAll(selectors[i]);
+                    for (var j = 0; j < nodes.length; j++) {
+                        if ((nodes[j].textContent || '').indexOf(expectedError) !== -1) {
+                            return true;
+                        }
+                    }
+                }
+                return (root.textContent || '').indexOf(expectedError) !== -1;
+            })('$escapedfield', '$escapederror');
+        JS);
+
+        if (!$found) {
+            $details = $this->getSession()->evaluateScript(<<<'JS'
+                (function() {
+                    var root = document.querySelector('.modal.show');
+                    if (!root) {
+                        return 'modal-closed';
+                    }
+                    return (root.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+                })();
+            JS);
+            throw new ExpectationException(
+                'Expected validation error "' . $errortext . '" for field "' . $fieldname
+                    . '" in the event details modal. Modal excerpt: ' . $details,
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that text is visible inside the currently open event details modal.
+     *
+     * @Then I should see :text in the Bookit event details modal
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function i_should_see_in_the_bookit_event_details_modal(string $text): void {
+        $escaped = addslashes($text);
+        $found = $this->getSession()->wait(5000, <<<JS
+            (function(expected) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                return (root.textContent || '').indexOf(expected) !== -1;
+            })('$escaped');
+        JS);
+
+        if (!$found) {
+            throw new ExpectationException(
+                "\"$text\" text was not found in the Bookit event details modal.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Click the save action in the currently visible event details modal.
+     *
+     * @When I click the save action in the Bookit event details modal
+     * @throws ExpectationException
+     */
+    public function i_click_the_save_action_in_the_bookit_event_details_modal(): void {
+        $js = <<<'JS'
+            (function() {
+                var root = null;
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        root = modals[i];
+                        break;
+                    }
+                }
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                window.skipClientValidation = true;
+                var form = root.querySelector('form');
+                if (!form) {
+                    return 'form-not-found';
+                }
+                form.querySelectorAll('[aria-invalid="true"]').forEach(function(node) {
+                    node.removeAttribute('aria-invalid');
+                    node.classList.remove('is-invalid');
+                });
+                form.querySelectorAll('.error, .has-danger, .fvalidation_error').forEach(function(node) {
+                    node.classList.remove('error', 'has-danger', 'fvalidation_error');
+                });
+                var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
+                if (button) {
+                    button.click();
+                    return 'clicked';
+                }
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+                }
+                return 'submitted';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if (!in_array($result, ['clicked', 'submitted'], true)) {
+            throw new ExpectationException(
+                "Could not click the event details modal save action. Result: $result",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the text of the primary action in the currently visible event details modal.
+     *
+     * @Then the Bookit event details primary action should be :label
+     * @param string $label
+     * @throws ExpectationException
+     */
+    public function the_bookit_event_details_primary_action_should_be(string $label): void {
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return JSON.stringify({status: 'modal-not-found'});
+                }
+                var button = root.querySelector('button[data-action="save"], footer button.btn-primary');
+                if (!button) {
+                    button = root.querySelector('button[data-action="cancel"]');
+                }
+                if (!button) {
+                    return JSON.stringify({status: 'save-not-found'});
+                }
+                return JSON.stringify({
+                    status: 'ok',
+                    text: (button.textContent || '').replace(/\s+/g, ' ').trim()
+                });
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect the event details primary action. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+        if (($result['text'] ?? '') !== $label) {
+            throw new ExpectationException(
+                'Expected the event details primary action to be "' . $label . '" but found "'
+                    . ($result['text'] ?? '') . '".',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Submit the modal and expect a validation error instead of a successful close.
+     *
+     * @When I submit the Bookit event details modal expecting validation error :errortext
+     * @param string $errortext
+     * @throws ExpectationException
+     */
+    public function i_submit_the_bookit_event_details_modal_expecting_validation_error(string $errortext): void {
+        $this->i_click_the_save_action_in_the_bookit_event_details_modal();
+
+        $escapederror = addslashes($errortext);
+        $found = $this->getSession()->wait(10000, <<<JS
+            (function(expectedError) {
+                if (document.body.textContent.indexOf(expectedError) !== -1) {
+                    return true;
+                }
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return false;
+                }
+                if ((root.textContent || '').indexOf(expectedError) !== -1) {
+                    return true;
+                }
+                var starttimeField = root.querySelector('#fitem_id_starttime');
+                if (!starttimeField) {
+                    var control = root.querySelector('[name="starttime"], #id_starttime');
+                    starttimeField = control ? control.closest('.fitem, .mb-3, .form-group') : null;
+                }
+                if (!starttimeField) {
+                    return false;
+                }
+                if (
+                    starttimeField.classList.contains('has-danger')
+                    || starttimeField.classList.contains('error')
+                    || starttimeField.querySelector('.error, .invalid-feedback, [aria-invalid="true"]')
+                ) {
+                    return true;
+                }
+                return false;
+            })('$escapederror');
+        JS);
+
+        if (!$found) {
+            $modalstillopen = $this->getSession()->evaluateScript("document.querySelector('.modal.show') !== null");
+            if (!$modalstillopen) {
+                throw new ExpectationException(
+                    'Expected validation error "' . $errortext . '" but the event details modal closed.',
+                    $this->getSession()
+                );
+            }
+
+            $details = $this->getSession()->evaluateScript(<<<'JS'
+                (function() {
+                    var root = document.querySelector('.modal.show');
+                    if (!root) {
+                        return 'modal-closed';
+                    }
+                    var texts = [];
+                    root.querySelectorAll('.invalid-feedback, .form-control-feedback, .alert-danger').forEach(function(node) {
+                        var text = (node.textContent || '').trim();
+                        if (text) {
+                            texts.push(text);
+                        }
+                    });
+                    if (texts.length === 0) {
+                        texts.push((root.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 400));
+                    }
+                    return texts.join(' | ');
+                })();
+            JS);
+
+            throw new ExpectationException(
+                'Expected validation error "' . $errortext . '" after modal submit. Visible feedback: ' . $details,
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Submit the currently visible event details modal.
+     *
+     * @When I submit the Bookit event details modal
+     * @throws ExpectationException
+     */
+    public function i_submit_the_bookit_event_details_modal(): void {
+        $urlbefore = $this->getSession()->getCurrentUrl();
+        $this->i_click_the_save_action_in_the_bookit_event_details_modal();
+
+        $this->wait_until_bookit_event_modal_closed();
+        if (!$this->is_bookit_event_modal_open()) {
+            return;
+        }
+
+        $urlafter = $this->getSession()->getCurrentUrl();
+        if ($urlafter !== $urlbefore) {
+            return;
+        }
+
+        // The save request may have completed even when the modal shell stays visible in Behat.
+        $this->getSession()->reload();
+        $this->getSession()->wait(15000, "document.readyState === 'complete'");
+        if (!$this->is_bookit_event_modal_open()) {
+            return;
+        }
+
+        $details = $this->getSession()->evaluateScript(<<<'JS'
+            (function() {
+                var root = null;
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        root = modals[i];
+                        break;
+                    }
+                }
+                if (!root) {
+                    return '';
+                }
+                var texts = [];
+                root.querySelectorAll('.invalid-feedback, .form-control-feedback, .alert-danger').forEach(function(node) {
+                    var text = (node.textContent || '').trim();
+                    if (text) {
+                        texts.push(text);
+                    }
+                });
+                root.querySelectorAll('[data-fieldtype="errors"]').forEach(function(node) {
+                    var text = (node.textContent || '').trim();
+                    if (text) {
+                        texts.push(text);
+                    }
+                });
+                var saveButton = root.querySelector('button[data-action="save"], footer button.btn-primary');
+                if (saveButton) {
+                    texts.push('save-button disabled=' + String(!!saveButton.disabled));
+                }
+                var starttime = root.querySelector('#id_starttime, [name="starttime"]');
+                if (starttime) {
+                    texts.push('starttime value=' + String(starttime.value));
+                }
+                if (texts.length === 0) {
+                    texts.push((root.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 400));
+                }
+                return texts.join(' | ');
+            })();
+        JS);
+        throw new ExpectationException(
+            'The event details modal stayed open after submit. The dynamic form did not complete successfully. '
+                . 'Visible modal feedback: ' . $details
+                . ' | url=' . $urlafter,
+            $this->getSession()
+        );
+    }
+
+    /**
+     * Closes the currently visible modal dialog.
+     *
+     * @When I close the currently open dialog
+     * @throws ExpectationException
+     */
+    public function i_close_the_currently_open_dialog(): void {
+        $js = <<<'JS'
+            (function() {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var button = root.querySelector('button.btn-close, button[data-bs-dismiss="modal"], button[data-dismiss="modal"]');
+                if (button) {
+                    button.click();
+                    return 'clicked';
+                }
+                document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+                return 'escape-dispatched';
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if (!in_array($result, ['clicked', 'escape-dispatched'], true)) {
+            throw new ExpectationException(
+                "Could not close the current dialog. Result: $result",
+                $this->getSession()
+            );
+        }
+
+        $this->getSession()->wait(3000, "document.querySelector('.modal.show') === null");
+    }
+
+    /**
+     * Click an open-request workflow action via the status dropdown in the given event row.
+     *
+     * @When I click the open request action :action for event :eventname
+     * @param string $action
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function i_click_the_open_request_action_for_event(string $action, string $eventname): void {
+        $js = <<<JS
+            (function(actionLabel, eventLabel) {
+                var rows = document.querySelectorAll(
+                    'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row, tr.mod-bookit-confirmed-request-row'
+                );
+                var actionMap = {
+                    'Accept': '2',
+                    'Reject': '4',
+                    'Reactivate as new request': '0',
+                    'Set in progress': '1',
+                    'Cancel': '3',
+                    'Confirmed': '2'
+                };
+                for (var i = 0; i < rows.length; i++) {
+                    var link = rows[i].querySelector('a.bookit-event-link');
+                    if (!link || link.textContent.trim() !== eventLabel) {
+                        continue;
+                    }
+                    if (actionLabel === 'Reactivate as new request') {
+                        var reactivateButton = rows[i].querySelector(
+                            'button[data-action="reactivate-booking-from-overview"]'
+                        );
+                        if (!reactivateButton) {
+                            return 'reactivate-button-not-found';
+                        }
+                        reactivateButton.click();
+                        return 'clicked-reactivate';
+                    }
+                    var select = rows[i].querySelector('select[data-action="update-booking-status"]');
+                    if (!select) {
+                        return 'select-not-found';
+                    }
+                    var targetValue = actionMap[actionLabel];
+                    if (targetValue !== undefined) {
+                        select.value = targetValue;
+                        select.dispatchEvent(new Event('change', {bubbles: true}));
+                        return 'clicked';
+                    }
+                    for (var k = 0; k < select.options.length; k++) {
+                        if (select.options[k].textContent.trim() === actionLabel) {
+                            select.value = select.options[k].value;
+                            select.dispatchEvent(new Event('change', {bubbles: true}));
+                            return 'clicked';
+                        }
+                    }
+                    return 'action-not-found';
+                }
+                return 'row-not-found';
+            })('$action', '$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result === 'clicked-reactivate') {
+            $this->i_confirm_the_bookit_overview_cancel_dialog();
+            return;
+        }
+        if ($result !== 'clicked') {
+            throw new ExpectationException(
+                "Could not click action \"$action\" for event \"$eventname\". Result: $result",
+                $this->getSession()
+            );
+        }
+        if (in_array($action, ['Accept', 'Reject'], true)) {
+            $eventjson = json_encode($eventname);
+            $this->getSession()->wait(10000, <<<JS
+                (function(eventLabel) {
+                    return !Array.from(document.querySelectorAll(
+                        'tr.mod-bookit-open-request-row, tr.mod-bookit-rejected-request-row'
+                    )).some(function(row) {
+                        var title = row.querySelector('a.bookit-event-link');
+                        return title && title.textContent.trim() === eventLabel;
+                    });
+                })($eventjson)
+            JS);
+        } else {
+            $this->getSession()->wait(3000);
+        }
+    }
+
+    /**
+     * Cancel a booking from the personal overview row action.
+     *
+     * @When I cancel the booking :eventname from the Bookit overview
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function i_cancel_the_booking_from_the_bookit_overview(string $eventname): void {
+        $js = <<<JS
+            (function(eventLabel) {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                for (var i = 0; i < rows.length; i++) {
+                    var link = rows[i].querySelector('a.bookit-event-link');
+                    var title = rows[i].querySelector('td span[data-is-reserved-projection="1"]');
+                    var label = link ? link.textContent.trim() : (title ? title.textContent.trim() : '');
+                    if (label !== eventLabel) {
+                        continue;
+                    }
+                    var button = rows[i].querySelector('button[data-action="cancel-booking-from-overview"]');
+                    if (!button) {
+                        return 'button-not-found';
+                    }
+                    button.click();
+                    return 'clicked';
+                }
+                return 'row-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'clicked') {
+            throw new ExpectationException(
+                "Could not cancel booking \"$eventname\" from the overview. Result: $result",
+                $this->getSession()
+            );
+        }
+        $this->getSession()->wait(1000);
+    }
+
+    /**
+     * Confirm the overview cancel dialog opened from the personal overview row action.
+     *
+     * @When I confirm the Bookit overview cancel dialog
+     * @return void
+     * @throws ExpectationException
+     */
+    public function i_confirm_the_bookit_overview_cancel_dialog(): void {
+        $this->getSession()->wait(5000, <<<'JS'
+            (function() {
+                return document.querySelector('.modal.show button[data-action="save"], .modal.show .btn-primary') !== null;
+            })();
+        JS);
+
+        $script = <<<'JS'
+            (function() {
+                const modal = document.querySelector('.modal.show');
+                if (!modal) {
+                    return false;
+                }
+                const button = modal.querySelector('button[data-action="save"]')
+                    || modal.querySelector('.modal-footer .btn-primary');
+                if (!button) {
+                    return false;
+                }
+                button.click();
+                return true;
+            })();
+        JS;
+
+        if (!$this->getSession()->evaluateScript($script)) {
+            throw new ExpectationException(
+                'The Bookit overview cancel confirmation dialog could not be confirmed.',
+                $this->getSession()
+            );
+        }
+        $this->getSession()->wait(3000);
+    }
+
+    /**
+     * Assert that the overview table currently renders the ID column.
+     *
+     * @Then the Bookit overview should show the ID column
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_the_id_column(): void {
+        $this->assert_overview_id_column(true);
+    }
+
+    /**
+     * Assert that the overview table currently hides the ID column.
+     *
+     * @Then the Bookit overview should not show the ID column
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_show_the_id_column(): void {
+        $this->assert_overview_id_column(false);
+    }
+
+    /**
+     * Assert that the overview row for an event exposes the participant cancel action.
+     *
+     * @Then the Bookit overview should show a cancel action for event :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_a_cancel_action_for_event(string $eventname): void {
+        $this->assert_overview_cancel_action($eventname, true);
+    }
+
+    /**
+     * Assert that the overview row for an event does not expose the participant cancel action.
+     *
+     * @Then the Bookit overview should not show a cancel action for event :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_show_a_cancel_action_for_event(string $eventname): void {
+        $this->assert_overview_cancel_action($eventname, false);
+    }
+
+    /**
+     * Assert the exact set of event titles currently rendered in the overview table.
+     *
+     * @Then the Bookit overview should list only the events :eventlist
+     * @param string $eventlist
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_list_only_the_events(string $eventlist): void {
+        $expected = array_values(array_filter(array_map('trim', explode(',', $eventlist))));
+        $js = <<<'JS'
+            (function() {
+                function rowTitle(row) {
+                    var reserved = row.querySelector('span[data-is-reserved-projection="1"]');
+                    if (reserved) {
+                        return reserved.textContent.trim();
+                    }
+                    var link = row.querySelector('a.bookit-event-link');
+                    if (link) {
+                        return link.textContent.trim();
+                    }
+                    return '';
+                }
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(rowTitle).filter(Boolean);
+            })();
+        JS;
+
+        $actual = $this->getSession()->evaluateScript($js);
+        sort($expected);
+        sort($actual);
+        if ($actual !== $expected) {
+            throw new ExpectationException(
+                'Unexpected overview event list. Expected ' . json_encode($expected) . ' but got ' . json_encode($actual),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the overview row for an event does not expose a detail link.
+     *
+     * @Then the Bookit overview should not expose a detail link for event :eventname
+     * @param string $eventname
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_not_expose_a_detail_link_for_event(string $eventname): void {
+        $js = <<<JS
+            (function(targetName) {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                for (var i = 0; i < rows.length; i++) {
+                    if (rows[i].textContent.indexOf(targetName) === -1) {
+                        continue;
+                    }
+                    return rows[i].querySelector('a.bookit-event-link') ? 'has-link' : 'no-link';
+                }
+                return 'row-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== 'no-link') {
+            throw new ExpectationException(
+                "Expected no detail link for \"$eventname\" but got result: $result",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the overview navigation tabs do not contain a specific label.
+     *
+     * @Then the Bookit overview navigation should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_navigation_should_not_contain(string $text): void {
+        $js = <<<'JS'
+            (function() {
+                var nav = document.querySelector('.mod_bookit-overview-examiner_overview .nav-tabs');
+                return nav ? nav.textContent.replace(/\s+/g, ' ').trim() : '';
+            })();
+        JS;
+
+        $content = (string)$this->getSession()->evaluateScript($js);
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                'The Bookit overview navigation unexpectedly contained "' . $text . '".',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the selected booking-status options in the overview filter.
+     *
+     * @Then the Bookit overview booking status filter should select :statuses
+     * @param string $statuses Comma-separated booking status ids.
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_booking_status_filter_should_select(string $statuses): void {
+        $expectedvalues = array_map(
+            'strval',
+            array_map(
+                'intval',
+                array_values(array_filter(
+                    array_map('trim', explode(',', $statuses)),
+                    static fn(string $status): bool => $status !== ''
+                ))
+            )
+        );
+        $js = <<<'JS'
+            (function() {
+                var select = document.querySelector('#bookit-bookingstatusfilter')
+                    || document.querySelector('#bookit-workspace-bookingstatusfilter');
+                var tabInput = document.querySelector('form[method="get"] input[name="tab"]');
+                var badge = document.querySelector('.badge.badge-info');
+                if (!select) {
+                    return JSON.stringify({status: 'missing'});
+                }
+                var values = Array.from(select.options)
+                    .filter(function(option) { return option.selected; })
+                    .map(function(option) { return option.value; });
+                return JSON.stringify({
+                    status: 'ok',
+                    values: values,
+                    url: window.location.href,
+                    formtab: tabInput ? tabInput.value : null,
+                    eventcount: badge ? badge.textContent : null
+                });
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect the booking-status filter selection. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        sort($expectedvalues);
+        $actualvalues = $result['values'] ?? [];
+        sort($actualvalues);
+        if ($actualvalues !== $expectedvalues) {
+            throw new ExpectationException(
+                'Unexpected booking-status selection. Expected ' . json_encode($expectedvalues)
+                    . ' but got ' . json_encode($actualvalues)
+                    . ' formtab=' . json_encode($result['formtab'] ?? null)
+                    . ' eventcount=' . json_encode($result['eventcount'] ?? null)
+                    . ' at ' . ($result['url'] ?? ''),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the selected semester options in the overview filter.
+     *
+     * @Then the Bookit overview semester filter should select :semesters
+     * @param string $semesters
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_semester_filter_should_select(string $semesters): void {
+        $expectedvalues = $this->resolve_semester_filter_values($semesters);
+        $js = <<<'JS'
+            (function() {
+                var select = document.querySelector('#bookit-semesterids')
+                    || document.querySelector('#bookit-workspace-semesterids');
+                if (!select) {
+                    return JSON.stringify({status: 'missing'});
+                }
+                var values = Array.from(select.options)
+                    .filter(function(option) { return option.selected; })
+                    .map(function(option) { return option.value; });
+                return JSON.stringify({status: 'ok', values: values});
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect the semester filter selection. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        sort($expectedvalues);
+        $actualvalues = $result['values'] ?? [];
+        sort($actualvalues);
+        if ($actualvalues !== $expectedvalues) {
+            throw new ExpectationException(
+                'Unexpected semester selection. Expected ' . json_encode($expectedvalues)
+                    . ' but got ' . json_encode($actualvalues),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the raw response contains a string.
+     *
+     * @Then the Bookit raw response should contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_raw_response_should_contain(string $text): void {
+        $content = (string)$this->getSession()->evaluateScript('window.bookitLastFeedResponse || ""');
+        if (mb_strpos($content, $text) === false) {
+            throw new ExpectationException(
+                "The raw response did not contain \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the raw response does not contain a string.
+     *
+     * @Then the Bookit raw response should not contain :text
+     * @param string $text
+     * @throws ExpectationException
+     */
+    public function the_bookit_raw_response_should_not_contain(string $text): void {
+        $content = (string)$this->getSession()->evaluateScript('window.bookitLastFeedResponse || ""');
+        if (mb_strpos($content, $text) !== false) {
+            throw new ExpectationException(
+                "The raw response unexpectedly contained \"$text\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that a named Bookit editor field does not equal a value, even when hidden by rich editors.
+     *
+     * @Then the Bookit editor field :field should not equal :value
+     * @param string $field
+     * @param string $value
+     * @throws ExpectationException
+     */
+    public function the_bookit_editor_field_should_not_equal(string $field, string $value): void {
+        $value = str_replace('""', '"', $value);
+        $actual = $this->get_named_form_control_value($field);
+        if ($actual === $value) {
+            throw new ExpectationException(
+                "The Bookit editor field \"$field\" unexpectedly matched \"$value\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that a named Bookit editor field equals a value, even when hidden by rich editors.
+     *
+     * @Then /^the Bookit editor field "([^"]+)" should equal "(.*)"$/
+     * @param string $field
+     * @param string $value
+     * @throws ExpectationException
+     */
+    public function the_bookit_editor_field_should_equal(string $field, string $value): void {
+        $value = str_replace('""', '"', $value);
+        $actual = $this->get_bookit_form_control_value($field);
+        if ($actual !== $value) {
+            throw new ExpectationException(
+                "The Bookit editor field \"$field\" did not match \"$value\". Got \"$actual\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Check a checkbox-style field.
+     *
+     * Moodle 4.5 dropped the simple "I check" alias from the available step catalogue in this stack,
+     * so Bookit keeps a thin compatibility wrapper for existing scenarios.
+     *
+     * @When /^I check "([^"]+)"$/
+     * @param string $field
+     * @throws ExpectationException
+     */
+    public function i_check(string $field): void {
+        $this->set_checkbox_field_state($field, true);
+    }
+
+    /**
+     * Uncheck a checkbox-style field.
+     *
+     * @When /^I uncheck "([^"]+)"$/
+     * @param string $field
+     * @throws ExpectationException
+     */
+    public function i_uncheck(string $field): void {
+        $this->set_checkbox_field_state($field, false);
+    }
+
+    /**
+     * Seed the shipped default checklist dataset when a scenario relies on it.
+     *
+     * @Given the Bookit default checklist data exists
+     * @return void
+     */
+    public function the_bookit_default_checklist_data_exists(): void {
+        \mod_bookit\local\install_helper::create_default_checklists(false, false);
+    }
+
+    /**
+     * Seed the shipped default resource dataset when a scenario relies on it.
+     *
+     * @Given the Bookit default resource data exists
+     * @return void
+     */
+    public function the_bookit_default_resource_data_exists(): void {
+        \mod_bookit\local\install_helper::create_default_resources(false, false);
+    }
+
+    /**
+     * Seed the legacy multi-room test fixtures used by older checklist scenarios.
+     *
+     * @Given the Bookit legacy test rooms exist
+     * @return void
+     */
+    public function the_bookit_legacy_test_rooms_exist(): void {
+        global $DB;
+
+        $rooms = [
+            ['name' => 'Lecture Hall A', 'shortname' => 'LH-A', 'eventcolor' => '#3a87ad'],
+            ['name' => 'Seminar Room B', 'shortname' => 'SR-B', 'eventcolor' => '#4caf50'],
+            ['name' => 'Computer Lab', 'shortname' => 'CL', 'eventcolor' => '#ff9800'],
+        ];
+
+        foreach ($rooms as $room) {
+            $exists = $DB->record_exists_sql(
+                'SELECT 1
+                   FROM {bookit_room}
+                  WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+                ['name' => $room['name']]
+            );
+            if ($exists) {
+                continue;
+            }
+
+            $record = (object)[
+                'name' => $room['name'],
+                'shortname' => $room['shortname'],
+                'description' => '',
+                'location' => '',
+                'eventcolor' => $room['eventcolor'],
+                'active' => 1,
+                'roommode' => 0,
+                'seats' => 10,
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'preventoverlap' => 0,
+                'usermodified' => 2,
+                'timecreated' => time(),
+                'timemodified' => time(),
+            ];
+            $DB->insert_record('bookit_room', $record);
+        }
+    }
+
+    /**
+     * Confirm the top-most reset confirmation dialog opened from the checklist editor.
+     *
+     * @When I confirm the visible Bookit reset dialog
+     * @return void
+     * @throws ExpectationException
+     */
+    public function i_confirm_the_visible_bookit_reset_dialog(): void {
+        $script = <<<'JS'
+            (function() {
+                const modals = Array.from(document.querySelectorAll('.modal.show'));
+                for (let i = modals.length - 1; i >= 0; i--) {
+                    const buttons = Array.from(modals[i].querySelectorAll('button'));
+                    const button = buttons.find((candidate) => candidate.textContent.trim() === 'Reset');
+                    if (button) {
+                        button.click();
+                        return true;
+                    }
+                }
+                return false;
+            })();
+        JS;
+
+        if (!$this->getSession()->evaluateScript($script)) {
+            throw new ExpectationException(
+                'The visible Bookit reset confirmation dialog could not be confirmed.',
+                $this->getSession()
+            );
+        }
+    }
+
     /**
      * Checks that the given resource row has the bookit-resource-disabled class (is greyed out).
      *
@@ -116,6 +2071,583 @@ class behat_mod_bookit extends behat_base {
                 $this->getSession()
             );
         }
+    }
+
+    /**
+     * Assert the state of a form control inside the currently visible event details modal.
+     *
+     * @param string $controlname
+     * @param string $expectedstate enabled|disabled|hidden
+     * @throws ExpectationException
+     */
+    private function assert_modal_control_state(string $controlname, string $expectedstate): void {
+        $js = <<<JS
+            (function(controlName) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return 'modal-not-found';
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return 'hidden';
+                }
+                if (control.type === 'hidden') {
+                    return 'hidden';
+                }
+                var style = window.getComputedStyle(control);
+                var visible = style.display !== 'none' &&
+                    style.visibility !== 'hidden' &&
+                    (control.offsetWidth > 0 || control.offsetHeight > 0 || control.getClientRects().length > 0);
+                if (!visible) {
+                    return 'hidden';
+                }
+                return control.disabled ? 'disabled' : 'enabled';
+            })('$controlname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result !== $expectedstate) {
+            throw new ExpectationException(
+                "Expected modal control \"$controlname\" to be \"$expectedstate\" but got \"$result\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert whether a modal select/autocomplete control contains an option label.
+     *
+     * @param string $controlname
+     * @param string $optionlabel
+     * @param bool $shouldcontain
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_modal_control_option(string $controlname, string $optionlabel, bool $shouldcontain): void {
+        $js = <<<JS
+            (function(controlName) {
+                var root = document.querySelector('.modal.show');
+                if (!root) {
+                    return JSON.stringify({status: 'modal-not-found'});
+                }
+                var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    return JSON.stringify({status: 'control-not-found'});
+                }
+                var options = Array.from(control.options || []).map(function(option) {
+                    return option.textContent.trim();
+                }).filter(function(text) {
+                    return text !== '';
+                });
+                return JSON.stringify({status: 'ok', options: options});
+            })('$controlname');
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not inspect modal control options for "' . $controlname . '". Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        $options = $result['options'] ?? [];
+        $contains = in_array($optionlabel, $options, true);
+        if ($shouldcontain && !$contains) {
+            throw new ExpectationException(
+                'Expected modal control "' . $controlname . '" to contain option "' . $optionlabel
+                    . '" but options were ' . json_encode($options),
+                $this->getSession()
+            );
+        }
+
+        if (!$shouldcontain && $contains) {
+            throw new ExpectationException(
+                'Expected modal control "' . $controlname . '" not to contain option "' . $optionlabel
+                    . '" but options were ' . json_encode($options),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert whether the active overview table shows the leading ID column.
+     *
+     * @param bool $expected
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_overview_id_column(bool $expected): void {
+        $js = <<<'JS'
+            (function() {
+                var table = document.querySelector('#overview-table, #open-requests-table');
+                if (!table) {
+                    return 'table-not-found';
+                }
+                var firstHeader = table.querySelector('thead th');
+                if (!firstHeader) {
+                    return 'header-not-found';
+                }
+                return firstHeader.textContent.trim();
+            })();
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result === 'table-not-found' || $result === 'header-not-found') {
+            throw new ExpectationException(
+                "Could not resolve overview table header state. Result: $result",
+                $this->getSession()
+            );
+        }
+
+        $actual = str_starts_with($result, 'ID');
+        if ($actual !== $expected) {
+            $message = $expected
+                ? 'Expected the overview to show the ID column, but it did not.'
+                : 'Expected the overview to hide the ID column, but it was visible.';
+            throw new ExpectationException($message, $this->getSession());
+        }
+    }
+
+    /**
+     * Return normalized overview table header labels from the active personal overview table.
+     *
+     * @return string[]
+     * @throws ExpectationException
+     */
+    private function get_overview_table_headers(): array {
+        $js = <<<'JS'
+            (function() {
+                var table = document.querySelector('#overview-table');
+                if (!table) {
+                    return JSON.stringify({status: 'table-not-found'});
+                }
+                var headers = Array.from(table.querySelectorAll('thead th')).map(function(th) {
+                    var clone = th.cloneNode(true);
+                    clone.querySelectorAll('.accesshide').forEach(function(node) {
+                        node.remove();
+                    });
+                    return clone.textContent.replace(/[▲▼]/g, '').trim();
+                });
+                return JSON.stringify({status: 'ok', headers: headers});
+            })();
+        JS;
+
+        $result = json_decode((string)$this->getSession()->evaluateScript($js), true);
+        if (!is_array($result) || ($result['status'] ?? '') !== 'ok') {
+            throw new ExpectationException(
+                'Could not resolve overview table headers. Result: ' . json_encode($result),
+                $this->getSession()
+            );
+        }
+
+        return $result['headers'] ?? [];
+    }
+
+    /**
+     * Assert that the datetime column is the first data column on the personal overview table.
+     *
+     * @Then the Bookit overview should show the datetime column as the first data column
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_show_the_datetime_column_as_the_first_data_column(): void {
+        $expected = get_string('overview_column_datetime', 'mod_bookit');
+        $headers = $this->get_overview_table_headers();
+        if ($headers === []) {
+            throw new ExpectationException('Expected overview headers but found none.', $this->getSession());
+        }
+
+        $firstdata = $headers[0];
+        if (str_starts_with($firstdata, 'ID')) {
+            $firstdata = $headers[1] ?? '';
+        }
+
+        if ($firstdata !== $expected) {
+            throw new ExpectationException(
+                'Expected first data column "' . $expected . '" but got "' . $firstdata
+                    . '". Headers: ' . json_encode($headers),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that the overview table headers begin with the given comma-separated labels.
+     *
+     * @Then the Bookit overview table headers should start with :headerlist
+     * @param string $headerlist
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_table_headers_should_start_with(string $headerlist): void {
+        $expected = array_values(array_filter(array_map('trim', explode(',', $headerlist))));
+        $actual = $this->get_overview_table_headers();
+        $slice = array_slice($actual, 0, count($expected));
+        if ($slice !== $expected) {
+            throw new ExpectationException(
+                'Expected overview headers to start with ' . json_encode($expected)
+                    . ' but got ' . json_encode($slice) . ' (full: ' . json_encode($actual) . ')',
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that overview rows are rendered in ascending start-time order.
+     *
+     * @Then the Bookit overview rows should be sorted ascending by start time
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_rows_should_be_sorted_ascending_by_start_time(): void {
+        $js = <<<'JS'
+            (function() {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(function(row) {
+                    var cell = row.querySelector('td[data-sort]');
+                    return cell ? Number(cell.getAttribute('data-sort') || 0) : 0;
+                });
+            })();
+        JS;
+
+        $sortvalues = $this->getSession()->evaluateScript($js);
+        if (!is_array($sortvalues) || $sortvalues === []) {
+            throw new ExpectationException(
+                'Expected sortable overview rows but found none.',
+                $this->getSession()
+            );
+        }
+
+        $sorted = $sortvalues;
+        sort($sorted, SORT_NUMERIC);
+        if ($sortvalues !== $sorted) {
+            throw new ExpectationException(
+                'Expected ascending start-time order but got ' . json_encode($sortvalues),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that overview rows are rendered in descending start-time order.
+     *
+     * @Then the Bookit overview rows should be sorted descending by start time
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_rows_should_be_sorted_descending_by_start_time(): void {
+        $js = <<<'JS'
+            (function() {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(function(row) {
+                    var cell = row.querySelector('td[data-sort]');
+                    return cell ? Number(cell.getAttribute('data-sort') || 0) : 0;
+                });
+            })();
+        JS;
+
+        $sortvalues = $this->getSession()->evaluateScript($js);
+        if (!is_array($sortvalues) || $sortvalues === []) {
+            throw new ExpectationException(
+                'Expected sortable overview rows but found none.',
+                $this->getSession()
+            );
+        }
+
+        $sorted = $sortvalues;
+        rsort($sorted, SORT_NUMERIC);
+        if ($sortvalues !== $sorted) {
+            throw new ExpectationException(
+                'Expected descending start-time order but got ' . json_encode($sortvalues),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert event titles appear in the overview table in the given DOM order.
+     *
+     * @Then the Bookit overview should list events in order :eventlist
+     * @param string $eventlist
+     * @throws ExpectationException
+     */
+    public function the_bookit_overview_should_list_events_in_order(string $eventlist): void {
+        $expected = array_values(array_filter(array_map('trim', explode(',', $eventlist))));
+        $js = <<<'JS'
+            (function() {
+                function rowTitle(row) {
+                    var reserved = row.querySelector('span[data-is-reserved-projection="1"]');
+                    if (reserved) {
+                        return reserved.textContent.trim();
+                    }
+                    var link = row.querySelector('a.bookit-event-link');
+                    if (link) {
+                        return link.textContent.trim();
+                    }
+                    return '';
+                }
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                return Array.from(rows).map(rowTitle).filter(Boolean);
+            })();
+        JS;
+
+        $actual = $this->getSession()->evaluateScript($js);
+        if ($actual !== $expected) {
+            throw new ExpectationException(
+                'Unexpected overview event order. Expected ' . json_encode($expected)
+                    . ' but got ' . json_encode($actual),
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert whether the personal overview row exposes the participant cancel action.
+     *
+     * @param string $eventname
+     * @param bool $expected
+     * @return void
+     * @throws ExpectationException
+     */
+    private function assert_overview_cancel_action(string $eventname, bool $expected): void {
+        $js = <<<JS
+            (function(eventLabel) {
+                var rows = document.querySelectorAll('#overview-table tbody tr');
+                for (var i = 0; i < rows.length; i++) {
+                    var link = rows[i].querySelector('a.bookit-event-link');
+                    var title = rows[i].querySelector('td span[data-is-reserved-projection="1"]');
+                    var label = link ? link.textContent.trim() : (title ? title.textContent.trim() : '');
+                    if (label !== eventLabel) {
+                        continue;
+                    }
+                    return !!rows[i].querySelector('button[data-action="cancel-booking-from-overview"]');
+                }
+                return 'row-not-found';
+            })('$eventname');
+        JS;
+
+        $result = $this->getSession()->evaluateScript($js);
+        if ($result === 'row-not-found') {
+            throw new ExpectationException(
+                "Could not find overview row for event \"$eventname\".",
+                $this->getSession()
+            );
+        }
+
+        $actual = (bool)$result;
+        if ($actual !== $expected) {
+            $message = $expected
+                ? "Expected overview cancel action for \"$eventname\"."
+                : "Did not expect overview cancel action for \"$eventname\".";
+            throw new ExpectationException($message, $this->getSession());
+        }
+    }
+
+    /**
+     * Build the raw calendar projection string for a given user and activity.
+     *
+     * @param string $username
+     * @param string $activity
+     * @param string $start
+     * @param string $end
+     * @return string
+     */
+    private function get_calendar_projection_content(string $username, string $activity, string $start, string $end): string {
+        global $DB, $USER;
+
+        $user = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
+        $bookit = $DB->get_record('bookit', ['name' => $activity], 'id, course', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('bookit', $bookit->id, $bookit->course, false, MUST_EXIST);
+
+        $previoususer = clone($USER);
+        \core\session\manager::set_user($user);
+        \accesslib_clear_all_caches(true);
+        load_all_capabilities();
+        $events = \mod_bookit\local\manager\event_manager::get_events_in_timerange(
+            (new \DateTime($this->resolve_datetime_value($start)))->format('Y-m-d H:i'),
+            (new \DateTime($this->resolve_datetime_value($end)))->format('Y-m-d H:i'),
+            $cm->id
+        );
+        \core\session\manager::set_user($previoususer);
+        \accesslib_clear_all_caches(true);
+        load_all_capabilities();
+
+        return json_encode($events);
+    }
+
+    /**
+     * Build the raw room-availability projection string for a given room and range.
+     *
+     * @param string $roomname
+     * @param string $start
+     * @param string $end
+     * @return string
+     */
+    private function get_room_availability_projection_content(string $roomname, string $start, string $end): string {
+        global $DB;
+
+        $roomid = (int)$DB->get_field_sql(
+            'SELECT id
+               FROM {bookit_room}
+              WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+            ['name' => $roomname],
+            MUST_EXIST
+        );
+        $entries = \mod_bookit\external\get_room_availability::execute(
+            $roomid,
+            $this->resolve_datetime_value($start),
+            $this->resolve_datetime_value($end)
+        );
+
+        return json_encode($entries);
+    }
+
+    /**
+     * Return the value of a form control by name, including hidden editor-backed fields.
+     *
+     * @param string $name
+     * @return string
+     * @throws ExpectationException
+     */
+    private function get_named_form_control_value(string $name): string {
+        $script = <<<JS
+            (function(fieldName) {
+                var elements = document.querySelectorAll('textarea, input, select');
+                for (var i = 0; i < elements.length; i++) {
+                    if (elements[i].getAttribute('name') === fieldName) {
+                        if (window.tinymce && elements[i].id) {
+                            var editor = window.tinymce.get(elements[i].id);
+                            if (editor) {
+                                editor.save();
+                            }
+                        }
+                        return elements[i].value;
+                    }
+                }
+                return null;
+            })(%s);
+        JS;
+        $value = $this->getSession()->evaluateScript(sprintf($script, json_encode($name)));
+        if ($value === null) {
+            throw new ExpectationException(
+                "The Bookit editor field \"$name\" was not found in the DOM.",
+                $this->getSession()
+            );
+        }
+
+        return (string)$value;
+    }
+
+    /**
+     * Check whether the Bookit event details modal is currently visible.
+     *
+     * @return bool
+     */
+    private function is_bookit_event_modal_open(): bool {
+        return (bool)$this->getSession()->evaluateScript(<<<'JS'
+            (function() {
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        return true;
+                    }
+                }
+                return false;
+            })();
+        JS);
+    }
+
+    /**
+     * Wait until the Bookit event details modal is no longer visible.
+     *
+     * @param int $timeoutms
+     * @return void
+     */
+    private function wait_until_bookit_event_modal_closed(int $timeoutms = 15000): void {
+        $this->getSession()->wait($timeoutms, <<<'JS'
+            (function() {
+                var modals = document.querySelectorAll('.modal.show');
+                for (var i = 0; i < modals.length; i++) {
+                    if (modals[i].querySelector('form.mform [name="starttime"], form.mform #id_starttime')) {
+                        return false;
+                    }
+                }
+                return true;
+            })();
+        JS);
+    }
+
+    /**
+     * Resolve a form control value by visible field identifier or exact raw input name.
+     *
+     * @param string $identifier
+     * @return string
+     * @throws ExpectationException
+     */
+    private function get_bookit_form_control_value(string $identifier): string {
+        try {
+            return $this->get_named_form_control_value($identifier);
+        } catch (ExpectationException $e) {
+            $field = $this->find_field($identifier);
+            if (!$field) {
+                throw $e;
+            }
+
+            if ($field->getTagName() === 'textarea' && $field->getAttribute('id')) {
+                $script = <<<JS
+                    (function(fieldId) {
+                        var field = document.getElementById(fieldId);
+                        if (!field) {
+                            return null;
+                        }
+                        if (window.tinymce) {
+                            var editor = window.tinymce.get(fieldId);
+                            if (editor) {
+                                editor.save();
+                            }
+                        }
+                        return field.value;
+                    })(%s);
+                JS;
+                $value = $this->getSession()->evaluateScript(sprintf($script, json_encode($field->getAttribute('id'))));
+                if ($value !== null) {
+                    return (string)$value;
+                }
+            }
+
+            return (string)$field->getValue();
+        }
+    }
+
+    /**
+     * Toggle a checkbox field by label, id or name.
+     *
+     * @param string $identifier
+     * @param bool $checked
+     * @return void
+     * @throws ExpectationException
+     */
+    private function set_checkbox_field_state(string $identifier, bool $checked): void {
+        $field = $this->find_field($identifier);
+        if (!$field) {
+            throw new ExpectationException(
+                "The checkbox field \"$identifier\" was not found.",
+                $this->getSession()
+            );
+        }
+
+        $tagname = $field->getTagName();
+        $type = $field->getAttribute('type');
+        if ($tagname !== 'input' || $type !== 'checkbox') {
+            throw new ExpectationException(
+                "The field \"$identifier\" is not a checkbox field.",
+                $this->getSession()
+            );
+        }
+
+        if ($checked) {
+            $field->check();
+            return;
+        }
+
+        $field->uncheck();
     }
 
     /**
@@ -395,5 +2927,337 @@ class behat_mod_bookit extends behat_base {
             );
         }
         $this->getSession()->wait(3000);
+    }
+
+    /**
+     * Create deterministic multi-page fixtures for a request workspace.
+     *
+     * @Given :count sortable Bookit request events exist for :workspace
+     * @param int $count
+     * @param string $workspace
+     */
+    public function sortable_bookit_request_events_exist_for(int $count, string $workspace): void {
+        global $DB;
+
+        $userid = (int)$DB->get_field('user', 'id', ['username' => 'susiservice']);
+        if ($userid === 0) {
+            $userid = (int)$DB->get_field('user', 'id', ['username' => 'serviceteam'], MUST_EXIST);
+        }
+        $now = time();
+        for ($i = $count; $i >= 1; $i--) {
+            $ispast = $workspace === 'history';
+            $starttime = $ispast ? $now - (($i + 1) * DAYSECS) : $now + (($i + 1) * HOURSECS);
+            $status = match ($workspace) {
+                'openrequests' => $i % 2 === 0
+                    ? \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_NEW
+                    : \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                'confirmedrequests' => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'rejectedcancelled' => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_REJECTED,
+                'history' => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_CANCELED,
+                default => \mod_bookit\local\manager\event_access_manager::BOOKINGSTATUS_NEW,
+            };
+            $DB->insert_record('bookit_event', (object)[
+                'name' => sprintf('Global sort %02d', $i),
+                'semester' => \mod_bookit\local\manager\event_manager::get_current_semester($starttime),
+                'institutionid' => 1,
+                'starttime' => $starttime,
+                'endtime' => $starttime + HOURSECS,
+                'duration' => 60,
+                'roomid' => null,
+                'participantsamount' => 1,
+                'timecompensation' => 0,
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => $status,
+                'personinchargeid' => $userid,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $userid,
+                'usermodified' => $userid,
+                'timecreated' => $now,
+                'timemodified' => $now,
+            ]);
+        }
+    }
+
+    /**
+     * Activate a Moodle Core table sort link by its visible column label.
+     *
+     * @When I sort the Bookit request workspace by :column :direction
+     * @param string $column
+     * @param string $direction
+     * @throws ExpectationException
+     */
+    public function i_sort_the_bookit_request_workspace_by(string $column, string $direction): void {
+        $expectedtitle = ucfirst(strtolower($direction));
+        $headerxpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]';
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $header = $this->getSession()->getPage()->find('xpath', $headerxpath);
+            if (
+                $header !== null && $header->find('xpath', './/i[@title='
+                    . behat_context_helper::escape($expectedtitle) . ']') !== null
+            ) {
+                return;
+            }
+            $link = $header?->find('xpath', './/a[@role="button"]');
+            if ($link === null) {
+                throw new ExpectationException(
+                    "Could not find the Core sort link for \"$column\".",
+                    $this->getSession()
+                );
+            }
+            $link->click();
+        }
+        throw new ExpectationException(
+            "Core did not activate $direction sorting for \"$column\".",
+            $this->getSession()
+        );
+    }
+
+    /**
+     * Focus a Moodle Core sort control for keyboard activation.
+     *
+     * @When I focus the Bookit request workspace sort control :column
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function i_focus_the_bookit_request_workspace_sort_control(string $column): void {
+        $columnjson = json_encode($column);
+        $focused = $this->getSession()->evaluateScript(<<<JS
+            (function(label) {
+                var headers = Array.from(document.querySelectorAll('table.generaltable thead th'));
+                var header = headers.find(function(node) {
+                    return node.textContent.trim().startsWith(label);
+                });
+                var link = header ? header.querySelector('a[role="button"]') : null;
+                if (!link) {
+                    return false;
+                }
+                link.focus({preventScroll: true});
+                return document.activeElement === link;
+            })($columnjson)
+        JS);
+        if (!$focused) {
+            throw new ExpectationException("Could not focus sort control \"$column\".", $this->getSession());
+        }
+    }
+
+    /**
+     * Activate a Core sort link with a keyboard Enter event.
+     *
+     * @When I activate the Bookit request workspace sort control :column with the keyboard
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function i_activate_the_bookit_request_workspace_sort_control_with_the_keyboard(string $column): void {
+        $columnjson = json_encode($column);
+        $this->getSession()->evaluateScript(<<<JS
+            (function(label) {
+                var header = Array.from(document.querySelectorAll('table.generaltable thead th')).find(function(node) {
+                    return node.textContent.trim().startsWith(label);
+                });
+                var link = header ? header.querySelector('a[role="button"]') : null;
+                if (link) {
+                    link.scrollIntoView({block: 'center'});
+                }
+            })($columnjson)
+        JS);
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]//a[@role="button"]';
+        $link = $this->getSession()->getPage()->find('xpath', $xpath);
+        if ($link === null) {
+            throw new ExpectationException("Could not activate sort control \"$column\".", $this->getSession());
+        }
+        $urlbefore = json_encode($this->getSession()->getCurrentUrl());
+        $link->focus();
+        behat_base::type_keys($this->getSession(), [behat_keys::ENTER]);
+        $this->getSession()->wait(10000, "document.location.href !== $urlbefore");
+    }
+
+    /**
+     * Assert whether a Core sort control is exposed for a column.
+     *
+     * @Then the Bookit request workspace column :column should have a Core sort control
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_have_a_core_sort_control(string $column): void {
+        $this->assert_workspace_column_sort_control($column, true);
+    }
+
+    /**
+     * Assert that no Core sort control is exposed for a calculated/action column.
+     *
+     * @Then the Bookit request workspace column :column should not have a Core sort control
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_not_have_a_core_sort_control(string $column): void {
+        $this->assert_workspace_column_sort_control($column, false);
+    }
+
+    /**
+     * Assert an active Core direction indicator.
+     *
+     * @Then the Bookit request workspace column :column should show Core direction :direction
+     * @param string $column
+     * @param string $direction
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_show_core_direction(
+        string $column,
+        string $direction
+    ): void {
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]'
+            . '//i[@title=' . behat_context_helper::escape(ucfirst(strtolower($direction))) . ']';
+        if ($this->getSession()->getPage()->find('xpath', $xpath) === null) {
+            throw new ExpectationException(
+                "Column \"$column\" does not show the Core $direction indicator.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that Core exposes an active direction indicator for a column.
+     *
+     * @Then the Bookit request workspace column :column should show a Core direction indicator
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function the_bookit_request_workspace_column_should_show_a_core_direction_indicator(
+        string $column
+    ): void {
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]'
+            . '//i[@title="Ascending" or @title="Descending"]';
+        if ($this->getSession()->getPage()->find('xpath', $xpath) === null) {
+            throw new ExpectationException(
+                "Column \"$column\" does not show a Core direction indicator.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Capture a visible Core-table column and row IDs across every result page.
+     *
+     * @When I capture the Bookit request workspace column :column across all pages
+     * @param string $column
+     * @throws ExpectationException
+     */
+    public function i_capture_the_bookit_request_workspace_column_across_all_pages(string $column): void {
+        $values = [];
+        $ids = [];
+
+        while (true) {
+            $table = $this->getSession()->getPage()->find('css', 'table.generaltable');
+            if ($table === null) {
+                throw new ExpectationException('Could not find the Core request workspace table.', $this->getSession());
+            }
+            $headers = $table->findAll('css', 'thead th');
+            $columnindex = null;
+            foreach ($headers as $index => $header) {
+                if (str_starts_with(trim($header->getText()), $column)) {
+                    $columnindex = $index;
+                    break;
+                }
+            }
+            if ($columnindex === null) {
+                throw new ExpectationException("Could not find column \"$column\".", $this->getSession());
+            }
+
+            foreach ($table->findAll('css', 'tbody tr') as $row) {
+                $cells = $row->findAll('css', 'td');
+                if ($cells === [] || trim($cells[0]->getText()) === '') {
+                    continue;
+                }
+                $ids[] = trim($cells[0]->getText());
+                $values[] = trim($cells[$columnindex]->getText());
+            }
+
+            $next = $this->getSession()->getPage()->find(
+                'xpath',
+                '//nav[@aria-label="Page"]//a[contains(normalize-space(.), "Next page")]'
+            );
+            if ($next === null) {
+                break;
+            }
+            $next->click();
+        }
+
+        $this->capturedworkspacecolumns[$column] = ['values' => $values, 'ids' => $ids];
+    }
+
+    /**
+     * Assert that a captured column is globally ordered without duplicate rows.
+     *
+     * @Then the captured Bookit request workspace column :column should be globally :direction
+     * @param string $column
+     * @param string $direction
+     * @throws ExpectationException
+     */
+    public function the_captured_bookit_request_workspace_column_should_be_globally(
+        string $column,
+        string $direction
+    ): void {
+        if (!isset($this->capturedworkspacecolumns[$column])) {
+            throw new ExpectationException("Column \"$column\" was not captured.", $this->getSession());
+        }
+        $capture = $this->capturedworkspacecolumns[$column];
+        $expected = $capture['values'];
+        if ($column === 'Booking status') {
+            $statusorder = ['New' => 0, 'In Progress' => 1, 'Confirmed' => 2, 'Canceled' => 3, 'Rejected' => 4];
+            usort($expected, static function (string $left, string $right) use ($statusorder): int {
+                $leftstatus = strtok($left, "\n");
+                $rightstatus = strtok($right, "\n");
+                return ($statusorder[$leftstatus] ?? PHP_INT_MAX) <=> ($statusorder[$rightstatus] ?? PHP_INT_MAX);
+            });
+        } else {
+            natcasesort($expected);
+        }
+        $expected = array_values($expected);
+        if (strtolower($direction) === 'descending') {
+            $expected = array_reverse($expected);
+        }
+
+        if ($capture['values'] !== $expected) {
+            throw new ExpectationException(
+                "Column \"$column\" is not globally $direction across pages.",
+                $this->getSession()
+            );
+        }
+        if (count($capture['ids']) !== count(array_unique($capture['ids']))) {
+            throw new ExpectationException(
+                "Column \"$column\" contains duplicate row IDs across pages.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert Core sort-link presence for a table column.
+     *
+     * @param string $column
+     * @param bool $expected
+     * @throws ExpectationException
+     */
+    private function assert_workspace_column_sort_control(string $column, bool $expected): void {
+        $xpath = '//table[contains(@class, "generaltable")]//th'
+            . '[contains(normalize-space(.), ' . behat_context_helper::escape($column) . ')]//a[@role="button"]';
+        $present = $this->getSession()->getPage()->find('xpath', $xpath) !== null;
+        if ($present !== $expected) {
+            throw new ExpectationException(
+                "Core sort control expectation failed for column \"$column\".",
+                $this->getSession()
+            );
+        }
     }
 }

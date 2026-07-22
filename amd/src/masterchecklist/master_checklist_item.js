@@ -5,6 +5,7 @@ import ModalForm from 'core_form/modalform';
 import {getString} from 'core/str';
 import Templates from 'core/templates';
 import Notification from 'core/notification';
+import {enhanceForm} from 'mod_bookit/form_multiselect_validation_bridge';
 
 export default class extends BaseComponent {
 
@@ -242,6 +243,7 @@ export default class extends BaseComponent {
             });
 
             setTimeout(() => {
+                enhanceForm(modalForm.getFormNode());
                 this._addResetButtonsToNotificationEditors(modalForm);
             }, this.constructor.MODAL_TIMEOUT_MS);
 
@@ -255,6 +257,7 @@ export default class extends BaseComponent {
             setTimeout(() => {
                 this._addResetButtonsToNotificationEditors(modalForm);
                 this._addRequiredIconsToNotificationFields(modalForm);
+                enhanceForm(modalForm.getFormNode());
             }, this.constructor.MODAL_TIMEOUT_MS);
         });
 

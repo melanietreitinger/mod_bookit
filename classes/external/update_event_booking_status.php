@@ -29,7 +29,9 @@ use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
-use mod_bookit\local\entity\bookit_event;
+use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\event_manager;
+use mod_bookit\local\tabs;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -38,7 +40,12 @@ require_once($CFG->libdir . "/externallib.php");
 /**
  * External API for updating the booking status of an event.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class update_event_booking_status extends external_api {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Description of parameters.
      *
@@ -49,6 +56,12 @@ class update_event_booking_status extends external_api {
             'cmid'    => new external_value(PARAM_INT, 'Course module ID'),
             'eventid' => new external_value(PARAM_INT, 'Event ID'),
             'status'  => new external_value(PARAM_INT, 'New booking status value (0-4)'),
+            'tab' => new external_value(
+                PARAM_ALPHA,
+                'Overview tab to return to after the status update.',
+                VALUE_DEFAULT,
+                ''
+            ),
         ]);
     }
 
@@ -58,32 +71,111 @@ class update_event_booking_status extends external_api {
      * @param int $cmid Course module ID
      * @param int $eventid Event ID
      * @param int $status New booking status
+     * @param string|null $tab Overview tab to return to
      * @return array
      */
-    public static function execute(int $cmid, int $eventid, int $status): array {
-        global $DB;
+    public static function execute(int $cmid, int $eventid, int $status, ?string $tab = ''): array {
+        global $DB, $USER;
 
-        $params = self::validate_parameters(self::execute_parameters(), [
-            'cmid'    => $cmid,
+        $rawparams = [
+            'cmid' => $cmid,
             'eventid' => $eventid,
-            'status'  => $status,
-        ]);
+            'status' => $status,
+            'tab' => $tab ?? '',
+        ];
+
+        $params = self::validate_parameters(self::execute_parameters(), $rawparams);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
-        require_capability('mod/bookit:managebasics', $context);
 
-        $validstatuses = [0, 1, 2, 3, 4];
+        $canviewrequestworkspace = event_access_manager::can_view_request_workspace($context);
+        if (empty($params['tab'])) {
+            $params['tab'] = tabs::get_default_overview_tab($canviewrequestworkspace);
+        }
+        $params['tab'] = tabs::validate_overview_tab($params['tab'], $canviewrequestworkspace);
+
+        $validstatuses = [
+            event_access_manager::BOOKINGSTATUS_NEW,
+            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+        ];
         if (!in_array($params['status'], $validstatuses, true)) {
             throw new \invalid_parameter_exception('Invalid booking status: ' . $params['status']);
         }
 
-        $event = bookit_event::from_database($params['eventid']);
-        $event->bookingstatus = $params['status'];
-        $event->save();
+        $event = $DB->get_record('bookit_event', ['id' => $params['eventid']], '*', MUST_EXIST);
+        $oldstatus = (int)($event->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
+        $effectivestatus = event_manager::resolve_requested_booking_status($event, (int)$params['status']);
 
-        return ['status' => $params['status']];
+        if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_REJECTED
+        ) {
+            if (!event_access_manager::can_reactivate_rejected_request($event, $context)) {
+                throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
+            }
+        } else if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+            && $params['tab'] === 'history'
+            && event_access_manager::can_reactivate_canceled_request($event, $context)
+        ) {
+            $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
+        } else if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+            && $params['tab'] === 'history'
+            && event_access_manager::can_manage_open_requests($context)
+        ) {
+            $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
+        } else if (
+            $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
+            && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
+        ) {
+            if (
+                $params['tab'] === 'rejectedcancelled'
+                && event_access_manager::can_restore_terminal_request($event, $context)
+            ) {
+                $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
+            } else if (
+                $effectivestatus === null
+                || !event_access_manager::can_restore_canceled_booking($event, $context, $effectivestatus)
+            ) {
+                throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
+            }
+        } else {
+            $allowparticipantoverviewcancel = (int)$params['status'] === event_access_manager::BOOKINGSTATUS_CANCELED
+                && $effectivestatus === event_access_manager::BOOKINGSTATUS_CANCELED
+                && $params['tab'] === 'myevents'
+                && event_access_manager::can_participant_overview_cancel($event, $context, (int)$USER->id);
+            if (!$allowparticipantoverviewcancel) {
+                require_capability('mod/bookit:managebasics', $context);
+            }
+        }
+
+        if ($effectivestatus === null || !event_access_manager::can_transition_booking_status($oldstatus, $effectivestatus)) {
+            throw new \invalid_parameter_exception('Invalid booking workflow transition.');
+        }
+
+        event_manager::transition_booking_status($event, $effectivestatus, (int)$USER->id, $context, (int)$params['cmid']);
+
+        $redirecttab = match (true) {
+            in_array($params['tab'], ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)
+                && $canviewrequestworkspace => $params['tab'],
+            $params['tab'] === 'allrequests'
+                && $canviewrequestworkspace => 'allrequests',
+            $params['tab'] === 'history' => 'history',
+            default => 'myevents',
+        };
+        return [
+            'status' => $effectivestatus,
+            'tab' => $redirecttab,
+            'redirecturl' => tabs::build_overview_url((int)$cm->id, $redirecttab),
+        ];
     }
 
     /**
@@ -94,6 +186,8 @@ class update_event_booking_status extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'status' => new external_value(PARAM_INT, 'Updated booking status value'),
+            'tab' => new external_value(PARAM_ALPHA, 'Overview tab to reopen after the workflow action'),
+            'redirecturl' => new external_value(PARAM_URL, 'Canonical overview redirect URL'),
         ]);
     }
 }

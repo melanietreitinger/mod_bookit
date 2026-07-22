@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use DateTime;
 use mod_bookit\local\bool_timeline;
+use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\weekplan_manager;
 use mod_bookit\local\persistent\blocker;
@@ -48,7 +49,24 @@ require_once($CFG->libdir . "/externallib.php");
  * @copyright   2025 Justus Dieckmann
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class get_possible_starttimes extends external_api {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+    /**
+     * Check whether a booking start timestamp lies in the past.
+     *
+     * @param int $timestamp
+     * @param int|null $referencetime
+     * @return bool
+     */
+    public static function is_starttime_in_past(int $timestamp, ?int $referencetime = null): bool {
+        $referencetime ??= time();
+        return $timestamp < $referencetime;
+    }
+
     /**
      * Description for get_possible_slots parameters.
      *
@@ -65,7 +83,8 @@ class get_possible_starttimes extends external_api {
                 'excepteventid' => new external_value(
                     PARAM_INT,
                     'Optionally, an eventid to exclude from blocking events',
-                    VALUE_OPTIONAL
+                    VALUE_DEFAULT,
+                    null
                 ),
         ]);
     }
@@ -118,10 +137,17 @@ class get_possible_starttimes extends external_api {
      * @param int $duration
      * @param int $roomid
      * @param ?int $excepteventid Optionally, an eventid to exclude from blocking events.
+     * @param bool $allowpast
      * @return array Pair of (associative array of [Timestamp => Time string])
      * and optional integer in case of no starttimes. 1 Means there is no weekplan assigned to that day.
      */
-    public static function list_possible_starttimes(DateTime $date, int $duration, int $roomid, ?int $excepteventid = null): array {
+    public static function list_possible_starttimes(
+        DateTime $date,
+        int $duration,
+        int $roomid,
+        ?int $excepteventid = null,
+        bool $allowpast = false
+    ): array {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
 
         $extratimebefore = $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore');
@@ -198,11 +224,53 @@ class get_possible_starttimes extends external_api {
             }
         }
 
+        if (!$allowpast) {
+            $starttimes = array_filter(
+                $starttimes,
+                static fn(int $time): bool => !self::is_starttime_in_past($time),
+                ARRAY_FILTER_USE_KEY
+            );
+        }
+
         if (empty($starttimes)) {
             return [[], 0];
         }
 
         return [$starttimes, null];
+    }
+
+    /**
+     * Keep the edited event starttime selectable when service-team past booking is allowed.
+     *
+     * @param array $starttimes Map of start timestamp to display time (H:i).
+     * @param int $excepteventid Event id currently being edited.
+     * @param DateTime $date Selected calendar day.
+     * @return array Map of start timestamp to display time (H:i).
+     */
+    private static function inject_editing_event_starttime(
+        array $starttimes,
+        int $excepteventid,
+        \DateTime $date
+    ): array {
+        global $DB;
+
+        $event = $DB->get_record('bookit_event', ['id' => $excepteventid], 'starttime', MUST_EXIST);
+        $currentstarttime = (int)$event->starttime;
+        if ($currentstarttime <= 0) {
+            return $starttimes;
+        }
+
+        $eventdate = (new \DateTime())->setTimestamp($currentstarttime)->setTime(0, 0);
+        if ($eventdate->format('Y-m-d') !== $date->format('Y-m-d')) {
+            return $starttimes;
+        }
+
+        if (!array_key_exists($currentstarttime, $starttimes)) {
+            $timestring = (new \DateTime())->setTimestamp($currentstarttime)->format('H:i');
+            $starttimes = [$currentstarttime => $timestring] + $starttimes;
+        }
+
+        return $starttimes;
     }
 
     /**
@@ -246,12 +314,21 @@ class get_possible_starttimes extends external_api {
         $context = \context_module::instance($cmid);
         self::validate_context($context);
         require_capability('mod/bookit:addevent', $context);
+        $allowpast = event_access_manager::can_manage_past_bookings($context);
 
         $date = new \DateTime("now");
         $date->setTime(0, 0);
         $date->setDate($year, $month, $day);
 
-        [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid, $excepteventid);
+        [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid, $excepteventid, $allowpast);
+
+        if ($allowpast && $excepteventid) {
+            $starttimes = self::inject_editing_event_starttime($starttimes, $excepteventid, $date);
+            if (!empty($starttimes)) {
+                $status = null;
+            }
+        }
+
         $transformed = [];
 
         if ($status !== null && !has_capability('mod/bookit:managebasics', $context)) {

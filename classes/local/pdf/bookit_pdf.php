@@ -33,7 +33,12 @@ require_once($CFG->libdir . '/pdflib.php');
  * Custom PDF class that modifies header text alignment to right-align.
  * Extends Moodle's PDF class with minimal changes for BookIt requirements.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class bookit_pdf extends \pdf {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Override header method to right-align the text while keeping logo on left.
      *

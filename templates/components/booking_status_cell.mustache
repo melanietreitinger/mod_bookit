@@ -1,0 +1,18 @@
+{{!
+    @template mod_bookit/components/booking_status_cell
+    @deprecated in favour of booking_status_cell_inner rendered inside renderer td wrapper.
+    Kept for documentation; renderer uses booking_status_cell_inner directly.
+
+    Example context (json):
+    {
+        "showoptions": false,
+        "statustext": "New",
+        "statusgrouptext": "Open request",
+        "statusclass": "mod-bookit-status-new",
+        "statusgroupkey": "new",
+        "statusstyle": "background-color:#fff3cd;",
+        "showhistorysummary": false,
+        "showhistorydetails": false
+    }
+}}
+{{> mod_bookit/components/booking_status_cell_inner }}

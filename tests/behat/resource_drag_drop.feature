@@ -8,6 +8,8 @@ Feature: Drag and drop reordering of resource items and categories
     Given I log in as "admin"
     And I change window size to "large"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable resources module"
+    And I press "Save changes"
     And I click on "Resources" "link"
     And I click on "[data-action='add-category']" "css_element"
     And I set the field "Name" to "Category Alpha"

@@ -7,6 +7,8 @@ Feature: Manage resource settings in the admin area
   Background:
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I check "Enable resources module"
+    And I press "Save changes"
     And I log out
 
   Scenario: Admin can open the resource settings modal
@@ -74,3 +76,14 @@ Feature: Manage resource settings in the admin area
     And I should see "Resource checklist settings"
     When I click on "button[data-action='cancel']" "css_element"
     Then I should see "Projector"
+
+  Scenario: Admin can persist booking notification settings
+    Given I log in as "admin"
+    And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I set the field "University service addresses" to "service@example.invalid;invalid-address"
+    And I set the field "Message subject for Confirmed" to "Accepted custom subject"
+    And I set the field "Message body for Confirmed" to "Accepted custom body"
+    When I press "Save changes"
+    Then the field "University service addresses" matches value "service@example.invalid;invalid-address"
+    And the field "Message subject for Confirmed" matches value "Accepted custom subject"
+    And the field "Message body for Confirmed" matches value "Accepted custom body"

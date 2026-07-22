@@ -30,6 +30,7 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use mod_bookit\local\entity\resource\bookit_resource_status;
+use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_resource_manager;
 use mod_bookit\local\manager\resource_notification_manager;
 
@@ -77,6 +78,9 @@ class update_event_resource_status extends external_api {
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
+        if (!event_access_manager::is_resources_enabled()) {
+            throw new \moodle_exception('optional_part_disabled', 'mod_bookit');
+        }
         require_capability('mod/bookit:managebasics', $context);
 
         $status = bookit_resource_status::tryFrom($params['status']);
