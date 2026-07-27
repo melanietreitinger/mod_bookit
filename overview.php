@@ -99,7 +99,8 @@ $tableid = $canviewrequestworkspace
 [$defaultreportstart, $defaultreportend] = event_manager::get_reporting_default_range(
     null,
     $showreportfilters && $canviewrequestworkspace,
-    $historyactive
+    $historyactive,
+    $canviewrequestworkspace && $workspacetab === 'rejectedcancelled'
 );
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
 $defaultreportendvalue = date('Y-m-d', $defaultreportend);
@@ -401,7 +402,7 @@ $templatecontext = [
     'searchvalue' => $search,
     'searchaction' => (new moodle_url('/mod/bookit/overview.php'))->out(false),
     'serversearch' => $canviewrequestworkspace,
-    'showoverviewfilters' => !$canviewrequestworkspace || $isreportingworkspacetab,
+    'showoverviewfilters' => !$canviewrequestworkspace || !empty($filterprofile['show_reporting_filters']),
     'showstatusfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_status_filter']),
     'showsemesterfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_semester_filter']),
     'showassignmentfilter' => $canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']),

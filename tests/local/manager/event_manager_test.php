@@ -3000,15 +3000,17 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Queue workspace tabs must not expose reporting status multiselect.
+     * Queue workspace tabs expose reporting filters without Booking status.
      *
      * @return void
      */
-    public function test_get_workspace_filter_profile_queue_tabs_hide_reporting_filters(): void {
+    public function test_get_workspace_filter_profile_queue_tabs_show_reporting_without_status(): void {
         foreach (['openrequests', 'confirmedrequests', 'rejectedcancelled'] as $tab) {
             $profile = event_manager::get_workspace_filter_profile($tab, true);
+            $this->assertTrue($profile['show_reporting_filters'], $tab);
+            $this->assertTrue($profile['show_semester_filter'], $tab);
             $this->assertFalse($profile['show_status_filter'], $tab);
-            $this->assertFalse($profile['show_reporting_filters'], $tab);
+            $this->assertFalse($profile['show_assignment_filter'], $tab);
         }
     }
 
@@ -3084,29 +3086,175 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Assigned filter keeps only events where the user is a support person.
+     * Assigned filter keeps events where the user is creator, PIC, other examiner, or support.
      *
      * @return void
      */
-    public function test_filter_events_by_assignment_assigned_narrows_to_supportpersons(): void {
+    public function test_filter_events_by_assignment_assigned_includes_involvement_roles(): void {
         $userid = 42;
-        $assigned = (object)['id' => 1, 'supportpersons' => '41,42,43'];
-        $unassigned = (object)['id' => 2, 'supportpersons' => '99'];
+        $ascreator = (object)[
+            'id' => 1,
+            'usercreated' => 42,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $aspic = (object)[
+            'id' => 2,
+            'usercreated' => 1,
+            'personinchargeid' => 42,
+            'otherexaminers' => '',
+            'supportpersons' => '',
+        ];
+        $asother = (object)[
+            'id' => 3,
+            'usercreated' => 1,
+            'personinchargeid' => 0,
+            'otherexaminers' => '41,42',
+            'supportpersons' => '',
+        ];
+        $assupport = (object)[
+            'id' => 4,
+            'usercreated' => 1,
+            'personinchargeid' => 0,
+            'otherexaminers' => '',
+            'supportpersons' => '41,42,43',
+        ];
+        $uninvolved = (object)[
+            'id' => 5,
+            'usercreated' => 1,
+            'personinchargeid' => 2,
+            'otherexaminers' => '99',
+            'supportpersons' => '99',
+        ];
 
-        $filtered = event_manager::filter_events_by_assignment([$assigned, $unassigned], $userid, 'assigned');
+        $filtered = event_manager::filter_events_by_assignment(
+            [$ascreator, $aspic, $asother, $assupport, $uninvolved],
+            $userid,
+            'assigned'
+        );
 
-        $this->assertCount(1, $filtered);
-        $this->assertSame(1, (int)$filtered[0]->id);
+        $this->assertSame([1, 2, 3, 4], array_map(static fn($event): int => (int)$event->id, $filtered));
     }
 
     /**
-     * Queue tabs must ignore reporting URL parameters.
+     * Queue tabs must not blanket-ignore reporting URL parameters (Spec 092).
      *
      * @return void
      */
     public function test_queue_tab_ignores_reporting_params(): void {
-        $this->assertTrue(event_manager::queue_tab_ignores_reporting_params('openrequests'));
+        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('openrequests'));
+        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('confirmedrequests'));
+        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('rejectedcancelled'));
         $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('allrequests'));
+    }
+
+    /**
+     * Rejected and cancelled service-team default spans the full calendar year.
+     *
+     * @return void
+     */
+    public function test_get_reporting_default_range_rejected_full_calendar_year(): void {
+        $reference = strtotime('2026-05-07 10:00:00');
+        [$start, $end] = event_manager::get_reporting_default_range($reference, true, false, true);
+
+        $this->assertSame(strtotime('2026-01-01 00:00:00'), $start);
+        $this->assertSame(strtotime('2026-12-31 23:59:59'), $end);
+    }
+
+    /**
+     * All requests service default stays today → year-end when rejected flag is false.
+     *
+     * @return void
+     */
+    public function test_get_reporting_default_range_allrequests_untouched_by_rejected_flag(): void {
+        $reference = strtotime('2026-05-07 10:00:00');
+        [$start, $end] = event_manager::get_reporting_default_range($reference, true, false, false);
+
+        $this->assertSame(usergetmidnight($reference), $start);
+        $this->assertSame(strtotime('2026-12-31 23:59:59'), $end);
+    }
+
+    /**
+     * Open-requests query honours report date range while keeping open status membership.
+     *
+     * @return void
+     */
+    public function test_openrequests_workspace_query_honours_date_range(): void {
+        $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
+
+        $insideid = $this->create_event_record([
+            'name' => 'Open inside range',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-06-10 09:00:00'),
+            'endtime' => strtotime('2026-06-10 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]);
+        $outsideid = $this->create_event_record([
+            'name' => 'Open outside range',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-08-10 09:00:00'),
+            'endtime' => strtotime('2026-08-10 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+        ]);
+
+        $result = $this->get_workspace_query_result(
+            $context,
+            $adminid,
+            'openrequests',
+            [],
+            strtotime('2026-06-01 00:00:00'),
+            strtotime('2026-06-30 23:59:59')
+        );
+        $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
+
+        $this->assertContains($insideid, $ids);
+        $this->assertNotContains($outsideid, $ids);
+    }
+
+    /**
+     * Rejected query with full-year defaults excludes out-of-year rejected fixtures.
+     *
+     * @return void
+     */
+    public function test_rejectedcancelled_workspace_query_honours_year_range(): void {
+        $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
+
+        $inyear = $this->create_event_record([
+            'name' => 'Rejected in 2026',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-03-10 09:00:00'),
+            'endtime' => strtotime('2026-03-10 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+        ]);
+        $outyear = $this->create_event_record([
+            'name' => 'Rejected in 2025',
+            'semester' => 20252,
+            'starttime' => strtotime('2025-06-10 09:00:00'),
+            'endtime' => strtotime('2025-06-10 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+        ]);
+
+        [$start, $end] = event_manager::get_reporting_default_range(
+            strtotime('2026-05-07 10:00:00'),
+            true,
+            false,
+            true
+        );
+        $result = $this->get_workspace_query_result(
+            $context,
+            $adminid,
+            'rejectedcancelled',
+            [],
+            $start,
+            $end
+        );
+        $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
+
+        $this->assertContains($inyear, $ids);
+        $this->assertNotContains($outyear, $ids);
     }
 
     /**

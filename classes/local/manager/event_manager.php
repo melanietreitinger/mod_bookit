@@ -301,14 +301,35 @@ class event_manager {
             );
             $conditions[] = "e.bookingstatus $statussql";
             $params += $statusparams;
+            [$conditions, $params] = self::append_queue_reporting_filters(
+                $conditions,
+                $params,
+                $filters,
+                $reportstart,
+                $reportend
+            );
         } else if ($workspace === 'confirmedrequests') {
             $conditions[] = 'e.bookingstatus = :confirmedstatus';
             $conditions[] = 'e.endtime >= :confirmedreferencetime';
             $params['confirmedstatus'] = event_access_manager::BOOKINGSTATUS_CONFIRMED;
             $params['confirmedreferencetime'] = time();
+            [$conditions, $params] = self::append_queue_reporting_filters(
+                $conditions,
+                $params,
+                $filters,
+                $reportstart,
+                $reportend
+            );
         } else if ($workspace === 'rejectedcancelled') {
             $conditions[] = self::get_rejected_requests_where_sql();
             $params += self::get_rejected_requests_params();
+            [$conditions, $params] = self::append_queue_reporting_filters(
+                $conditions,
+                $params,
+                $filters,
+                $reportstart,
+                $reportend
+            );
         } else {
             [$defaultstart, $defaultend] = self::get_reporting_default_range(
                 null,
@@ -515,26 +536,32 @@ class event_manager {
      * @param int|null $referencetime
      * @param bool $serviceteam
      * @param bool $ishistorytab
+     * @param bool $isrejectedcancelledtab Rejected and cancelled uses full calendar year for service team.
      * @return int[]
      */
     public static function get_reporting_default_range(
         ?int $referencetime = null,
         bool $serviceteam = false,
-        bool $ishistorytab = false
+        bool $ishistorytab = false,
+        bool $isrejectedcancelledtab = false
     ): array {
         $timestamp = $referencetime ?? time();
         $date = (new DateTime())->setTimestamp($timestamp);
         $year = (int)$date->format('Y');
+        $yearstart = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
         $yearend = (new DateTime())->setDate($year, 12, 31)->setTime(23, 59, 59)->getTimestamp();
 
-        if ($serviceteam && $ishistorytab) {
-            $start = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
+        if ($serviceteam && $isrejectedcancelledtab) {
+            $start = $yearstart;
+            $end = $yearend;
+        } else if ($serviceteam && $ishistorytab) {
+            $start = $yearstart;
             $end = (new DateTime())->setTimestamp(usergetmidnight($timestamp))->setTime(23, 59, 59)->getTimestamp();
         } else if ($serviceteam) {
             $start = usergetmidnight($timestamp);
             $end = $yearend;
         } else {
-            $start = (new DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0)->getTimestamp();
+            $start = $yearstart;
             $end = $yearend;
         }
 
@@ -667,11 +694,14 @@ class event_manager {
     /**
      * Whether a Request Workspace tab must ignore reporting URL parameters.
      *
+     * Spec 092: queue tabs honour date/faculty/semester. Booking status stays tab-authoritative
+     * via query SQL and filter profile (show_status_filter=false), not via blanket ignore.
+     *
      * @param string $workspacetab Canonical workspace tab slug.
      * @return bool
      */
     public static function queue_tab_ignores_reporting_params(string $workspacetab): bool {
-        return in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true);
+        return false;
     }
 
     /**
@@ -696,11 +726,11 @@ class event_manager {
             ];
         }
 
-        if (self::queue_tab_ignores_reporting_params($workspacetab)) {
+        if (in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)) {
             return [
-                'show_reporting_filters' => false,
+                'show_reporting_filters' => true,
                 'show_status_filter' => false,
-                'show_semester_filter' => false,
+                'show_semester_filter' => true,
                 'show_assignment_filter' => false,
             ];
         }
@@ -939,7 +969,9 @@ class event_manager {
     }
 
     /**
-     * Narrow overview events by support-person assignment (All requests only).
+     * Narrow overview events by involvement roles (All requests Assigned to me).
+     *
+     * Keeps events where the user is creator, person in charge, other examiner, or support person.
      *
      * @param stdClass[] $events
      * @param int $userid
@@ -951,10 +983,13 @@ class event_manager {
             return $events;
         }
 
+        $involvementroles = ['bookingperson', 'personincharge', 'otherexaminer', 'supportperson'];
+
         return array_values(array_filter(
             $events,
-            static function (stdClass $event) use ($userid): bool {
-                return in_array('supportperson', event_access_manager::get_user_roles_for_event($event, $userid), true);
+            static function (stdClass $event) use ($userid, $involvementroles): bool {
+                $roles = event_access_manager::get_user_roles_for_event($event, $userid);
+                return !empty(array_intersect($roles, $involvementroles));
             }
         ));
     }
@@ -1093,13 +1128,87 @@ class event_manager {
         }
 
         if ($workspace === 'allrequests' && $assignmentfilter === 'assigned') {
-            $supportwrapped = $DB->sql_concat("','", "COALESCE(e.supportpersons, '')", "','");
-            $conditions[] = "(e.supportpersons IS NOT NULL AND e.supportpersons <> '' AND " .
-                $DB->sql_like($supportwrapped, ':supportuserid', false) . ")";
-            $params['supportuserid'] = '%,' . $userid . ',%';
+            [$assignmentsql, $assignmentparams] = self::build_assigned_involvement_sql($userid);
+            $conditions[] = $assignmentsql;
+            $params += $assignmentparams;
         }
 
         return [implode(' AND ', $conditions), $params];
+    }
+
+    /**
+     * SQL fragment for Assigned-to-me involvement (creator / PIC / other examiners / support).
+     *
+     * @param int $userid
+     * @return array{0:string,1:array}
+     */
+    private static function build_assigned_involvement_sql(int $userid): array {
+        global $DB;
+
+        $supportwrapped = $DB->sql_concat("','", "COALESCE(e.supportpersons, '')", "','");
+        $otherwrapped = $DB->sql_concat("','", "COALESCE(e.otherexaminers, '')", "','");
+        $sql = '(e.usercreated = :assignuserid'
+            . ' OR e.personinchargeid = :assignpicuserid'
+            . ' OR (e.otherexaminers IS NOT NULL AND e.otherexaminers <> \'\' AND '
+            . $DB->sql_like($otherwrapped, ':assignotheruserid', false) . ')'
+            . ' OR (e.supportpersons IS NOT NULL AND e.supportpersons <> \'\' AND '
+            . $DB->sql_like($supportwrapped, ':assignsupportuserid', false) . '))';
+
+        return [
+            $sql,
+            [
+                'assignuserid' => $userid,
+                'assignpicuserid' => $userid,
+                'assignotheruserid' => '%,' . $userid . ',%',
+                'assignsupportuserid' => '%,' . $userid . ',%',
+            ],
+        ];
+    }
+
+    /**
+     * Apply date / faculty / semester filters on queue-tab workspace queries.
+     *
+     * @param string[] $conditions
+     * @param array $params
+     * @param array $filters
+     * @param int|null $reportstart
+     * @param int|null $reportend
+     * @return array{0:string[],1:array}
+     */
+    private static function append_queue_reporting_filters(
+        array $conditions,
+        array $params,
+        array $filters,
+        ?int $reportstart,
+        ?int $reportend
+    ): array {
+        global $DB;
+
+        if ($reportstart !== null && $reportend !== null) {
+            $conditions[] = 'e.endtime >= :queuereportstart';
+            $conditions[] = 'e.starttime <= :queuereportend';
+            $params['queuereportstart'] = $reportstart;
+            $params['queuereportend'] = $reportend;
+        }
+
+        $facultyids = self::normalise_filter_ids($filters['facultyids'] ?? []);
+        if (!empty($facultyids)) {
+            [$facultysql, $facultyparams] = $DB->get_in_or_equal($facultyids, SQL_PARAMS_NAMED, 'queuefaculty');
+            $conditions[] = "e.institutionid $facultysql";
+            $params += $facultyparams;
+        }
+
+        $semesterids = array_values(array_filter(
+            array_map('intval', $filters['semesterids'] ?? []),
+            static fn(int $value): bool => $value !== 0
+        ));
+        if (!empty($semesterids)) {
+            [$semestersql, $semesterparams] = $DB->get_in_or_equal($semesterids, SQL_PARAMS_NAMED, 'queuesemester');
+            $conditions[] = "e.semester $semestersql";
+            $params += $semesterparams;
+        }
+
+        return [$conditions, $params];
     }
 
     /**
