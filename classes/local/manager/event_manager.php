@@ -692,19 +692,6 @@ class event_manager {
     }
 
     /**
-     * Whether a Request Workspace tab must ignore reporting URL parameters.
-     *
-     * Spec 092: queue tabs honour date/faculty/semester. Booking status stays tab-authoritative
-     * via query SQL and filter profile (show_status_filter=false), not via blanket ignore.
-     *
-     * @param string $workspacetab Canonical workspace tab slug.
-     * @return bool
-     */
-    public static function queue_tab_ignores_reporting_params(string $workspacetab): bool {
-        return false;
-    }
-
-    /**
      * Return the filter profile for a Request Workspace tab (service team only).
      *
      * @param string $workspacetab Canonical workspace tab slug.

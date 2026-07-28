@@ -3138,18 +3138,6 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Queue tabs must not blanket-ignore reporting URL parameters (Spec 092).
-     *
-     * @return void
-     */
-    public function test_queue_tab_ignores_reporting_params(): void {
-        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('openrequests'));
-        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('confirmedrequests'));
-        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('rejectedcancelled'));
-        $this->assertFalse(event_manager::queue_tab_ignores_reporting_params('allrequests'));
-    }
-
-    /**
      * Rejected and cancelled service-team default spans the full calendar year.
      *
      * @return void

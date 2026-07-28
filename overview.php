@@ -73,13 +73,11 @@ $filterprofile = $canviewrequestworkspace
 $tableprofile = $canviewrequestworkspace
     ? event_manager::get_workspace_table_profile($workspacetab)
     : [];
-$ignorereportingurlparams = $canviewrequestworkspace
-    && event_manager::queue_tab_ignores_reporting_params($workspacetab);
 $showreportfilters = $canviewrequestworkspace || $isobserverrestricted;
 $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
-$hasexplicitstatusfilter = !$ignorereportingurlparams && array_key_exists('bookingstatusfilter', $_GET);
-$rawstatusfilter = $ignorereportingurlparams ? [] : optional_param_array('bookingstatusfilter', [], PARAM_INT);
+$hasexplicitstatusfilter = array_key_exists('bookingstatusfilter', $_GET);
+$rawstatusfilter = optional_param_array('bookingstatusfilter', [], PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $search = optional_param('search', '', PARAM_RAW_TRIMMED);
@@ -104,11 +102,11 @@ $tableid = $canviewrequestworkspace
 );
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
 $defaultreportendvalue = date('Y-m-d', $defaultreportend);
-$hasexplicitreportstart = !$ignorereportingurlparams && array_key_exists('reportstart', $_GET);
-$hasexplicitreportend = !$ignorereportingurlparams && array_key_exists('reportend', $_GET);
+$hasexplicitreportstart = array_key_exists('reportstart', $_GET);
+$hasexplicitreportend = array_key_exists('reportend', $_GET);
 $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT);
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
-$hasexplicitsemesterfilter = !$ignorereportingurlparams && array_key_exists('semesterids', $_GET);
+$hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
 $assignmentfilter = 'all';
 if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter'])) {
     $assignmentfilter = optional_param('assignmentfilter', 'all', PARAM_ALPHA);
@@ -148,14 +146,6 @@ if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter'])
 }
 if ($search !== '') {
     $overviewnavigationparams['search'] = $search;
-}
-if ($ignorereportingurlparams) {
-    $overviewfilters = [
-        'bookingstatuses' => [],
-        'facultyids' => [],
-        'semesterids' => [],
-    ];
-    $overviewnavigationparams = [];
 }
 
 $parsetimestamp = static function (string $value, int $fallback, bool $endofday = false): int {
