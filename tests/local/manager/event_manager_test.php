@@ -480,6 +480,66 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * Rejected-and-cancelled tab defaults to Canceled + Rejected only.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_rejectedcancelled_default(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids(
+            [],
+            false,
+            false,
+            false,
+            true
+        );
+
+        $this->assertSame(
+            event_manager::get_rejectedcancelled_default_booking_status_filter(),
+            $resolved
+        );
+    }
+
+    /**
+     * Rejected-and-cancelled tab strips New/In progress/Confirmed from explicit selection.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_rejectedcancelled_strips_active(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids(
+            [
+                event_access_manager::BOOKINGSTATUS_NEW,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+            ],
+            true,
+            false,
+            false,
+            true
+        );
+
+        $this->assertSame([event_access_manager::BOOKINGSTATUS_REJECTED], $resolved);
+    }
+
+    /**
+     * Rejected-and-cancelled empty explicit selection falls back to both terminal statuses.
+     *
+     * @return void
+     */
+    public function test_resolve_overview_booking_status_filter_ids_rejectedcancelled_empty_explicit(): void {
+        $resolved = event_manager::resolve_overview_booking_status_filter_ids(
+            [],
+            true,
+            false,
+            false,
+            true
+        );
+
+        $this->assertSame(
+            event_manager::get_rejectedcancelled_default_booking_status_filter(),
+            $resolved
+        );
+    }
+
+    /**
      * Explicit status selection overrides history default.
      *
      * @return void
@@ -3000,18 +3060,24 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Queue workspace tabs expose reporting filters without Booking status.
+     * Open/Confirmed queue tabs hide Booking status; Rejected and cancelled exposes restricted status.
      *
      * @return void
      */
     public function test_get_workspace_filter_profile_queue_tabs_show_reporting_without_status(): void {
-        foreach (['openrequests', 'confirmedrequests', 'rejectedcancelled'] as $tab) {
+        foreach (['openrequests', 'confirmedrequests'] as $tab) {
             $profile = event_manager::get_workspace_filter_profile($tab, true);
             $this->assertTrue($profile['show_reporting_filters'], $tab);
             $this->assertTrue($profile['show_semester_filter'], $tab);
             $this->assertFalse($profile['show_status_filter'], $tab);
             $this->assertTrue($profile['show_assignment_filter'], $tab);
         }
+
+        $rejected = event_manager::get_workspace_filter_profile('rejectedcancelled', true);
+        $this->assertTrue($rejected['show_reporting_filters']);
+        $this->assertTrue($rejected['show_semester_filter']);
+        $this->assertTrue($rejected['show_status_filter']);
+        $this->assertTrue($rejected['show_assignment_filter']);
     }
 
     /**
@@ -3244,6 +3310,146 @@ final class event_manager_test extends advanced_testcase {
 
         $this->assertContains($inyear, $ids);
         $this->assertNotContains($outyear, $ids);
+    }
+
+    /**
+     * Rejected-and-cancelled tab with Rejected-only status excludes canceled fixtures.
+     *
+     * @return void
+     */
+    public function test_rejectedcancelled_workspace_query_rejected_only_status(): void {
+        $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
+        $booker = $this->getDataGenerator()->create_user();
+
+        $rejectedid = $this->create_event_record([
+            'name' => 'Rejected only fixture',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-04-10 09:00:00'),
+            'endtime' => strtotime('2026-04-10 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'usercreated' => $booker->id,
+        ]);
+        $canceledid = $this->create_event_record([
+            'name' => 'Canceled only fixture',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-04-11 09:00:00'),
+            'endtime' => strtotime('2026-04-11 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'usercreated' => $booker->id,
+        ]);
+        event_manager::record_booking_history(
+            $canceledid,
+            'status_changed',
+            (int)$booker->id,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $result = $this->get_workspace_query_result(
+            $context,
+            $adminid,
+            'rejectedcancelled',
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]]
+        );
+        $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
+
+        $this->assertContains($rejectedid, $ids);
+        $this->assertNotContains($canceledid, $ids);
+    }
+
+    /**
+     * Rejected-and-cancelled tab with Cancelled-only status excludes rejected fixtures.
+     *
+     * @return void
+     */
+    public function test_rejectedcancelled_workspace_query_cancelled_only_status(): void {
+        $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
+        $booker = $this->getDataGenerator()->create_user();
+
+        $rejectedid = $this->create_event_record([
+            'name' => 'Rejected for cancel filter',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-04-12 09:00:00'),
+            'endtime' => strtotime('2026-04-12 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'usercreated' => $booker->id,
+        ]);
+        $canceledid = $this->create_event_record([
+            'name' => 'Canceled for cancel filter',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-04-13 09:00:00'),
+            'endtime' => strtotime('2026-04-13 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'usercreated' => $booker->id,
+        ]);
+        event_manager::record_booking_history(
+            $canceledid,
+            'status_changed',
+            (int)$booker->id,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $result = $this->get_workspace_query_result(
+            $context,
+            $adminid,
+            'rejectedcancelled',
+            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]]
+        );
+        $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
+
+        $this->assertContains($canceledid, $ids);
+        $this->assertNotContains($rejectedid, $ids);
+    }
+
+    /**
+     * Rejected-and-cancelled both-status selection keeps membership SQL (both statuses visible).
+     *
+     * @return void
+     */
+    public function test_rejectedcancelled_workspace_query_both_statuses_default(): void {
+        $this->resetAfterTest(true);
+        [$context, $adminid] = $this->create_admin_workspace_context();
+        $booker = $this->getDataGenerator()->create_user();
+
+        $rejectedid = $this->create_event_record([
+            'name' => 'Rejected both default',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-04-14 09:00:00'),
+            'endtime' => strtotime('2026-04-14 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+            'usercreated' => $booker->id,
+        ]);
+        $canceledid = $this->create_event_record([
+            'name' => 'Canceled both default',
+            'semester' => 20261,
+            'starttime' => strtotime('2026-04-15 09:00:00'),
+            'endtime' => strtotime('2026-04-15 11:00:00'),
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'usercreated' => $booker->id,
+        ]);
+        event_manager::record_booking_history(
+            $canceledid,
+            'status_changed',
+            (int)$booker->id,
+            event_access_manager::BOOKINGSTATUS_CONFIRMED,
+            event_access_manager::BOOKINGSTATUS_CANCELED
+        );
+
+        $result = $this->get_workspace_query_result(
+            $context,
+            $adminid,
+            'rejectedcancelled',
+            [
+                'bookingstatuses' => event_manager::get_rejectedcancelled_default_booking_status_filter(),
+            ]
+        );
+        $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
+
+        $this->assertContains($rejectedid, $ids);
+        $this->assertContains($canceledid, $ids);
     }
 
     /**

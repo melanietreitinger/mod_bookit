@@ -81,11 +81,13 @@ $rawstatusfilter = optional_param_array('bookingstatusfilter', [], PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $search = optional_param('search', '', PARAM_RAW_TRIMMED);
+$isrejectedcancelledtab = $canviewrequestworkspace && $workspacetab === 'rejectedcancelled';
 $selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
     $rawstatusfilter,
     $hasexplicitstatusfilter,
     $historyactive,
-    $historyactive && $canviewrequestworkspace
+    $historyactive && $canviewrequestworkspace,
+    $isrejectedcancelledtab
 );
 $tableid = $canviewrequestworkspace
     ? (string)($tableprofile['tableid'] ?? 'overview-table')
@@ -313,7 +315,13 @@ foreach (event_manager::get_faculties() as $value => $label) {
     ];
 }
 $statusfilteroptions = [];
-foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+$statusoptionids = $isrejectedcancelledtab
+    ? [
+        event_access_manager::BOOKINGSTATUS_CANCELED,
+        event_access_manager::BOOKINGSTATUS_REJECTED,
+    ]
+    : [0, 1, 2, 3, 4];
+foreach ($statusoptionids as $statusvalue) {
     $statusfilteroptions[] = [
         'value' => (string)$statusvalue,
         'label' => event_manager::get_booking_status_label($statusvalue),

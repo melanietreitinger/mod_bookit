@@ -330,6 +330,20 @@ class event_manager {
                 $reportstart,
                 $reportend
             );
+            $rejectedstatuses = array_values(array_intersect(
+                self::normalise_filter_ids($filters['bookingstatuses'] ?? []),
+                self::get_rejectedcancelled_default_booking_status_filter()
+            ));
+            // Both (or empty after normalise) ⇒ membership SQL alone; one status ⇒ narrow.
+            if (count($rejectedstatuses) === 1) {
+                [$statussql, $statusparams] = $DB->get_in_or_equal(
+                    $rejectedstatuses,
+                    SQL_PARAMS_NAMED,
+                    'rejstatus'
+                );
+                $conditions[] = "e.bookingstatus $statussql";
+                $params += $statusparams;
+            }
         } else {
             [$defaultstart, $defaultend] = self::get_reporting_default_range(
                 null,
@@ -603,20 +617,51 @@ class event_manager {
     }
 
     /**
+     * Return the default Rejected-and-cancelled tab status filter (Canceled + Rejected only).
+     *
+     * @return int[]
+     */
+    public static function get_rejectedcancelled_default_booking_status_filter(): array {
+        return [
+            event_access_manager::BOOKINGSTATUS_CANCELED,
+            event_access_manager::BOOKINGSTATUS_REJECTED,
+        ];
+    }
+
+    /**
      * Resolve overview booking status filter ids from request payload.
      *
      * @param int[] $rawids Raw status ids from bookingstatusfilter[].
      * @param bool $hasexplicitfilter Whether the request included bookingstatusfilter.
      * @param bool $ishistorytab Whether the active overview tab is History.
      * @param bool $isreportinghistory Whether the user is on the service-team reporting History path.
+     * @param bool $isrejectedcancelledtab Whether the active tab is Rejected and cancelled.
      * @return int[]
      */
     public static function resolve_overview_booking_status_filter_ids(
         array $rawids,
         bool $hasexplicitfilter,
         bool $ishistorytab = false,
-        bool $isreportinghistory = false
+        bool $isreportinghistory = false,
+        bool $isrejectedcancelledtab = false
     ): array {
+        if ($isrejectedcancelledtab) {
+            $allowed = self::get_rejectedcancelled_default_booking_status_filter();
+            $default = $allowed;
+
+            if (!$hasexplicitfilter) {
+                return $default;
+            }
+
+            $normalised = self::normalise_filter_ids($rawids);
+            if ($normalised === []) {
+                return $default;
+            }
+
+            $filtered = array_values(array_intersect($normalised, $allowed));
+            return $filtered !== [] ? $filtered : $default;
+        }
+
         $allowed = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
@@ -717,10 +762,19 @@ class event_manager {
             ];
         }
 
-        if (in_array($workspacetab, ['openrequests', 'confirmedrequests', 'rejectedcancelled'], true)) {
+        if (in_array($workspacetab, ['openrequests', 'confirmedrequests'], true)) {
             return [
                 'show_reporting_filters' => true,
                 'show_status_filter' => false,
+                'show_semester_filter' => true,
+                'show_assignment_filter' => true,
+            ];
+        }
+
+        if ($workspacetab === 'rejectedcancelled') {
+            return [
+                'show_reporting_filters' => true,
+                'show_status_filter' => true,
                 'show_semester_filter' => true,
                 'show_assignment_filter' => true,
             ];
