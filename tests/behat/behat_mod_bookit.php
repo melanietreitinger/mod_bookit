@@ -2087,7 +2087,43 @@ class behat_mod_bookit extends behat_base {
                 if (!root) {
                     return 'modal-not-found';
                 }
+
+                // Moodle may append a random suffix to element ids (e.g. id_supportpersons_abc123).
+                var fitems = Array.from(root.querySelectorAll('[id^="fitem_id_"]')).filter(function(el) {
+                    return el.id.indexOf('fitem_id_' + controlName) === 0;
+                });
+                var readonlyFitem = fitems.find(function(el) {
+                    return el.id.indexOf('fitem_id_' + controlName + '_readonly') === 0
+                        || el.id.indexOf('_readonly') !== -1;
+                });
+                var editFitem = fitems.find(function(el) {
+                    return el.id.indexOf('readonly') === -1;
+                });
+
+                // Static readonly display for this field.
+                if (readonlyFitem && !editFitem) {
+                    return 'disabled';
+                }
+
+                // Autocomplete: the original <select> is visually hidden; use the UI widget state.
+                if (editFitem) {
+                    var ac = editFitem.querySelector(
+                        '.form-autocomplete-selection, .form-autocomplete-downarrow, [role="combobox"]'
+                    );
+                    if (ac) {
+                        var acInput = editFitem.querySelector('input:not([type="hidden"])');
+                        if (acInput) {
+                            return acInput.disabled ? 'disabled' : 'enabled';
+                        }
+                        return 'enabled';
+                    }
+                }
+
                 var control = root.querySelector('#id_' + controlName + ', [name=\"' + controlName + '\"]');
+                if (!control) {
+                    // Suffix id fallback.
+                    control = root.querySelector('[id^="id_' + controlName + '_"]');
+                }
                 if (!control) {
                     return 'hidden';
                 }
@@ -2099,6 +2135,10 @@ class behat_mod_bookit extends behat_base {
                     style.visibility !== 'hidden' &&
                     (control.offsetWidth > 0 || control.offsetHeight > 0 || control.getClientRects().length > 0);
                 if (!visible) {
+                    // Autocomplete original select is display:none — treat as enabled if not disabled.
+                    if (control.tagName === 'SELECT' && control.classList.contains('form-autocomplete-original-select')) {
+                        return control.disabled ? 'disabled' : 'enabled';
+                    }
                     return 'hidden';
                 }
                 return control.disabled ? 'disabled' : 'enabled';

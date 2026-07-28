@@ -580,12 +580,11 @@ final class edit_event_form_support_status_test extends advanced_testcase {
      * @return void
      */
     public function test_support_readonly_status_canceled_and_rejected(): void {
-        foreach (
-            [
+        $bookingstatuses = [
                 event_access_manager::BOOKINGSTATUS_CANCELED,
                 event_access_manager::BOOKINGSTATUS_REJECTED,
-            ] as $bookingstatus
-        ) {
+        ];
+        foreach ($bookingstatuses as $bookingstatus) {
             $bookingperson = $this->getDataGenerator()->create_user();
             $supportuser = $this->getDataGenerator()->create_user();
             $context = $this->create_support_context();

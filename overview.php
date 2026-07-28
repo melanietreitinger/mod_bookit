@@ -73,21 +73,21 @@ $filterprofile = $canviewrequestworkspace
 $tableprofile = $canviewrequestworkspace
     ? event_manager::get_workspace_table_profile($workspacetab)
     : [];
-$ignorereportingurlparams = $canviewrequestworkspace
-    && event_manager::queue_tab_ignores_reporting_params($workspacetab);
 $showreportfilters = $canviewrequestworkspace || $isobserverrestricted;
 $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
-$hasexplicitstatusfilter = !$ignorereportingurlparams && array_key_exists('bookingstatusfilter', $_GET);
-$rawstatusfilter = $ignorereportingurlparams ? [] : optional_param_array('bookingstatusfilter', [], PARAM_INT);
+$hasexplicitstatusfilter = array_key_exists('bookingstatusfilter', $_GET);
+$rawstatusfilter = optional_param_array('bookingstatusfilter', [], PARAM_INT);
 $selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
 $selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
 $search = optional_param('search', '', PARAM_RAW_TRIMMED);
+$isrejectedcancelledtab = $canviewrequestworkspace && $workspacetab === 'rejectedcancelled';
 $selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
     $rawstatusfilter,
     $hasexplicitstatusfilter,
     $historyactive,
-    $historyactive && $canviewrequestworkspace
+    $historyactive && $canviewrequestworkspace,
+    $isrejectedcancelledtab
 );
 $tableid = $canviewrequestworkspace
     ? (string)($tableprofile['tableid'] ?? 'overview-table')
@@ -99,17 +99,18 @@ $tableid = $canviewrequestworkspace
 [$defaultreportstart, $defaultreportend] = event_manager::get_reporting_default_range(
     null,
     $showreportfilters && $canviewrequestworkspace,
-    $historyactive
+    $historyactive,
+    $canviewrequestworkspace && $workspacetab === 'rejectedcancelled'
 );
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
 $defaultreportendvalue = date('Y-m-d', $defaultreportend);
-$hasexplicitreportstart = !$ignorereportingurlparams && array_key_exists('reportstart', $_GET);
-$hasexplicitreportend = !$ignorereportingurlparams && array_key_exists('reportend', $_GET);
+$hasexplicitreportstart = array_key_exists('reportstart', $_GET);
+$hasexplicitreportend = array_key_exists('reportend', $_GET);
 $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT);
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
-$hasexplicitsemesterfilter = !$ignorereportingurlparams && array_key_exists('semesterids', $_GET);
+$hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
 $assignmentfilter = 'all';
-if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter'])) {
+if (!empty($filterprofile['show_assignment_filter'])) {
     $assignmentfilter = optional_param('assignmentfilter', 'all', PARAM_ALPHA);
     if (!in_array($assignmentfilter, ['all', 'assigned'], true)) {
         $assignmentfilter = 'all';
@@ -142,19 +143,11 @@ if ($hasexplicitreportstart) {
 if ($hasexplicitreportend) {
     $overviewnavigationparams['reportend'] = $reportendvalue;
 }
-if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
+if (!empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
     $overviewnavigationparams['assignmentfilter'] = $assignmentfilter;
 }
 if ($search !== '') {
     $overviewnavigationparams['search'] = $search;
-}
-if ($ignorereportingurlparams) {
-    $overviewfilters = [
-        'bookingstatuses' => [],
-        'facultyids' => [],
-        'semesterids' => [],
-    ];
-    $overviewnavigationparams = [];
 }
 
 $parsetimestamp = static function (string $value, int $fallback, bool $endofday = false): int {
@@ -261,6 +254,7 @@ if ($canviewrequestworkspace) {
     );
     $events = [];
 } else if ($showreportfilters) {
+    $overviewfilters['assignmentfilter'] = $assignmentfilter;
     $events = event_manager::get_events_for_reporting(
         $context,
         (int)$USER->id,
@@ -273,13 +267,16 @@ if ($canviewrequestworkspace) {
         $overviewfilters,
         $currenttab === 'history'
     );
+    $events = event_manager::filter_events_by_assignment($events, (int)$USER->id, $assignmentfilter);
 } else {
+    $overviewfilters['assignmentfilter'] = $assignmentfilter;
     $events = event_manager::get_events_for_examiner($USER->id);
     $events = event_manager::filter_overview_events(
         $events,
         $overviewfilters,
         $currenttab === 'history'
     );
+    $events = event_manager::filter_events_by_assignment($events, (int)$USER->id, $assignmentfilter);
 }
 $openrequests = [];
 $rejectedcancelledqueue = [];
@@ -318,7 +315,13 @@ foreach (event_manager::get_faculties() as $value => $label) {
     ];
 }
 $statusfilteroptions = [];
-foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+$statusoptionids = $isrejectedcancelledtab
+    ? [
+        event_access_manager::BOOKINGSTATUS_CANCELED,
+        event_access_manager::BOOKINGSTATUS_REJECTED,
+    ]
+    : [0, 1, 2, 3, 4];
+foreach ($statusoptionids as $statusvalue) {
     $statusfilteroptions[] = [
         'value' => (string)$statusvalue,
         'label' => event_manager::get_booking_status_label($statusvalue),
@@ -401,10 +404,10 @@ $templatecontext = [
     'searchvalue' => $search,
     'searchaction' => (new moodle_url('/mod/bookit/overview.php'))->out(false),
     'serversearch' => $canviewrequestworkspace,
-    'showoverviewfilters' => !$canviewrequestworkspace || $isreportingworkspacetab,
+    'showoverviewfilters' => !$canviewrequestworkspace || !empty($filterprofile['show_reporting_filters']),
     'showstatusfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_status_filter']),
     'showsemesterfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_semester_filter']),
-    'showassignmentfilter' => $canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']),
+    'showassignmentfilter' => !empty($filterprofile['show_assignment_filter']),
     'showreportfilters' => $showreportfilters
         && (!$canviewrequestworkspace || !empty($filterprofile['show_reporting_filters'])),
     'showcreatedbycolumn' => $canviewrequestworkspace

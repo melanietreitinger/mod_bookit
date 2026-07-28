@@ -419,11 +419,11 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
     }
 
     /**
-     * Support-only users see internal fields read-only except internal notes.
+     * Support-only users may edit Support persons and Internal notes; other internal fields stay RO.
      *
      * @return void
      */
-    public function test_support_internal_fields_readonly_except_notes(): void {
+    public function test_support_internal_fields_persons_and_notes_editable(): void {
         $bookingperson = $this->getDataGenerator()->create_user();
         $supportuser = $this->getDataGenerator()->create_user();
         $context = $this->create_support_context();
@@ -442,20 +442,24 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
         $form = $this->create_rendered_form($context, (int)$event->id, (int)$supportuser->id);
         $mform = $this->get_mform($form);
 
-        $this->assertTrue($mform->elementExists('supportpersons_readonly'));
+        $this->assertTrue($mform->elementExists('header_internal'));
+        $this->assertTrue($mform->elementExists('supportpersons'));
+        $this->assertFalse($mform->elementExists('supportpersons_readonly'));
+        $this->assertSame('autocomplete', $mform->getElementType('supportpersons'));
         $this->assertTrue($mform->elementExists('extratimebefore_readonly'));
         $this->assertTrue($mform->elementExists('extratimeafter_readonly'));
         $this->assertTrue($mform->elementExists('bookingstatusreadonly'));
         $this->assertTrue($mform->elementExists('internalnotes'));
+        $this->assertTrue($mform->elementExists('supportpersoninternalnotesnotice'));
         $this->assertNotSame('select', $mform->getElementType('bookingstatus') ?? '');
     }
 
     /**
-     * Tampered internal field submissions must not change persisted values.
+     * Support may change Support persons and notes; tampered other internal fields are ignored.
      *
      * @return void
      */
-    public function test_support_tamper_internal_fields_ignored_on_save(): void {
+    public function test_support_save_persons_and_notes_other_internal_ignored(): void {
         global $DB;
 
         $bookingperson = $this->getDataGenerator()->create_user();
@@ -493,7 +497,7 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
 
         $persisted = $DB->get_record('bookit_event', ['id' => $event->id], '*', MUST_EXIST);
         $this->assertSame((int)$refcourse->id, (int)$persisted->refcourseid);
-        $this->assertSame((string)$supportuser->id, $persisted->supportpersons);
+        $this->assertSame((string)$otheruser->id, $persisted->supportpersons);
         $this->assertSame(15, (int)$persisted->extratimebefore);
         $this->assertSame(30, (int)$persisted->extratimeafter);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_IN_PROGRESS, (int)$persisted->bookingstatus);

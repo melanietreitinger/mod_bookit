@@ -41,7 +41,7 @@ Feature: Enforce role-based visibility and editing for booking requests
       | name         | shortname | seats |
       | Default room | DEF       | 0     |
 
-  Scenario: Support person sees assigned new and confirmed bookings and may edit only internal notes
+  Scenario: Support person sees assigned bookings and may edit support persons and internal notes
     Given the following "mod_bookit > events" exist:
       | name                    | username    | supportperson_usernames | startdate                         | enddate                              | bookingstatus | institution |
       | Accepted support exam   | bookinguser | supportuser             | ##tomorrow noon##%Y-%m-%dT%H:%M:%S## | ##tomorrow 14:00##%Y-%m-%dT%H:%M:%S## | 2 | 1 |
@@ -55,6 +55,7 @@ Feature: Enforce role-based visibility and editing for booking requests
     And the Bookit event details control "institutionid" should be disabled
     And the Bookit event details control "starttime" should be disabled
     And the Bookit event details control "bookingstatus" should not be visible
+    And the Bookit event details control "supportpersons" should be enabled
     And the Bookit event details control "internalnotes" should be enabled
     And I should see "Internal fields"
 

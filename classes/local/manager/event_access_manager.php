@@ -524,7 +524,10 @@ class event_access_manager {
     }
 
     /**
-     * Check whether the user may edit only the internal notes field.
+     * Check whether assigned Support may edit Internal notes (and Support persons on the form).
+     *
+     * The same gate authorises Support-persons edits in edit_event_form; other internal fields
+     * remain read-only for Support-only users.
      *
      * @param stdClass $event
      * @param context_module $context

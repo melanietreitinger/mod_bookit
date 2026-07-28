@@ -478,7 +478,8 @@ class edit_event_form extends dynamic_form {
                 $supportpersons[$id] = fullname($user);
             }
             $supportpersonselementname = 'supportpersons';
-            if (!$caneditinternal && $existingevent) {
+            // Assigned Support may edit support persons (same gate as internal notes); others stay RO.
+            if (!$caneditinternal && !$caneditinternalnotes && $existingevent) {
                 $supportpersonselementname = 'supportpersons_readonly';
                 $mform->addElement(
                     'static',
@@ -503,7 +504,6 @@ class edit_event_form extends dynamic_form {
                     $userselectoroptions
                 );
                 $mform->setType('supportpersons', PARAM_TEXT);
-                $mform->disabledIf('supportpersons', 'editinternal', 'neq', 1);
             }
             $mform->addHelpButton($supportpersonselementname, 'event_supportperson', 'mod_bookit');
         } else {
@@ -1125,7 +1125,10 @@ class edit_event_form extends dynamic_form {
         }
 
         if ($currentevent && !$caneditinternal) {
-            $formdata->supportpersons = $currentevent->supportpersons;
+            // Support with notes-gate may update supportpersons; other internal fields stay locked.
+            if (!$caneditinternalnotes) {
+                $formdata->supportpersons = $currentevent->supportpersons;
+            }
             $formdata->extratimebefore = $currentevent->extratimebefore;
             $formdata->extratimeafter = $currentevent->extratimeafter;
             $formdata->refcourseid = $currentevent->refcourseid;

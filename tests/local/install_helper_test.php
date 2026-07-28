@@ -160,15 +160,14 @@ final class install_helper_test extends advanced_testcase {
         $bookit = $DB->get_record('bookit', ['course' => $course->id], 'id,name', MUST_EXIST);
         $this->assertSame('Calendar Demo', $bookit->name);
 
-        foreach (
-            [
+        $usernames = [
             'eva.examiner',
             'bob.booker',
             'susi.serviceteam',
             'steven.support',
             'olaf.observer',
-            ] as $username
-        ) {
+        ];
+        foreach ($usernames as $username) {
             $userid = $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
             $this->assertTrue(
                 $DB->record_exists_sql(

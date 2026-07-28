@@ -617,13 +617,12 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_participant_role($context, $user->id);
         $this->setUser($user);
 
-        foreach (
-            [
+        $statuses = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
@@ -755,14 +754,13 @@ final class event_access_manager_test extends advanced_testcase {
         ];
 
         $this->assertTrue(event_access_manager::can_self_cancel_new_request($event, $context, $user->id));
-        foreach (
-            [
+        $statuses = [
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
             event_access_manager::BOOKINGSTATUS_REJECTED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event->bookingstatus = $status;
             $this->assertFalse(event_access_manager::can_self_cancel_new_request($event, $context, $user->id));
         }
@@ -795,12 +793,11 @@ final class event_access_manager_test extends advanced_testcase {
         $event->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
         $this->assertTrue(event_access_manager::can_participant_overview_cancel($event, $context, $user->id));
 
-        foreach (
-            [
+        $statuses = [
                 event_access_manager::BOOKINGSTATUS_CANCELED,
                 event_access_manager::BOOKINGSTATUS_REJECTED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event->bookingstatus = $status;
             $this->assertFalse(event_access_manager::can_participant_overview_cancel($event, $context, $user->id));
         }
@@ -1324,12 +1321,11 @@ final class event_access_manager_test extends advanced_testcase {
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
         $this->setUser($serviceuser);
-        foreach (
-            [
+        $targetstatusvalues = [
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            ] as $targetstatus
-        ) {
+            ];
+        foreach ($targetstatusvalues as $targetstatus) {
             $event = event_manager::transition_booking_status(
                 $event,
                 $targetstatus,
@@ -1654,13 +1650,12 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_participant_role($context, $user->id);
         $this->setUser($user);
 
-        foreach (
-            [
+        $statuses = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
@@ -1787,12 +1782,11 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_participant_role($context, $user->id);
         $this->setUser($user);
 
-        foreach (
-            [
+        $statuses = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
@@ -1864,14 +1858,13 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_participant_role($context, $user->id);
         $this->setUser($user);
 
-        foreach (
-            [
+        $statuses = [
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_REJECTED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
@@ -1971,12 +1964,11 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_participant_role($context, $user->id);
         $this->setUser($user);
 
-        foreach (
-            [
+        $statuses = [
             event_access_manager::BOOKINGSTATUS_REJECTED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
@@ -2002,12 +1994,11 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_role_by_shortname($context, $user->id, 'bookitservice049hist');
         $this->setUser($user);
 
-        foreach (
-            [
+        $statuses = [
             event_access_manager::BOOKINGSTATUS_REJECTED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
-            ] as $status
-        ) {
+        ];
+        foreach ($statuses as $status) {
             $event = (object)[
                 'bookingstatus' => $status,
                 'personinchargeid' => 0,
