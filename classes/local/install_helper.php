@@ -1456,12 +1456,11 @@ class install_helper {
         $updaterecord = (object)['id' => $roomid];
         $haschanges = false;
 
-        foreach (
-            [
+        $fields = [
             'name', 'shortname', 'description', 'location', 'eventcolor', 'active', 'roommode', 'seats',
             'extratimebefore', 'extratimeafter', 'preventoverlap',
-            ] as $field
-        ) {
+        ];
+        foreach ($fields as $field) {
             if (!self::baseline_values_match($roomrecord->$field ?? null, $record->$field ?? null)) {
                 $updaterecord->$field = $record->$field;
                 $haschanges = true;
