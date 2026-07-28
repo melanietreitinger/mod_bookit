@@ -3887,13 +3887,15 @@ final class event_manager_test extends advanced_testcase {
                 'supportpersons' => (string)$otheruser->id,
                 'usermodified' => (int)$otheruser->id,
             ]);
+            // Keep creator/support off admin so Spec-092 Assigned-to-me stays at the 26 support fixtures.
             $this->create_event_record([
                 'name' => sprintf('Service confirmed request %02d', $i),
                 'starttime' => $start + (($i + 40) * HOURSECS),
                 'endtime' => $start + (($i + 40) * HOURSECS) + HOURSECS,
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
                 'supportpersons' => '',
-                'usermodified' => $adminid,
+                'usercreated' => (int)$otheruser->id,
+                'usermodified' => (int)$otheruser->id,
             ]);
             $this->create_event_record([
                 'name' => sprintf('Service rejected request %02d', $i),
@@ -3901,7 +3903,8 @@ final class event_manager_test extends advanced_testcase {
                 'endtime' => $start + (($i + 50) * HOURSECS) + HOURSECS,
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
                 'supportpersons' => '',
-                'usermodified' => $adminid,
+                'usercreated' => (int)$otheruser->id,
+                'usermodified' => (int)$otheruser->id,
             ]);
         }
 
