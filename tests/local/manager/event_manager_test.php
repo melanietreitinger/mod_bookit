@@ -3010,12 +3010,12 @@ final class event_manager_test extends advanced_testcase {
             $this->assertTrue($profile['show_reporting_filters'], $tab);
             $this->assertTrue($profile['show_semester_filter'], $tab);
             $this->assertFalse($profile['show_status_filter'], $tab);
-            $this->assertFalse($profile['show_assignment_filter'], $tab);
+            $this->assertTrue($profile['show_assignment_filter'], $tab);
         }
     }
 
     /**
-     * History workspace profile exposes reporting filters without assignment filter.
+     * History workspace profile exposes reporting filters including assignment filter.
      *
      * @return void
      */
@@ -3023,7 +3023,8 @@ final class event_manager_test extends advanced_testcase {
         $profile = event_manager::get_workspace_filter_profile('history', true);
 
         $this->assertArrayNotHasKey('include_legacy_semester_option', $profile);
-        $this->assertFalse($profile['show_assignment_filter']);
+        $this->assertTrue($profile['show_assignment_filter']);
+        $this->assertTrue($profile['show_status_filter']);
         $this->assertTrue($profile['show_semester_filter']);
     }
 
@@ -3318,7 +3319,7 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_participant_myevents_default_status_triplet_unchanged(): void {
         $profile = event_manager::get_workspace_filter_profile('myevents', false);
-        $this->assertFalse($profile['show_assignment_filter']);
+        $this->assertTrue($profile['show_assignment_filter']);
         $this->assertSame(
             event_manager::get_reporting_default_booking_status_filter(),
             event_manager::resolve_overview_booking_status_filter_ids([], false, false, false)
@@ -3906,6 +3907,18 @@ final class event_manager_test extends advanced_testcase {
             25,
             25
         );
+        $openassigned = $this->get_workspace_query_result(
+            $context,
+            $adminid,
+            'openrequests',
+            ['assignmentfilter' => 'assigned']
+        );
+        $openall = $this->get_workspace_query_result(
+            $context,
+            $adminid,
+            'openrequests',
+            ['assignmentfilter' => 'all']
+        );
         $open = $this->get_workspace_query_result($context, $adminid, 'openrequests');
         $confirmed = $this->get_workspace_query_result($context, $adminid, 'confirmedrequests');
         $rejected = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled');
@@ -3913,6 +3926,12 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame(26, $assigned['count']);
         $this->assertCount(1, $assigned['events']);
         $this->assertStringContainsString('Service assigned request', $assigned['events'][0]->name);
+        $this->assertSame(26, $openassigned['count']);
+        foreach ($openassigned['events'] as $event) {
+            $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$event->bookingstatus);
+            $this->assertStringContainsString('Service assigned request', $event->name);
+        }
+        $this->assertSame(28, $openall['count']);
         $this->assertSame(28, $open['count']);
         foreach ($open['events'] as $event) {
             $this->assertSame(event_access_manager::BOOKINGSTATUS_NEW, (int)$event->bookingstatus);

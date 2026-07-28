@@ -108,7 +108,7 @@ $reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARA
 $reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
 $hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
 $assignmentfilter = 'all';
-if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter'])) {
+if (!empty($filterprofile['show_assignment_filter'])) {
     $assignmentfilter = optional_param('assignmentfilter', 'all', PARAM_ALPHA);
     if (!in_array($assignmentfilter, ['all', 'assigned'], true)) {
         $assignmentfilter = 'all';
@@ -141,7 +141,7 @@ if ($hasexplicitreportstart) {
 if ($hasexplicitreportend) {
     $overviewnavigationparams['reportend'] = $reportendvalue;
 }
-if ($canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
+if (!empty($filterprofile['show_assignment_filter']) && array_key_exists('assignmentfilter', $_GET)) {
     $overviewnavigationparams['assignmentfilter'] = $assignmentfilter;
 }
 if ($search !== '') {
@@ -252,6 +252,7 @@ if ($canviewrequestworkspace) {
     );
     $events = [];
 } else if ($showreportfilters) {
+    $overviewfilters['assignmentfilter'] = $assignmentfilter;
     $events = event_manager::get_events_for_reporting(
         $context,
         (int)$USER->id,
@@ -264,13 +265,16 @@ if ($canviewrequestworkspace) {
         $overviewfilters,
         $currenttab === 'history'
     );
+    $events = event_manager::filter_events_by_assignment($events, (int)$USER->id, $assignmentfilter);
 } else {
+    $overviewfilters['assignmentfilter'] = $assignmentfilter;
     $events = event_manager::get_events_for_examiner($USER->id);
     $events = event_manager::filter_overview_events(
         $events,
         $overviewfilters,
         $currenttab === 'history'
     );
+    $events = event_manager::filter_events_by_assignment($events, (int)$USER->id, $assignmentfilter);
 }
 $openrequests = [];
 $rejectedcancelledqueue = [];
@@ -395,7 +399,7 @@ $templatecontext = [
     'showoverviewfilters' => !$canviewrequestworkspace || !empty($filterprofile['show_reporting_filters']),
     'showstatusfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_status_filter']),
     'showsemesterfilter' => !$canviewrequestworkspace || !empty($filterprofile['show_semester_filter']),
-    'showassignmentfilter' => $canviewrequestworkspace && !empty($filterprofile['show_assignment_filter']),
+    'showassignmentfilter' => !empty($filterprofile['show_assignment_filter']),
     'showreportfilters' => $showreportfilters
         && (!$canviewrequestworkspace || !empty($filterprofile['show_reporting_filters'])),
     'showcreatedbycolumn' => $canviewrequestworkspace

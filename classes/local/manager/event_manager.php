@@ -354,12 +354,16 @@ class event_manager {
                 $reportstart,
                 $reportend,
                 $semesterids,
-                $bookingstatuses,
-                $assignmentfilter,
-                $userid
+                $bookingstatuses
             );
             $conditions[] = $where;
             $params += $reportparams;
+        }
+
+        if ($assignmentfilter === 'assigned') {
+            [$assignmentsql, $assignmentparams] = self::build_assigned_involvement_sql($userid);
+            $conditions[] = $assignmentsql;
+            $params += $assignmentparams;
         }
 
         $search = trim((string)($filters['search'] ?? ''));
@@ -709,7 +713,7 @@ class event_manager {
                 'show_reporting_filters' => true,
                 'show_status_filter' => true,
                 'show_semester_filter' => true,
-                'show_assignment_filter' => false,
+                'show_assignment_filter' => true,
             ];
         }
 
@@ -718,7 +722,7 @@ class event_manager {
                 'show_reporting_filters' => true,
                 'show_status_filter' => false,
                 'show_semester_filter' => true,
-                'show_assignment_filter' => false,
+                'show_assignment_filter' => true,
             ];
         }
 
@@ -727,7 +731,7 @@ class event_manager {
                 'show_reporting_filters' => true,
                 'show_status_filter' => true,
                 'show_semester_filter' => true,
-                'show_assignment_filter' => false,
+                'show_assignment_filter' => true,
             ];
         }
 
@@ -1056,8 +1060,6 @@ class event_manager {
      * @param int $reportend
      * @param int[] $semesterids
      * @param int[] $bookingstatuses
-     * @param string $assignmentfilter
-     * @param int $userid
      * @return array
      * @throws dml_exception
      */
@@ -1067,9 +1069,7 @@ class event_manager {
         int $reportstart,
         int $reportend,
         array $semesterids,
-        array $bookingstatuses,
-        string $assignmentfilter,
-        int $userid
+        array $bookingstatuses
     ): array {
         global $DB;
 
@@ -1112,12 +1112,6 @@ class event_manager {
             [$semestersql, $semesterparams] = $DB->get_in_or_equal($selectedsemesters, SQL_PARAMS_NAMED, 'semester');
             $conditions[] = "e.semester $semestersql";
             $params += $semesterparams;
-        }
-
-        if ($workspace === 'allrequests' && $assignmentfilter === 'assigned') {
-            [$assignmentsql, $assignmentparams] = self::build_assigned_involvement_sql($userid);
-            $conditions[] = $assignmentsql;
-            $params += $assignmentparams;
         }
 
         return [implode(' AND ', $conditions), $params];
