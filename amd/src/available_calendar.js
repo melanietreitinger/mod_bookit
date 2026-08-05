@@ -30,12 +30,12 @@ import {theGlobalProperty} from "mod_bookit/calendar";
 
 /**
  * Initializes the calendar.
- * @param {string} eventsource
+ * @param {object} readconfig
  * @param {array} capabilities
  * @param {string} lang
  * @returns {Promise<void>}
  */
-export async function init(eventsource, capabilities, lang) {
+export async function init(readconfig, capabilities, lang) {
     await theGlobalProperty('EventCalendar');
 
     // Define toolbarbuttons.
@@ -57,6 +57,24 @@ export async function init(eventsource, capabilities, lang) {
     if (window.screen.width <= 1000) {
         viewType = 'listWeek';
     }
+
+    const loadEntries = (fetchInfo, successCallback, failureCallback) => {
+        Ajax.call([{
+            methodname: readconfig.methodname,
+            args: {
+                roomid: readconfig.roomid,
+                start: fetchInfo.startStr,
+                end: fetchInfo.endStr,
+            }
+        }])[0]
+            .then((response) => {
+                successCallback(response.entries || []);
+                return null;
+            })
+            .catch((error) => {
+                failureCallback(error);
+            });
+    };
 
     var calendar;
 
@@ -120,7 +138,7 @@ export async function init(eventsource, capabilities, lang) {
                 const modalForm = new ModalForm({
                     formClass: "mod_bookit\\local\\form\\edit_blocker_form",
                     args: {
-                        id: info.event.id,
+                        id: info.event.id.split("-")[1],
                     },
                     modalConfig: {
                         title: getString('edit_blocker', 'mod_bookit'),
@@ -132,7 +150,7 @@ export async function init(eventsource, capabilities, lang) {
                 });
                 modalForm.addEventListener(modalForm.events.LOADED, () => {
                     modalForm.modal.getRoot().on(ModalEvents.delete, async() => {
-                        await deleteBlocker(info.event.id);
+                        await deleteBlocker(info.event.id.split("-")[1]);
                         calendar.refetchEvents();
                     });
                 });
@@ -147,7 +165,7 @@ export async function init(eventsource, capabilities, lang) {
         resources: [],
         eventSources: [
             {
-                url: eventsource,
+                events: loadEntries,
             },
         ],
         views: {

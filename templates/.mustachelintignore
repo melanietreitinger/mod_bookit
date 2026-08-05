@@ -1,0 +1,3 @@
+# Table row partials included inside a parent <table>.
+# Standalone HTML validation reports "Stray start tag tr" errors.
+event_resources_checklist_item_row.mustache

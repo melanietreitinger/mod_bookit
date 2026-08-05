@@ -78,6 +78,9 @@ class toggle_event_checklist_item extends external_api {
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
+        if (!event_access_manager::is_checklist_enabled()) {
+            throw new \moodle_exception('optional_part_disabled', 'mod_bookit');
+        }
 
         // Verify event exists before acting on it.
         $event = $DB->get_record('bookit_event', ['id' => $params['eventid']], '*', MUST_EXIST);

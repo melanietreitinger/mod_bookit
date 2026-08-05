@@ -31,7 +31,12 @@ namespace mod_bookit\local\entity\resource;
  * Extends resources with settings metadata like due dates,
  * notification configuration and independent sort order.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class bookit_resource_settings {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** @var ?int Database ID */
     private ?int $id;
 

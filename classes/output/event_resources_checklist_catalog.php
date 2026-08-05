@@ -26,8 +26,10 @@
 namespace mod_bookit\output;
 
 use mod_bookit\local\entity\resource\bookit_resource_status;
+use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\event_resource_manager;
 use mod_bookit\local\manager\resource_settings_manager;
+use mod_bookit\output\booking_status_cell;
 use renderer_base;
 use renderable;
 use templatable;
@@ -38,7 +40,12 @@ use stdClass;
  *
  * Prepares data for the event_resources_checklist_catalog template.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class event_resources_checklist_catalog implements renderable, templatable {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** @var int Event ID */
     private int $eventid;
 
@@ -73,7 +80,7 @@ class event_resources_checklist_catalog implements renderable, templatable {
      * @return stdClass
      */
     public function export_for_template(renderer_base $output): stdClass {
-        global $DB;
+        global $DB, $PAGE;
 
         $data = new stdClass();
         $data->eventid = $this->eventid;
@@ -92,15 +99,8 @@ class event_resources_checklist_catalog implements renderable, templatable {
         }
 
         // Booking status label.
-        $statusmap = [
-            0 => get_string('event_bookingstatus_0', 'mod_bookit'),
-            1 => get_string('event_bookingstatus_1', 'mod_bookit'),
-            2 => get_string('event_bookingstatus_2', 'mod_bookit'),
-            3 => get_string('event_bookingstatus_3', 'mod_bookit'),
-            4 => get_string('event_bookingstatus_4', 'mod_bookit'),
-        ];
         $bookingstatus = (int)($this->event->bookingstatus ?? 0);
-        $data->bookingstatus = $statusmap[$bookingstatus] ?? '';
+        $data->bookingstatus = event_manager::get_booking_status_label($bookingstatus);
 
         $eventresources = event_resource_manager::get_resources_for_event($this->eventid);
 
@@ -110,6 +110,8 @@ class event_resources_checklist_catalog implements renderable, templatable {
 
         // Group items by category.
         $categoriesmap = [];
+
+        $bookitrenderer = $PAGE->get_renderer('mod_bookit');
 
         foreach ($eventresources as $eventresource) {
             $resource = $DB->get_record('bookit_resource', ['id' => $eventresource->get_resourceid()]);
@@ -168,10 +170,17 @@ class event_resources_checklist_catalog implements renderable, templatable {
             $itemdata->status           = $status->value;
             $itemdata->duedate          = $duedate;
             $itemdata->canmanage        = (int)$this->canmanage;
+            $itemdata->cmid             = $this->cmid;
+            $itemdata->eventid          = $this->eventid;
             $itemdata->isrequested      = ($status === bookit_resource_status::REQUESTED);
             $itemdata->isconfirmed      = ($status === bookit_resource_status::CONFIRMED);
             $itemdata->isinprogress     = ($status === bookit_resource_status::INPROGRESS);
             $itemdata->isrejected       = ($status === bookit_resource_status::REJECTED);
+
+            $statuscell = booking_status_cell::for_resource_row($itemdata, $this->canmanage);
+            $celldata = $statuscell->export_for_template($bookitrenderer);
+            $itemdata->statusgroupkey = $celldata->statusgroupkey;
+            $itemdata->statuscellhtml = $bookitrenderer->render($statuscell);
 
             $totalcount++;
             if ($status === bookit_resource_status::CONFIRMED) {

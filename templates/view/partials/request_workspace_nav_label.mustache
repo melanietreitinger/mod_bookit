@@ -1,0 +1,19 @@
+{{!
+    @template mod_bookit/view/partials/request_workspace_nav_label
+
+    Request workspace navigation label with badge counts.
+
+    Example context (json):
+    {
+        "label": "Request workspace",
+        "newcount": 2,
+        "inprogresscount": 1,
+        "newbadgearialabel": "2 new requests",
+        "inprogressbadgearialabel": "1 in progress"
+    }
+}}
+<span class="mod-bookit-request-workspace-nav-label">
+    <span class="mod-bookit-request-workspace-nav-text">{{label}}</span>
+    <span class="bookit-nav-badge bookit-nav-badge--new" aria-label="{{newbadgearialabel}}">{{newcount}}</span>
+    <span class="bookit-nav-badge bookit-nav-badge--inprogress" aria-label="{{inprogressbadgearialabel}}">{{inprogresscount}}</span>
+</span>

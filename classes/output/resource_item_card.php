@@ -37,7 +37,12 @@ use stdClass;
  *
  * Prepares data for a single resource item card
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class resource_item_card implements renderable, templatable {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** @var bookit_resource */
     private $resource;
 

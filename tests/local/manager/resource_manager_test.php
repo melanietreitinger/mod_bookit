@@ -40,7 +40,15 @@ use mod_bookit\local\entity\resource\bookit_resource_category;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers      \mod_bookit\local\manager\resource_manager
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * Coverage metadata and PHPMD suppression for the resource manager test case.
+ *
+ * @covers \mod_bookit\local\manager\resource_manager
+ * @SuppressWarnings(PHPMD)
+ */
 final class resource_manager_test extends advanced_testcase {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Test creating and retrieving a category.
      */

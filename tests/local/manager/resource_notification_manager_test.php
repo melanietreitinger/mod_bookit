@@ -54,7 +54,7 @@ final class resource_notification_manager_test extends advanced_testcase {
     }
 
     /**
-     * Test that the booker (usermodified) receives a notification.
+     * Test that the booker (usercreated / booking person) receives a notification.
      */
     public function test_notify_sends_to_booker(): void {
         $booker = $this->getDataGenerator()->create_user();
@@ -139,7 +139,7 @@ final class resource_notification_manager_test extends advanced_testcase {
      */
     public function test_notify_deduplicates_recipients(): void {
         $user = $this->getDataGenerator()->create_user();
-        // Same user in both usermodified and personinchargeid.
+        // Same user as booking person (usercreated) and personinchargeid.
         $eventid = $this->create_test_event($user->id, $user->id);
         $resourceid = $this->create_test_resource();
 
@@ -207,14 +207,14 @@ final class resource_notification_manager_test extends advanced_testcase {
     /**
      * Insert a minimal bookit_event record for testing.
      *
-     * @param int $usermodified ID of the booker
+     * @param int $bookerid Booking person (usercreated)
      * @param int|null $personinchargeid ID of the examiner
      * @param string|null $otherexaminers Comma-separated user IDs
      * @param string $name Event name
      * @return int Event ID
      */
     private function create_test_event(
-        int $usermodified,
+        int $bookerid,
         ?int $personinchargeid = null,
         ?string $otherexaminers = null,
         string $name = 'Test Event'
@@ -242,7 +242,8 @@ final class resource_notification_manager_test extends advanced_testcase {
         $record->extratimebefore = 0;
         $record->extratimeafter = 0;
         $record->refcourseid = null;
-        $record->usermodified = $usermodified;
+        $record->usercreated = $bookerid;
+        $record->usermodified = $bookerid;
         $record->timecreated = time();
         $record->timemodified = time();
 

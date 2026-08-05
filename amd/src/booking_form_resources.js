@@ -131,12 +131,16 @@ define(['core/notification', 'core/str'], function(Notification, Str) {
         const row = getResourceRow(groupElement);
         row.classList.remove('bookit-resource-disabled');
         if (groupElement && groupElement.tagName === 'INPUT') {
-            groupElement.disabled = false;
+            groupElement.removeAttribute('aria-disabled');
+            groupElement.readOnly = false;
         } else {
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox) {
-                checkbox.disabled = false;
+                checkbox.removeAttribute('aria-disabled');
             }
+            row.querySelectorAll('input[type="text"]').forEach(input => {
+                input.readOnly = false;
+            });
         }
     }
 
@@ -149,9 +153,11 @@ define(['core/notification', 'core/str'], function(Notification, Str) {
         const row = getResourceRow(groupElement);
         row.classList.add('bookit-resource-disabled');
         row.querySelectorAll('input').forEach(input => {
-            input.disabled = true;
+            input.setAttribute('aria-disabled', 'true');
             if (input.type === 'checkbox') {
                 input.checked = false;
+            } else if (input.type !== 'hidden') {
+                input.readOnly = true;
             }
         });
     }

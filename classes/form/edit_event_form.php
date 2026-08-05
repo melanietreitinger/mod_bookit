@@ -35,6 +35,8 @@ use core_user\fields;
 use dml_exception;
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\entity\resource\bookit_resource_status;
+use mod_bookit\local\examiner_pool_resolver;
+use mod_bookit\local\manager\event_access_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
 use mod_bookit\local\persistent\institution;
@@ -50,7 +52,12 @@ use function bookit_allowed_weekdays;
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class edit_event_form extends dynamic_form {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * @var int BOOKINGSTATUS_NEW: event is not processed yet and can be edited by the creator.
      */
@@ -59,22 +66,59 @@ class edit_event_form extends dynamic_form {
     /** @var bookit_event|stdClass|null An event, if an existing one is getting edited. */
     private bookit_event|stdClass|null $event = null;
 
+    /** @var bool Whether the editable-resources section marker was added to the form. */
+    private bool $resourcessectionmarkeradded = false;
+
     /**
      * Define the form
      */
     public function definition(): void {
-        global $DB, $CFG, $PAGE;
+        global $DB, $CFG, $PAGE, $USER;
         $mform =& $this->_form;
 
         // Get the plugin config.
         $config = get_config('mod_bookit');
 
-        // Get the ressources.
-        $catresourceslist = resource_manager::get_resources();
-
         // Define variables.
         $context = $this->get_context_for_dynamic_submission();
+        $resourcesenabled = event_access_manager::is_resources_enabled();
         $caneditinternal = has_capability('mod/bookit:editinternal', $context);
+        $eventid = $this->optional_param('id', null, PARAM_INT);
+        $existingevent = !empty($eventid) ? event_manager::get_event($eventid) : null;
+        $participantpastreadonly = $existingevent
+            && event_access_manager::should_block_participant_past_edit($existingevent, $context, (int)$USER->id);
+        $caneditevent = has_capability('mod/bookit:editevent', $context)
+            || empty($eventid)
+            || ($existingevent && event_access_manager::can_participant_edit_event($existingevent, (int)$USER->id));
+        if ($participantpastreadonly) {
+            $caneditevent = false;
+        }
+        $canviewrestrictedfields = $caneditinternal
+            || ($existingevent && event_access_manager::can_supportperson_view_internal_fields(
+                $existingevent,
+                $context,
+                (int)$USER->id
+            ));
+        $caneditinternalnotes = $caneditinternal
+            || ($existingevent && event_access_manager::can_supportperson_edit_internal_notes(
+                $existingevent,
+                $context,
+                (int)$USER->id
+            ));
+        $canselfcancelnew = !$participantpastreadonly && $existingevent
+            && event_access_manager::can_self_cancel_new_request($existingevent, $context, (int)$USER->id);
+        $cancancelonly = !$participantpastreadonly && $existingevent
+            && event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
+        $caneditbookingstatus = $existingevent
+            ? event_access_manager::can_user_edit_booking_status($existingevent, $context, (int)$USER->id)
+            : ($caneditinternal || $cancancelonly || $canselfcancelnew);
+        $showbookingstatus = $caneditbookingstatus;
+        $showbookingstatusreadonly = $existingevent
+            && !$participantpastreadonly
+            && !$showbookingstatus
+            && !has_capability('mod/bookit:editevent', $context)
+            && event_access_manager::can_user_view_event_details($existingevent, $context, (int)$USER->id);
+        $requirepublicfields = $caneditevent && !$canselfcancelnew;
         $cmid = $this->_ajaxformdata['cmid'] ?? false;
         $course = get_course_and_cm_from_cmid($cmid);
         $contextcourse = context_course::instance($course[0]->id);
@@ -87,6 +131,20 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
+        // Hidden permission flags used by dynamic visibility rules.
+        $mform->addElement('hidden', 'editevent', (int)$caneditevent);
+        $mform->setType('editevent', PARAM_BOOL);
+        $mform->addElement('hidden', 'editinternal', (int)$caneditinternal);
+        $mform->setType('editinternal', PARAM_BOOL);
+        $mform->addElement('hidden', 'viewrestrictedfields', (int)$canviewrestrictedfields);
+        $mform->setType('viewrestrictedfields', PARAM_BOOL);
+        $mform->addElement('hidden', 'editinternalnotes', (int)$caneditinternalnotes);
+        $mform->setType('editinternalnotes', PARAM_BOOL);
+        $mform->addElement('hidden', 'editbookingstatus', (int)$caneditbookingstatus);
+        $mform->setType('editbookingstatus', PARAM_BOOL);
+        $mform->addElement('hidden', 'cancelonly', (int)$cancancelonly);
+        $mform->setType('cancelonly', PARAM_BOOL);
+
         // Show the user who created the entry.
         $mform->addElement('text', 'usercreated', get_string('event_usercreated', 'mod_bookit'));
         $mform->setType('usercreated', PARAM_TEXT);
@@ -97,7 +155,9 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('text', 'name', get_string('event_name', 'mod_bookit'), ['size' => '64']);
         $mform->setType('name', PARAM_TEXT);
         $mform->disabledIf('name', 'editevent', 'neq');
-        $mform->addRule('name', null, 'required', null, 'client');
+        if ($requirepublicfields) {
+            $mform->addRule('name', null, 'required', null, 'client');
+        }
         $mform->addRule('name', null, 'maxlength', 255, 'client');
         $mform->addHelpButton('name', 'event_name', 'mod_bookit');
 
@@ -105,14 +165,24 @@ class edit_event_form extends dynamic_form {
         $currentyear = (int) date('Y');
         // Generate semesters dynamically.
         $semesters = [];
-        // ...@TODO: Make range of semester terms an admin option.
-        for ($i = -1; $i < 2; $i++) {
+        $lookbackyears = max(0, (int)($config->semesterlookbackyears ?? 1));
+        $lookaheadyears = max(0, (int)($config->semesterlookaheadyears ?? 1));
+        for ($i = -$lookbackyears; $i <= $lookaheadyears; $i++) {
             $semesters[($currentyear + $i) * 10 + 1] = get_string('summer_semester', 'mod_bookit') . " " . ($currentyear + $i);
             $semesters[($currentyear + $i) * 10 + 2] = get_string('winter_semester', 'mod_bookit') . " " . ($currentyear + $i);
         }
+
         $mform->addElement('select', 'semester', get_string('select_semester', 'mod_bookit'), $semesters);
+        if (empty($eventid)) {
+            $currentsemester = event_manager::get_current_semester();
+            if (array_key_exists($currentsemester, $semesters)) {
+                $mform->setDefault('semester', $currentsemester);
+            }
+        }
         $mform->disabledIf('semester', 'editevent', 'neq');
-        $mform->addRule('semester', null, 'required', null, 'client');
+        if ($requirepublicfields) {
+            $mform->addRule('semester', null, 'required', null, 'client');
+        }
         $mform->addHelpButton('semester', 'select_semester', 'mod_bookit');
 
         // Add the "institutionid" field.
@@ -122,20 +192,15 @@ class edit_event_form extends dynamic_form {
             $institutionoptions[$institution->get('id')] = $institution->get('name');
         }
 
-        // Merge 28.01: Added Fallback.
         if (empty($institutionoptions)) {
-            $institutionoptions = [0 => get_string('none')];
-            $mform->addElement(
-                'static',
-                'institutionid_empty_notice',
-                '',
-                get_string('none') . ' (No active institutions found in bookit_institution)'
-            );
+            $mform->addElement('static', 'institutionid_empty_notice', '', get_string('institutionid_empty_notice', 'mod_bookit'));
         }
 
         $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
-        $mform->addRule('institutionid', null, 'required', null, 'client');
         $mform->disabledIf('institutionid', 'editevent', 'neq');
+        if ($requirepublicfields) {
+            $mform->addRule('institutionid', null, 'required', null, 'client');
+        }
         $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
 
         // Add the "roomid" field.
@@ -156,10 +221,8 @@ class edit_event_form extends dynamic_form {
             $roomoptions[$room->get('id')] = $str;
         }
 
-        // Merge 28.01: Added Fallback.
         if (empty($roomoptions)) {
-            $roomoptions = [0 => get_string('none')];
-            $mform->addElement('static', 'roomid_empty_notice', '', get_string('none') . ' (No active rooms found in bookit_room)');
+            $mform->addElement('static', 'roomid_empty_notice', '', get_string('roomid_empty_notice', 'mod_bookit'));
         }
         $mform->addElement('select', 'roomid', get_string('event_room', 'mod_bookit'), $roomoptions);
         $mform->disabledIf('roomid', 'editevent', 'neq');
@@ -186,6 +249,8 @@ class edit_event_form extends dynamic_form {
         // Set time restrictions based on "editinternal" capability.
         if ($caneditinternal) {
             $starttimearray['startyear'] = $config->eventminyear ?? (date("Y") - 1);
+        } else if ($participantpastreadonly && !empty($existingevent->starttime)) {
+            $starttimearray['startyear'] = min((int)date("Y"), (int)date("Y", (int)$existingevent->starttime));
         } else {
             $starttimearray['startyear'] = date("Y");
         }
@@ -193,12 +258,13 @@ class edit_event_form extends dynamic_form {
 
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('startdate', 'editevent', 'neq');
-        $mform->addRule('startdate', null, 'required', null, 'client');
+        if ($requirepublicfields) {
+            $mform->addRule('startdate', null, 'required', null, 'client');
+        }
         $mform->addHelpButton('startdate', 'event_start', 'mod_bookit');
 
         $mform->addElement('select', 'starttime');
         $mform->disabledIf('starttime', 'editevent', 'neq');
-        $mform->addRule('starttime', null, 'required', null, 'client');
 
         $mform->addElement('static', 'starttime_explanation', '', '');
 
@@ -214,100 +280,192 @@ class edit_event_form extends dynamic_form {
         $mform->addElement('text', 'participantsamount', get_string('event_students', 'mod_bookit'), ['size' => '4']);
         $mform->disabledIf('participantsamount', 'editevent', 'neq');
         $mform->setType('participantsamount', PARAM_INT);
-        $mform->addRule('participantsamount', null, 'required', null, 'client');
+        if ($requirepublicfields) {
+            $mform->addRule('participantsamount', null, 'required', null, 'client');
+        }
         $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
 
         // Add the "person in charge" field.
+        $examinersresolver = examiner_pool_resolver::from_config($config);
+        $legacyexaminerids = examiner_pool_resolver::get_legacy_user_ids_from_event($existingevent);
+        $examinerlist = $examinersresolver->build_options($legacyexaminerids);
         $userselectoroptions = [
-                'ajax' => 'enrol_manual/form-potential-user-selector',
                 'multiple' => false,
                 'courseid' => $course[0]->id,
                 'enrolid' => 0,
                 'perpage' => $CFG->maxusersperpage,
                 'userfields' => implode(',', fields::get_identity_fields($contextcourse, true)),
         ];
-        $examinerlist = [];
-        // ...@TODO: Find better query to select users!
-        $sql = "SELECT DISTINCT u.*
-                  FROM {user} u
-                  WHERE u.deleted = 0 AND u.suspended = 0
-                  ORDER BY lastname, firstname";
-        $users = $DB->get_records_sql($sql, []);
-        foreach ($users as $id => $user) {
-            $examinerlist[$id] = fullname($user) . ' | ' . $user->email;
+        if (!$examinersresolver->is_restricted()) {
+            $userselectoroptions['ajax'] = 'enrol_manual/form-potential-user-selector';
         }
-        $mform->addElement(
-            'autocomplete',
-            'personinchargeid',
-            get_string(
-                'event_personincharge',
-                'mod_bookit'
-            ),
-            $examinerlist,
-            $userselectoroptions
-        );
-        $mform->disabledIf('personinchargeid', 'editevent', 'neq');
-        $mform->setType('personinchargeid', PARAM_TEXT);
-        // The person in charge is by default the booking person.
-        $mform->setDefault('personinchargeid', '');
-        $mform->addRule('personinchargeid', null, 'required', null, 'client');
-        $mform->addHelpButton('personinchargeid', 'event_personincharge', 'mod_bookit');
+        $personinchargeelementname = 'personinchargeid';
+        if (!$caneditevent && $existingevent) {
+            $personinchargeelementname = 'personinchargeid_readonly';
+            $mform->addElement(
+                'static',
+                $personinchargeelementname,
+                get_string('event_personincharge', 'mod_bookit'),
+                s($this->format_selector_display($existingevent->personinchargeid ?? '', $examinerlist))
+            );
+            $mform->addElement('hidden', 'personinchargeid');
+            $mform->setType('personinchargeid', PARAM_TEXT);
+        } else {
+            $mform->addElement(
+                'autocomplete',
+                'personinchargeid',
+                get_string(
+                    'event_personincharge',
+                    'mod_bookit'
+                ),
+                $examinerlist,
+                $userselectoroptions
+            );
+            $mform->disabledIf('personinchargeid', 'editevent', 'neq');
+            $mform->setType('personinchargeid', PARAM_TEXT);
+            $mform->setDefault('personinchargeid', '');
+        }
+        if ($requirepublicfields) {
+            $mform->addRule('personinchargeid', null, 'required', null, 'client');
+        }
+        $mform->addHelpButton($personinchargeelementname, 'event_personincharge', 'mod_bookit');
 
         // Add the "otherexaminers" field.
         $userselectoroptions['multiple'] = true;
-        $mform->addElement(
-            'autocomplete',
-            'otherexaminers',
-            get_string(
-                'event_otherexaminers',
-                'mod_bookit'
-            ),
-            $examinerlist,
-            $userselectoroptions
-        );
-        $mform->disabledIf('otherexaminers', 'editevent', 'neq');
-        $mform->setType('otherexaminers', PARAM_TEXT);
-        $mform->addHelpButton('otherexaminers', 'event_otherexaminers', 'mod_bookit');
+        $otherexaminerselementname = 'otherexaminers';
+        if (!$caneditevent && $existingevent) {
+            $otherexaminerselementname = 'otherexaminers_readonly';
+            $mform->addElement(
+                'static',
+                $otherexaminerselementname,
+                get_string(
+                    'event_otherexaminers',
+                    'mod_bookit'
+                ),
+                s($this->format_selector_display($existingevent->otherexaminers ?? '', $examinerlist))
+            );
+            $mform->addElement('hidden', 'otherexaminers');
+            $mform->setType('otherexaminers', PARAM_TEXT);
+        } else {
+            $mform->addElement(
+                'autocomplete',
+                'otherexaminers',
+                get_string(
+                    'event_otherexaminers',
+                    'mod_bookit'
+                ),
+                $examinerlist,
+                $userselectoroptions
+            );
+            $mform->disabledIf('otherexaminers', 'editevent', 'neq');
+            $mform->setType('otherexaminers', PARAM_TEXT);
+        }
+        $mform->addHelpButton($otherexaminerselementname, 'event_otherexaminers', 'mod_bookit');
 
-        // The "compensationfordisadvantages" field; hidden for new bookings.
-        $mform->addElement(
-            'editor',
-            'compensationfordisadvantages',
-            get_string(
-                'event_compensationfordisadvantages_label',
-                'mod_bookit'
-            ),
-            ['rows' => 5],
-            ['maxfiles' => 0, 'noclean' => false]
-        );
-        $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
-        $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
+        if ($this->is_optional_field_enabled($config, 'coursetemplate')) {
+            // Add the coursetemplate field.
+            $coursetemplates = [0 => get_string('default')];
+            $mform->addElement('select', 'coursetemplate', get_string('select_coursetemplate', 'mod_bookit'), $coursetemplates);
+            $mform->disabledIf('coursetemplate', 'editevent', 'neq');
+            if ($requirepublicfields) {
+                $mform->addRule('coursetemplate', null, 'required', null, 'client');
+            }
+            $mform->addHelpButton('coursetemplate', 'select_coursetemplate', 'mod_bookit');
+        } else {
+            $mform->addElement('hidden', 'coursetemplate');
+            $mform->setType('coursetemplate', PARAM_INT);
+        }
 
-        // Hide for new bookings (status 0) – examiners won't have this info yet.
-        $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
+        if ($this->is_optional_field_enabled($config, 'timecompensation')) {
+            $mform->addElement(
+                'advcheckbox',
+                'timecompensation',
+                get_string('event_timecompensation', 'mod_bookit'),
+                get_string('yes')
+            );
+            $mform->disabledIf('timecompensation', 'editevent', 'neq');
+            $mform->setType('timecompensation', PARAM_BOOL);
+            $mform->addHelpButton('timecompensation', 'event_timecompensation', 'mod_bookit');
+        } else {
+            $mform->addElement('hidden', 'timecompensation');
+            $mform->setType('timecompensation', PARAM_BOOL);
+        }
 
-        // Add the "notes" field.
-        $mform->addElement(
-            'editor',
-            'notes',
-            get_string("event_notes", "mod_bookit"),
-            ['rows' => 5],
-            ['maxfiles' => 0, 'noclean' => false]
-        );
-        $mform->disabledIf('notes', 'editevent', 'neq');
-        $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
+        if ($this->is_optional_field_enabled($config, 'compensationfordisadvantages')) {
+            // MCE editor (#177) within the shared optional-field profile gate.
+            $mform->addElement(
+                'editor',
+                'compensationfordisadvantages',
+                get_string('event_compensationfordisadvantages', 'mod_bookit'),
+                ['rows' => 5],
+                ['maxfiles' => 0, 'noclean' => false]
+            );
+            $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
+            $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
+            // Hide for new bookings (status New) – examiners won't have this info yet.
+            $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
+        } else {
+            $mform->addElement('hidden', 'compensationfordisadvantages');
+            $mform->setType('compensationfordisadvantages', PARAM_RAW);
+        }
+
+        if ($this->is_optional_field_enabled($config, 'notes')) {
+            $mform->addElement(
+                'textarea',
+                'notes',
+                get_string("event_notes", "mod_bookit"),
+                'wrap="virtual" rows="5" cols="50"'
+            );
+            $mform->disabledIf('notes', 'editevent', 'neq');
+            $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
+        } else {
+            $mform->addElement('hidden', 'notes');
+            $mform->setType('notes', PARAM_TEXT);
+        }
 
         // Internal fields.
-        if ($caneditinternal) {
+        if ($caneditinternal || $canviewrestrictedfields) {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
         }
-        // Add the "refcourseid" field. Legacy Field, kept it for #85 if necessary.
-         $mform->addElement('hidden', 'refcourseid');
-        $mform->setType('refcourseid', PARAM_INT);
-        $mform->setDefault('refcourseid', 0);
+        if ($this->is_optional_field_enabled($config, 'refcourseid')) {
+            if ($caneditinternal) {
+                $mform->addElement(
+                    'course',
+                    'refcourseid',
+                    get_string(
+                        'event_refcourseid',
+                        'mod_bookit'
+                    ),
+                    ['multiple' => false, 'showhidden' => true, 'exclude' => '']
+                );
+                $mform->setType('refcourseid', PARAM_INT);
+                $mform->setDefault('refcourseid', 0);
+                $mform->hideIf('refcourseid', 'editinternal', 'neq');
+                $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
+            } else if ($canviewrestrictedfields) {
+                $refcourselabel = get_string('event_refcourseid', 'mod_bookit');
+                $refcoursedisplay = '';
+                $refcoursevalue = 0;
+                if ($existingevent && !empty($existingevent->refcourseid)) {
+                    $refcoursevalue = (int)$existingevent->refcourseid;
+                    $refcourse = get_course($refcoursevalue, false);
+                    $refcoursedisplay = $refcourse ? format_string($refcourse->fullname) : '';
+                }
+                $mform->addElement('static', 'refcourseid_readonly', $refcourselabel, s($refcoursedisplay));
+                $mform->addHelpButton('refcourseid_readonly', 'event_refcourseid', 'mod_bookit');
+                $mform->addElement('hidden', 'refcourseid', $refcoursevalue);
+                $mform->setType('refcourseid', PARAM_INT);
+            } else {
+                $mform->addElement('hidden', 'refcourseid');
+                $mform->setType('refcourseid', PARAM_INT);
+            }
+        } else {
+            $mform->addElement('hidden', 'refcourseid');
+            $mform->setType('refcourseid', PARAM_INT);
+        }
 
-        if ($caneditinternal) {
+        if ($canviewrestrictedfields) {
             // Add the "supportpersons" field.
             $supportpersons = [];
             // ...@TODO: Find better query to select users!
@@ -319,57 +477,173 @@ class edit_event_form extends dynamic_form {
             foreach ($users as $id => $user) {
                 $supportpersons[$id] = fullname($user);
             }
-            $mform->addElement(
-                'autocomplete',
-                'supportpersons',
-                get_string(
-                    'event_supportperson',
-                    'mod_bookit'
-                ),
-                $supportpersons,
-                $userselectoroptions
-            );
-            $mform->setType('supportpersons', PARAM_TEXT);
-            $mform->addHelpButton('supportpersons', 'event_supportperson', 'mod_bookit');
+            $supportpersonselementname = 'supportpersons';
+            // Assigned Support may edit support persons (same gate as internal notes); others stay RO.
+            if (!$caneditinternal && !$caneditinternalnotes && $existingevent) {
+                $supportpersonselementname = 'supportpersons_readonly';
+                $mform->addElement(
+                    'static',
+                    $supportpersonselementname,
+                    get_string(
+                        'event_supportperson',
+                        'mod_bookit'
+                    ),
+                    s($this->format_selector_display($existingevent->supportpersons ?? '', $supportpersons))
+                );
+                $mform->addElement('hidden', 'supportpersons');
+                $mform->setType('supportpersons', PARAM_TEXT);
+            } else {
+                $mform->addElement(
+                    'autocomplete',
+                    'supportpersons',
+                    get_string(
+                        'event_supportperson',
+                        'mod_bookit'
+                    ),
+                    $supportpersons,
+                    $userselectoroptions
+                );
+                $mform->setType('supportpersons', PARAM_TEXT);
+            }
+            $mform->addHelpButton($supportpersonselementname, 'event_supportperson', 'mod_bookit');
         } else {
             $mform->addElement('hidden', 'supportpersons');
             $mform->setType('supportpersons', PARAM_TEXT);
         }
 
-        if ($caneditinternal) {
+        if ($canviewrestrictedfields) {
             // Don't use PARAM_INT, because it converts an empty text field to 0.
             // In our case, an empty field should mean be the inherited default.
-            $mform->addElement('text', 'extratimebefore', get_string('settings_extratime_before', 'mod_bookit'));
-            $mform->setType('extratimebefore', PARAM_ALPHANUM);
-            $mform->addRule('extratimebefore', null, 'numeric', null, 'client');
-            $mform->addElement('text', 'extratimeafter', get_string('settings_extratime_after', 'mod_bookit'));
-            $mform->setType('extratimeafter', PARAM_ALPHANUM);
-            $mform->addRule('extratimeafter', null, 'numeric', null, 'client');
+            if (!$caneditinternal && $existingevent) {
+                $extratimebeforelabel = get_string('settings_extratime_before', 'mod_bookit');
+                $extratimeafterlabel = get_string('settings_extratime_after', 'mod_bookit');
+                $extratimebeforevalue = $existingevent->extratimebefore ?? '';
+                $extratimeaftervalue = $existingevent->extratimeafter ?? '';
+                $mform->addElement(
+                    'static',
+                    'extratimebefore_readonly',
+                    $extratimebeforelabel,
+                    s((string)$extratimebeforevalue)
+                );
+                $mform->addElement('hidden', 'extratimebefore', $extratimebeforevalue);
+                $mform->setType('extratimebefore', PARAM_ALPHANUM);
+                $mform->addElement(
+                    'static',
+                    'extratimeafter_readonly',
+                    $extratimeafterlabel,
+                    s((string)$extratimeaftervalue)
+                );
+                $mform->addElement('hidden', 'extratimeafter', $extratimeaftervalue);
+                $mform->setType('extratimeafter', PARAM_ALPHANUM);
+            } else {
+                $mform->addElement('text', 'extratimebefore', get_string('settings_extratime_before', 'mod_bookit'));
+                $mform->setType('extratimebefore', PARAM_ALPHANUM);
+                $mform->addRule('extratimebefore', null, 'numeric', null, 'client');
+                $mform->disabledIf('extratimebefore', 'editinternal', 'neq', 1);
+                $mform->addElement('text', 'extratimeafter', get_string('settings_extratime_after', 'mod_bookit'));
+                $mform->setType('extratimeafter', PARAM_ALPHANUM);
+                $mform->addRule('extratimeafter', null, 'numeric', null, 'client');
+                $mform->disabledIf('extratimeafter', 'editinternal', 'neq', 1);
+            }
         } else {
             $mform->addElement('hidden', 'extratimebefore');
+            $mform->setType('extratimebefore', PARAM_ALPHANUM);
             $mform->addElement('hidden', 'extratimeafter');
+            $mform->setType('extratimeafter', PARAM_ALPHANUM);
+        }
+
+        $bookingstatusoptions = [];
+        $currentbookingstatus = (int)($existingevent->bookingstatus ?? self::BOOKINGSTATUS_NEW);
+        if ($caneditinternal) {
+            foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+                $bookingstatusoptions[$statusvalue] = event_manager::get_booking_status_label($statusvalue);
+            }
+        } else if ($showbookingstatus) {
+            $bookingstatusoptions[$currentbookingstatus] = get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit');
+            if (
+                ($cancancelonly || $canselfcancelnew)
+                && event_access_manager::can_transition_booking_status(
+                    $currentbookingstatus,
+                    event_access_manager::BOOKINGSTATUS_CANCELED
+                )
+            ) {
+                $bookingstatusoptions[event_access_manager::BOOKINGSTATUS_CANCELED] = get_string(
+                    'event_bookingstatus_' . event_access_manager::BOOKINGSTATUS_CANCELED,
+                    'mod_bookit'
+                );
+            }
         }
 
         // Add the "bookingstatus" field.
-        $mform->addElement(
-            'select',
-            'bookingstatus',
-            get_string('event_bookingstatus', 'mod_bookit'),
-            explode(',', get_string('event_bookingstatus_list', 'mod_bookit'))
-        );
-        $mform->hideIf('bookingstatus', 'editinternal', 'neq');
-        $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
+        if ($participantpastreadonly) {
+            $mform->addElement(
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+            );
+        } else if ($showbookingstatus) {
+            $mform->addElement(
+                'select',
+                'bookingstatus',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                $bookingstatusoptions
+            );
+            $mform->setDefault('bookingstatus', $currentbookingstatus);
+            $mform->disabledIf('bookingstatus', 'editbookingstatus', 'neq', 1);
+            $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
+        } else if ($showbookingstatusreadonly) {
+            $mform->addElement(
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+            );
+            $mform->addElement('hidden', 'bookingstatus');
+            $mform->setType('bookingstatus', PARAM_INT);
+        } else {
+            $mform->addElement('hidden', 'bookingstatus');
+            $mform->setType('bookingstatus', PARAM_INT);
+        }
+
+        if ($participantpastreadonly) {
+            $mform->addElement(
+                'static',
+                'pastparticipantnotice',
+                '',
+                get_string('event_past_participant_notice', 'mod_bookit')
+            );
+        } else if ($cancancelonly) {
+            $mform->addElement(
+                'static',
+                'cancelonlynotice',
+                '',
+                get_string('event_cancel_only_notice', 'mod_bookit')
+            );
+        }
 
         // Add the "internalnotes" field.
-        $mform->addElement(
-            'editor',
-            'internalnotes',
-            get_string("event_internalnotes", "mod_bookit"),
-            ['rows' => 5],
-            ['maxfiles' => 0, 'noclean' => false]
-        );
-        $mform->hideIf('internalnotes', 'editinternal', 'neq');
-        $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
+        if ($canviewrestrictedfields || $caneditinternalnotes) {
+            $mform->addElement(
+                'textarea',
+                'internalnotes',
+                get_string("event_internalnotes", "mod_bookit"),
+                'wrap="virtual" rows="5" cols="50"'
+            );
+            $mform->disabledIf('internalnotes', 'editinternalnotes', 'neq', 1);
+            $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
+            if (!$caneditinternal && $caneditinternalnotes) {
+                $mform->addElement(
+                    'static',
+                    'supportpersoninternalnotesnotice',
+                    '',
+                    get_string('event_supportperson_internalnotes_notice', 'mod_bookit')
+                );
+            }
+        } else {
+            $mform->addElement('hidden', 'internalnotes');
+            $mform->setType('internalnotes', PARAM_TEXT);
+        }
 
         $timeclicked = $this->optional_param('timeclicked', null, PARAM_TEXT);
         $possiblestarttimes = [];
@@ -385,6 +659,8 @@ class edit_event_form extends dynamic_form {
                 \DateTime::createFromImmutable($startdate),
                 $eventdefaultduration,
                 array_key_first($roomoptions),
+                null,
+                $participantpastreadonly || event_access_manager::can_manage_past_bookings($context),
             );
 
             $smallestdiff = 1e9;
@@ -413,7 +689,7 @@ class edit_event_form extends dynamic_form {
         $eventid = $this->optional_param('id', null, PARAM_INT);
         $bookingcompleted = false;
         $bookedresources = [];
-        if (!empty($eventid)) {
+        if (!empty($eventid) && $resourcesenabled) {
             $eventrec = $DB->get_record('bookit_event', ['id' => $eventid], 'bookingstatus');
             if ($eventrec && (int)$eventrec->bookingstatus >= 2) {
                 $bookingcompleted = true;
@@ -430,12 +706,12 @@ class edit_event_form extends dynamic_form {
         $starttimeel = $mform->getElement('starttime');
         $starttimeel->removeOptions();
         $starttimeel->loadArray($possiblestarttimes);
-        // Default to next future slot for non-service-team users.
-        if (!$caneditinternal) {
+        // Default to next future slot for non-service-team users when no click-derived selection.
+        if ($selectedtime === null && !$caneditinternal && !empty($possiblestarttimes)) {
             $now = time();
             foreach ($possiblestarttimes as $ts => $str) {
                 if ($ts >= $now) {
-                    $mform->setDefault('starttime', $ts);
+                    $selectedtime = $ts;
                     break;
                 }
             }
@@ -443,10 +719,10 @@ class edit_event_form extends dynamic_form {
         $mform->setDefault('starttime', $selectedtime);
 
         // Get active resources grouped by category for booking form.
-        $resourcesdata = resource_manager::get_active_resources_grouped();
-
-        // Add resources section.
-        $this->add_resources_fields($mform, $resourcesdata, $bookingcompleted, $bookedresources);
+        if ($resourcesenabled) {
+            $resourcesdata = resource_manager::get_active_resources_grouped();
+            $this->add_resources_fields($mform, $resourcesdata, $bookingcompleted, $bookedresources);
+        }
     }
 
     /**
@@ -457,78 +733,17 @@ class edit_event_form extends dynamic_form {
      * @throws coding_exception|dml_exception
      */
     public function definition_after_data(): void {
-        global $DB, $USER, $PAGE;  // The $PAGE is needed for JS injection; $User for prefilling the Booking person.
+        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
+        $caneditinternal = (bool)($mform->getElementValue('editinternal')[0] ?? 0);
+        $cancancelonly = (bool)($mform->getElementValue('cancelonly')[0] ?? 0);
 
         $context = $this->get_context_for_dynamic_submission();
-        $usercreated = $this->_form->getElementValue('usercreated');
-        $examiner = $this->_form->getElementValue('personinchargeid');
-        $otherexaminers = $this->_form->getElementValue('otherexaminers') ?? [];
-        array_push($otherexaminers, $usercreated, $examiner);
-
-        // Show the user who created the entry.
-        $user = $DB->get_record('user', ['id' => $usercreated]);
-        $mform->getElement('usercreated')->setValue(
-            fullname($user, has_capability('moodle/site:viewfullnames', $context)) // ...TODO: find better way?
-        );
-
-        // Derive current booking-status & capability flags.
-        $rawstatus = $mform->getElementValue('bookingstatus');
-        $bookingstat = is_array($rawstatus) ? (int) $rawstatus[0] : self::BOOKINGSTATUS_NEW;
-
-        $id = $mform->getElementValue('id');
-        $usercreated = $mform->getElementValue('usercreated');
-        $examiner = $mform->getElementValue('personinchargeid');
-        $otherexaminers = array_filter(array_merge(
-            $mform->getElementValue('otherexaminers') ?? [],
-            [$usercreated, $examiner]
-        ));
-
-        $context = $this->get_context_for_dynamic_submission();
-             $caneditevent = has_capability('mod/bookit:editevent', $context)
-                || !$id
-                || (self::BOOKINGSTATUS_NEW == $bookingstat && in_array($USER->id, $otherexaminers, true));
-        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
-
-        // Past events are read-only for non-service-team users.
-        if ($id && !$caneditinternal && $this->event) {
-            if ((int)$this->event->starttime < time()) {
-                $caneditevent = false;
-            }
-        }
-        // Store capability flags as hidden elements.
-        $mform->insertElementBefore(
-            $mform->createElement(
-                'hidden',
-                'editevent',
-                $caneditevent
-            ),
-            'name'
-        )->setType('editevent', PARAM_BOOL);
-
-        $mform->insertElementBefore(
-            $mform->createElement(
-                'hidden',
-                'editinternal',
-                $caneditinternal
-            ),
-            'name'
-        )->setType('editinternal', PARAM_BOOL);
-        // Disable submit button when user has no edit rights at all.
-        if (!$caneditevent && !$caneditinternal) {
-            $PAGE->requires->js_init_code("
-                require(['jquery'], function($) {
-                    var poll = setInterval(function() {
-                        var btn = $('.modal [data-action=\"save\"]');
-                        if (btn.length) {
-                            btn.prop('disabled', true).css({'pointer-events': 'none', 'opacity': '0.5'});
-                            clearInterval(poll);
-                        }
-                    }, 200);
-                });
-            ");
-        }
+        $currenteventid = (int)($data->id ?? $this->event->id ?? 0);
+        $existingevent = $currenteventid > 0 ? event_manager::get_event($currenteventid) : null;
+        $participantpastreadonly = $existingevent
+            && event_access_manager::should_block_participant_past_edit($existingevent, $context, (int)$USER->id);
 
         // Week-day validation  – server side.
         $mform->addRule(
@@ -576,12 +791,13 @@ class edit_event_form extends dynamic_form {
                 });
             ");
 
-            // Client-side past-time validation (non-service-team only).
-            if ($caneditevent && !$caneditinternal) {
+            // Client-side past-time validation (non-service-team only; #160/#189).
+            $caneditevent = (bool)($mform->getElementValue('editevent')[0] ?? 0);
+            if ($caneditevent && !$caneditinternal && !$participantpastreadonly) {
                 $PAGE->requires->js_call_amd(
                     'mod_bookit/past_time_check',
                     'init',
-                    [get_string('error_starttime_in_past', 'mod_bookit')]
+                    [get_string('event_error_mintime', 'mod_bookit')]
                 );
             }
 
@@ -595,19 +811,83 @@ class edit_event_form extends dynamic_form {
                 }
             }
 
-            if ($data && $data->roomid && !is_null($data->duration)) {
+            $selectedroomid = $data->roomid ?? $this->event->roomid ?? null;
+            $selectedduration = $data->duration ?? $this->event->duration ?? null;
+            $selectedstartdate = $data->startdate ?? null;
+            if ($selectedstartdate === null && !empty($this->event->starttime)) {
+                $selectedstartdate = (new \DateTime())->setTimestamp((int)$this->event->starttime)->setTime(0, 0)->getTimestamp();
+            }
+            if (
+                $data
+                && $selectedroomid
+                && !is_null($selectedduration)
+                && !is_null($selectedstartdate)
+                && $DB->record_exists('bookit_room', ['id' => $selectedroomid])
+            ) {
+                $excepteventid = (int)($data->id ?? $this->event->id ?? 0) ?: null;
                 /** @var \MoodleQuickForm_select $starttimeel */
                 $starttimeel = $mform->getElement('starttime');
                 $starttimeel->removeOptions();
                 [$possiblestarttimes, ] = get_possible_starttimes::list_possible_starttimes(
-                    (new \DateTime())->setTimestamp($data->startdate),
-                    $data->duration,
-                    $data->roomid,
-                    $id
+                    (new \DateTime())->setTimestamp((int)$selectedstartdate),
+                    $selectedduration,
+                    $selectedroomid,
+                    $excepteventid,
+                    $participantpastreadonly || event_access_manager::can_manage_past_bookings($context)
                 );
                 $starttimeel->loadArray($possiblestarttimes);
+                $currentstarttime = (int)($data->starttime ?? 0);
+                if ($currentstarttime > 0) {
+                    $starttimeel->updateAttributes(['data-current-starttime' => (string)$currentstarttime]);
+                }
+                if (
+                    (
+                        $participantpastreadonly
+                        || event_access_manager::can_manage_past_bookings($context)
+                    )
+                    && $currentstarttime > 0
+                    && !array_key_exists($currentstarttime, $possiblestarttimes)
+                ) {
+                    $possiblestarttimes = [
+                        $currentstarttime => (new \DateTime())->setTimestamp($currentstarttime)->format('H:i'),
+                    ] + $possiblestarttimes;
+                    $starttimeel->loadArray($possiblestarttimes);
+                }
+                if ($currentstarttime > 0 && array_key_exists($currentstarttime, $possiblestarttimes)) {
+                    $starttimeel->setSelected((string)$currentstarttime);
+                    $starttimeel->setValue((string)$currentstarttime);
+                    $mform->setDefault('starttime', $currentstarttime);
+                }
             }
         }
+
+        $this->inject_examiner_selector_labels($mform, $data);
+
+        // Re-apply after starttime setDefault(), which resets usercreated to the numeric id.
+        if ($existingevent && !empty($existingevent->usercreated) && $mform->elementExists('usercreated')) {
+            $user = $DB->get_record('user', ['id' => (int)$existingevent->usercreated]);
+            $displayname = $user
+                ? fullname($user, has_capability('moodle/site:viewfullnames', $context))
+                : get_string('deleteduser', 'moodle');
+            $mform->getElement('usercreated')->setValue($displayname);
+        }
+    }
+
+    /**
+     * Check whether an optional calendar field is enabled in the shared booking profile.
+     *
+     * @param \stdClass $config
+     * @param string $fieldname
+     * @return bool
+     */
+    private function is_optional_field_enabled(\stdClass $config, string $fieldname): bool {
+        $rawfields = (string)($config->calendar_optional_fields ?? '');
+        if ($rawfields === '') {
+            $rawfields = 'timecompensation,compensationfordisadvantages,notes,refcourseid,coursetemplate';
+        }
+        $enabledfields = array_values(array_filter(array_map('trim', explode(',', $rawfields))));
+
+        return in_array($fieldname, $enabledfields, true);
     }
 
     /**
@@ -615,8 +895,10 @@ class edit_event_form extends dynamic_form {
      */
     public function set_data_for_dynamic_submission(): void {
         global $USER;
+
         $e = new StdClass();
         $id = $this->optional_param('id', null, PARAM_INT);
+        $config = get_config('mod_bookit');
 
         if (!empty($id)) {
             $e = event_manager::get_event($id);
@@ -625,15 +907,22 @@ class edit_event_form extends dynamic_form {
             $e->startdate = $date->getTimestamp();
             $this->event = $e;
         } else {
-            // New event: pre-fill person in charge with the current user.
+            // New event: pre-fill person in charge with the current user (#169/#177).
             $e->personinchargeid = $USER->id;
         }
         $e->cmid = $this->optional_param('cmid', null, PARAM_INT);
 
-        // Wrap plain-text values for editor elements.
-        $e->notes = ['text' => $e->notes ?? '', 'format' => FORMAT_HTML];
-        $e->internalnotes = ['text' => $e->internalnotes ?? '', 'format' => FORMAT_HTML];
-        $e->compensationfordisadvantages = ['text' => $e->compensationfordisadvantages ?? '', 'format' => FORMAT_HTML];
+        // Wrap compensation text for the MCE editor element when that optional field is enabled.
+        if ($this->is_optional_field_enabled($config, 'compensationfordisadvantages')) {
+            $rawcompensation = $e->compensationfordisadvantages ?? '';
+            if (is_array($rawcompensation)) {
+                $rawcompensation = $rawcompensation['text'] ?? '';
+            }
+            $e->compensationfordisadvantages = [
+                'text' => (string)$rawcompensation,
+                'format' => FORMAT_HTML,
+            ];
+        }
 
         $this->set_data($e);
     }
@@ -652,7 +941,26 @@ class edit_event_form extends dynamic_form {
      * Checks if current user has access to this form, otherwise throws exception
      */
     protected function check_access_for_dynamic_submission(): void {
-        // ...@TODO.  Does this look like Code codechecker?!
+        global $USER;
+
+        $context = $this->get_context_for_dynamic_submission();
+        $eventid = $this->optional_param('id', null, PARAM_INT);
+        if (empty($eventid)) {
+            return;
+        }
+
+        $event = event_manager::get_event($eventid);
+        if (event_access_manager::is_observer_restricted_mode($context)) {
+            throw new moodle_exception('observer_no_detail_access', 'mod_bookit');
+        }
+
+        if (
+            !event_access_manager::can_user_view_event_details($event, $context, (int)$USER->id)
+            && !event_access_manager::can_manage_open_requests($context)
+            && !has_capability('mod/bookit:editevent', $context)
+        ) {
+            throw new moodle_exception('nopermissions', 'error', '', 'view event details');
+        }
     }
 
     /**
@@ -662,38 +970,133 @@ class edit_event_form extends dynamic_form {
      * @throws dml_exception|coding_exception
      */
     public function process_dynamic_submission(): array {
+        global $USER;
         $formdata = $this->get_data();
+        $context = $this->get_context_for_dynamic_submission();
+        $currentevent = null;
+        $submittedstarttime = $this->optional_param('starttime', null, PARAM_INT);
+        $submittedduration = $this->optional_param('duration', null, PARAM_INT);
+        $caneditpublic = empty($formdata->id) || has_capability('mod/bookit:editevent', $context);
+        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
+        $caneditinternalnotes = $caneditinternal;
+        $caneditbookingstatus = $caneditinternal;
+        $canmanagepastbookings = event_access_manager::can_manage_past_bookings($context);
+        $bookingstatustransition = null;
+        $cancancelonly = false;
+        $statusonlyselfcancel = false;
+        $resourcesenabled = event_access_manager::is_resources_enabled();
+        $currentrecord = null;
 
-        $mappings = [];
-        foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
-            // Rooms.
-            foreach ($categorygroup['resources'] as $resource) {
-                $id = $resource['id'];
-                if ($categorygroup['category']['name'] === 'Rooms') {
-                    if ($formdata->room == $id) {
-                        $mappings[] = (object) [
-                                'resourceid' => $formdata->room,
-                                'amount' => 1,
-                        ];
-                    }
-                } else {
-                    // Other Resources.
-                    $checkboxname = 'checkbox_' . $id;
-                    if ($formdata->$checkboxname ?? false) {
-                        // Amountirrelevant resources have no amount input; store 1 as neutral value.
-                        $amount = $resource['amountirrelevant'] ? 1 : (int)($formdata->{'resource_' . $id} ?? 1);
-                        $mappings[] = (object) [
-                                'resourceid' => $id,
-                                'amount' => $amount,
-                        ];
-                    }
+        if (!empty($formdata->id)) {
+            $currentevent = bookit_event::from_database((int)$formdata->id);
+            $currentrecord = event_manager::get_event((int)$formdata->id);
+            $participantpastreadonly = event_access_manager::should_block_participant_past_edit(
+                $currentrecord,
+                $context,
+                (int)$USER->id
+            );
+            $caneditpublic = $caneditpublic
+                || event_access_manager::can_participant_edit_event($currentrecord, (int)$USER->id);
+            if ($participantpastreadonly) {
+                $caneditpublic = false;
+            }
+            $caneditinternalnotes = $caneditinternal
+                || event_access_manager::can_supportperson_edit_internal_notes($currentrecord, $context, (int)$USER->id);
+            $cancancelonly = !$participantpastreadonly
+                && event_access_manager::can_participant_cancel_only($currentrecord, $context, (int)$USER->id);
+            $canselfcancelnew = !$participantpastreadonly
+                && event_access_manager::can_self_cancel_new_request($currentrecord, $context, (int)$USER->id);
+            $caneditbookingstatus = event_access_manager::can_user_edit_booking_status(
+                $currentrecord,
+                $context,
+                (int)$USER->id
+            );
+            $requestedstatus = (int)($formdata->bookingstatus ?? $currentrecord->bookingstatus);
+            $statusonlyselfcancel = $canselfcancelnew
+                && $requestedstatus === event_access_manager::BOOKINGSTATUS_CANCELED;
+
+            if ($participantpastreadonly) {
+                if ($this->has_past_participant_mutation_attempt($currentrecord, $formdata)) {
+                    throw new moodle_exception('event_past_participant_notice', 'mod_bookit');
                 }
+                return [];
+            }
+
+            if (
+                $cancancelonly
+                && !in_array(
+                    $requestedstatus,
+                    [(int)$currentrecord->bookingstatus, event_access_manager::BOOKINGSTATUS_CANCELED],
+                    true
+                )
+            ) {
+                throw new moodle_exception('event_cancel_only_notice', 'mod_bookit');
+            }
+
+            if (!$caneditpublic && !$caneditinternalnotes && !$caneditbookingstatus) {
+                throw new moodle_exception('nopermissions', 'error', '', 'update event');
             }
         }
+
+        $mappings = $this->resolve_resource_mappings_from_submission(
+            $formdata,
+            $resourcesenabled,
+            $caneditpublic,
+            $statusonlyselfcancel,
+            $currentevent,
+            $currentrecord,
+            $context,
+            (int)$USER->id
+        );
         $formdata->resources = $mappings;
 
-        // Calculate endtime.
-        $formdata->endtime = $formdata->starttime + $formdata->duration * 60;
+        if ($caneditpublic && !$statusonlyselfcancel) {
+            $resolvedstarttime = $submittedstarttime ?? ($formdata->starttime ?? null);
+            $resolvedduration = $submittedduration ?? ($formdata->duration ?? null) ?? $currentevent?->duration;
+
+            if (
+                $resolvedstarttime === null
+                && $currentrecord !== null
+                && $this->should_reuse_current_starttime($currentrecord, $formdata, $submittedstarttime, $submittedduration)
+            ) {
+                $resolvedstarttime = (int)$currentrecord->starttime;
+            }
+
+            if ($resolvedstarttime === null || $resolvedduration === null) {
+                if (!$canmanagepastbookings) {
+                    throw new moodle_exception('event_error_mintime', 'mod_bookit');
+                }
+                throw new moodle_exception('missingrequiredfield', 'error');
+            }
+
+            if (
+                !$canmanagepastbookings
+                && get_possible_starttimes::is_starttime_in_past((int)$resolvedstarttime)
+            ) {
+                throw new moodle_exception('event_error_mintime', 'mod_bookit');
+            }
+
+            $formdata->starttime = (int)$resolvedstarttime;
+            $formdata->duration = (int)$resolvedduration;
+            // Calculate endtime.
+            $formdata->endtime = $formdata->starttime + $formdata->duration * 60;
+        } else if ($currentevent) {
+            $formdata->starttime = $currentevent->starttime;
+            $formdata->endtime = $currentevent->endtime;
+            $formdata->duration = $currentevent->duration;
+            $formdata->semester = $currentevent->semester;
+            $formdata->institutionid = $currentevent->institutionid;
+            $formdata->roomid = $currentevent->roomid;
+            $formdata->participantsamount = $currentevent->participantsamount;
+            $formdata->timecompensation = $currentevent->timecompensation;
+            $formdata->compensationfordisadvantages = $currentevent->compensationfordisadvantages;
+            $formdata->personinchargeid = $currentevent->personinchargeid;
+            $formdata->otherexaminers = $currentevent->otherexaminers;
+            $formdata->coursetemplate = $currentevent->coursetemplate;
+            $formdata->notes = $currentevent->notes;
+            $formdata->refcourseid = $currentevent->refcourseid;
+            $formdata->name = $currentevent->name;
+        }
 
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));
@@ -703,8 +1106,14 @@ class edit_event_form extends dynamic_form {
             $formdata->refcourseid = $r[0];
         }
 
-        if (!is_int($formdata->usercreated)) {
+        // Usercreated stores the booking person (created-by); do not clobber with display name.
+        if (!is_int($formdata->usercreated ?? null)) {
             unset($formdata->usercreated);
+        }
+
+        // Unwrap MCE editor array to plain text for persistence.
+        if (is_array($formdata->compensationfordisadvantages ?? null)) {
+            $formdata->compensationfordisadvantages = $formdata->compensationfordisadvantages['text'] ?? '';
         }
 
         if (!is_int($formdata->extratimebefore)) {
@@ -714,26 +1123,69 @@ class edit_event_form extends dynamic_form {
         if (!is_int($formdata->extratimeafter)) {
             $formdata->extratimeafter = null;
         }
-        // Extract text from editor fields before persisting.
-        if (is_array($formdata->notes)) {
-            $formdata->notes = $formdata->notes['text'] ?? '';
+
+        if ($currentevent && !$caneditinternal) {
+            // Support with notes-gate may update supportpersons; other internal fields stay locked.
+            if (!$caneditinternalnotes) {
+                $formdata->supportpersons = $currentevent->supportpersons;
+            }
+            $formdata->extratimebefore = $currentevent->extratimebefore;
+            $formdata->extratimeafter = $currentevent->extratimeafter;
+            $formdata->refcourseid = $currentevent->refcourseid;
+            if (!$caneditbookingstatus) {
+                $formdata->bookingstatus = $currentevent->bookingstatus;
+            }
         }
-        if (is_array($formdata->internalnotes)) {
-            $formdata->internalnotes = $formdata->internalnotes['text'] ?? '';
+
+        if ($currentevent && !$caneditinternalnotes) {
+            $formdata->internalnotes = $currentevent->internalnotes;
         }
-        if (is_array($formdata->compensationfordisadvantages)) {
-            $formdata->compensationfordisadvantages = $formdata->compensationfordisadvantages['text'] ?? '';
-        }
-        // Hard guard: reject past start times for non-service-team users.
-        $context = $this->get_context_for_dynamic_submission();
-        if (!has_capability('mod/bookit:editinternal', $context)) {
-            if ((int)$formdata->starttime < time()) {
-                throw new \moodle_exception('error_starttime_in_past', 'mod_bookit');
+
+        if ($currentevent && $caneditbookingstatus && !$caneditinternal) {
+            $requestedstatus = (int)($formdata->bookingstatus ?? $currentevent->bookingstatus);
+            $allowedstatuses = [
+                (int)$currentevent->bookingstatus,
+            ];
+            if (
+                event_access_manager::can_transition_booking_status(
+                    (int)$currentevent->bookingstatus,
+                    event_access_manager::BOOKINGSTATUS_CANCELED
+                )
+            ) {
+                $allowedstatuses[] = event_access_manager::BOOKINGSTATUS_CANCELED;
+            }
+
+            if (!in_array($requestedstatus, $allowedstatuses, true)) {
+                throw new moodle_exception('nopermissions', 'error', '', 'change booking status');
+            }
+
+            if ($requestedstatus !== (int)$currentevent->bookingstatus) {
+                $bookingstatustransition = $requestedstatus;
+                $formdata->bookingstatus = (int)$currentevent->bookingstatus;
+            } else {
+                $formdata->bookingstatus = $requestedstatus;
             }
         }
 
         $event = bookit_event::from_record($formdata);
-        $event->save();
+        $cmid = (int)$this->optional_param('cmid', 0, PARAM_INT);
+        $persistedevent = event_manager::save_event_with_lifecycle_tracking(
+            $event,
+            $currentevent,
+            (int)$USER->id,
+            $context,
+            $cmid > 0 ? $cmid : null
+        );
+        if ($bookingstatustransition !== null) {
+            $persistedrecord = event_manager::get_event((int)$persistedevent->id);
+            event_manager::transition_booking_status(
+                $persistedrecord,
+                $bookingstatustransition,
+                (int)$USER->id,
+                $context,
+                $cmid > 0 ? $cmid : null
+            );
+        }
 
         return [];
     }
@@ -750,6 +1202,104 @@ class edit_event_form extends dynamic_form {
                 'cmid' => $this->optional_param('cmid', null, PARAM_INT),
         ];
         return new moodle_url('/mod/bookit/view.php', $params);
+    }
+
+    /**
+     * Resolve resource mappings for save from form submission and permission context.
+     *
+     * @param stdClass $formdata Submitted form data
+     * @param bool $resourcesenabled Whether the resources module is enabled
+     * @param bool $caneditpublic Whether public event fields may be edited
+     * @param bool $statusonlyselfcancel Whether this is a self-cancel-only save
+     * @param bookit_event|null $currentevent Existing event entity, if any
+     * @param stdClass|null $currentrecord Existing event DB record, if any
+     * @param module $context Module context for permission checks
+     * @param int $userid Acting user id
+     * @return array List of mapping objects with resourceid and amount
+     * @throws dml_exception
+     */
+    private function resolve_resource_mappings_from_submission(
+        stdClass $formdata,
+        bool $resourcesenabled,
+        bool $caneditpublic,
+        bool $statusonlyselfcancel,
+        ?bookit_event $currentevent,
+        ?stdClass $currentrecord,
+        module $context,
+        int $userid
+    ): array {
+        if (!$resourcesenabled) {
+            return $currentevent !== null ? $currentevent->resources : [];
+        }
+
+        if ($statusonlyselfcancel || !$caneditpublic) {
+            return $currentevent !== null ? $currentevent->resources : [];
+        }
+
+        if ($currentrecord !== null && (int)$currentrecord->bookingstatus >= 2) {
+            return $currentevent !== null ? $currentevent->resources : [];
+        }
+
+        $caneditresourcecheckboxes = $currentrecord === null
+            || event_access_manager::can_user_edit_event_resources($currentrecord, $context, $userid);
+        if ($currentevent !== null && !$caneditresourcecheckboxes) {
+            return $currentevent->resources;
+        }
+
+        $hassection = !empty($formdata->bookit_resources_section);
+        if ($currentevent !== null && !$hassection) {
+            return $currentevent->resources;
+        }
+
+        if ($currentevent !== null && $hassection && !$this->submission_includes_resource_checkbox_fields()) {
+            return $currentevent->resources;
+        }
+
+        return $this->build_resource_mappings_from_checkbox_submission($formdata);
+    }
+
+    /**
+     * Whether the AJAX submission included any resource checkbox fields.
+     *
+     * Unchecked advcheckboxes still submit a hidden checkbox_*=0 entry; omitted keys mean
+     * the browser did not serialize the resource controls (e.g. disabled fields).
+     *
+     * @return bool
+     */
+    private function submission_includes_resource_checkbox_fields(): bool {
+        foreach (array_keys((array)($this->_ajaxformdata ?? [])) as $fieldname) {
+            if (str_starts_with($fieldname, 'checkbox_')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build resource mappings from submitted checkbox and amount fields.
+     *
+     * @param stdClass $formdata Submitted form data
+     * @return array List of mapping objects with resourceid and amount
+     * @throws dml_exception
+     */
+    private function build_resource_mappings_from_checkbox_submission(stdClass $formdata): array {
+        $mappings = [];
+        foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
+            foreach ($categorygroup['resources'] as $resource) {
+                $id = $resource['id'];
+                $checkboxname = 'checkbox_' . $id;
+                if ($formdata->$checkboxname ?? false) {
+                    $amount = $resource['amountirrelevant'] ? 1 : (int)($formdata->{'resource_' . $id} ?? 1);
+                    $mappings[] = (object) [
+                        'resourceid' => $id,
+                        'amount' => $amount,
+                    ];
+                }
+            }
+        }
+
+        return $mappings;
     }
 
     /**
@@ -771,6 +1321,12 @@ class edit_event_form extends dynamic_form {
     ): void {
         if (empty($resourcesdata)) {
             return;
+        }
+
+        if (!$bookingcompleted && !$this->resourcessectionmarkeradded) {
+            $mform->addElement('hidden', 'bookit_resources_section', '1');
+            $mform->setType('bookit_resources_section', PARAM_RAW);
+            $this->resourcessectionmarkeradded = true;
         }
 
         // Load room data for room icons (shortname + color per resource).
@@ -810,14 +1366,8 @@ class edit_event_form extends dynamic_form {
                     $bookedinfo = $bookedresources[$resource['id']];
                     $bookedamount = $bookedinfo['amount'];
                     $bookedstatus = $bookedinfo['status'];
-                    $statusclassmap = [
-                        bookit_resource_status::REQUESTED->value  => 'badge-secondary',
-                        bookit_resource_status::CONFIRMED->value  => 'badge-success',
-                        bookit_resource_status::INPROGRESS->value => 'badge-primary',
-                        bookit_resource_status::REJECTED->value   => 'badge-danger',
-                    ];
-                    $badgeclass = 'badge ' . ($statusclassmap[$bookedstatus] ?? 'badge-secondary');
-                    $statuslabel = get_string('resources:status_' . $bookedstatus, 'mod_bookit');
+                    $badgeclass = 'badge ' . event_manager::get_resource_status_bootstrap_badge_class($bookedstatus);
+                    $statuslabel = event_manager::get_resource_status_label($bookedstatus);
                     $statichtml = '<span class="' . $badgeclass . '">' . $statuslabel . '</span>';
                     if (!$resource['amountirrelevant']) {
                         $statichtml .= ' &nbsp;' . get_string('booking:resource_amount', 'mod_bookit')
@@ -847,7 +1397,6 @@ class edit_event_form extends dynamic_form {
                     ['group' => 1],
                     [0, 1]
                 );
-                $mform->disabledIf('checkbox_' . $resource['id'], 'editevent', 'neq');
 
                 // Info icon with popover (Moodle-native pattern: data-toggle=popover, trigger=focus).
                 $popoverparts = [];
@@ -890,7 +1439,6 @@ class edit_event_form extends dynamic_form {
                         ['size' => '4', 'data-resource-max' => (int)$resource['amount']]
                     );
                     $mform->setType('resource_' . $resource['id'], PARAM_INT);
-                    $mform->disabledIf('resource_' . $resource['id'], 'checkbox_' . $resource['id']);
                     $mform->setDefault('resource_' . $resource['id'], 1);
 
                     // Add max amount as static text.
@@ -912,6 +1460,11 @@ class edit_event_form extends dynamic_form {
                     [' '],
                     false
                 );
+                $mform->disabledIf('checkbox_' . $resource['id'], 'editevent', 'neq');
+                if (!$resource['amountirrelevant']) {
+                    $mform->disabledIf('resource_' . $resource['id'], 'editevent', 'neq');
+                    $mform->disabledIf('resource_' . $resource['id'], 'checkbox_' . $resource['id']);
+                }
             }
         }
     }
@@ -927,62 +1480,378 @@ class edit_event_form extends dynamic_form {
      */
     #[\Override]
     public function validation($data, $files): array {
-        $errors = parent::validation($data, $files);
-        // Past-time check: prevent creating new events in the past.
-        // Past-time check: Service-Team (editinternal) may always save dates in the past.
-        $starttime = (int)($data['starttime'] ?? 0);
+        global $USER;
         $context = $this->get_context_for_dynamic_submission();
-        $caneditinternal = has_capability('mod/bookit:editinternal', $context);
+        $canmanagepastbookings = event_access_manager::can_manage_past_bookings($context);
+        $existingevent = null;
+        $submittedstarttime = $this->_ajaxformdata['starttime'] ?? null;
+        $resourcesenabled = event_access_manager::is_resources_enabled();
+        if (!empty($data['id'])) {
+            $existingevent = event_manager::get_event((int)$data['id']);
+            $participantpastreadonly = event_access_manager::should_block_participant_past_edit(
+                $existingevent,
+                $context,
+                (int)$USER->id
+            );
+            $caneditpublic = has_capability('mod/bookit:editevent', $context)
+                || event_access_manager::can_participant_edit_event($existingevent, (int)$USER->id);
+            if ($participantpastreadonly) {
+                $caneditpublic = false;
+            }
+            $caneditinternal = has_capability('mod/bookit:editinternal', $context);
+            $caneditinternalnotes = $caneditinternal
+                || event_access_manager::can_supportperson_edit_internal_notes($existingevent, $context, (int)$USER->id);
+            $cancancelonly = !$participantpastreadonly
+                && event_access_manager::can_participant_cancel_only($existingevent, $context, (int)$USER->id);
+            $canselfcancelnew = !$participantpastreadonly
+                && event_access_manager::can_self_cancel_new_request($existingevent, $context, (int)$USER->id);
 
-        if ($starttime > 0 && !$caneditinternal) {
-            $now = time();
-            $eventid = (int)($data['id'] ?? 0);
+            if ($participantpastreadonly && $this->has_past_participant_mutation_attempt($existingevent, (object)$data)) {
+                $errors = parent::validation($data, $files);
+                $errors['name'] = get_string('event_past_participant_notice', 'mod_bookit');
+                return $errors;
+            }
 
-            if ($eventid <= 0) {
-                // Creating a new event.
-                if ($starttime < $now) {
-                    $errors['starttime'] = get_string('error_starttime_in_past', 'mod_bookit');
-                }
-            } else {
-                // Editing an existing event.
-                global $DB;
-                $original = (int)$DB->get_field('bookit_event', 'starttime', ['id' => $eventid]);
-                if ($original >= $now && $starttime < $now) {
-                    // Original was in the future, new value is in the past → reject.
-                    $errors['starttime'] = get_string('error_starttime_in_past', 'mod_bookit');
-                }
-                // If original was in the past, allow any new starttime.
+            if ($participantpastreadonly) {
+                return parent::validation($data, $files);
+            }
+
+            if (!$caneditpublic && !$caneditinternalnotes && !$cancancelonly && !$canselfcancelnew) {
+                $errors = parent::validation($data, $files);
+                $errors['name'] = get_string('nopermissions', 'error');
+                return $errors;
+            }
+
+            $statusonlyselfcancel = $canselfcancelnew
+                && (int)($data['bookingstatus'] ?? $existingevent->bookingstatus)
+                    === event_access_manager::BOOKINGSTATUS_CANCELED;
+
+            if (!$caneditpublic || $statusonlyselfcancel) {
+                $data['name'] = $data['name'] ?? $existingevent->name;
+                $data['semester'] = $data['semester'] ?? $existingevent->semester;
+                $data['institutionid'] = $data['institutionid'] ?? $existingevent->institutionid;
+                $data['roomid'] = $data['roomid'] ?? $existingevent->roomid;
+                $data['startdate'] = $data['startdate'] ?? usergetdate($existingevent->starttime);
+                $data['starttime'] = $data['starttime'] ?? $existingevent->starttime;
+                $data['duration'] = $data['duration'] ?? $existingevent->duration;
+                $data['participantsamount'] = $data['participantsamount'] ?? $existingevent->participantsamount;
+                $data['personinchargeid'] = $data['personinchargeid'] ?? $existingevent->personinchargeid;
+                $data['otherexaminers'] = $data['otherexaminers'] ?? $existingevent->otherexaminers;
+                $data['coursetemplate'] = $data['coursetemplate'] ?? $existingevent->coursetemplate;
+                $data['timecompensation'] = $data['timecompensation'] ?? $existingevent->timecompensation;
+                $data['compensationfordisadvantages'] = $data['compensationfordisadvantages']
+                    ?? $existingevent->compensationfordisadvantages;
+                $data['notes'] = $data['notes'] ?? $existingevent->notes;
+                $data['refcourseid'] = $data['refcourseid'] ?? $existingevent->refcourseid;
             }
         }
 
-        $room = room::get_record(['id' => $data['roomid']]);
-        if ($room->get('seats') != 0 && $room->get('seats') < $data['participantsamount']) {
+        $errors = parent::validation($data, $files);
+
+        if ($existingevent !== null) {
+            if (!$caneditpublic && ($cancancelonly || $canselfcancelnew)) {
+                $requestedstatus = (int)($data['bookingstatus'] ?? $existingevent->bookingstatus);
+                $allowedstatuses = $cancancelonly
+                    ? [(int)$existingevent->bookingstatus, event_access_manager::BOOKINGSTATUS_CANCELED]
+                    : [(int)$existingevent->bookingstatus, event_access_manager::BOOKINGSTATUS_CANCELED];
+                if (!in_array($requestedstatus, $allowedstatuses, true)) {
+                    $errors['bookingstatus'] = get_string('event_cancel_only_notice', 'mod_bookit');
+                }
+            }
+        }
+
+        $roomid = $data['roomid'] ?? $existingevent->roomid ?? null;
+        $participantsamount = $data['participantsamount'] ?? $existingevent->participantsamount ?? null;
+        $room = !empty($roomid) ? room::get_record(['id' => $roomid], IGNORE_MISSING) : null;
+        $starttime = $submittedstarttime ?? ($data['starttime'] ?? null);
+        if (
+            !$canmanagepastbookings
+            && $starttime !== null
+            && get_possible_starttimes::is_starttime_in_past((int)$starttime)
+        ) {
+            $errors['starttime'] = get_string('event_error_mintime', 'mod_bookit');
+        }
+        if ($room && $participantsamount !== null && $room->get('seats') != 0 && $room->get('seats') < $participantsamount) {
             $errors['roomid'] = get_string('room_doesnt_have_enough_seats', 'mod_bookit');
         }
 
-        foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
-            foreach ($categorygroup['resources'] as $resource) {
-                $id = $resource['id'];
-                if (empty($data['checkbox_' . $id]) || $resource['amountirrelevant']) {
-                    continue;
-                }
-                $requested = (int)($data['resource_' . $id] ?? 0);
-                $maxamount = (int)$resource['amount'];
-                if ($requested < 1) {
-                    $errors['resourcegroup_' . $id] = get_string(
-                        'booking:resource_amount_too_low',
-                        'mod_bookit'
-                    );
-                } else if ($maxamount > 0 && $requested > $maxamount) {
-                    $errors['resourcegroup_' . $id] = get_string(
-                        'booking:resource_amount_invalid',
-                        'mod_bookit',
-                        (object)['requested' => $requested, 'available' => $maxamount]
-                    );
+        $caneditresources = empty($data['id'])
+            || $existingevent === null
+            || event_access_manager::can_user_edit_event_resources($existingevent, $context, (int)$USER->id);
+        if ($resourcesenabled && $caneditresources) {
+            foreach (resource_manager::get_active_resources_grouped() as $categorygroup) {
+                foreach ($categorygroup['resources'] as $resource) {
+                    $id = $resource['id'];
+                    if (empty($data['checkbox_' . $id]) || $resource['amountirrelevant']) {
+                        continue;
+                    }
+                    $requested = (int)($data['resource_' . $id] ?? 0);
+                    $maxamount = (int)$resource['amount'];
+                    if ($requested < 1) {
+                        $errors['resourcegroup_' . $id] = get_string(
+                            'booking:resource_amount_too_low',
+                            'mod_bookit'
+                        );
+                    } else if ($maxamount > 0 && $requested > $maxamount) {
+                        $errors['resourcegroup_' . $id] = get_string(
+                            'booking:resource_amount_invalid',
+                            'mod_bookit',
+                            (object)['requested' => $requested, 'available' => $maxamount]
+                        );
+                    }
                 }
             }
         }
 
+        $config = get_config('mod_bookit');
+        $examinersresolver = examiner_pool_resolver::from_config($config);
+        $legacyexaminerids = examiner_pool_resolver::get_legacy_user_ids_from_event($existingevent);
+        $poolerrors = $examinersresolver->validate_assignments(
+            isset($data['personinchargeid']) ? (string)$data['personinchargeid'] : null,
+            isset($data['otherexaminers']) ? (string)$data['otherexaminers'] : null,
+            $legacyexaminerids
+        );
+        foreach ($poolerrors as $fieldname => $message) {
+            $errors[$fieldname] = $message;
+        }
+
         return $errors;
+    }
+
+    /**
+     * Check whether a blocked participant submission still tries to mutate historical booking fields.
+     *
+     * @param stdClass $currentevent
+     * @param stdClass $formdata
+     * @return bool
+     */
+    private function has_past_participant_mutation_attempt(stdClass $currentevent, stdClass $formdata): bool {
+        $currentstate = [
+            'name' => (string)($currentevent->name ?? ''),
+            'semester' => (string)($currentevent->semester ?? ''),
+            'institutionid' => (string)($currentevent->institutionid ?? ''),
+            'roomid' => (string)($currentevent->roomid ?? ''),
+            'starttime' => (string)($currentevent->starttime ?? ''),
+            'duration' => (string)($currentevent->duration ?? ''),
+            'participantsamount' => (string)($currentevent->participantsamount ?? ''),
+            'personinchargeid' => (string)($currentevent->personinchargeid ?? ''),
+            'otherexaminers' => $this->normalise_comma_separated_ids($currentevent->otherexaminers ?? ''),
+            'coursetemplate' => (string)($currentevent->coursetemplate ?? ''),
+            'timecompensation' => (string)($currentevent->timecompensation ?? ''),
+            'compensationfordisadvantages' => $this->normalise_editor_text_value(
+                $currentevent->compensationfordisadvantages ?? ''
+            ),
+            'notes' => (string)($currentevent->notes ?? ''),
+            'refcourseid' => (string)($currentevent->refcourseid ?? ''),
+            'bookingstatus' => (string)($currentevent->bookingstatus ?? ''),
+        ];
+
+        $submittedstate = [
+            'name' => (string)($formdata->name ?? $currentevent->name ?? ''),
+            'semester' => (string)($formdata->semester ?? $currentevent->semester ?? ''),
+            'institutionid' => (string)($formdata->institutionid ?? $currentevent->institutionid ?? ''),
+            'roomid' => (string)($formdata->roomid ?? ($formdata->room ?? $currentevent->roomid ?? '')),
+            'starttime' => (string)($this->_ajaxformdata['starttime'] ?? ($formdata->starttime ?? $currentevent->starttime ?? '')),
+            'duration' => (string)($this->_ajaxformdata['duration'] ?? ($formdata->duration ?? $currentevent->duration ?? '')),
+            'participantsamount' => (string)($formdata->participantsamount ?? $currentevent->participantsamount ?? ''),
+            'personinchargeid' => (string)($formdata->personinchargeid ?? $currentevent->personinchargeid ?? ''),
+            'otherexaminers' => $this->normalise_comma_separated_ids(
+                $formdata->otherexaminers ?? $currentevent->otherexaminers ?? ''
+            ),
+            'coursetemplate' => (string)($formdata->coursetemplate ?? $currentevent->coursetemplate ?? ''),
+            'timecompensation' => (string)($formdata->timecompensation ?? $currentevent->timecompensation ?? ''),
+            'compensationfordisadvantages' => $this->normalise_editor_text_value(
+                $formdata->compensationfordisadvantages ?? $currentevent->compensationfordisadvantages ?? ''
+            ),
+            'notes' => (string)($formdata->notes ?? $currentevent->notes ?? ''),
+            'refcourseid' => (string)($formdata->refcourseid ?? $currentevent->refcourseid ?? ''),
+            'bookingstatus' => (string)($formdata->bookingstatus ?? $currentevent->bookingstatus ?? ''),
+        ];
+
+        foreach ($currentstate as $field => $value) {
+            if ($submittedstate[$field] !== $value) {
+                return true;
+            }
+        }
+
+        foreach (array_keys((array)($this->_ajaxformdata ?? [])) as $fieldname) {
+            if (str_starts_with($fieldname, 'checkbox_') || str_starts_with($fieldname, 'resource_')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Reuse the current start time when the request did not actually change the booking schedule.
+     *
+     * This keeps status-only updates working for service roles even if the start-time dropdown cannot
+     * repopulate options for an already scheduled historical slot.
+     *
+     * @param stdClass $currentevent
+     * @param stdClass $formdata
+     * @param int|null $submittedstarttime
+     * @param int|null $submittedduration
+     * @return bool
+     */
+    private function should_reuse_current_starttime(
+        stdClass $currentevent,
+        stdClass $formdata,
+        ?int $submittedstarttime,
+        ?int $submittedduration
+    ): bool {
+        if ($submittedstarttime !== null || (($formdata->starttime ?? null) !== null && $formdata->starttime !== '')) {
+            return false;
+        }
+
+        $currentstartdate = (new \DateTime())
+            ->setTimestamp((int)$currentevent->starttime)
+            ->setTime(0, 0)
+            ->getTimestamp();
+        $submittedstartdate = $this->normalise_submitted_startdate($formdata->startdate ?? null) ?? $currentstartdate;
+        $submittedroomid = (int)($formdata->roomid ?? ($formdata->room ?? $currentevent->roomid ?? 0));
+        $resolvedduration = $submittedduration ?? ($formdata->duration ?? $currentevent->duration ?? null);
+
+        if ($resolvedduration === null) {
+            return false;
+        }
+
+        return $submittedstartdate === $currentstartdate
+            && $submittedroomid === (int)$currentevent->roomid
+            && (int)$resolvedduration === (int)$currentevent->duration;
+    }
+
+    /**
+     * Normalise a plain-text or Moodle editor array value to a comparable string.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    private function normalise_editor_text_value(mixed $value): string {
+        if (is_array($value)) {
+            return (string)($value['text'] ?? '');
+        }
+
+        return (string)($value ?? '');
+    }
+
+    /**
+     * Normalise a submitted start-date value to a midnight timestamp.
+     *
+     * @param mixed $value
+     * @return int|null
+     */
+    private function normalise_submitted_startdate(mixed $value): ?int {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_array($value)) {
+            if (
+                !isset($value['year'], $value['month'], $value['day'])
+                || $value['year'] === ''
+                || $value['month'] === ''
+                || $value['day'] === ''
+            ) {
+                return null;
+            }
+
+            return make_timestamp((int)$value['year'], (int)$value['month'], (int)$value['day'], 0, 0, 0);
+        }
+
+        return (new \DateTime())
+            ->setTimestamp((int)$value)
+            ->setTime(0, 0)
+            ->getTimestamp();
+    }
+
+    /**
+     * Normalise comma separated ids or id arrays for stable comparisons.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    private function normalise_comma_separated_ids(mixed $value): string {
+        if (is_array($value)) {
+            $value = implode(',', $value);
+        }
+
+        $ids = array_values(array_filter(
+            array_map('trim', explode(',', (string)$value)),
+            static fn(string $id): bool => $id !== ''
+        ));
+        $ids = array_map('intval', $ids);
+        sort($ids);
+
+        return implode(',', $ids);
+    }
+
+    /**
+     * Ensure selected examiner ids have readable autocomplete labels after form data is loaded.
+     *
+     * @param \MoodleQuickForm $mform
+     * @param \stdClass|null $data
+     * @return void
+     */
+    private function inject_examiner_selector_labels(\MoodleQuickForm $mform, ?\stdClass $data): void {
+        if ($data === null) {
+            return;
+        }
+        $personid = (int)($data->personinchargeid ?? 0);
+        if ($personid > 0 && $mform->elementExists('personinchargeid')) {
+            $this->merge_examiner_autocomplete_options($mform, 'personinchargeid', [$personid]);
+        }
+
+        $otherexaminerids = examiner_pool_resolver::parse_user_id_list(
+            isset($data->otherexaminers) ? (string)$data->otherexaminers : null
+        );
+        if ($otherexaminerids !== [] && $mform->elementExists('otherexaminers')) {
+            $this->merge_examiner_autocomplete_options($mform, 'otherexaminers', $otherexaminerids);
+        }
+    }
+
+    /**
+     * Merge resolved labels into an examiner autocomplete element.
+     *
+     * @param \MoodleQuickForm $mform
+     * @param string $fieldname
+     * @param int[] $userids
+     * @return void
+     */
+    private function merge_examiner_autocomplete_options(\MoodleQuickForm $mform, string $fieldname, array $userids): void {
+        $element = $mform->getElement($fieldname);
+        if (!is_object($element) || !method_exists($element, 'addOption')) {
+            return;
+        }
+
+        foreach (examiner_pool_resolver::build_options_for_user_ids($userids) as $value => $label) {
+            $element->addOption($label, (string)$value);
+        }
+    }
+
+    /**
+     * Format one or more selected user ids for readonly selector output.
+     *
+     * @param mixed $value
+     * @param array $options
+     * @return string
+     */
+    private function format_selector_display(mixed $value, array $options): string {
+        $ids = examiner_pool_resolver::parse_user_id_list(
+            $value === null || $value === '' ? null : (string)$value
+        );
+        if ($ids === []) {
+            return '-';
+        }
+
+        $resolvedlabels = examiner_pool_resolver::build_options_for_user_ids($ids);
+        $labels = [];
+
+        foreach ($ids as $id) {
+            $labels[] = $options[$id] ?? $resolvedlabels[$id] ?? examiner_pool_resolver::format_fallback_label($id);
+        }
+
+        return implode(', ', $labels);
     }
 }

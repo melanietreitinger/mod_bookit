@@ -28,19 +28,65 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
 require_admin();
+require_sesskey();
 
-// Mark installation helper as finished first to avoid session mutation issues.
-set_config('installhelperfinished', 1, 'mod_bookit');
+/**
+ * Resolve the combined setup outcome across baseline and role import reports.
+ *
+ * @param string[] $statuses
+ * @return string
+ */
+function mod_bookit_resolve_install_helper_status(array $statuses): string {
+    $statuses = array_values(array_unique($statuses));
+    if (in_array('failed', $statuses, true)) {
+        return count($statuses) > 1 ? 'partial' : 'failed';
+    }
+    if (in_array('partial', $statuses, true)) {
+        return 'partial';
+    }
+    if (in_array('success', $statuses, true)) {
+        return 'success';
+    }
+    return 'idempotent';
+}
 
-// Run the installation helper.
-$rolesimported = install_helper::import_default_roles(false, false);
-$usersimported = install_helper::import_default_users(false, false);
-$result = install_helper::create_default_checklists(false, false); // Creates rooms as well.
-$resourcesresult = install_helper::create_default_resources(false, false);
-$weekplanresult = install_helper::create_default_weekplan(false, false);
-$courseresult = install_helper::create_default_course_and_activity(false, false);
-$eventsresult = install_helper::create_default_events(false, false);
+$rolereport = install_helper::import_default_roles_with_report(false, false);
+$baselinereport = install_helper::ensure_fresh_install_baseline(false);
+$status = mod_bookit_resolve_install_helper_status([
+    $rolereport['status'],
+    $baselinereport['status'],
+]);
+
+if (in_array($baselinereport['status'], ['success', 'idempotent'], true)) {
+    set_config('installhelperfinished', 1, 'mod_bookit');
+} else {
+    set_config('installhelperfinished', 0, 'mod_bookit');
+}
+
+$details = array_merge($rolereport['errors'], $baselinereport['errors']);
+$baselinecreated = 0;
+$baselineverified = 0;
+foreach ($baselinereport['operations'] as $operation) {
+    if (($operation['status'] ?? '') === 'created') {
+        $baselinecreated++;
+    } else if (($operation['status'] ?? '') === 'idempotent') {
+        $baselineverified++;
+    }
+}
 
 // Redirect back to settings.
-$returnurl = new moodle_url('/admin/settings.php', ['section' => 'modsettingbookit']);
-redirect($returnurl, 'Installation helper completed successfully.');
+$params = [
+    'section' => 'modsettingbookit',
+    'installhelperstatus' => $status,
+    'rolesimported' => count($rolereport['imported']),
+    'rolesskipped' => count($rolereport['skipped']),
+    'baselinecreated' => $baselinecreated,
+    'baselineverified' => $baselineverified,
+    'installhelpererrors' => count($details),
+];
+if (!empty($details)) {
+    $params['installhelperdetails'] = implode(' | ', $details);
+}
+
+$returnurl = new moodle_url('/admin/settings.php', $params);
+redirect($returnurl);

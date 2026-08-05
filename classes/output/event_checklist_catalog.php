@@ -38,7 +38,12 @@ use stdClass;
 /**
  * Event checklist catalog output class.
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class event_checklist_catalog implements renderable, templatable {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /** @var int Event ID */
     private int $eventid;
 

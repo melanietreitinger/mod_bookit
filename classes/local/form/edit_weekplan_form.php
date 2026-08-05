@@ -40,7 +40,12 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class edit_weekplan_form extends moodleform {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Defines forms elements
      */

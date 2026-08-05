@@ -23,6 +23,7 @@
  */
 
 use mod_bookit\form\settings_checklist_form;
+use mod_bookit\local\install_helper;
 use mod_bookit\local\tabs;
 
 require_once(__DIR__ . '/../../../config.php');
@@ -41,6 +42,10 @@ $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 $returnurl = new moodle_url('/mod/bookit/admin/checklist.php');
 
 require_capability('mod/bookit:managemasterchecklist', $context); // XXX TODO: use other capability.
+if (!install_helper::is_checklist_enabled()) {
+    $settingsurl = new moodle_url('/admin/settings.php', ['section' => 'modsettingbookit']);
+    redirect($settingsurl, get_string('optional_part_disabled', 'mod_bookit'), null, \core\output\notification::NOTIFY_WARNING);
+}
 
 $mform = new settings_checklist_form();
 

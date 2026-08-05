@@ -27,6 +27,7 @@ namespace mod_bookit\local;
 use coding_exception;
 use context;
 use core\exception\moodle_exception;
+use invalid_parameter_exception;
 use moodle_url;
 use tabobject;
 
@@ -38,6 +39,73 @@ use tabobject;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tabs {
+    /** @var string[] Canonical Request Workspace tab slugs. */
+    public const WORKSPACE_TABS = [
+        'allrequests',
+        'openrequests',
+        'confirmedrequests',
+        'rejectedcancelled',
+        'history',
+    ];
+
+    /** @var string[] Canonical participant overview tab slugs. */
+    public const PARTICIPANT_TABS = [
+        'myevents',
+        'history',
+    ];
+
+    /**
+     * Default overview tab when the query parameter is omitted.
+     *
+     * @param bool $isrequestworkspaceviewer Whether the viewer may use Request Workspace tabs.
+     * @return string
+     */
+    public static function get_default_overview_tab(bool $isrequestworkspaceviewer): string {
+        return $isrequestworkspaceviewer ? 'allrequests' : 'myevents';
+    }
+
+    /**
+     * Validate an overview tab slug for the current viewer role.
+     *
+     * @param string $tab Raw tab from the request.
+     * @param bool $isrequestworkspaceviewer Whether the viewer may use Request Workspace tabs.
+     * @return string Canonical tab slug.
+     * @throws invalid_parameter_exception
+     */
+    public static function validate_overview_tab(string $tab, bool $isrequestworkspaceviewer): string {
+        $allowed = $isrequestworkspaceviewer ? self::WORKSPACE_TABS : self::PARTICIPANT_TABS;
+        if (!in_array($tab, $allowed, true)) {
+            throw new invalid_parameter_exception('tab');
+        }
+
+        return $tab;
+    }
+
+    /**
+     * Validate a governed workspace slug for external queue reads.
+     *
+     * @param string $workspace Workspace slug from an external API call.
+     * @return string Canonical workspace slug.
+     * @throws invalid_parameter_exception
+     */
+    public static function validate_workspace_tab(string $workspace): string {
+        if (!in_array($workspace, self::WORKSPACE_TABS, true)) {
+            throw new invalid_parameter_exception('workspace');
+        }
+
+        return $workspace;
+    }
+
+    /**
+     * Whether a slug is a canonical Request Workspace tab.
+     *
+     * @param string $tab
+     * @return bool
+     */
+    public static function is_workspace_tab(string $tab): bool {
+        return in_array($tab, self::WORKSPACE_TABS, true);
+    }
+
     /**
      * Generates a Moodle tabrow i.e. an array of tabs
      *
@@ -84,15 +152,17 @@ class tabs {
             );
 
             // Tab to the resources page.
-            $targeturl = new moodle_url('/mod/bookit/admin/resources.php', ['id' => 'resources']);
-            $tabrow[] = new tabobject(
-                'resources',
-                $targeturl,
-                get_string('resources', 'mod_bookit')
-            );
+            if (install_helper::is_resources_enabled()) {
+                $targeturl = new moodle_url('/mod/bookit/admin/resources.php', ['id' => 'resources']);
+                $tabrow[] = new tabobject(
+                    'resources',
+                    $targeturl,
+                    get_string('resources', 'mod_bookit')
+                );
+            }
         }
 
-        if ($canmanagechecklists) {
+        if ($canmanagechecklists && install_helper::is_checklist_enabled()) {
             // Tab to the master checklist page.
             $targeturl = new moodle_url('/mod/bookit/admin/master_checklist.php', ['id' => 'master_checklist_items']);
             $tabrow[] = new tabobject(
@@ -121,5 +191,110 @@ class tabs {
         }
 
         return $tabrow;
+    }
+
+    /**
+     * Build the inner overview tabs for the overview/history workspace.
+     *
+     * @param int $cmid
+     * @param array $navigationparams
+     * @param bool $showhistory
+     * @param bool $useservicebookinglabel
+     * @return array
+     */
+    public static function get_overview_inner_tabrow(
+        int $cmid,
+        array $navigationparams,
+        bool $showhistory,
+        bool $useservicebookinglabel = false
+    ): array {
+        $tabrow = [
+            new tabobject(
+                'myevents',
+                self::build_overview_url($cmid, 'myevents', $navigationparams),
+                get_string($useservicebookinglabel ? 'overview_all_events' : 'overview_my_events', 'mod_bookit')
+            ),
+        ];
+
+        if ($showhistory) {
+            $tabrow[] = new tabobject(
+                'history',
+                self::build_overview_url($cmid, 'history', $navigationparams),
+                get_string('overview_history', 'mod_bookit')
+            );
+        }
+
+        return $tabrow;
+    }
+
+    /**
+     * Build the inner request-workspace tabs for open/rejected requests.
+     *
+     * @param int $cmid
+     * @param array $navigationparams
+     * @return array
+     */
+    public static function get_request_workspace_tabrow(int $cmid, array $navigationparams): array {
+        return [
+            new tabobject(
+                'allrequests',
+                self::build_overview_url($cmid, 'allrequests', $navigationparams),
+                get_string('overview_all_requests', 'mod_bookit')
+            ),
+            new tabobject(
+                'openrequests',
+                self::build_overview_url($cmid, 'openrequests', $navigationparams),
+                get_string('overview_open_requests', 'mod_bookit')
+            ),
+            new tabobject(
+                'confirmedrequests',
+                self::build_overview_url($cmid, 'confirmedrequests', $navigationparams),
+                get_string('overview_confirmed_requests', 'mod_bookit')
+            ),
+            new tabobject(
+                'rejectedcancelled',
+                self::build_overview_url($cmid, 'rejectedcancelled', $navigationparams),
+                get_string('overview_rejected_cancelled_requests', 'mod_bookit')
+            ),
+            new tabobject(
+                'history',
+                self::build_overview_url($cmid, 'history', $navigationparams),
+                get_string('overview_history', 'mod_bookit')
+            ),
+        ];
+    }
+
+    /**
+     * Build an overview URL that safely preserves scalar and array filter state.
+     *
+     * moodle_url rejects array parameter values, but the overview needs to preserve
+     * filters such as semesterids[] when switching inner tabs.
+     *
+     * @param int $cmid
+     * @param string $tab
+     * @param array $navigationparams
+     * @return string
+     */
+    public static function build_overview_url(int $cmid, string $tab, array $navigationparams = []): string {
+        $params = [
+            'id' => $cmid,
+            'tab' => $tab,
+        ];
+
+        foreach ($navigationparams as $key => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            if (is_array($value) && $value === []) {
+                continue;
+            }
+
+            $params[$key] = $value;
+        }
+
+        return (new moodle_url('/mod/bookit/overview.php'))->out(false)
+            . '?'
+            . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 }

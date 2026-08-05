@@ -23,6 +23,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_bookit\local\install_helper;
 use mod_bookit\local\tabs;
 
 require_once(__DIR__ . '/../../../config.php');
@@ -32,6 +33,10 @@ $context = context_system::instance();
 
 require_login();
 require_capability('mod/bookit:managebasics', $context);
+if (!install_helper::is_resources_enabled()) {
+    $settingsurl = new moodle_url('/admin/settings.php', ['section' => 'modsettingbookit']);
+    redirect($settingsurl, get_string('optional_part_disabled', 'mod_bookit'), null, \core\output\notification::NOTIFY_WARNING);
+}
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/bookit/admin/resources.php', ['id' => 'resources']));

@@ -40,7 +40,12 @@ use mod_bookit\local\manager\resource_settings_manager;
  * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class resource_manager {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Get resources of event.
      *
@@ -611,11 +616,12 @@ class resource_manager {
         $rooms = $DB->get_records('bookit_room', ['active' => 1], '', 'id, name, shortname, eventcolor');
         $roomsbyid = [];
         foreach ($rooms as $room) {
+            $eventcolor = trim((string)($room->eventcolor ?? ''));
             $roomsbyid[$room->id] = [
                 'id' => (int)$room->id,
                 'name' => $room->name,
                 'shortname' => $room->shortname,
-                'color' => $room->eventcolor,
+                'color' => $eventcolor !== '' ? $eventcolor : '#6c757d',
             ];
         }
 

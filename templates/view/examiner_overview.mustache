@@ -17,7 +17,7 @@
 {{!
     @template mod_bookit/overview/examiner_overview
 
-    Examiner overview table with live search and sortable columns.
+    Examiner overview with a Moodle Core SQL table for the Request Workspace.
     The title link opens the event details ModalForm (handled by existing AMD JS).
 
     Classes required for JS:
@@ -36,11 +36,10 @@
     * room - Room label (string).
     * personincharge - Full name of the person in charge (string).
     * myrole - Role label for current user (string).
-    * statustext - Booking status label (string).
-    * statusstyle - Inline CSS for the status cell (string).
-    * statusoptions - Array of {value, label, selected} for admin dropdown.
-    * canmanage - Whether current user can manage events (bool).
+    * statusgroupkey - Row accent class suffix (open|confirmed|closed).
+    * statuscellhtml - Pre-rendered shared booking status cell markup.
     * datestr - Date string for display (string).
+    * datetimestr - Date/time string for my-events table (string).
     * starttime - Unix timestamp used for sorting (number).
     * cmid - Course module id for the modal (number).
     * checklistprogress - Checklist progress percent (int, -1 = no master checklist).
@@ -59,9 +58,10 @@
           "room": "Room 1",
           "personincharge": "Jane Doe",
           "myrole": "Person in charge",
-          "statustext": "Accepted",
-          "statusstyle": "background-color:#d4edda;color:#000000;",
+          "statusgroupkey": "confirmed",
+          "statuscellhtml": "<td class=\"mod-bookit-status-cell\">...</td>",
           "datestr": "14.01.2026",
+          "datetimestr": "14.01.2026 10:00",
           "starttime": 1768425600,
           "cmid": 42,
           "checklistprogress": 50,
@@ -75,68 +75,102 @@
 }}
 
 <div class="mod_bookit-overview-examiner_overview">
+    {{#showrequestworkspacetabs}}
     <div class="mb-3">
-        <label for="bookit-filter" class="mr-2">{{#str}}search, core{{/str}}:</label>
-        <input type="text" id="bookit-filter" class="form-control w-auto d-inline">
+        {{{requestworkspacetabtree}}}
     </div>
-
+    {{/showrequestworkspacetabs}}
+    {{#showmyeventssection}}
+    {{#showoverviewnavigation}}
+    <div class="mb-3">
+        {{{overviewtabtree}}}
+    </div>
+    {{/showoverviewnavigation}}
+    <div class="mb-3">
+        <h3 class="h5 mb-0">{{sectiontitle}}</h3>
+    </div>
+    {{> mod_bookit/view/partials/overview_search_field }}
+    {{#showoverviewfilters}}
+    {{< mod_bookit/view/partials/overview_filter_form }}
+        {{$idprefix}}bookit-{{/idprefix}}
+    {{/ mod_bookit/view/partials/overview_filter_form }}
+    {{/showoverviewfilters}}
+    {{#hasevents}}
     <table id="{{tableid}}" class="generaltable table-striped table-hover w-100">
         <thead class="text-center">
             <tr style="background-color:#cfe2ff;">
+                {{#showidcolumn}}
                 <th class="align-middle">ID</th>
-                <th class="align-middle">Title</th>
-                <th class="align-middle">Room</th>
-                <th class="align-middle">Person in charge</th>
-                <th class="align-middle">My role</th>
-                <th class="align-middle">Booking status</th>
-                <th class="align-middle">Date</th>
-                <th class="align-middle">Progress</th>
-                <th class="align-middle">Checklist</th>
-                <th class="align-middle">Resources</th>
+                {{/showidcolumn}}
+                <th class="align-middle">{{overviewcolumndatetime}}</th>
+                <th class="align-middle">{{overviewcolumntitle}}</th>
+                <th class="align-middle">{{overviewcolumnroom}}</th>
+                <th class="align-middle">{{overviewcolumnpersonincharge}}</th>
+                <th class="align-middle">{{overviewcolumnmyrole}}</th>
+                {{#showcreatedbycolumn}}
+                <th class="align-middle">{{createdbycolumnlabel}}</th>
+                {{/showcreatedbycolumn}}
+                <th class="align-middle">{{overviewcolumnbookingstatus}}</th>
+                {{#showprogresscolumn}}
+                <th class="align-middle">{{overviewcolumnprogress}}</th>
+                {{/showprogresscolumn}}
+                {{#showchecklistcolumn}}
+                <th class="align-middle">{{overviewcolumnchecklist}}</th>
+                {{/showchecklistcolumn}}
+                {{#showresourcescolumn}}
+                <th class="align-middle">{{overviewcolumnresources}}</th>
+                {{/showresourcescolumn}}
+                {{#showcancelcolumn}}
+                <th class="align-middle">{{overviewcancelcolumnlabel}}</th>
+                {{/showcancelcolumn}}
+                {{#showreactivatecolumn}}
+                <th class="align-middle">{{overviewreactivatecolumnlabel}}</th>
+                {{/showreactivatecolumn}}
             </tr>
         </thead>
 
         <tbody class="text-center">
             {{#events}}
-                <tr>
-                    <td class="align-middle">{{id}}</td>
+                <tr class="mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}">
+                    {{#showidcolumn}}
+                    <td class="align-middle" data-sort="{{id}}">{{id}}</td>
+                    {{/showidcolumn}}
+
+                    <td class="align-middle" data-sort="{{starttime}}">{{datetimestr}}</td>
 
                     <td class="align-middle">
+                        {{#is_reserved_projection}}
+                        <span data-is-reserved-projection="1">{{name}}</span>
+                        {{/is_reserved_projection}}
+                        {{^is_reserved_projection}}
+                        {{#caneventdetails}}
                         <a href="#"
                            class="bookit-event-link"
                            data-eventid="{{id}}"
-                           data-cmid="{{cmid}}">
-                            {{name}}
+                           data-cmid="{{cmid}}"
+                           data-modal-footer-mode="{{modalfootermode}}"
+                           data-is-reserved-projection="{{#is_reserved_projection}}1{{/is_reserved_projection}}{{^is_reserved_projection}}0{{/is_reserved_projection}}">
+                           {{name}}
                         </a>
+                        {{/caneventdetails}}
+                        {{^caneventdetails}}{{name}}{{/caneventdetails}}
+                        {{/is_reserved_projection}}
                     </td>
 
                     <td class="align-middle">{{room}}</td>
                     <td class="align-middle">{{personincharge}}</td>
                     <td class="align-middle">{{myrole}}</td>
+                    {{#showcreatedbycolumn}}
+                    <td class="align-middle">{{createdby}}</td>
+                    {{/showcreatedbycolumn}}
 
-                    {{#canmanage}}
-                    <td class="align-middle text-center">
-                        <select class="custom-select custom-select-sm"
-                                data-action="update-booking-status"
-                                data-eventid="{{id}}"
-                                data-cmid="{{cmid}}"
-                                data-bookingstatus="{{bookingstatus}}">
-                            {{#statusoptions}}
-                            <option value="{{value}}" data-bg="{{bg}}" data-fg="{{fg}}" {{#selected}}selected{{/selected}}>{{label}}</option>
-                            {{/statusoptions}}
-                        </select>
-                    </td>
-                    {{/canmanage}}
-                    {{^canmanage}}
-                    <td class="align-middle" style="{{statusstyle}}">{{statustext}}</td>
-                    {{/canmanage}}
+                    {{{statuscellhtml}}}
 
-                    <td class="align-middle" data-sort="{{starttime}}">{{datestr}}</td>
-
+                    {{#showprogresscolumn}}
                     <td class="align-middle">
                         {{#checklistprogress_available}}
                         <div class="mb-1">
-                            <div class="small text-muted mb-1">Checklist</div>
+                            <div class="small text-muted mb-1">{{overviewcolumnchecklist}}</div>
                             <div class="progress position-relative" style="min-width:80px;">
                                 <div class="progress-bar" role="progressbar"
                                      style="width:{{checklistprogress}}%;"
@@ -149,7 +183,7 @@
                         {{/checklistprogress_available}}
                         {{#resourcesprogress_available}}
                         <div>
-                            <div class="small text-muted mb-1">Resources</div>
+                            <div class="small text-muted mb-1">{{overviewcolumnresources}}</div>
                             <div class="progress position-relative" style="min-width:80px;">
                                 <div class="progress-bar" role="progressbar"
                                      style="width:{{resourcesprogress}}%;"
@@ -162,21 +196,77 @@
                         {{/resourcesprogress_available}}
                         {{^checklistprogress_available}}{{^resourcesprogress_available}}--{{/resourcesprogress_available}}{{/checklistprogress_available}}
                     </td>
-
+                    {{/showprogresscolumn}}
+                    {{#showchecklistcolumn}}
                     <td class="align-middle">
                         {{#haschecklistaction}}
                         <a href="{{checklisturl}}" class="btn btn-sm btn-primary">{{checklistlabel}}</a>
                         {{/haschecklistaction}}
                         {{^haschecklistaction}}-{{/haschecklistaction}}
                     </td>
+                    {{/showchecklistcolumn}}
+                    {{#showresourcescolumn}}
                     <td class="align-middle">
                         {{#hasresourcesaction}}
                         <a href="{{resourceschecklisturl}}" class="btn btn-sm btn-primary">{{resourceschecklistlabel}}</a>
                         {{/hasresourcesaction}}
                         {{^hasresourcesaction}}-{{/hasresourcesaction}}
                     </td>
+                    {{/showresourcescolumn}}
+                    {{#showcancelcolumn}}
+                    <td class="align-middle">
+                        {{#hascancelaction}}
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                data-action="cancel-booking-from-overview"
+                                data-eventid="{{id}}"
+                                data-cmid="{{cmid}}"
+                                data-status="{{canceltargetstatus}}"
+                                data-tab="{{overviewtab}}">
+                            {{cancelactionlabel}}
+                        </button>
+                        {{/hascancelaction}}
+                        {{^hascancelaction}}-{{/hascancelaction}}
+                    </td>
+                    {{/showcancelcolumn}}
+                    {{#showreactivatecolumn}}
+                    <td class="align-middle">
+                        {{#hasreactivateaction}}
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-action="reactivate-booking-from-overview"
+                                data-eventid="{{id}}"
+                                data-cmid="{{cmid}}"
+                                data-status="{{reactivatetargetstatus}}"
+                                data-tab="{{overviewtab}}">
+                            {{reactivateactionlabel}}
+                        </button>
+                        {{/hasreactivateaction}}
+                        {{^hasreactivateaction}}-{{/hasreactivateaction}}
+                    </td>
+                    {{/showreactivatecolumn}}
                 </tr>
             {{/events}}
         </tbody>
     </table>
+    {{/hasevents}}
+    {{^hasevents}}
+    <div class="alert alert-info">{{noeventsmessage}}</div>
+    {{/hasevents}}
+    {{/showmyeventssection}}
+
+    {{#showworkspacetable}}
+    <div class="mb-3">
+        <h3 class="h5 mb-0">{{sectiontitle}}</h3>
+    </div>
+    {{#showoverviewfilters}}
+    {{< mod_bookit/view/partials/overview_filter_form }}
+        {{$idprefix}}bookit-workspace-{{/idprefix}}
+    {{/ mod_bookit/view/partials/overview_filter_form }}
+    {{/showoverviewfilters}}
+    {{#workspacetableprofile.showtablesearch}}
+    {{> mod_bookit/view/partials/overview_search_field }}
+    {{/workspacetableprofile.showtablesearch}}
+    {{{coretablehtml}}}
+    {{/showworkspacetable}}
 </div>

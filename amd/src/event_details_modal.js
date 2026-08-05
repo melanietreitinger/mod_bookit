@@ -1,4 +1,6 @@
-define(['jquery', 'core_form/modalform'], function($, ModalForm) {
+define([
+    'mod_bookit/event_modal_opener'
+], function(EventModalOpener) {
     return {
         init: function() {
             document.addEventListener('click', function(e) {
@@ -8,20 +10,16 @@ define(['jquery', 'core_form/modalform'], function($, ModalForm) {
                 }
 
                 e.preventDefault();
-                const cmid = link.dataset.cmid;
-                const event = link.dataset.eventid;
+                if (link.dataset.isReservedProjection === '1') {
+                    return;
+                }
 
-                const modal = new ModalForm({
-                    formClass: 'mod_bookit\\form\\edit_event_form',
-                    args: {cmid: cmid, id: event, readonly: 1},
-                    modalConfig: {title: link.textContent.trim()}
+                EventModalOpener.openEditEventModal({
+                    cmid: link.dataset.cmid,
+                    eventid: link.dataset.eventid,
+                    title: link.textContent.trim(),
+                    modalfootermode: link.dataset.modalFooterMode || 'editable',
                 });
-
-                modal.addEventListener(modal.events.FORM_SUBMITTED, function() {
-                    window.location.reload();
-                });
-
-                modal.show();
             });
         }
     };

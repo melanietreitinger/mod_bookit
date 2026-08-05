@@ -51,6 +51,7 @@ function bookit_supports(string $feature): bool|string|null {
  */
 function bookit_add_instance(object $moduleinstance, mod_bookit_mod_form|null $mform = null): int {
     global $DB;
+    unset($mform);
 
     $moduleinstance->timecreated = time();
 
@@ -106,25 +107,58 @@ function bookit_extend_settings_navigation(
     settings_navigation $settingsnav,
     ?navigation_node $modnode = null
 ) {
-    global $PAGE;
+    global $PAGE, $OUTPUT;
+    unset($settingsnav);
 
     if (!$modnode) {
         return; // Safety: we are not inside an activity page.
     }
 
     $context = $PAGE->cm->context;
-    if (has_capability('mod/bookit:viewownoverview', $context)) {
-        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id]);
+    $pageisoverview = $PAGE->url->compare(new moodle_url('/mod/bookit/overview.php'), URL_MATCH_BASE);
+    $canviewrequestworkspace = \mod_bookit\local\manager\event_access_manager::can_view_request_workspace($context);
+    $tab = optional_param('tab', \mod_bookit\local\tabs::get_default_overview_tab($canviewrequestworkspace), PARAM_ALPHANUMEXT);
+    $workspacetabs = \mod_bookit\local\tabs::WORKSPACE_TABS;
+    $isinrequestworkspace = $pageisoverview && $canviewrequestworkspace && in_array($tab, $workspacetabs, true);
 
-        // THIS is the line that puts the entry under the current Bookit node.
-        $modnode->add(
-            get_string('overview', 'bookit'),
+    if (has_capability('mod/bookit:viewownoverview', $context) && !$canviewrequestworkspace) {
+        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'myevents']);
+        $overviewlabel = get_string('overview', 'bookit');
+
+        $overviewnode = $modnode->add(
+            $overviewlabel,
             $url,
             navigation_node::TYPE_SETTING,
             null,
             'bookitoverview',
             new pix_icon('i/calendar', '')
         );
+
+        if ($pageisoverview && !$isinrequestworkspace) {
+            $PAGE->set_secondary_active_tab('bookitoverview');
+            $overviewnode->make_active();
+        }
+    }
+
+    if ($canviewrequestworkspace) {
+        $newcount = \mod_bookit\local\manager\event_manager::count_new_requests();
+        $inprogresscount = \mod_bookit\local\manager\event_manager::count_in_progress_requests();
+        $bookitrenderer = $PAGE->get_renderer('mod_bookit');
+        $label = $bookitrenderer->render(new \mod_bookit\output\request_workspace_nav_label($newcount, $inprogresscount));
+        $url = new moodle_url('/mod/bookit/overview.php', ['id' => $PAGE->cm->id, 'tab' => 'allrequests']);
+        $requestworkspacenode = $modnode->add(
+            $label,
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'bookitrequestworkspace',
+            new pix_icon('i/report', '')
+        );
+
+        if ($isinrequestworkspace) {
+            $PAGE->set_secondary_active_tab('bookitrequestworkspace');
+            $requestworkspacenode->make_active();
+        }
     }
 }
 

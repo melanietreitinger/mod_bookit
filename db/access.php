@@ -96,4 +96,10 @@ $capabilities = [
                 'contextlevel' => CONTEXT_MODULE,
                 'archetypes'   => [],
         ],
+        // View the restricted observer projection without access to operational details.
+        'mod/bookit:viewrestrictedobserver' => [
+                'captype' => 'read',
+                'contextlevel' => CONTEXT_MODULE,
+                'archetypes' => [],
+        ],
 ];

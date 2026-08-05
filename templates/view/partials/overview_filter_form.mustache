@@ -1,0 +1,101 @@
+{{!
+    @template mod_bookit/view/partials/overview_filter_form
+
+    Shared overview reporting filter form for participant and workspace sections.
+
+    Context variables:
+    * idprefix block - Prefix for field element IDs (default "bookit-"; workspace section overrides to "bookit-workspace-")
+    * cmid, activetabparam, reportstartvalue, reportendvalue
+    * showreportfilters, showstatusfilter, showsemesterfilter, showassignmentfilter
+    * reportstartlabel, reportendlabel, statusfilterlabel, facultyfilterlabel
+    * semesterfilterlabel, assignmentfilterlabel, reportapplylabel, reportresetlabel
+    * reportreseturl, statusfilteroptions, facultyoptions, semesteroptions
+    * assignmentfilteroptions, eventcounttext
+
+    Example context (json):
+    {
+        "cmid": 12,
+        "activetabparam": "allrequests",
+        "reportstartvalue": "2026-01-01",
+        "reportendvalue": "2026-12-31",
+        "showreportfilters": true,
+        "showstatusfilter": true,
+        "showsemesterfilter": true,
+        "showassignmentfilter": false,
+        "reportstartlabel": "Start date",
+        "reportendlabel": "End date",
+        "statusfilterlabel": "Booking status",
+        "facultyfilterlabel": "Faculty",
+        "semesterfilterlabel": "Semester",
+        "assignmentfilterlabel": "Assignment",
+        "reportapplylabel": "Apply filters",
+        "reportresetlabel": "Reset filters",
+        "reportreseturl": "/mod/bookit/overview.php?id=12&tab=allrequests",
+        "statusfilteroptions": [],
+        "facultyoptions": [],
+        "semesteroptions": [],
+        "assignmentfilteroptions": [],
+        "eventcounttext": "3 events"
+    }
+}}
+<form method="get" class="mb-3">
+    <input type="hidden" name="id" value="{{cmid}}">
+    <input type="hidden" name="tab" value="{{activetabparam}}">
+    <div class="form-row align-items-end">
+        {{#showreportfilters}}
+        <div class="form-group col-md-3">
+            <label for="{{$idprefix}}bookit-{{/idprefix}}reportstart">{{reportstartlabel}}</label>
+            <input type="date" id="{{$idprefix}}bookit-{{/idprefix}}reportstart" name="reportstart" class="form-control" value="{{reportstartvalue}}">
+        </div>
+        <div class="form-group col-md-3">
+            <label for="{{$idprefix}}bookit-{{/idprefix}}reportend">{{reportendlabel}}</label>
+            <input type="date" id="{{$idprefix}}bookit-{{/idprefix}}reportend" name="reportend" class="form-control" value="{{reportendvalue}}">
+        </div>
+        {{/showreportfilters}}
+        {{#showstatusfilter}}
+        <div class="form-group col-md-2">
+            <label for="{{$idprefix}}bookit-{{/idprefix}}bookingstatusfilter">{{statusfilterlabel}}</label>
+            <select id="{{$idprefix}}bookit-{{/idprefix}}bookingstatusfilter" name="bookingstatusfilter[]" class="form-control" multiple size="5">
+                {{#statusfilteroptions}}
+                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                {{/statusfilteroptions}}
+            </select>
+        </div>
+        {{/showstatusfilter}}
+        <div class="form-group col-md-2">
+            <label for="{{$idprefix}}bookit-{{/idprefix}}facultyid">{{facultyfilterlabel}}</label>
+            <select id="{{$idprefix}}bookit-{{/idprefix}}facultyid" name="facultyid" class="form-control">
+                {{#facultyoptions}}
+                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                {{/facultyoptions}}
+            </select>
+        </div>
+        {{#showsemesterfilter}}
+        <div class="form-group {{#showreportfilters}}col-md-2{{/showreportfilters}}{{^showreportfilters}}col-md-4{{/showreportfilters}}">
+            <label for="{{$idprefix}}bookit-{{/idprefix}}semesterids">{{semesterfilterlabel}}</label>
+            <select id="{{$idprefix}}bookit-{{/idprefix}}semesterids" name="semesterids[]" class="form-control" multiple size="4">
+                {{#semesteroptions}}
+                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                {{/semesteroptions}}
+            </select>
+        </div>
+        {{/showsemesterfilter}}
+        {{#showassignmentfilter}}
+        <div class="form-group col-md-2">
+            <label for="{{$idprefix}}bookit-{{/idprefix}}assignmentfilter">{{assignmentfilterlabel}}</label>
+            <select id="{{$idprefix}}bookit-{{/idprefix}}assignmentfilter" name="assignmentfilter" class="form-control">
+                {{#assignmentfilteroptions}}
+                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                {{/assignmentfilteroptions}}
+            </select>
+        </div>
+        {{/showassignmentfilter}}
+        <div class="form-group col-md-2">
+            <div class="d-flex flex-wrap">
+                <button type="submit" class="btn btn-primary mr-2 mb-1">{{reportapplylabel}}</button>
+                <a href="{{reportreseturl}}" class="btn btn-outline-secondary mb-1" data-action="reset-report-filters">{{reportresetlabel}}</a>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="badge badge-info mb-3 p-2">{{eventcounttext}}</div>

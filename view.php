@@ -25,6 +25,7 @@
 use mod_bookit\event\course_module_viewed;
 use mod_bookit\local\manager\resource_manager;
 use mod_bookit\local\manager\event_manager;
+use mod_bookit\local\manager\event_access_manager;
 
 
 
@@ -52,17 +53,14 @@ if ($id) {
 require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
+require_capability('mod/bookit:view', $modulecontext);
+$observerrestricted = event_access_manager::is_observer_restricted_mode($modulecontext);
 
-// Helper data for the filter <select>s  (WORK IN PROGRESS).
-// $string['event_bookingstatus_list'] = 'New, In progress, Accepted, Canceled, Rejeced'.
-$eventstatus = explode(',', get_string('event_bookingstatus_list', 'mod_bookit'));
-$statusmap = [
-    0 => $eventstatus[0],
-    1 => $eventstatus[1],
-    2 => $eventstatus[2],
-    3 => $eventstatus[3],
-    4 => $eventstatus[4],
-];
+// Status labels for calendar filter (canonical registry vocabulary).
+$statusmap = [];
+foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+    $statusmap[$statusvalue] = event_manager::get_booking_status_label($statusvalue);
+}
 
 $rooms = resource_manager::get_rooms();
 $faculties = event_manager::get_faculties();
@@ -106,13 +104,11 @@ require(['jquery'], function($) {
 ");
 
 /* -------- Export modal ------------------------------------------------ */
-$PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$cm->id]);
-
-// Calendar feed URL & caps passed to AMD module.
-$eventsource = (new moodle_url('/mod/bookit/events.php', [
-    'id' => $cm->id,
-    'debug' => 1,
-]))->out(false);
+$calendarreadconfig = [
+    'methodname' => 'mod_bookit_get_calendar_events',
+    'cmid' => (int)$cm->id,
+];
+$PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$calendarreadconfig]);
 
 $capabilities   = [
     'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
@@ -160,6 +156,7 @@ $templatecontext = [
     'faculties' => [],
     'statuses' => [],
     'canfilterstatus' => has_capability('mod/bookit:filterstatus', $modulecontext),
+    'canexportevents' => !$observerrestricted,
 ];
 
 foreach ($rooms as $rid => $rname) {
@@ -186,28 +183,13 @@ foreach ($statusmap as $scode => $label) {
 // Render HTML via mustache templates.
 echo $OUTPUT->render_from_template('mod_bookit/view/calendar_view', $templatecontext);
 
-$PAGE->requires->js_init_code("
-    (function() {
-        console.log('[BookIt DEBUG] Event feed URL →', " . json_encode($eventsource) . ");
-        fetch(" . json_encode($eventsource) . ")
-            .then(r => r.json())
-            .then(d => {
-                console.log('[BookIt DEBUG] events.php returned', d.length, 'events');
-                if (d.length) console.log('[BookIt DEBUG] sample', d[0]);
-            })
-            .catch(e => console.error('[BookIt DEBUG] error fetching events.php:', e));
-    })();
-");
-
-
-
 // Initialise AMD calendar (from original file).
 $PAGE->requires->js_call_amd(
     'mod_bookit/calendar',
     'init',
     [
         $cm->id,
-        $eventsource,
+        $calendarreadconfig,
         $capabilities,
         current_language(),
         $configcalendar,

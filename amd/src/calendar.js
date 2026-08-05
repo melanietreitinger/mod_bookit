@@ -22,8 +22,10 @@
  */
 
 import {getString} from 'core/str';
+import Ajax from 'core/ajax';
 import ModalForm from 'core_form/modalform';
 import {prefetchStrings} from 'core/prefetch';
+import {openEditEventModal} from 'mod_bookit/event_modal_opener';
 import {initPossibleStarttimesRefresh} from "mod_bookit/possible_slots_refresh";
 import BookingFormResources from "mod_bookit/booking_form_resources";
 
@@ -45,12 +47,12 @@ export const theGlobalProperty = (globalPropertyName) =>
 /**
  * Initializes the calendar.
  * @param {Number}  cmid         Course-module id
- * @param {String}  eventsource  URL for JSON feed (events.php)
+ * @param {Object}  readconfig   Governed read configuration
  * @param {Object}  capabilities {addevent: Boolean}
  * @param {String}  lang         Current UI language code
  * @param {Object}  config       Extra config (e.g. {textcolor:'#fff'})
  */
-export async function init(cmid, eventsource, capabilities, lang, config) {
+export async function init(cmid, readconfig, capabilities, lang, config) {
     await theGlobalProperty('EventCalendar');
 
     // Set textcolor.
@@ -92,6 +94,41 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
     // Runtime filter parameters – mutable via bookitCalendarUpdate()
     let extraFilterParams = {}; // {room:123, status:2, faculty:'ENG', …}
 
+    const parseIds = (value) => {
+        if (!value) {
+            return [];
+        }
+        if (Array.isArray(value)) {
+            return value.map(Number).filter((item) => !Number.isNaN(item));
+        }
+        return String(value).split(',')
+            .map((item) => Number(item))
+            .filter((item) => !Number.isNaN(item));
+    };
+
+    const loadEvents = (fetchInfo, successCallback, failureCallback) => {
+        Ajax.call([{
+            methodname: readconfig.methodname,
+            args: {
+                cmid: readconfig.cmid || cmid,
+                start: fetchInfo.startStr,
+                end: fetchInfo.endStr,
+                roomids: parseIds(extraFilterParams.room),
+                facultyids: parseIds(extraFilterParams.faculty),
+                bookingstatuses: parseIds(extraFilterParams.status),
+                search: extraFilterParams.search || '',
+                exportmode: false,
+            },
+        }])[0]
+            .then((response) => {
+                successCallback(response.events || []);
+                return null;
+            })
+            .catch((error) => {
+                failureCallback(error);
+            });
+    };
+
     const calendar = window.EventCalendar.create(document.getElementById('ec'), {
         /* Appearance / behaviour */
         locale: lang,
@@ -104,10 +141,16 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,
+        displayEventEnd: true,
         eventTextColor: textcolor,
         eventBackgroundColor: '#035AA3',
         eventStartEditable: false,
         eventDurationEditable: false,
+        eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        },
         buttonText: function(text) {
             text.today = strToday;
             text.dayGridMonth = strMonth;
@@ -164,11 +207,10 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
                 return;
             }
 
-            let d = new Date();
-            let dateoff = new Date(d.setMinutes(d.getMinutes() - d.getTimezoneOffset()));
             let startdate = info.dateStr;
+            const isFutureSlot = info.date.getTime() > Date.now();
 
-            if (capabilities.addevent && startdate > dateoff.toISOString()) {
+            if (capabilities.addevent && isFutureSlot) {
                 const modalForm = new ModalForm({
                     formClass: 'mod_bookit\\form\\edit_event_form',
                     args: {
@@ -191,26 +233,20 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
         /* Event click (edit) */
         eventClick: function(info) {
             let id = info.event.id;
-            if (info.event.extendedProps.reserved) {
+            if (info.event.extendedProps.visibilitymode === 'reserved_projection') {
                 return;
             }
 
-            const modalForm = new ModalForm({
-                formClass: "mod_bookit\\form\\edit_event_form",
-                args: {
-                    cmid: cmid,
-                    id: id
+            openEditEventModal({
+                cmid: cmid,
+                eventid: id,
+                title: editevent,
+                modalfootermode: info.event.extendedProps.modalfootermode || 'editable',
+                reloadOnSubmit: false,
+                onSubmitted: () => {
+                    calendar.refetchEvents();
                 },
-                modalConfig: {title: editevent},
             });
-            modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-                calendar.refetchEvents();
-            });
-            modalForm.addEventListener(modalForm.events.LOADED, () => {
-                initPossibleStarttimesRefresh(cmid, id);
-                BookingFormResources.init(modalForm.modal.getRoot()[0]);
-            });
-            modalForm.show();
         },
 
         // Toolbar configuration
@@ -224,11 +260,7 @@ export async function init(cmid, eventsource, capabilities, lang, config) {
 
         // Feed with logged extra params
         eventSources: [{
-            url: eventsource,
-            extraParams: () => {
-                // Console.log('[BookIT] extraParams sent →', extraFilterParams);
-                return extraFilterParams;
-            }
+            events: loadEvents,
         }],
 
         views: {

@@ -104,6 +104,7 @@ trait notification_slots_form_trait {
      * @return void
      */
     protected function on_notification_slot_saved(bookit_notification_type $case, int $slotid, int $itemid): void {
+        unset($case, $slotid, $itemid);
         // Default: no-op. Resource checklist overrides.
     }
 
@@ -126,13 +127,16 @@ trait notification_slots_form_trait {
 
     // Form definition.
 
+    // phpcs:disable moodle.Commenting.ValidTags.Invalid
     /**
      * Add notification slots section to the form.
      *
      * @param array $allroles Associative array of role IDs to role names.
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      * @return void
      */
     protected function definition_notification_section(array $allroles): void {
+    // phpcs:enable moodle.Commenting.ValidTags.Invalid
         $mform = $this->_form;
 
         $mform->addElement('header', 'notifications', get_string('notifications', 'mod_bookit'));
@@ -265,6 +269,7 @@ trait notification_slots_form_trait {
 
     // Save.
 
+    // phpcs:disable moodle.Commenting.ValidTags.Invalid
     /**
      * Save notification slots from submitted form data.
      *
@@ -274,9 +279,11 @@ trait notification_slots_form_trait {
      *
      * @param array $data Submitted form data (from get_data()).
      * @param int $itemid The parent item ID (checklist item or resource checklist item).
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @return void
      */
     protected function save_notification_slots(array $data, int $itemid): void {
+    // phpcs:enable moodle.Commenting.ValidTags.Invalid
         global $USER;
 
         foreach (bookit_notification_type::cases() as $case) {

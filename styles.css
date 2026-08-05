@@ -1,7 +1,3 @@
-.ec .hide-event-time .ec-event-time {
-    display: none;
-}
-
 /* BookIT filter dropdown (frontend-only UI). */
 .mod_bookit-view-calendar_view .bookit-filters {
     display: flex;
@@ -93,10 +89,6 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
-    border: 1px solid rgba(0, 0, 0, .15);
-    border-radius: 999px;
-    padding: .15rem .45rem;
-    background: #f7f7f7;
 }
 
 .mod_bookit-view-calendar_view .bookit-filterchip-label {
@@ -226,4 +218,281 @@
     overflow: hidden;
     white-space: nowrap;
     vertical-align: middle;
+}
+
+.mod_bookit-overview-examiner_overview .mod-bookit-overview-inner-tabs .nav-tabs,
+.mod_bookit-overview-examiner_overview .mod-bookit-request-workspace-tabs .nav-tabs {
+    margin-bottom: 0;
+}
+
+.mod-bookit-open-request-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(8.5rem, 1fr));
+    gap: 0.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .mod-bookit-open-request-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .mod-bookit-request-pagination .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+.mod-bookit-open-requests-table tr.mod-bookit-open-request-row td {
+    vertical-align: middle;
+}
+
+.mod-bookit-status-cell {
+    min-width: 10rem;
+}
+
+.mod-bookit-status-select {
+    width: 100%;
+    border: 0;
+    font-weight: 600;
+}
+
+.mod-bookit-status-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 8.5rem;
+    width: 100%;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.mod-bookit-status-row-open td:first-child {
+    box-shadow: inset 4px 0 0 #ffe08a;
+}
+
+.mod-bookit-status-row-confirmed td:first-child {
+    box-shadow: inset 4px 0 0 #198754;
+}
+
+.mod-bookit-status-row-closed td:first-child {
+    box-shadow: inset 4px 0 0 #842029;
+}
+
+.mod-bookit-status-chip-open {
+    opacity: 0.55;
+    border-style: dashed;
+    border-width: 3px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.mod-bookit-status-chip-confirmed {
+    opacity: 1;
+    font-weight: 600;
+    border-style: solid;
+    border-width: 3px;
+    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.35);
+}
+
+.mod-bookit-status-chip-closed {
+    opacity: 0.72;
+    border-style: solid;
+    border-width: 3px;
+}
+
+/* Overview status chips — fill model (not calendar events). */
+.bookit-bookingstatus-0 {
+    background: #e2e3e5;
+    border-color: #c6c8ca;
+    color: #212529;
+}
+
+.bookit-bookingstatus-1 {
+    background: #fff3cd;
+    border-color: #ffe08a;
+    color: #664d03;
+}
+
+.bookit-bookingstatus-2 {
+    background: #d1e7dd;
+    border-color: #a3cfbb;
+    color: #0f5132;
+}
+
+.bookit-bookingstatus-3 {
+    background: #343a40;
+    border-color: #343a40;
+    color: #fff;
+}
+
+.bookit-bookingstatus-4 {
+    background: #f8d7da;
+    border-color: #f1aeb5;
+    color: #842029;
+}
+
+/* Calendar events — room fill from API inline colour; status via border only. */
+.ec-event.bookit-bookingstatus-0,
+.ec-event.bookit-bookingstatus-1 {
+    opacity: 0.55;
+    border-style: dashed;
+    border-width: 6px;
+    box-shadow: none;
+}
+
+.ec-event.bookit-bookingstatus-0 {
+    border-color: #c6c8ca;
+}
+
+.ec-event.bookit-bookingstatus-1 {
+    border-color: #ffe08a;
+}
+
+.ec-event.bookit-bookingstatus-2 {
+    opacity: 1;
+    font-weight: 600;
+    border-style: solid;
+    border-width: 7px;
+    border-color: #198754;
+    box-shadow: 0 0 0 1px rgba(25, 135, 84, 0.45);
+}
+
+.ec-event.bookit-bookingstatus-3,
+.ec-event.bookit-bookingstatus-4 {
+    opacity: 0.72;
+    border-style: solid;
+    border-width: 6px;
+}
+
+.ec-event.bookit-bookingstatus-3 {
+    border-color: #343a40;
+}
+
+.ec-event.bookit-bookingstatus-4 {
+    border-color: #f1aeb5;
+}
+
+.ec-time-grid .ec-event,
+.ec-day-grid .ec-event {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.ec-time-grid .ec-event .ec-event-title,
+.ec-day-grid .ec-event .ec-event-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+}
+
+.ec-time-grid .ec-event .ec-event-time,
+.ec-day-grid .ec-event .ec-event-time {
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.ec-time-grid .ec-event .ec-event-body,
+.ec-day-grid .ec-event .ec-event-body {
+    overflow: hidden;
+}
+
+.ec-day-grid .ec-event .ec-event-body,
+.ec-list .ec-event .ec-event-body {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ec-day-grid .ec-event .ec-event-time,
+.ec-list .ec-event .ec-event-time {
+    margin: 0 0 0.2rem;
+    max-inline-size: none;
+    font-weight: 700;
+}
+
+.ec-list .ec-event .ec-event-title,
+.ec-day-grid .ec-event .ec-event-title {
+    white-space: normal;
+    text-overflow: initial;
+}
+
+.bookit-export-toolbar .form-control[type="date"] {
+    min-width: 11rem;
+}
+
+.bookit-export-search {
+    max-width: 22rem;
+}
+
+.bookit-export-item {
+    cursor: pointer;
+    gap: 0.5rem;
+}
+
+.bookit-export-item .form-check-input {
+    margin-top: 0.25rem;
+}
+
+.bookit-export-item-checkbox {
+    display: flex;
+    align-items: flex-start;
+    padding-left: 0.25rem;
+}
+
+.bookit-export-item-text {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.bookit-export-item-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+}
+
+.bookit-export-list .list-group-item {
+    border-left-width: 0.25rem;
+}
+.ec-event.bookit-bookingstatus-2 .ec-event-time {
+    font-weight: 600;
+}
+
+.mod-bookit-request-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.mod-bookit-request-pagination-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+/* Request Workspace navigation badges (Spec 068). */
+.bookit-nav-badge {
+    display: inline-block;
+    min-width: 1.25rem;
+    margin-left: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.bookit-nav-badge--new {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+.bookit-nav-badge--inprogress {
+    background-color: #fff3cd;
+    color: #664d03;
 }

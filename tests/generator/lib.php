@@ -25,16 +25,21 @@
 use mod_bookit\local\entity\bookit_event;
 use mod_bookit\local\entity\resource\bookit_resource;
 use mod_bookit\local\entity\resource\bookit_resource_category;
+use mod_bookit\local\install_helper;
+use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\resource_manager;
 
+// phpcs:disable moodle.Commenting.ValidTags.Invalid
 /**
  * Data generator for mod_bookit
  *
  * @package     mod_bookit
  * @copyright   2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @SuppressWarnings(PHPMD)
  */
 class mod_bookit_generator extends testing_module_generator {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid
     /**
      * Create a new event.
      * @param array $event
@@ -50,28 +55,68 @@ class mod_bookit_generator extends testing_module_generator {
             $userid = $user->id;
         }
 
+        $roomid = 1;
+        if (!empty($event['room'])) {
+            $room = $DB->get_record('bookit_room', ['name' => $event['room']], 'id', IGNORE_MISSING);
+            if ($room) {
+                $roomid = (int)$room->id;
+            }
+        } else if (!empty($event['roomid'])) {
+            $roomid = (int)$event['roomid'];
+        }
+
+        $personinchargeid = !empty($event['personincharge_username'])
+            ? (int)$DB->get_field('user', 'id', ['username' => $event['personincharge_username']], MUST_EXIST)
+            : 2;
+
+        $otherexaminers = '';
+        if (!empty($event['otherexaminer_usernames'])) {
+            $usernames = array_filter(array_map('trim', explode(',', $event['otherexaminer_usernames'])));
+            $ids = [];
+            foreach ($usernames as $username) {
+                $ids[] = (int)$DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+            }
+            $otherexaminers = implode(',', $ids);
+        }
+
+        $supportpersons = '';
+        if (!empty($event['supportperson_usernames'])) {
+            $usernames = array_filter(array_map('trim', explode(',', $event['supportperson_usernames'])));
+            $ids = [];
+            foreach ($usernames as $username) {
+                $ids[] = (int)$DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+            }
+            $supportpersons = implode(',', $ids);
+        }
+
+        $starttime = strtotime($event['startdate']);
+        $semester = isset($event['semester'])
+            ? (int)$event['semester']
+            : event_manager::get_current_semester($starttime);
+
         $e = new bookit_event(
             0,
             $event['name'],
-            20241,
+            $semester,
             $event['institution'],
-            strtotime($event['startdate']),
+            $starttime,
             strtotime($event['enddate']),
-            90,
-            1,
-            rand(20, 250),
-            1,
-            '',
+            (int)($event['duration'] ?? 90),
+            $roomid,
+            (int)($event['participantsamount'] ?? rand(20, 250)),
+            (int)($event['timecompensation'] ?? 1),
+            $event['compensationfordisadvantages'] ?? '',
             $event['bookingstatus'],
-            2,
-            '',
-            0,
-            'External lorem ipsum',
-            'Internal Lorem Ipsum dolor...',
-            'Susi Support',
-            15,
-            15,
+            $personinchargeid,
+            $otherexaminers,
+            (int)($event['coursetemplate'] ?? 0),
+            $event['notes'] ?? 'External lorem ipsum',
+            $event['internalnotes'] ?? 'Internal Lorem Ipsum dolor...',
+            $supportpersons,
+            (int)($event['extratimebefore'] ?? 15),
+            (int)($event['extratimeafter'] ?? 15),
             null,
+            $userid,
             $userid,
             time(),
             time(),
@@ -93,7 +138,7 @@ class mod_bookit_generator extends testing_module_generator {
 
         $record = new \stdClass();
         $record->name = $room['name'];
-        $record->shortname = $room['shortname'] ?? substr($room['name'], 0, 10);
+        $record->shortname = $room['shortname'] ?? substr($room['name'], 0, 6);
         $record->description = $room['description'] ?? '';
         $record->location = $room['location'] ?? '';
         $record->eventcolor = $room['eventcolor'] ?? '#3a87ad';
@@ -102,12 +147,15 @@ class mod_bookit_generator extends testing_module_generator {
         $record->seats = $room['seats'] ?? 10;
         $record->extratimebefore = 0;
         $record->extratimeafter = 0;
-        $record->overlapping = 0;
+        $record->preventoverlap = 0;
         $record->usermodified = 2;
         $record->timecreated = time();
         $record->timemodified = time();
 
-        return $DB->insert_record('bookit_room', $record);
+        $roomid = (int)$DB->insert_record('bookit_room', $record);
+        install_helper::create_default_weekplan();
+
+        return $roomid;
     }
 
     /**
@@ -178,5 +226,92 @@ class mod_bookit_generator extends testing_module_generator {
             2
         );
         return resource_manager::save_resource($res, 2);
+    }
+
+    /**
+     * Create an institution for testing.
+     *
+     * @param array $institution
+     * @return int
+     * @throws dml_exception
+     */
+    final public function create_institution(array $institution): int {
+        global $DB;
+
+        return (int)$DB->insert_record('bookit_institution', (object)[
+            'name' => $institution['name'],
+            'internalnotes' => $institution['internalnotes'] ?? '',
+            'active' => isset($institution['active']) ? (int)(bool)$institution['active'] : 1,
+            'usermodified' => 2,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+    }
+
+    /**
+     * Create a blocker for testing.
+     *
+     * @param array $blockerdata
+     * @return int
+     */
+    final public function create_blocker(array $blockerdata): int {
+        global $DB;
+
+        $roomid = null;
+        if (!empty($blockerdata['room'])) {
+            $roomid = (int)$DB->get_field_sql(
+                'SELECT id
+                   FROM {bookit_room}
+                  WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+                ['name' => $blockerdata['room']],
+                MUST_EXIST
+            );
+        } else if (array_key_exists('roomid', $blockerdata) && $blockerdata['roomid'] !== '') {
+            $roomid = (int)$blockerdata['roomid'];
+        }
+
+        return (int)$DB->insert_record('bookit_blocker', (object)[
+            'name' => $blockerdata['name'] ?? null,
+            'starttime' => strtotime($blockerdata['startdate']),
+            'endtime' => strtotime($blockerdata['enddate']),
+            'roomid' => $roomid,
+        ]);
+    }
+
+    /**
+     * Create the agreed fresh-install baseline for tests.
+     *
+     * @return array
+     */
+    final public function create_fresh_install_baseline(): array {
+        global $DB;
+
+        install_helper::ensure_fresh_install_baseline();
+        install_helper::ensure_optional_part_defaults(false);
+        install_helper::ensure_booking_status_notification_defaults();
+
+        return [
+            'roomid' => (int)$DB->get_field_sql(
+                'SELECT id
+                   FROM {bookit_room}
+                  WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+                ['name' => install_helper::DEFAULT_ROOM_NAME],
+                MUST_EXIST
+            ),
+            'weekplanid' => (int)$DB->get_field_sql(
+                'SELECT id
+                   FROM {bookit_weekplan}
+                  WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+                ['name' => install_helper::DEFAULT_WEEKPLAN_NAME],
+                MUST_EXIST
+            ),
+            'institutionid' => (int)$DB->get_field_sql(
+                'SELECT id
+                   FROM {bookit_institution}
+                  WHERE ' . $DB->sql_compare_text('name') . ' = ' . $DB->sql_compare_text(':name'),
+                ['name' => install_helper::DEFAULT_INSTITUTION_NAME],
+                MUST_EXIST
+            ),
+        ];
     }
 }

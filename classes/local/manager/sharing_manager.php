@@ -27,6 +27,7 @@ use mod_bookit\local\entity\masterchecklist\bookit_checklist_item;
 use mod_bookit\local\entity\masterchecklist\bookit_checklist_category;
 use mod_bookit\local\pdf\bookit_pdf;
 
+// phpcs:disable moodle.Commenting.ValidTags.Invalid
 /**
  * Sharing manager class for checklist import/export functionality.
  *
@@ -37,8 +38,10 @@ use mod_bookit\local\pdf\bookit_pdf;
  * @copyright   2025 ssystems GmbH <oss@ssystems.de>
  * @author      Andreas Rosenthal
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @SuppressWarnings(PHPMD)
  */
 class sharing_manager {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid
     /**
      * Get the logo file for PDF export based on configuration settings.
      *

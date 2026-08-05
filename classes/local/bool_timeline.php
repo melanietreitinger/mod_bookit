@@ -29,7 +29,12 @@ namespace mod_bookit\local;
  * @copyright  2022 Justus Dieckmann University of Münster
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+// phpcs:disable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class bool_timeline {
+// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * @var array[] Array of pairs [time, value]. Every value is valid from the specified time until the next value
      * is defined.

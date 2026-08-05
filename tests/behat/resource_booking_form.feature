@@ -6,9 +6,11 @@ Feature: Resource integration in the BookIt booking workflow
 
   Background:
     Given the following "users" exist:
-      | username    |
-      | susiservice |
-      | examiner1   |
+      | username    | firstname | lastname   |
+      | susiservice | Susi      | Service    |
+      | bookinguser | Bella     | Booker     |
+      | examiner1   | Emma      | Examiner   |
+      | examiner2   | Otto      | Observer   |
     And the following "courses" exist:
       | fullname | shortname |
       | Course 1 | C1        |
@@ -16,6 +18,7 @@ Feature: Resource integration in the BookIt booking workflow
       | shortname   | name         | archetype |
       | serviceteam | Service-Team | student   |
       | examiner    | Examiner     | student   |
+      | requester   | Requester    | student   |
     And the following "role capability" exists:
       | role                             | serviceteam |
       | mod/bookit:addevent              | allow       |
@@ -28,16 +31,30 @@ Feature: Resource integration in the BookIt booking workflow
       | role                             | examiner |
       | mod/bookit:view                  | allow    |
       | mod/bookit:viewownoverview       | allow    |
+    And the following "role capability" exists:
+      | role                             | requester |
+      | mod/bookit:addevent              | allow     |
+      | mod/bookit:view                  | allow     |
+      | mod/bookit:viewownoverview       | allow     |
     And the following "course enrolments" exist:
       | user        | course | role        |
       | susiservice | C1     | serviceteam |
       | examiner1   | C1     | examiner    |
+      | examiner2   | C1     | examiner    |
+      | bookinguser | C1     | requester   |
     And the following "activities" exist:
       | activity | name               | course | idnumber |
       | bookit   | My BookIt Activity | C1     | 1        |
+    And the following "mod_bookit > institutions" exist:
+      | name                 |
+      | Standard-Institution |
+    And the following "mod_bookit > rooms" exist:
+      | name         | shortname | seats |
+      | Default room | DEF       | 0     |
     And I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
-    And I click on "Run install helper" "link"
+    And I check "Enable resources module"
+    And I press "Save changes"
     And I log out
 
   # The booking form is a JavaScript modal opened from the calendar.
@@ -62,9 +79,8 @@ Feature: Resource integration in the BookIt booking workflow
     Given I log in as "susiservice"
     And I am on "Course 1" course homepage
     And I follow "My BookIt Activity"
-    When I navigate to "My booked events" in current page administration
-    Then I should see "Resources"
-    And I should see "Checklist"
+    When I follow "Request workspace" in the Bookit secondary navigation
+    Then I should see "Request workspace"
 
   Scenario: Overview page shows resources column header
     Given the following "mod_bookit > events" exist:
@@ -73,11 +89,18 @@ Feature: Resource integration in the BookIt booking workflow
     And I log in as "susiservice"
     And I am on "Course 1" course homepage
     And I follow "My BookIt Activity"
-    When I navigate to "My booked events" in current page administration
+    When I follow "Request workspace" in the Bookit secondary navigation
     Then I should see "Test Event"
     And I should see "Resources"
 
   Scenario: Admin can access resource admin pages to manage bookable resources
+    Given the following "mod_bookit > resource_categories" exist:
+      | name                |
+      | Technical Equipment |
+    And the following "mod_bookit > resources" exist:
+      | name      | category_name        |
+      | Projector | Technical Equipment  |
+      | Laptop    | Technical Equipment  |
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
     And I click on "Resources" "link"
@@ -159,3 +182,61 @@ Feature: Resource integration in the BookIt booking workflow
     And I wait "2" seconds
     Then the resource "Resource P" should be disabled in the booking form
     And the resource "Resource Q" should be enabled in the booking form
+
+  @javascript
+  Scenario: Configured examiner pool is shared between requester and service team
+    Given I log in as "admin"
+    And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I set the field "Examiner pool usernames" to "examiner1"
+    And I press "Save changes"
+    And I log out
+    And I log in as "susiservice"
+    And I am on "Course 1" course homepage
+    And I follow "My BookIt Activity"
+    And I change window size to "large"
+    When I click on ".ec-addButton" "css_element"
+    And I wait "2" seconds
+    Then the Bookit event details control "personinchargeid" should contain option "Emma Examiner | examiner1@example.com"
+    And the Bookit event details control "personinchargeid" should not contain option "Otto Observer | examiner2@example.com"
+    And the Bookit event details control "personinchargeid" should not contain option "Bella Booker | bookinguser@example.com"
+    When I close the currently open dialog
+    And I log out
+    And I log in as "bookinguser"
+    And I am on "Course 1" course homepage
+    And I follow "My BookIt Activity"
+    And I change window size to "large"
+    When I click on ".ec-addButton" "css_element"
+    And I wait "2" seconds
+    Then the Bookit event details control "personinchargeid" should contain option "Emma Examiner | examiner1@example.com"
+    And the Bookit event details control "personinchargeid" should not contain option "Otto Observer | examiner2@example.com"
+    And the Bookit event details control "personinchargeid" should not contain option "Bella Booker | bookinguser@example.com"
+
+  @javascript
+  Scenario: Optional calendar fields stay aligned for requester and service team
+    Given I log in as "admin"
+    And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I set the field "Enabled optional calendar fields" to "notes"
+    And I press "Save changes"
+    And I log out
+    And I log in as "susiservice"
+    And I am on "Course 1" course homepage
+    And I follow "My BookIt Activity"
+    And I change window size to "large"
+    When I click on ".ec-addButton" "css_element"
+    And I wait "2" seconds
+    Then the Bookit event details control "notes" should be enabled
+    And the Bookit event details control "timecompensation" should not be visible
+    And the Bookit event details control "coursetemplate" should not be visible
+    And the Bookit event details control "refcourseid" should not be visible
+    When I close the currently open dialog
+    And I log out
+    And I log in as "bookinguser"
+    And I am on "Course 1" course homepage
+    And I follow "My BookIt Activity"
+    And I change window size to "large"
+    When I click on ".ec-addButton" "css_element"
+    And I wait "2" seconds
+    Then the Bookit event details control "notes" should be enabled
+    And the Bookit event details control "timecompensation" should not be visible
+    And the Bookit event details control "coursetemplate" should not be visible
+    And the Bookit event details control "refcourseid" should not be visible

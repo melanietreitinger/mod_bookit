@@ -31,6 +31,10 @@
     * isconfirmed  - Boolean for selected state
     * isinprogress - Boolean for selected state
     * isrejected   - Boolean for selected state
+    * statusgroupkey - Row accent class suffix (open|confirmed|closed)
+    * statuscellhtml - Pre-rendered shared resource status cell markup
+    * amountirrelevant - Whether available amount is unlimited
+    * availableamount - Available amount label
 
     Example context (json):
     {
@@ -39,7 +43,11 @@
         "resourcename": "Beamer",
         "categoryid": 1,
         "amount": 2,
+        "availableamount": 5,
+        "amountirrelevant": false,
         "status": "confirmed",
+        "statusgroupkey": "confirmed",
+        "statuscellhtml": "<td class=\"align-middle py-3 mod-bookit-status-cell\"><span class=\"badge\">Confirmed</span></td>",
         "duedate": "20 Feb 2026",
         "canmanage": 0,
         "isrequested": false,
@@ -48,7 +56,7 @@
         "isrejected": false
     }
 }}
-<tr class="event-resources-checklist-item-row"
+<tr class="event-resources-checklist-item-row mod-bookit-status-row mod-bookit-status-row-{{statusgroupkey}}"
     data-region="event-resources-checklist-item-row"
     data-itemid="{{id}}"
     data-item-resourceid="{{resourceid}}"
@@ -71,20 +79,5 @@
         {{#duedate}}{{duedate}}{{/duedate}}
         {{^duedate}}<small class="text-muted">-</small>{{/duedate}}
     </td>
-    <td class="align-middle py-3" data-field="item-status">
-        {{#canmanage}}
-        <select class="custom-select custom-select-sm" data-action="update-status">
-            <option value="requested"  {{#isrequested}}selected{{/isrequested}}>{{#str}}resources:status_requested, mod_bookit{{/str}}</option>
-            <option value="confirmed"  {{#isconfirmed}}selected{{/isconfirmed}}>{{#str}}resources:status_confirmed, mod_bookit{{/str}}</option>
-            <option value="inprogress" {{#isinprogress}}selected{{/isinprogress}}>{{#str}}resources:status_inprogress, mod_bookit{{/str}}</option>
-            <option value="rejected"   {{#isrejected}}selected{{/isrejected}}>{{#str}}resources:status_rejected, mod_bookit{{/str}}</option>
-        </select>
-        {{/canmanage}}
-        {{^canmanage}}
-        {{#isrequested}}<span class="badge badge-secondary" data-field="status-badge">{{#str}}resources:status_requested, mod_bookit{{/str}}</span>{{/isrequested}}
-        {{#isconfirmed}}<span class="badge badge-success"   data-field="status-badge">{{#str}}resources:status_confirmed, mod_bookit{{/str}}</span>{{/isconfirmed}}
-        {{#isinprogress}}<span class="badge badge-warning"  data-field="status-badge">{{#str}}resources:status_inprogress, mod_bookit{{/str}}</span>{{/isinprogress}}
-        {{#isrejected}}<span class="badge badge-danger"     data-field="status-badge">{{#str}}resources:status_rejected, mod_bookit{{/str}}</span>{{/isrejected}}
-        {{/canmanage}}
-    </td>
+    {{{statuscellhtml}}}
 </tr>

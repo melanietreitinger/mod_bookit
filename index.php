@@ -52,7 +52,7 @@ echo $OUTPUT->heading($modulenameplural);
 $bookits = get_all_instances_in_course('bookit', $course);
 
 if (empty($bookits)) {
-    notice(get_string('no$bookitinstances', 'mod_bookit'), new moodle_url('/course/view.php', ['id' => $course->id]));
+    notice(get_string('nobookitinstances', 'mod_bookit'), new moodle_url('/course/view.php', ['id' => $course->id]));
 }
 
 $table = new html_table();
