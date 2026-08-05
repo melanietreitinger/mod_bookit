@@ -126,6 +126,8 @@ class bookit_event {
         public ?int $timemodified,
         /** @var array $resources */
         public array $resources,
+        /** @var int|null $totalparticipantsamount Actual total number of participants */
+        public ?int $totalparticipantsamount = null,
     ) {
     }
 
@@ -195,6 +197,7 @@ class bookit_event {
             $record->timecreated ?? null,
             $record->timemodified ?? null,
             $record->resources ?? [],
+            $record->totalparticipantsamount ?? null,
         );
     }
 
