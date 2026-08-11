@@ -21,6 +21,7 @@
  * @copyright  2025 Justus Dieckmann RUB
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 namespace mod_bookit\local\form;
 
 use mod_bookit\local\formelement\colorpicker;
@@ -53,54 +54,72 @@ class edit_room_form extends \core\form\persistent {
         $mform->addElement('text', 'name', get_string('name'));
         $mform->addRule('name', get_string('required'), 'required');
 
-        $mform->addElement('text', 'shortname', get_string('shortname', 'mod_bookit'));
+        $mform->addElement('text', 'shortname', get_string('room_shortname', 'mod_bookit'));
+        $mform->addHelpButton('shortname', 'room_shortname', 'mod_bookit');
 
-        $mform->addElement('text', 'seats', get_string('seats', 'mod_bookit'));
+        $mform->addElement('text', 'seats', get_string('room_seats', 'mod_bookit'));
         $mform->addRule('seats', get_string('required'), 'required');
-        $mform->addRule('seats', get_string('err_numeric', 'form'), 'numeric', null, 'client');
+        $mform->addRule(
+                'seats',
+                get_string('err_numeric', 'form'),
+                'numeric',
+                null,
+                'client'
+        );
 
         $mform->addElement('textarea', 'description', get_string('description'));
 
-        $mform->addElement('text', 'location', get_string('location', 'mod_bookit'));
+        $mform->addElement('text', 'location', get_string('room_location', 'mod_bookit'));
 
         colorpicker::register();
         colorpicker_rule::register();
-        $mform->addElement('mod_bookit_colorpicker', 'eventcolor', get_string('color', 'mod_bookit'));
-        $mform->addRule('eventcolor', get_string('validateerror', 'admin'), 'mod_bookit_colorpicker_rule');
+        $mform->addElement('mod_bookit_colorpicker', 'eventcolor', get_string('room_color', 'mod_bookit'));
+        $mform->addRule(
+                'eventcolor',
+                get_string(
+                        'validateerror', 'admin'),
+                'mod_bookit_colorpicker_rule'
+        );
 
-        $mform->addElement('checkbox', 'active', get_string('room_active', 'mod_bookit'));
-
-        $mform->addElement('select', 'roommode', get_string('roommode', 'mod_bookit'), [
-            room::MODE_FREE => get_string('roommode_free', 'mod_bookit'),
-            room::MODE_SLOTS => get_string('roommode_slots', 'mod_bookit'),
-            room::MODE_TOP_TO_BOTTOM => get_string('roommode_top_to_bottom', 'mod_bookit'),
+        $mform->addElement('select', 'roommode', get_string('room_mode', 'mod_bookit'), [
+                room::MODE_FREE => get_string('room_mode_free', 'mod_bookit'),
+                room::MODE_SLOTS => get_string('room_mode_slots', 'mod_bookit'),
+                room::MODE_TOP_TO_BOTTOM => get_string('room_mode_top_to_bottom', 'mod_bookit'),
         ]);
 
-        $mform->addElement('select', 'preventoverlap', get_string('overlapping_mode', 'mod_bookit'), [
-            room::OVERLAPPING_ALLOW_ALL => get_string('overlapping_allow_all', 'mod_bookit'),
-            room::OVERLAPPING_ALLOW_NON_CONFIRMED => get_string('overlapping_non_confirmed', 'mod_bookit'),
-            room::OVERLAPPING_ALLOW_NONE => get_string('overlapping_allow_none', 'mod_bookit'),
+        $mform->addElement('select', 'preventoverlap', get_string('room_overlapping_mode', 'mod_bookit'), [
+                room::OVERLAPPING_ALLOW_ALL => get_string('room_overlapping_allow_all', 'mod_bookit'),
+                room::OVERLAPPING_ALLOW_NON_CONFIRMED => get_string('room_overlapping_non_confirmed', 'mod_bookit'),
+                room::OVERLAPPING_ALLOW_NONE => get_string('room_overlapping_allow_none', 'mod_bookit'),
         ]);
 
-        $mform->addElement('checkbox', 'overwrite_extratimebefore', get_string('overwrite_extratimebefore', 'mod_bookit'));
         $mform->addElement(
-            'text',
-            'extratimebefore',
-            get_string('settings_extratime_before', 'mod_bookit'),
-            get_string('settings_extratime_before_desc', 'mod_bookit')
+                'checkbox',
+                'overwrite_extratimebefore',
+                get_string('room_overwrite_extratimebefore', 'mod_bookit')
+        );
+        $mform->addElement(
+                'text',
+                'extratimebefore',
+                get_string('settings_extratime_before', 'mod_bookit')
         );
         $mform->setDefault('extratimebefore', get_config('bookit', 'extratimebefore'));
         $mform->hideIf('extratimebefore', 'overwrite_extratimebefore');
 
-        $mform->addElement('checkbox', 'overwrite_extratimeafter', get_string('overwrite_extratimeafter', 'mod_bookit'));
         $mform->addElement(
-            'text',
-            'extratimeafter',
-            get_string('settings_extratime_after', 'mod_bookit'),
-            get_string('settings_extratime_before_desc', 'mod_bookit')
+                'checkbox',
+                'overwrite_extratimeafter',
+                get_string('room_overwrite_extratimeafter', 'mod_bookit')
+        );
+        $mform->addElement(
+                'text',
+                'extratimeafter',
+                get_string('settings_extratime_after', 'mod_bookit')
         );
         $mform->setDefault('extratimeafter', get_config('bookit', 'extratimeafter'));
         $mform->hideIf('extratimeafter', 'overwrite_extratimeafter');
+
+        $mform->addElement('checkbox', 'active', get_string('room_active', 'mod_bookit'));
 
         $this->add_action_buttons();
     }
@@ -131,6 +150,8 @@ class edit_room_form extends \core\form\persistent {
         if (empty($data->overwrite_extratimeafter)) {
             $data->extratimeafter = null;
         }
+        // Ensure active is converted to boolean-like int
+        $data->active = empty($data->active) ? 0 : 1;
         return parent::convert_fields($data);
     }
 }

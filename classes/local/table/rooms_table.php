@@ -67,9 +67,9 @@ class rooms_table extends \table_sql {
         ]);
         $this->define_headers([
             get_string('name'),
-            get_string('shortname', 'mod_bookit'),
-            get_string('seats', 'mod_bookit'),
-            get_string('location', 'mod_bookit'),
+            get_string('room_shortname', 'mod_bookit'),
+            get_string('room_seats', 'mod_bookit'),
+            get_string('room_location', 'mod_bookit'),
             get_string('description'),
             get_string('active_weekplan', 'mod_bookit'),
             get_string('tools', 'mod_bookit'),
