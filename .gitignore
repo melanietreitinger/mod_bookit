@@ -1,12 +1,9 @@
-.DS_Store
-Thumbs.db
-*.log
-*.tmp
-*.swp
-*.swo
-.env*
-.idea/
-.vscode/
-node_modules/
-vendor/
-*.cache
+# Sprachstring-Tool, liegt im Branch tools/bookit-lang-tool
+bookit_lang_tool.py
+langstring_cleaner.py
+
+# Backups, die das Tool selbst schreibt
+*.bak
+
+__pycache__/
+*.pyc
