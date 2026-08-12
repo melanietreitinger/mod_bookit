@@ -1,6 +1,6 @@
-# Sprachstring-Tool, liegt im Branch tools/bookit-lang-tool
-bookit_lang_tool.py
-langstring_cleaner.py
+# Sprachstring-Tool und Doku, liegen im Branch tools/bookit-lang-tool
+/*.py
+lang/en/language_tool_documentation*.pdf
 
 # Backups, die das Tool selbst schreibt
 *.bak
