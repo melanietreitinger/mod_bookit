@@ -93,7 +93,7 @@ echo $OUTPUT->heading(get_string('weekplan_assignments', 'mod_bookit'), 3, 'mt-4
 echo \core\output\html_writer::link(
     new moodle_url('/mod/bookit/admin/edit_weekplan_room.php', ['roomid' => $room->get('id')]),
     get_string('new_weekplan_assignment', 'mod_bookit'),
-    ['class' => 'btn btn-primary mb-2']
+    ['class' => 'btn btn-secondary mb-2']
 );
 
 $table->out(48, false);
