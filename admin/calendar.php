@@ -47,22 +47,15 @@ $mform = new settings_calendar_form();
 // Standard form processing if statement.
 if ($mform->is_cancelled()) {
     redirect($returnurl);
+// Fix for #211: The Code should not store the configuration in the database because of caching. 
 } else if ($data = $mform->get_data()) {
+    unset($data->submitbutton);
     foreach ($data as $key => $value) {
-        unset($data->submitbutton);
-        // Create data object for each entry.
-        // Fields: id, plugin, name, value.
-        $c = new stdClass();
-        $c->plugin = 'mod_bookit';
-        $c->name = $key;
-        $c->value = (is_array($value) ? implode(',', $value) : $value);
-        $record = $DB->get_record('config_plugins', ['plugin' => 'mod_bookit', 'name' => $key], 'id');
-        if ($record) {
-            $c->id = $record->id;
-            $DB->update_record('config_plugins', $c);
-        } else {
-            $DB->insert_record('config_plugins', $c);
-        }
+        set_config(
+            $key,
+            is_array($value) ? implode(',', $value) : $value,
+            'mod_bookit'
+        );
     }
 }
 
