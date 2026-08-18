@@ -100,15 +100,29 @@ class event_manager {
         $events = [];
 
         foreach ($records as $record) {
-            if (!event_access_manager::can_user_view_event_in_calendar($record, $context, (int)$USER->id)) {
+            $canview = event_access_manager::can_user_view_event_in_calendar(
+                $record,
+                $context,
+                (int)$USER->id
+            );
+            $isconfirmed = (int)$record->bookingstatus === event_access_manager::BOOKINGSTATUS_CONFIRMED;
+
+            if (!$canview && !$isconfirmed) {
                 continue;
             }
 
-            if ($observerrestricted && (int)$record->bookingstatus !== event_access_manager::BOOKINGSTATUS_CONFIRMED) {
+            if ($observerrestricted && !$isconfirmed) {
                 continue;
             }
 
-            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels, $context, (int)$USER->id);
+            $reserved = $observerrestricted || !$canview;
+            $events[] = self::build_calendar_read_event(
+                $record,
+                $reserved,
+                $facultylabels,
+                $context,
+                (int)$USER->id
+            );
         }
         return $events;
     }
