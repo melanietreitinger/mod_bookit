@@ -332,6 +332,12 @@
     color: #842029;
 }
 
+/* Highlighting the "Request booking" button */
+.ec-button:not(:disabled).ec-addButton {
+    background-color: var(--primary);
+    color: var(--ec-event-text-color);
+}
+
 /* Calendar events — room fill from API inline colour; status via border only. */
 .ec-event.bookit-bookingstatus-0,
 .ec-event.bookit-bookingstatus-1 {
