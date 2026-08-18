@@ -11,13 +11,9 @@
 	<allowassign/>
 	<allowoverride/>
 	<allowswitch/>
-	<allowview>
-		<shortname>bookit_serviceteam</shortname>
-		<shortname>bookit_examiner</shortname>
-	</allowview>
+	<allowview/>
 	<permissions>
 		<allow>mod/bookit:view</allow>
 		<allow>mod/bookit:viewrestrictedobserver</allow>
-		<allow>moodle/role:assign</allow>
 	</permissions>
 </role>
