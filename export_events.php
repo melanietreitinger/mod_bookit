@@ -172,11 +172,12 @@ $roomids = array_values(array_unique(array_filter(array_map(
     $events
 ))));
 if (!empty($roomids)) {
-    $roomrecords = $DB->get_records_list('bookit_room', 'id', $roomids, '', 'id, name');
+    $roomrecords = $DB->get_records_list('bookit_room', 'id', $roomids, '', 'id, name, shortname, location');
     foreach ($events as $eventid => $event) {
         $roomid = (int)($event->roomid ?? 0);
         if ($roomid && isset($roomrecords[$roomid])) {
-            $events[$eventid]->room = $roomrecords[$roomid]->name;
+            $rec = $roomrecords[$roomid];
+            $events[$eventid]->room = implode(', ', array_filter([$rec->name, $rec->shortname, $rec->location]));
         }
     }
 }
