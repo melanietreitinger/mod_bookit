@@ -7,3 +7,16 @@ lang/en/language_tool_documentation*.pdf
 
 __pycache__/
 *.pyc
+
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+.env*
+.idea/
+.vscode/
+node_modules/
+vendor/
+*.cache
