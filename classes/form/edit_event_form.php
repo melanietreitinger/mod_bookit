@@ -467,16 +467,13 @@ class edit_event_form extends dynamic_form {
 
         if ($canviewrestrictedfields) {
             // Add the "supportpersons" field.
-            $supportpersons = [];
-            // ...@TODO: Find better query to select users!
-            $sqlsupport = "SELECT DISTINCT u.*
-                  FROM {user} u
-                  WHERE u.deleted = 0 AND u.suspended = 0
-                  ORDER BY lastname, firstname";
-            $users = $DB->get_records_sql($sqlsupport, []);
-            foreach ($users as $id => $user) {
-                $supportpersons[$id] = fullname($user);
-            }
+            // Do not use the 'enrol_manual/form-potential-user-selector' ajax-form-element.
+            unset($userselectoroptions['ajax']);
+            // Support users can be users with the roles "serviceteam" and "supportonsite".
+            $supportpersons = event_manager::get_support_person_candidates(
+                $contextcourse,
+                $existingevent->supportpersons ?? ''
+            );
             $supportpersonselementname = 'supportpersons';
             // Assigned Support may edit support persons (same gate as internal notes); others stay RO.
             if (!$caneditinternal && !$caneditinternalnotes && $existingevent) {

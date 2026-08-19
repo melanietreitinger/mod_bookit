@@ -25,8 +25,10 @@
 namespace mod_bookit\local\manager;
 
 use coding_exception;
+use context_course;
 use context_module;
 use core_text;
+use core_user\fields;
 use DateTime;
 use dml_exception;
 use mod_bookit\event\booking_reactivated;
@@ -50,6 +52,71 @@ use stdClass;
  */
 class event_manager {
 // phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+    /**
+     * @var string[] Role shortnames whose holders may be assigned as support persons of an event.
+     */
+    public const SUPPORT_PERSON_ROLES = [
+        'bookit_serviceteam',
+        'bookit_supportonsite',
+    ];
+
+    /**
+     * Get the users that can be assigned as support persons of an event.
+     *
+     * Returns an associative array  userid => fullname  so the caller can use it directly as the
+     * options of a select or autocomplete element.
+     *
+     * Only users holding one of the SUPPORT_PERSON_ROLES are returned. Role assignments are taken
+     * into account for the given course context and all of its parents (category, system), because
+     * the BookIt roles are typically assigned on system level.
+     *
+     * @param context_course $context Course context the event belongs to.
+     * @param string $selectedids Comma-separated user IDs already stored on the event. These are
+     *      always included, even if the user lost the role meanwhile, so that the form does not
+     *      silently drop them.
+     * @return array [int userid => string fullname]
+     * @throws coding_exception
+     * @throws dml_exception
+     */
+    public static function get_support_person_candidates(context_course $context, string $selectedids = ''): array {
+        global $DB;
+
+        [$roleinsql, $params] = $DB->get_in_or_equal(self::SUPPORT_PERSON_ROLES, SQL_PARAMS_NAMED, 'rsn');
+        [$ctxinsql, $ctxparams] = $DB->get_in_or_equal(
+            $context->get_parent_context_ids(true),
+            SQL_PARAMS_NAMED,
+            'ctx'
+        );
+        $params += $ctxparams;
+
+        $where = "u.suspended = 0 AND r.shortname $roleinsql AND ra.contextid $ctxinsql";
+
+        $selected = array_filter(array_map('intval', explode(',', $selectedids)));
+        if ($selected) {
+            [$selinsql, $selparams] = $DB->get_in_or_equal($selected, SQL_PARAMS_NAMED, 'sel');
+            $params += $selparams;
+            $where = "($where) OR u.id $selinsql";
+        }
+
+        // DISTINCT is required because a user may hold both roles, or the same role in several
+        // contexts. Selecting u.* instead of the name fields would break DISTINCT on databases
+        // that cannot compare TEXT columns.
+        $namefields = fields::for_name()->get_sql('u')->selects;
+        $sql = "SELECT DISTINCT u.id $namefields
+                  FROM {user} u
+             LEFT JOIN {role_assignments} ra ON ra.userid = u.id
+             LEFT JOIN {role} r ON r.id = ra.roleid
+                 WHERE u.deleted = 0
+                   AND ($where)
+              ORDER BY u.lastname, u.firstname";
+
+        $candidates = [];
+        foreach ($DB->get_records_sql($sql, $params) as $id => $user) {
+            $candidates[(int) $id] = fullname($user);
+        }
+        return $candidates;
+    }
+
     /**
      * Get event from id.
      *
