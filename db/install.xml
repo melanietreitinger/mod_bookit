@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/bookit/db" VERSION="2026080502" COMMENT="XMLDB file for Moodle mod_bookit"  
+<XMLDB PATH="mod/bookit/db" VERSION="2026080502" COMMENT="XMLDB file for Moodle mod_bookit"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -28,7 +28,7 @@
         <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="duration" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>  
+        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="participantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Estimated number of participants"/>
         <FIELD NAME="totalparticipantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Actual total number of participants"/>        <FIELD NAME="timecompensation" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="compensationfordisadvantages" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
@@ -120,6 +120,27 @@
       <INDEXES>
         <INDEX NAME="resourceid_idx" UNIQUE="false" FIELDS="resourceid" COMMENT="Index for resource lookups"/>
         <INDEX NAME="sortorder_idx" UNIQUE="false" FIELDS="sortorder" COMMENT="Index for sorting"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="bookit_event_history" COMMENT="History table for tracking event changes">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Event history record ID"/>
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit_event table"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Type of action performed"/>
+        <FIELD NAME="oldstatus" TYPE="int" LENGTH="6" NOTNULL="true" SEQUENCE="false" COMMENT="Previous status value"/>
+        <FIELD NAME="newstatus" TYPE="int" LENGTH="6" NOTNULL="true" SEQUENCE="false" COMMENT="New status value"/>
+        <FIELD NAME="changedfields" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON or serialized data of changed fields"/>
+        <FIELD NAME="recoverymarker" TYPE="int" LENGTH="1"  NOTNULL="true" SEQUENCE="false" DEFAULT="0" COMMENT="Recovery marker flag"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10"  NOTNULL="true" SEQUENCE="false" DEFAULT="0" COMMENT="User ID who made the modification"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10"  NOTNULL="true" SEQUENCE="false" DEFAULT="0" COMMENT="Timestamp of the change"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key"/>
+        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit_event" REFFIELDS="id" COMMENT="Foreign key to bookit_event table"/>
+        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" COMMENT="Foreign key to user table"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="event_time_idx" UNIQUE="false" FIELDS="eventid, timecreated" COMMENT="Index on eventid and timecreated for faster queries"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="bookit_event_resource" COMMENT="Junction table for event-resource relationships">
