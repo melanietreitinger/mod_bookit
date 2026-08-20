@@ -60,11 +60,11 @@ class edit_room_form extends \core\form\persistent {
         $mform->addElement('text', 'seats', get_string('room_seats', 'mod_bookit'));
         $mform->addRule('seats', get_string('required'), 'required');
         $mform->addRule(
-                'seats',
-                get_string('err_numeric', 'form'),
-                'numeric',
-                null,
-                'client'
+            'seats',
+            get_string('err_numeric', 'form'),
+            'numeric',
+            null,
+            'client'
         );
 
         $mform->addElement('textarea', 'description', get_string('description'));
@@ -75,10 +75,12 @@ class edit_room_form extends \core\form\persistent {
         colorpicker_rule::register();
         $mform->addElement('mod_bookit_colorpicker', 'eventcolor', get_string('room_color', 'mod_bookit'));
         $mform->addRule(
-                'eventcolor',
-                get_string(
-                        'validateerror', 'admin'),
-                'mod_bookit_colorpicker_rule'
+            'eventcolor',
+            get_string(
+                'validateerror',
+                'admin'
+            ),
+            'mod_bookit_colorpicker_rule'
         );
 
         $mform->addElement('select', 'roommode', get_string('room_mode', 'mod_bookit'), [
@@ -94,27 +96,27 @@ class edit_room_form extends \core\form\persistent {
         ]);
 
         $mform->addElement(
-                'checkbox',
-                'overwrite_extratimebefore',
-                get_string('room_overwrite_extratimebefore', 'mod_bookit')
+            'checkbox',
+            'overwrite_extratimebefore',
+            get_string('room_overwrite_extratimebefore', 'mod_bookit')
         );
         $mform->addElement(
-                'text',
-                'extratimebefore',
-                get_string('settings_extratime_before', 'mod_bookit')
+            'text',
+            'extratimebefore',
+            get_string('settings_extratime_before', 'mod_bookit')
         );
         $mform->setDefault('extratimebefore', get_config('bookit', 'extratimebefore'));
         $mform->hideIf('extratimebefore', 'overwrite_extratimebefore');
 
         $mform->addElement(
-                'checkbox',
-                'overwrite_extratimeafter',
-                get_string('room_overwrite_extratimeafter', 'mod_bookit')
+            'checkbox',
+            'overwrite_extratimeafter',
+            get_string('room_overwrite_extratimeafter', 'mod_bookit')
         );
         $mform->addElement(
-                'text',
-                'extratimeafter',
-                get_string('settings_extratime_after', 'mod_bookit')
+            'text',
+            'extratimeafter',
+            get_string('settings_extratime_after', 'mod_bookit')
         );
         $mform->setDefault('extratimeafter', get_config('bookit', 'extratimeafter'));
         $mform->hideIf('extratimeafter', 'overwrite_extratimeafter');
@@ -150,7 +152,7 @@ class edit_room_form extends \core\form\persistent {
         if (empty($data->overwrite_extratimeafter)) {
             $data->extratimeafter = null;
         }
-        // Ensure active is converted to boolean-like int
+        // Ensure active is converted to boolean-like int.
         $data->active = empty($data->active) ? 0 : 1;
         return parent::convert_fields($data);
     }

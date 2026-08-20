@@ -441,40 +441,40 @@ class edit_event_form extends dynamic_form {
             if (
                     ($cancancelonly || $canselfcancelnew)
                     && event_access_manager::can_transition_booking_status(
-                            $currentbookingstatus,
-                            event_access_manager::BOOKINGSTATUS_CANCELED
+                        $currentbookingstatus,
+                        event_access_manager::BOOKINGSTATUS_CANCELED
                     )
             ) {
                 $bookingstatusoptions[event_access_manager::BOOKINGSTATUS_CANCELED] = get_string(
-                        'event_bookingstatus_' . event_access_manager::BOOKINGSTATUS_CANCELED,
-                        'mod_bookit'
+                    'event_bookingstatus_' . event_access_manager::BOOKINGSTATUS_CANCELED,
+                    'mod_bookit'
                 );
             }
         }
 
         if ($participantpastreadonly) {
             $mform->addElement(
-                    'static',
-                    'bookingstatusreadonly',
-                    get_string('event_bookingstatus', 'mod_bookit'),
-                    get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
             );
         } else if ($showbookingstatus) {
             $mform->addElement(
-                    'select',
-                    'bookingstatus',
-                    get_string('event_bookingstatus', 'mod_bookit'),
-                    $bookingstatusoptions
+                'select',
+                'bookingstatus',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                $bookingstatusoptions
             );
             $mform->setDefault('bookingstatus', $currentbookingstatus);
             $mform->disabledIf('bookingstatus', 'editbookingstatus', 'neq', 1);
             $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
         } else if ($showbookingstatusreadonly) {
             $mform->addElement(
-                    'static',
-                    'bookingstatusreadonly',
-                    get_string('event_bookingstatus', 'mod_bookit'),
-                    get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
             );
             $mform->addElement('hidden', 'bookingstatus');
             $mform->setType('bookingstatus', PARAM_INT);
@@ -486,20 +486,19 @@ class edit_event_form extends dynamic_form {
         // Show hints if request can no longer be edited.
         if ($participantpastreadonly) {
             $mform->addElement(
-                    'static',
-                    'pastparticipantnotice',
-                    '',
-                    get_string('event_past_participant_notice', 'mod_bookit')
+                'static',
+                'pastparticipantnotice',
+                '',
+                get_string('event_past_participant_notice', 'mod_bookit')
             );
         } else if ($cancancelonly) {
             $mform->addElement(
-                    'static',
-                    'cancelonlynotice',
-                    '',
-                    get_string('event_cancel_only_notice', 'mod_bookit')
+                'static',
+                'cancelonlynotice',
+                '',
+                get_string('event_cancel_only_notice', 'mod_bookit')
             );
         }
-
 
         if ($this->is_optional_field_enabled($config, 'refcourseid')) {
             if ($caneditinternal) {
@@ -621,7 +620,6 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('hidden', 'extratimeafter');
             $mform->setType('extratimeafter', PARAM_ALPHANUM);
         }
-
 
         // Add the "internalnotes" field.
         if ($canviewrestrictedfields || $caneditinternalnotes) {

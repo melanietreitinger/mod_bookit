@@ -102,20 +102,20 @@ class settings_calendar_form extends moodleform {
 
         // Configure semester range.
         $mform->addElement(
-                'select',
-                'semesterlookbackyears',
-                get_string('semesterlookbackyears', 'mod_bookit'). '<br><br>' .
+            'select',
+            'semesterlookbackyears',
+            get_string('semesterlookbackyears', 'mod_bookit') . '<br><br>' .
                 get_string('semesterlookbackyears_desc', 'mod_bookit'),
-                [0,1,2],
+            [0, 1, 2],
         );
         $mform->getElement('semesterlookbackyears')->setSelected(0);
 
         $mform->addElement(
-                'select',
-                'semesterlookaheadyears',
-                get_string('semesterlookaheadyears', 'mod_bookit'). '<br><br>' .
+            'select',
+            'semesterlookaheadyears',
+            get_string('semesterlookaheadyears', 'mod_bookit') . '<br><br>' .
                 get_string('semesterlookaheadyears_desc', 'mod_bookit'),
-                [0,1,2],
+            [0, 1, 2],
         );
         $mform->getElement('semesterlookaheadyears')->setSelected(2);
 
