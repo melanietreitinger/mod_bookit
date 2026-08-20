@@ -88,10 +88,10 @@ class ics_exporter {
             ];
 
             if ($descrrows) {
-                $evlines[] = 'DESCRIPTION:' . self::escape(array_shift($descrrows));
-                foreach ($descrrows as $row) {
-                    $evlines[] = ' ' . self::escape($row);
-                }
+                // One logical DESCRIPTION line: escape each row, then join with the
+                // iCalendar text line break (\n) so clients show each row separately.
+                $escaped = array_map([self::class, 'escape'], $descrrows);
+                $evlines[] = 'DESCRIPTION:' . implode('\n', $escaped);
             } else {
                 $evlines[] = 'DESCRIPTION:';
             }

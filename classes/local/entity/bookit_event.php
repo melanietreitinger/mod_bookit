@@ -26,7 +26,6 @@ namespace mod_bookit\local\entity;
 
 use coding_exception;
 use dml_exception;
-use mod_bookit\local\entity\resource\bookit_event_resource;
 use mod_bookit\local\entity\resource\bookit_resource_status;
 use mod_bookit\local\persistent\room;
 
@@ -72,6 +71,7 @@ class bookit_event {
      * @param int|null $timecreated
      * @param int|null $timemodified
      * @param array $resources
+     * @param int|null $totalparticipantsamount
      */
     public function __construct(
         /** @var int $id */
@@ -126,6 +126,8 @@ class bookit_event {
         public ?int $timemodified,
         /** @var array $resources */
         public array $resources,
+        /** @var int|null $totalparticipantsamount Actual total number of participants */
+        public ?int $totalparticipantsamount = null,
     ) {
     }
 
@@ -195,6 +197,7 @@ class bookit_event {
             $record->timecreated ?? null,
             $record->timemodified ?? null,
             $record->resources ?? [],
+            $record->totalparticipantsamount ?? null,
         );
     }
 

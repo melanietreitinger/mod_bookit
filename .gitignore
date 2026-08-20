@@ -1,3 +1,13 @@
+# Sprachstring-Tool und Doku, liegen im Branch tools/bookit-lang-tool
+/*.py
+lang/en/language_tool_documentation*.pdf
+
+# Backups, die das Tool selbst schreibt
+*.bak
+
+__pycache__/
+*.pyc
+
 .DS_Store
 Thumbs.db
 *.log

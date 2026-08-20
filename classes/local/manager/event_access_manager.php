@@ -1116,6 +1116,10 @@ class event_access_manager {
             return true;
         }
 
+        if ($field === 'totalparticipantsamount') {
+            return has_capability('mod/bookit:editinternal', $context, $userid);
+        }
+
         if ($field === 'internalnotes') {
             return self::can_user_view_workflow_history_internal_fields($event, $context, $userid);
         }

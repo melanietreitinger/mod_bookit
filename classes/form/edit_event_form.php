@@ -422,11 +422,22 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('hidden', 'notes');
             $mform->setType('notes', PARAM_TEXT);
         }
-
         // Internal fields.
         if ($caneditinternal || $canviewrestrictedfields) {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
+        }
+        // Actual attendance is an internal reporting field and is available only to the Service Team.
+        if ($caneditinternal) {
+            $mform->addElement(
+                'text',
+                'totalparticipantsamount',
+                get_string('event_totalparticipants', 'mod_bookit'),
+                ['size' => '4']
+            );
+            $mform->setType('totalparticipantsamount', PARAM_RAW_TRIMMED);
+            $mform->addRule('totalparticipantsamount', null, 'numeric', null, 'client');
+            $mform->addHelpButton('totalparticipantsamount', 'event_totalparticipants', 'mod_bookit');
         }
         if ($this->is_optional_field_enabled($config, 'refcourseid')) {
             if ($caneditinternal) {
@@ -1140,6 +1151,18 @@ class edit_event_form extends dynamic_form {
         if ($currentevent && !$caneditinternalnotes) {
             $formdata->internalnotes = $currentevent->internalnotes;
         }
+        if ($caneditinternal) {
+            $totalparticipantsamount = $formdata->totalparticipantsamount ?? null;
+            $formdata->totalparticipantsamount =
+                ($totalparticipantsamount === '' || $totalparticipantsamount === null)
+                    ? null
+                    : (int)$totalparticipantsamount;
+        } else if ($currentevent) {
+            // Prevent non-Service-Team submissions from changing this internal value.
+            $formdata->totalparticipantsamount = $currentevent->totalparticipantsamount;
+        } else {
+            $formdata->totalparticipantsamount = null;
+        }
 
         if ($currentevent && $caneditbookingstatus && !$caneditinternal) {
             $requestedstatus = (int)($formdata->bookingstatus ?? $currentevent->bookingstatus);
@@ -1557,6 +1580,21 @@ class edit_event_form extends dynamic_form {
                 if (!in_array($requestedstatus, $allowedstatuses, true)) {
                     $errors['bookingstatus'] = get_string('event_cancel_only_notice', 'mod_bookit');
                 }
+            }
+        }
+
+        if (has_capability('mod/bookit:editinternal', $context)) {
+            $totalparticipantsamount = trim((string)($data['totalparticipantsamount'] ?? ''));
+
+            if (
+                $totalparticipantsamount !== ''
+                && (
+                    filter_var($totalparticipantsamount, FILTER_VALIDATE_INT) === false
+                    || (int)$totalparticipantsamount < 0
+                )
+            ) {
+                $errors['totalparticipantsamount'] =
+                    get_string('event_totalparticipants_invalid', 'mod_bookit');
             }
         }
 

@@ -121,6 +121,20 @@ if ($showreportfilters) {
         $selectedsemesterids,
         $hasexplicitsemesterfilter
     );
+
+    $semesterrange = event_manager::get_semester_date_range($selectedsemesterids);
+
+    if ($semesterrange !== null) {
+        if (!$hasexplicitreportstart) {
+            $defaultreportstart = $semesterrange[0];
+            $reportstartvalue = date('Y-m-d', $defaultreportstart);
+        }
+
+        if (!$hasexplicitreportend) {
+            $defaultreportend = $semesterrange[1];
+            $reportendvalue = date('Y-m-d', $defaultreportend);
+        }
+    }
 }
 $overviewfilters = [
     'bookingstatuses' => $selectedstatuses,
@@ -206,6 +220,8 @@ if (!$canviewrequestworkspace) {
 /* ----- inline ModalForm handler -------------------------------------- */
 $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
+$PAGE->requires->js_call_amd('mod_bookit/semester_date_sync', 'init');
+
 /* =======================================================================
    2.  Page headings
    ======================================================================= */

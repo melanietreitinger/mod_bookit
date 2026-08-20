@@ -452,9 +452,23 @@
     font-weight: 600;
 }
 
+/* Keep export-list rows left-aligned; the shared calendar titlehtml
+   centers its time heading, which is wrong inside this list. */
+.bookit-export-item-text,
+.bookit-export-item-title {
+    text-align: left;
+}
+
+.bookit-export-item-title h6 {
+    width: auto;
+    text-align: left;
+    margin-bottom: 0.15rem;
+}
+
 .bookit-export-list .list-group-item {
     border-left-width: 0.25rem;
 }
+
 .ec-event.bookit-bookingstatus-2 .ec-event-time {
     font-weight: 600;
 }
@@ -495,4 +509,136 @@
 .bookit-nav-badge--inprogress {
     background-color: #fff3cd;
     color: #664d03;
+}
+
+/* ===========================================================================
+   Export modal - subtle modern polish. Scoped to #bookit-export-modal and the
+   .bookit-export-* classes. Reuses the canonical booking-status palette so the
+   accent colours match the calendar.
+   =========================================================================== */
+#bookit-export-modal .modal-content {
+    border: 0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1.5rem 3rem rgba(20, 30, 55, 0.18);
+    overflow: hidden;
+}
+
+#bookit-export-modal .modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: linear-gradient(180deg, rgba(15, 108, 191, 0.06), rgba(15, 108, 191, 0));
+}
+
+#bookit-export-modal .modal-title {
+    position: relative;
+    padding-bottom: 0.35rem;
+    font-weight: 600;
+}
+
+#bookit-export-modal .modal-title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 2.25rem;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--primary, #0f6cbf);
+}
+
+#bookit-export-modal .form-control {
+    border-radius: 0.5rem;
+}
+
+#bookit-export-modal .form-control:focus {
+    border-color: var(--primary, #0f6cbf);
+    box-shadow: 0 0 0 0.15rem rgba(15, 108, 191, 0.15);
+}
+
+#bookit-export-selection-count {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(15, 108, 191, 0.08);
+    color: var(--primary, #0f6cbf);
+}
+
+.bookit-export-list {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.6rem;
+    overflow: hidden;
+}
+
+.bookit-export-list .list-group-item {
+    border-left-width: 0.25rem;
+    border-left-color: transparent;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background-color 0.12s ease, border-left-color 0.12s ease;
+}
+
+.bookit-export-list .list-group-item:last-child {
+    border-bottom: 0;
+}
+
+.bookit-export-item:hover {
+    background: rgba(15, 108, 191, 0.035);
+}
+
+/* Left-border accent per booking status (same palette as the calendar). */
+.bookit-export-list .list-group-item.bookit-export-status-0 {
+    border-left-color: #c6c8ca;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-1 {
+    border-left-color: #ffe08a;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-2 {
+    border-left-color: #198754;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-3 {
+    border-left-color: #343a40;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-4 {
+    border-left-color: #f1aeb5;
+}
+
+/* Selected row: gentle primary tint + accent, wins over the status border. */
+.bookit-export-list .bookit-export-item:has(input:checked) {
+    background: rgba(15, 108, 191, 0.07);
+    border-left-color: var(--primary, #0f6cbf);
+}
+
+/* Status badge as a faint tinted chip instead of plain grey. */
+.bookit-export-status-0 .badge {
+    background: #e2e3e5;
+    border-color: #c6c8ca !important;
+    color: #212529;
+}
+
+.bookit-export-status-1 .badge {
+    background: #fff3cd;
+    border-color: #ffe08a !important;
+    color: #664d03;
+}
+
+.bookit-export-status-2 .badge {
+    background: #d1e7dd;
+    border-color: #a3cfbb !important;
+    color: #0f5132;
+}
+
+.bookit-export-status-3 .badge {
+    background: #343a40;
+    border-color: #343a40 !important;
+    color: #fff;
+}
+
+.bookit-export-status-4 .badge {
+    background: #f8d7da;
+    border-color: #f1aeb5 !important;
+    color: #842029;
 }
