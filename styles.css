@@ -468,6 +468,7 @@
 .bookit-export-list .list-group-item {
     border-left-width: 0.25rem;
 }
+
 .ec-event.bookit-bookingstatus-2 .ec-event-time {
     font-weight: 600;
 }
@@ -585,11 +586,25 @@
 }
 
 /* Left-border accent per booking status (same palette as the calendar). */
-.bookit-export-list .list-group-item.bookit-export-status-0 { border-left-color: #c6c8ca; }
-.bookit-export-list .list-group-item.bookit-export-status-1 { border-left-color: #ffe08a; }
-.bookit-export-list .list-group-item.bookit-export-status-2 { border-left-color: #198754; }
-.bookit-export-list .list-group-item.bookit-export-status-3 { border-left-color: #343a40; }
-.bookit-export-list .list-group-item.bookit-export-status-4 { border-left-color: #f1aeb5; }
+.bookit-export-list .list-group-item.bookit-export-status-0 {
+    border-left-color: #c6c8ca;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-1 {
+    border-left-color: #ffe08a;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-2 {
+    border-left-color: #198754;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-3 {
+    border-left-color: #343a40;
+}
+
+.bookit-export-list .list-group-item.bookit-export-status-4 {
+    border-left-color: #f1aeb5;
+}
 
 /* Selected row: gentle primary tint + accent, wins over the status border. */
 .bookit-export-list .bookit-export-item:has(input:checked) {
@@ -598,8 +613,32 @@
 }
 
 /* Status badge as a faint tinted chip instead of plain grey. */
-.bookit-export-status-0 .badge { background: #e2e3e5; border-color: #c6c8ca !important; color: #212529; }
-.bookit-export-status-1 .badge { background: #fff3cd; border-color: #ffe08a !important; color: #664d03; }
-.bookit-export-status-2 .badge { background: #d1e7dd; border-color: #a3cfbb !important; color: #0f5132; }
-.bookit-export-status-3 .badge { background: #343a40; border-color: #343a40 !important; color: #fff; }
-.bookit-export-status-4 .badge { background: #f8d7da; border-color: #f1aeb5 !important; color: #842029; }
+.bookit-export-status-0 .badge {
+    background: #e2e3e5;
+    border-color: #c6c8ca !important;
+    color: #212529;
+}
+
+.bookit-export-status-1 .badge {
+    background: #fff3cd;
+    border-color: #ffe08a !important;
+    color: #664d03;
+}
+
+.bookit-export-status-2 .badge {
+    background: #d1e7dd;
+    border-color: #a3cfbb !important;
+    color: #0f5132;
+}
+
+.bookit-export-status-3 .badge {
+    background: #343a40;
+    border-color: #343a40 !important;
+    color: #fff;
+}
+
+.bookit-export-status-4 .badge {
+    background: #f8d7da;
+    border-color: #f1aeb5 !important;
+    color: #842029;
+}
