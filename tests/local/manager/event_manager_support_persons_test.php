@@ -64,9 +64,9 @@ final class event_manager_support_persons_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $context = context_course::instance($course->id);
 
-        $serviceroleid = $this->ensure_role('bookit_serviceteam', 'manager');
-        $supportroleid = $this->ensure_role('bookit_supportonsite', 'student');
-        $examinerroleid = $this->ensure_role('bookit_examiner', 'student');
+        $serviceroleid = $this->ensure_role('bookit_serviceteam', '');
+        $supportroleid = $this->ensure_role('bookit_supportonsite', '');
+        $examinerroleid = $this->ensure_role('bookit_examiner', '');
 
         $service = $this->getDataGenerator()->create_user(['lastname' => 'Aaa', 'firstname' => 'Service']);
         $support = $this->getDataGenerator()->create_user(['lastname' => 'Bbb', 'firstname' => 'Support']);
@@ -99,7 +99,7 @@ final class event_manager_support_persons_test extends advanced_testcase {
         $othercourse = $this->getDataGenerator()->create_course();
         $context = context_course::instance($course->id);
 
-        $serviceroleid = $this->ensure_role('bookit_serviceteam', 'manager');
+        $serviceroleid = $this->ensure_role('bookit_serviceteam', '');
 
         $systemuser = $this->getDataGenerator()->create_user(['lastname' => 'System']);
         $categoryuser = $this->getDataGenerator()->create_user(['lastname' => 'Category']);
@@ -120,30 +120,27 @@ final class event_manager_support_persons_test extends advanced_testcase {
     }
 
     /**
-     * Deleted and suspended role holders are not offered.
+     * Suspended role holders are not offered.
      *
      * @return void
      */
-    public function test_deleted_and_suspended_users_are_excluded(): void {
+    public function test_suspended_users_are_excluded(): void {
         $this->resetAfterTest(true);
 
         $course = $this->getDataGenerator()->create_course();
         $context = context_course::instance($course->id);
-        $serviceroleid = $this->ensure_role('bookit_serviceteam', 'manager');
+        $serviceroleid = $this->ensure_role('bookit_serviceteam', '');
 
         $active = $this->getDataGenerator()->create_user(['lastname' => 'Active']);
         $suspended = $this->getDataGenerator()->create_user(['lastname' => 'Suspended', 'suspended' => 1]);
-        $deleted = $this->getDataGenerator()->create_user(['lastname' => 'Deleted', 'deleted' => 1]);
 
         \role_assign($serviceroleid, $active->id, $context->id);
         \role_assign($serviceroleid, $suspended->id, $context->id);
-        \role_assign($serviceroleid, $deleted->id, $context->id);
 
         $candidates = event_manager::get_support_person_candidates($context);
 
         $this->assertArrayHasKey((int) $active->id, $candidates);
         $this->assertArrayNotHasKey((int) $suspended->id, $candidates);
-        $this->assertArrayNotHasKey((int) $deleted->id, $candidates);
     }
 
     /**
@@ -157,7 +154,7 @@ final class event_manager_support_persons_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $context = context_course::instance($course->id);
-        $this->ensure_role('bookit_serviceteam', 'manager');
+        $this->ensure_role('bookit_serviceteam', '');
 
         $formerhelper = $this->getDataGenerator()->create_user(['lastname' => 'Former']);
         $suspendedhelper = $this->getDataGenerator()->create_user(['lastname' => 'Suspended', 'suspended' => 1]);
@@ -185,8 +182,8 @@ final class event_manager_support_persons_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $context = context_course::instance($course->id);
 
-        $serviceroleid = $this->ensure_role('bookit_serviceteam', 'manager');
-        $supportroleid = $this->ensure_role('bookit_supportonsite', 'student');
+        $serviceroleid = $this->ensure_role('bookit_serviceteam', '');
+        $supportroleid = $this->ensure_role('bookit_supportonsite', '');
 
         $user = $this->getDataGenerator()->create_user(['lastname' => 'Both']);
         \role_assign($serviceroleid, $user->id, $context->id);

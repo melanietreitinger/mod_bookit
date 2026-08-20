@@ -27,6 +27,7 @@ namespace mod_bookit\local\manager;
 use coding_exception;
 use context_course;
 use context_module;
+use core\context;
 use core_text;
 use core_user\fields;
 use DateTime;
@@ -67,10 +68,10 @@ class event_manager {
      * options of a select or autocomplete element.
      *
      * Only users holding one of the SUPPORT_PERSON_ROLES are returned. Role assignments are taken
-     * into account for the given course context and all of its parents (category, system), because
-     * the BookIt roles are typically assigned on system level.
+     * into account for the given context and all of its parents, because the BookIt roles may be
+     * assigned at module, course, category, or system level.
      *
-     * @param context_course $context Course context the event belongs to.
+     * @param context $context Course or module context the event belongs to.
      * @param string $selectedids Comma-separated user IDs already stored on the event. These are
      *      always included, even if the user lost the role meanwhile, so that the form does not
      *      silently drop them.
@@ -78,7 +79,7 @@ class event_manager {
      * @throws coding_exception
      * @throws dml_exception
      */
-    public static function get_support_person_candidates(context_course $context, string $selectedids = ''): array {
+    public static function get_support_person_candidates(context $context, string $selectedids = ''): array {
         global $DB;
 
         [$roleinsql, $params] = $DB->get_in_or_equal(self::SUPPORT_PERSON_ROLES, SQL_PARAMS_NAMED, 'rsn');

@@ -89,7 +89,7 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
 
         $role = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
         if (!$role) {
-            $roleid = \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+            $roleid = \create_role('Bookit support on site', 'bookit_supportonsite', '');
         } else {
             $roleid = (int)$role->id;
         }
@@ -467,7 +467,9 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
         $otheruser = $this->getDataGenerator()->create_user();
         $context = $this->create_support_context();
         $this->getDataGenerator()->enrol_user((int)$supportuser->id, $context->get_course_context()->instanceid);
+        $this->getDataGenerator()->enrol_user((int)$otheruser->id, $context->get_course_context()->instanceid);
         $this->assign_support_role($context, (int)$supportuser->id);
+        $this->assign_support_role($context, (int)$otheruser->id);
 
         $refcourse = $this->getDataGenerator()->create_course(['fullname' => 'Original exam course']);
         $tampercourse = $this->getDataGenerator()->create_course(['fullname' => 'Tampered exam course']);
@@ -478,7 +480,10 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
             (int)$supportuser->id,
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             $roomid,
-            ['refcourseid' => (int)$refcourse->id]
+            [
+                'refcourseid' => (int)$refcourse->id,
+                'supportpersons' => (string)$supportuser->id,
+            ]
         );
 
         $this->submit_edit_event_form(

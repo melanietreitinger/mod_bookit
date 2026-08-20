@@ -543,7 +543,7 @@ class edit_event_form extends dynamic_form {
             unset($userselectoroptions['ajax']);
             // Support users can be users with the roles "serviceteam" and "supportonsite".
             $supportpersons = event_manager::get_support_person_candidates(
-                $contextcourse,
+                $context,
                 $existingevent->supportpersons ?? ''
             );
             $supportpersonselementname = 'supportpersons';
