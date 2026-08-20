@@ -73,8 +73,8 @@ class room extends persistent {
                 'type' => PARAM_TEXT,
             ],
             'active' => [
-                'type' => PARAM_BOOL,
-                'default' => false,
+                'type' => PARAM_INT,
+                'default' => 0,
             ],
             'roommode' => [
                 'type' => PARAM_INT,

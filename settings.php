@@ -167,21 +167,6 @@ if ($hassiteconfig) {
         get_string('calendar_profile_desc', 'mod_bookit')
     ));
 
-    $settings->add(new admin_setting_configtext(
-        'mod_bookit/semesterlookbackyears',
-        get_string('semesterlookbackyears', 'mod_bookit'),
-        get_string('semesterlookbackyears_desc', 'mod_bookit'),
-        1,
-        PARAM_INT
-    ));
-
-    $settings->add(new admin_setting_configtext(
-        'mod_bookit/semesterlookaheadyears',
-        get_string('semesterlookaheadyears', 'mod_bookit'),
-        get_string('semesterlookaheadyears_desc', 'mod_bookit'),
-        1,
-        PARAM_INT
-    ));
 
     $settings->add(new admin_setting_configtextarea(
         'mod_bookit/examiner_pool_usernames',

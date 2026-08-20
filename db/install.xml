@@ -6,376 +6,375 @@
   <TABLES>
     <TABLE NAME="bookit" COMMENT="Stores the bookit activity module instances.">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID of the course this activity is part of."/>
-        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The name of the activity module instance"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp of when the instance was added to the course."/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp of when the instance was last modified."/>
-        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Activity description."/>
-        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The format of the intro field."/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID of the course this activity is part of." />
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The name of the activity module instance" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp of when the instance was added to the course." />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp of when the instance was last modified." />
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Activity description." />
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The format of the intro field." />
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="fk_course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_event" COMMENT="Stores the events of bookit">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="semester" TYPE="int" LENGTH="8" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="institutionid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="duration" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="participantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Estimated number of participants"/>
-        <FIELD NAME="totalparticipantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Actual total number of participants"/>        <FIELD NAME="timecompensation" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="compensationfordisadvantages" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="bookingstatus" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="personinchargeid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="otherexaminers" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="coursetemplate" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="supportpersons" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Person(s) for technical support"/>
-        <FIELD NAME="extratimebefore" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes"/>
-        <FIELD NAME="extratimeafter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes"/>
-        <FIELD NAME="refcourseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Courseid of the exam course"/>
-        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who originally created the event; never changes on update"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usercreated" TYPE="foreign" FIELDS="usercreated" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="even_per_fk" TYPE="foreign" FIELDS="personinchargeid" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="even_cou_fk" TYPE="foreign" FIELDS="coursetemplate" REFTABLE="course" REFFIELDS="id"/>
-        <KEY NAME="even_ref_fk" TYPE="foreign" FIELDS="refcourseid" REFTABLE="course" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_resource_category" COMMENT="Stores the categories of resources">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_resource" COMMENT="Stores the available resources">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="amount" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="amountirrelevant" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="categoryid" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="roomids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded array of room IDs"/>
-        <FIELD NAME="internalinfo" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Internal information visible only to admins"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="reso_cat_fk" TYPE="foreign" FIELDS="categoryid" REFTABLE="bookit_resource_category" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_resource_settings" COMMENT="Resource settings metadata with due dates and notifications">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="resourceid" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="FK to bookit_resource"/>
-        <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Default due date offset in seconds (NULL = no default)"/>
-        <FIELD NAME="duedatetype" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Type: before_event, after_event, fixed_date"/>
-        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Independent sort order for checklist view"/>
-        <FIELD NAME="beforedueid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (before due notification)"/>
-        <FIELD NAME="whendueid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (when due notification)"/>
-        <FIELD NAME="overdueid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (overdue notification)"/>
-        <FIELD NAME="whendoneid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (when done notification)"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="resourceid" TYPE="foreign" FIELDS="resourceid" REFTABLE="bookit_resource" REFFIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="beforedueid_fk" TYPE="foreign" FIELDS="beforedueid" REFTABLE="bookit_notification_slots" REFFIELDS="id"/>
-        <KEY NAME="whendueid_fk" TYPE="foreign" FIELDS="whendueid" REFTABLE="bookit_notification_slots" REFFIELDS="id"/>
-        <KEY NAME="overdueid_fk" TYPE="foreign" FIELDS="overdueid" REFTABLE="bookit_notification_slots" REFFIELDS="id"/>
-        <KEY NAME="whendoneid_fk" TYPE="foreign" FIELDS="whendoneid" REFTABLE="bookit_notification_slots" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="resourceid_idx" UNIQUE="false" FIELDS="resourceid" COMMENT="Index for resource lookups"/>
-        <INDEX NAME="sortorder_idx" UNIQUE="false" FIELDS="sortorder" COMMENT="Index for sorting"/>
-      </INDEXES>
-    </TABLE>
-    <TABLE NAME="bookit_event_history" COMMENT="Stores visible second-pass workflow history for booking events.">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="action" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="oldstatus" TYPE="int" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="newstatus" TYPE="int" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="changedfields" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="recoverymarker" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit_event" REFFIELDS="id"/>
-        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="event_time_idx" UNIQUE="false" FIELDS="eventid,timecreated" COMMENT="Index for ordered event history lookups"/>
-      </INDEXES>
-    </TABLE>
-    <TABLE NAME="bookit_event_resource" COMMENT="Junction table for event-resource relationships">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit_event table"/>
-        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit_resource table"/>
-        <FIELD NAME="amount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Number of units of this resource used"/>
-        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="requested" SEQUENCE="false" COMMENT="Status: requested, confirmed, inprogress, rejected"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit" REFFIELDS="id"/>
-        <KEY NAME="resourceid_fk" TYPE="foreign" FIELDS="resourceid" REFTABLE="bookit_resource" REFFIELDS="id"/>
-        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="eventid_idx" UNIQUE="false" FIELDS="eventid" COMMENT="Index for event lookups"/>
-        <INDEX NAME="resourceid_idx" UNIQUE="false" FIELDS="resourceid" COMMENT="Index for resource lookups"/>
-        <INDEX NAME="event_resource_unique_idx" UNIQUE="true" FIELDS="eventid,resourceid" COMMENT="Unique constraint for event-resource pair"/>
-      </INDEXES>
-    </TABLE>
-    <TABLE NAME="bookit_institution" COMMENT="Institutions choosable in bookit">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether the institution is active or hidden (not selectable for new events)."/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_room" COMMENT="Bookit room">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="shortname" TYPE="char" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="location" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="eventcolor" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="roommode" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 = choose freely inside slots, 1 = only use predetermined slots."/>
-        <FIELD NAME="seats" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="extratimebefore" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes; can be empty to fall back on the global setting"/>
-        <FIELD NAME="extratimeafter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes; can be empty to fall back on the global setting"/>
-        <FIELD NAME="preventoverlap" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="2" SEQUENCE="false" COMMENT="0 = Allow all overlap 1 = Allow overlap with not confirmed events 2 = Do not allow overlap"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_weekplan" COMMENT="Weekplan">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_weekplanslot" COMMENT="Weekplan slots">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="weekplanid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="starttime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Starttime in seconds, counted from start of week."/>
-        <FIELD NAME="endtime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Endtime in seconds, counted from start of week."/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="week_wee_frk" TYPE="foreign" FIELDS="weekplanid" REFTABLE="bookit_weekplan" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_weekplan_room" COMMENT="Saves weekplan is used for which room in what timeframe.">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="weekplanid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="epoch"/>
-        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="epoch"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="weekplanid" TYPE="foreign" FIELDS="weekplanid" REFTABLE="bookit_weekplan" REFFIELDS="id"/>
-        <KEY NAME="roomid" TYPE="foreign" FIELDS="roomid" REFTABLE="bookit_room" REFFIELDS="id"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id" />
       </KEYS>
     </TABLE>
     <TABLE NAME="bookit_blocker" COMMENT="Stores blocked times for specific rooms or globally.">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="roomid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="roomid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="roomid" TYPE="foreign" FIELDS="roomid" REFTABLE="bookit_room" REFFIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bookit_checklist_master" COMMENT="Stores the master checklists">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Name of the master checklist"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Description of the checklist"/>
-        <FIELD NAME="isdefault" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether this is the default master checklist"/>
-        <FIELD NAME="checklistcategories" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Checklist categories order (JSON encoded)"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="roomid" TYPE="foreign" FIELDS="roomid" REFTABLE="bookit_room" REFFIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
       </KEYS>
     </TABLE>
     <TABLE NAME="bookit_checklist_category" COMMENT="Stores categories for organizing checklist items">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="masterid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to the master checklist"/>
-        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Name of the category"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Description of the category"/>
-        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Position of the category"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="checklistitems" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Checklist items order (JSON encoded)"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="masterid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to the master checklist" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Name of the category" />
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Description of the category" />
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Position of the category" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="checklistitems" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Checklist items order (JSON encoded)" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="masterid" TYPE="foreign" FIELDS="masterid" REFTABLE="bookit_checklist_master" REFFIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="masterid" TYPE="foreign" FIELDS="masterid" REFTABLE="bookit_checklist_master" REFFIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
       </KEYS>
       <INDEXES>
-        <INDEX NAME="masterid_sortorder" UNIQUE="false" FIELDS="masterid, sortorder"/>
+        <INDEX NAME="masterid_sortorder" UNIQUE="false" FIELDS="masterid, sortorder" />
       </INDEXES>
     </TABLE>
     <TABLE NAME="bookit_checklist_item" COMMENT="Stores the individual items of master checklists">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="masterid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to the master checklist"/>
-        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to category"/>
-        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to parent item for hierarchical structure"/>
-        <FIELD NAME="roomids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded array of room IDs"/>
-        <FIELD NAME="roleids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to roles"/>
-        <FIELD NAME="title" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Title of the checklist item"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Detailed description of the item"/>
-        <FIELD NAME="itemtype" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Type of the item (not used)"/>
-        <FIELD NAME="options" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded options for complex types"/>
-        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Position in the checklist"/>
-        <FIELD NAME="isrequired" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the item is required"/>
-        <FIELD NAME="state" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="State of the item (open, processing, done, unknown)"/>
-        <FIELD NAME="defaultvalue" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Default value for the item"/>
-        <FIELD NAME="duedaysoffset" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Due days relative to the event date"/>
-        <FIELD NAME="duedaysrelation" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="masterid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to the master checklist" />
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to category" />
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to parent item for hierarchical structure" />
+        <FIELD NAME="roomids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded array of room IDs" />
+        <FIELD NAME="roleids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to roles" />
+        <FIELD NAME="title" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Title of the checklist item" />
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Detailed description of the item" />
+        <FIELD NAME="itemtype" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Type of the item (not used)" />
+        <FIELD NAME="options" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded options for complex types" />
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Position in the checklist" />
+        <FIELD NAME="isrequired" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the item is required" />
+        <FIELD NAME="state" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="State of the item (open, processing, done, unknown)" />
+        <FIELD NAME="defaultvalue" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Default value for the item" />
+        <FIELD NAME="duedaysoffset" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Due days relative to the event date" />
+        <FIELD NAME="duedaysrelation" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="masterid" TYPE="foreign" FIELDS="masterid" REFTABLE="bookit_checklist_master" REFFIELDS="id"/>
-        <KEY NAME="categoryid" TYPE="foreign" FIELDS="categoryid" REFTABLE="bookit_checklist_category" REFFIELDS="id"/>
-        <KEY NAME="parentid" TYPE="foreign" FIELDS="parentid" REFTABLE="bookit_checklist_item" REFFIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="masterid" TYPE="foreign" FIELDS="masterid" REFTABLE="bookit_checklist_master" REFFIELDS="id" />
+        <KEY NAME="categoryid" TYPE="foreign" FIELDS="categoryid" REFTABLE="bookit_checklist_category" REFFIELDS="id" />
+        <KEY NAME="parentid" TYPE="foreign" FIELDS="parentid" REFTABLE="bookit_checklist_item" REFFIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
       </KEYS>
       <INDEXES>
-        <INDEX NAME="masterid_sortorder" UNIQUE="false" FIELDS="masterid, sortorder"/>
+        <INDEX NAME="masterid_sortorder" UNIQUE="false" FIELDS="masterid, sortorder" />
       </INDEXES>
     </TABLE>
-    <TABLE NAME="bookit_notification_slots" COMMENT="Stores notification settings for checklist items">
+    <TABLE NAME="bookit_checklist_master" COMMENT="Stores the master checklists">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="checklistitemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to the masterchecklist item (null for resource checklist items)"/>
-        <FIELD NAME="type" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Type of notification"/>
-        <FIELD NAME="roleids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded list of role IDs to notify"/>
-        <FIELD NAME="duedaysoffset" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Due days relative to the event date"/>
-        <FIELD NAME="duedaysrelation" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)"/>
-        <FIELD NAME="isactive" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether this notification slot is active"/>
-        <FIELD NAME="messagetext" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Text message to send in the notification"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Name of the master checklist" />
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Description of the checklist" />
+        <FIELD NAME="isdefault" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether this is the default master checklist" />
+        <FIELD NAME="checklistcategories" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Checklist categories order (JSON encoded)" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="checklistitemid" TYPE="foreign" FIELDS="checklistitemid" REFTABLE="bookit_checklist_item" REFFIELDS="id"/>
-        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_event" COMMENT="Stores the events of bookit">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="semester" TYPE="int" LENGTH="8" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="institutionid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="duration" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="participantsamount" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Number of participants" />
+        <FIELD NAME="timecompensation" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="compensationfordisadvantages" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="bookingstatus" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="personinchargeid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="otherexaminers" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="coursetemplate" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="supportpersons" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Person(s) for technical support" />
+        <FIELD NAME="extratimebefore" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes" />
+        <FIELD NAME="extratimeafter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes" />
+        <FIELD NAME="refcourseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="Courseid of the exam course" />
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who originally created the event; never changes on update" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+        <KEY NAME="even_per_fk" TYPE="foreign" FIELDS="personinchargeid" REFTABLE="user" REFFIELDS="id" />
+        <KEY NAME="even_cou_fk" TYPE="foreign" FIELDS="coursetemplate" REFTABLE="course" REFFIELDS="id" />
+        <KEY NAME="even_ref_fk" TYPE="foreign" FIELDS="refcourseid" REFTABLE="course" REFFIELDS="id" />
       </KEYS>
     </TABLE>
     <TABLE NAME="bookit_event_checklist_state" COMMENT="Stores per-event check-off state for master checklist items">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit (event)"/>
-        <FIELD NAME="checklistitemid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit_checklist_item"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="User who checked the item"/>
-        <FIELD NAME="done" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 if checked off, 0 otherwise"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit (event)" />
+        <FIELD NAME="checklistitemid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit_checklist_item" />
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="User who checked the item" />
+        <FIELD NAME="done" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 if checked off, 0 otherwise" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit_event" REFFIELDS="id"/>
-        <KEY NAME="checklistitemid_fk" TYPE="foreign" FIELDS="checklistitemid" REFTABLE="bookit_checklist_item" REFFIELDS="id"/>
-        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit_event" REFFIELDS="id" />
+        <KEY NAME="checklistitemid_fk" TYPE="foreign" FIELDS="checklistitemid" REFTABLE="bookit_checklist_item" REFFIELDS="id" />
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" />
+        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
       </KEYS>
       <INDEXES>
-        <INDEX NAME="eventid_idx" UNIQUE="false" FIELDS="eventid" COMMENT="Index for event lookups"/>
-        <INDEX NAME="event_item_user_unique_idx" UNIQUE="true" FIELDS="eventid,checklistitemid,userid" COMMENT="One state record per event/item/user"/>
+        <INDEX NAME="eventid_idx" UNIQUE="false" FIELDS="eventid" COMMENT="Index for event lookups" />
+        <INDEX NAME="event_item_user_unique_idx" UNIQUE="true" FIELDS="eventid,checklistitemid,userid" COMMENT="One state record per event/item/user" />
       </INDEXES>
+    </TABLE>
+    <TABLE NAME="bookit_event_history" COMMENT="Stores visible second-pass workflow history for booking events.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="action" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="oldstatus" TYPE="int" LENGTH="6" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="newstatus" TYPE="int" LENGTH="6" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="changedfields" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="recoverymarker" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit_event" REFFIELDS="id" />
+        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="event_time_idx" UNIQUE="false" FIELDS="eventid,timecreated" COMMENT="Index for ordered event history lookups" />
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="bookit_event_resource" COMMENT="Junction table for event-resource relationships">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit_event table" />
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to bookit_resource table" />
+        <FIELD NAME="amount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Number of units of this resource used" />
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="requested" SEQUENCE="false" COMMENT="Status: requested, confirmed, inprogress, rejected" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="eventid_fk" TYPE="foreign" FIELDS="eventid" REFTABLE="bookit" REFFIELDS="id" />
+        <KEY NAME="resourceid_fk" TYPE="foreign" FIELDS="resourceid" REFTABLE="bookit_resource" REFFIELDS="id" />
+        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="eventid_idx" UNIQUE="false" FIELDS="eventid" COMMENT="Index for event lookups" />
+        <INDEX NAME="resourceid_idx" UNIQUE="false" FIELDS="resourceid" COMMENT="Index for resource lookups" />
+        <INDEX NAME="event_resource_unique_idx" UNIQUE="true" FIELDS="eventid,resourceid" COMMENT="Unique constraint for event-resource pair" />
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="bookit_institution" COMMENT="Institutions choosable in bookit">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="internalnotes" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether the institution is active or hidden (not selectable for new events)." />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_notification_slots" COMMENT="Stores notification settings for checklist items">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="checklistitemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to the masterchecklist item (null for resource checklist items)" />
+        <FIELD NAME="type" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Type of notification" />
+        <FIELD NAME="roleids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded list of role IDs to notify" />
+        <FIELD NAME="duedaysoffset" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Due days relative to the event date" />
+        <FIELD NAME="duedaysrelation" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Relation of the due date (before, after)" />
+        <FIELD NAME="isactive" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether this notification slot is active" />
+        <FIELD NAME="messagetext" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Text message to send in the notification" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="checklistitemid" TYPE="foreign" FIELDS="checklistitemid" REFTABLE="bookit_checklist_item" REFFIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_resource" COMMENT="Stores the available resources">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="amount" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="amountirrelevant" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" />
+        <FIELD NAME="roomids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded array of room IDs" />
+        <FIELD NAME="internalinfo" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Internal information visible only to admins" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+        <KEY NAME="reso_cat_fk" TYPE="foreign" FIELDS="categoryid" REFTABLE="bookit_resource_category" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_resource_category" COMMENT="Stores the categories of resources">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_resource_settings" COMMENT="Resource settings metadata with due dates and notifications">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="FK to bookit_resource" />
+        <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Default due date offset in seconds (NULL = no default)" />
+        <FIELD NAME="duedatetype" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Type: before_event, after_event, fixed_date" />
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Independent sort order for checklist view" />
+        <FIELD NAME="beforedueid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (before due notification)" />
+        <FIELD NAME="whendueid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (when due notification)" />
+        <FIELD NAME="overdueid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (overdue notification)" />
+        <FIELD NAME="whendoneid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to bookit_notification_slot (when done notification)" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="resourceid" TYPE="foreign" FIELDS="resourceid" REFTABLE="bookit_resource" REFFIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+        <KEY NAME="beforedueid_fk" TYPE="foreign" FIELDS="beforedueid" REFTABLE="bookit_notification_slots" REFFIELDS="id" />
+        <KEY NAME="whendueid_fk" TYPE="foreign" FIELDS="whendueid" REFTABLE="bookit_notification_slots" REFFIELDS="id" />
+        <KEY NAME="overdueid_fk" TYPE="foreign" FIELDS="overdueid" REFTABLE="bookit_notification_slots" REFFIELDS="id" />
+        <KEY NAME="whendoneid_fk" TYPE="foreign" FIELDS="whendoneid" REFTABLE="bookit_notification_slots" REFFIELDS="id" />
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="resourceid_idx" UNIQUE="false" FIELDS="resourceid" COMMENT="Index for resource lookups" />
+        <INDEX NAME="sortorder_idx" UNIQUE="false" FIELDS="sortorder" COMMENT="Index for sorting" />
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="bookit_room" COMMENT="Bookit room">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="shortname" TYPE="char" LENGTH="6" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="location" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="eventcolor" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" />
+        <FIELD NAME="roommode" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 = choose freely inside slots, 1 = only use predetermined slots." />
+        <FIELD NAME="seats" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="extratimebefore" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes; can be empty to fall back on the global setting" />
+        <FIELD NAME="extratimeafter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="In minutes; can be empty to fall back on the global setting" />
+        <FIELD NAME="preventoverlap" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="2" SEQUENCE="false" COMMENT="0 = Allow all overlap 1 = Allow overlap with not confirmed events 2 = Do not allow overlap" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_weekplan" COMMENT="Weekplan">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_weekplan_room" COMMENT="Saves weekplan is used for which room in what timeframe.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="weekplanid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="roomid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="starttime" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" COMMENT="epoch" />
+        <FIELD NAME="endtime" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" COMMENT="epoch" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id" />
+        <KEY NAME="weekplanid" TYPE="foreign" FIELDS="weekplanid" REFTABLE="bookit_weekplan" REFFIELDS="id" />
+        <KEY NAME="roomid" TYPE="foreign" FIELDS="roomid" REFTABLE="bookit_room" REFFIELDS="id" />
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="bookit_weekplanslot" COMMENT="Weekplan slots">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="weekplanid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="starttime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Starttime in seconds, counted from start of week." />
+        <FIELD NAME="endtime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Endtime in seconds, counted from start of week." />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="week_wee_frk" TYPE="foreign" FIELDS="weekplanid" REFTABLE="bookit_weekplan" REFFIELDS="id" />
+      </KEYS>
     </TABLE>
   </TABLES>
 </XMLDB>

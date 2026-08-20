@@ -100,6 +100,25 @@ class settings_calendar_form extends moodleform {
         );
         $mform->getElement('eventmaxyear')->setSelected(($thisyear + 1));
 
+        // Configure semester range.
+        $mform->addElement(
+            'select',
+            'semesterlookbackyears',
+            get_string('semesterlookbackyears', 'mod_bookit') . '<br><br>' .
+                get_string('semesterlookbackyears_desc', 'mod_bookit'),
+            [0, 1, 2],
+        );
+        $mform->getElement('semesterlookbackyears')->setSelected(0);
+
+        $mform->addElement(
+            'select',
+            'semesterlookaheadyears',
+            get_string('semesterlookaheadyears', 'mod_bookit') . '<br><br>' .
+                get_string('semesterlookaheadyears_desc', 'mod_bookit'),
+            [0, 1, 2],
+        );
+        $mform->getElement('semesterlookaheadyears')->setSelected(2);
+
         // Event default duration, default 60 minutes.
         $mform->addElement(
             'text',

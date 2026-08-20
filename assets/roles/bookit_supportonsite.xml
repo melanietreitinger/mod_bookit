@@ -16,11 +16,15 @@
 		<shortname>bookit_bookingperson</shortname>
 		<shortname>bookit_examiner</shortname>
 		<shortname>bookit_supportonsite</shortname>
+		<shortname>bookit_observer</shortname>
 	</allowview>
 	<permissions>
 		<allow>mod/bookit:view</allow>
 		<allow>mod/bookit:viewalldetailsofownevent</allow>
 		<allow>mod/bookit:viewownoverview</allow>
+		<allow>moodle/course:enrolreview</allow>
 		<allow>moodle/role:assign</allow>
+		<allow>moodle/user:viewdetails</allow>
+		<allow>moodle/site:viewuseridentity</allow>
 	</permissions>
 </role>

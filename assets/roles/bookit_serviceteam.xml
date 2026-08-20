@@ -50,5 +50,6 @@
 		<allow>moodle/course:enrolreview</allow>
 		<allow>moodle/role:assign</allow>
 		<allow>moodle/user:viewdetails</allow>
+		<allow>moodle/site:viewuseridentity</allow>
 	</permissions>
 </role>

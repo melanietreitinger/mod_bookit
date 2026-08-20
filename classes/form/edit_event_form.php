@@ -427,18 +427,78 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
         }
-        // Actual attendance is an internal reporting field and is available only to the Service Team.
+
+        // Add the "bookingstatus" field.
+        $bookingstatusoptions = [];
+        $currentbookingstatus = (int)($existingevent->bookingstatus ?? self::BOOKINGSTATUS_NEW);
         if ($caneditinternal) {
-            $mform->addElement(
-                'text',
-                'totalparticipantsamount',
-                get_string('event_totalparticipants', 'mod_bookit'),
-                ['size' => '4']
-            );
-            $mform->setType('totalparticipantsamount', PARAM_RAW_TRIMMED);
-            $mform->addRule('totalparticipantsamount', null, 'numeric', null, 'client');
-            $mform->addHelpButton('totalparticipantsamount', 'event_totalparticipants', 'mod_bookit');
+            foreach ([0, 1, 2, 3, 4] as $statusvalue) {
+                $bookingstatusoptions[$statusvalue] = event_manager::get_booking_status_label($statusvalue);
+            }
+        } else if ($showbookingstatus) {
+            $bookingstatusoptions[$currentbookingstatus] = get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit');
+            if (
+                    ($cancancelonly || $canselfcancelnew)
+                    && event_access_manager::can_transition_booking_status(
+                        $currentbookingstatus,
+                        event_access_manager::BOOKINGSTATUS_CANCELED
+                    )
+            ) {
+                $bookingstatusoptions[event_access_manager::BOOKINGSTATUS_CANCELED] = get_string(
+                    'event_bookingstatus_' . event_access_manager::BOOKINGSTATUS_CANCELED,
+                    'mod_bookit'
+                );
+            }
         }
+
+        if ($participantpastreadonly) {
+            $mform->addElement(
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+            );
+        } else if ($showbookingstatus) {
+            $mform->addElement(
+                'select',
+                'bookingstatus',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                $bookingstatusoptions
+            );
+            $mform->setDefault('bookingstatus', $currentbookingstatus);
+            $mform->disabledIf('bookingstatus', 'editbookingstatus', 'neq', 1);
+            $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
+        } else if ($showbookingstatusreadonly) {
+            $mform->addElement(
+                'static',
+                'bookingstatusreadonly',
+                get_string('event_bookingstatus', 'mod_bookit'),
+                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
+            );
+            $mform->addElement('hidden', 'bookingstatus');
+            $mform->setType('bookingstatus', PARAM_INT);
+        } else {
+            $mform->addElement('hidden', 'bookingstatus');
+            $mform->setType('bookingstatus', PARAM_INT);
+        }
+
+        // Show hints if request can no longer be edited.
+        if ($participantpastreadonly) {
+            $mform->addElement(
+                'static',
+                'pastparticipantnotice',
+                '',
+                get_string('event_past_participant_notice', 'mod_bookit')
+            );
+        } else if ($cancancelonly) {
+            $mform->addElement(
+                'static',
+                'cancelonlynotice',
+                '',
+                get_string('event_cancel_only_notice', 'mod_bookit')
+            );
+        }
+
         if ($this->is_optional_field_enabled($config, 'refcourseid')) {
             if ($caneditinternal) {
                 $mform->addElement(
@@ -478,16 +538,13 @@ class edit_event_form extends dynamic_form {
 
         if ($canviewrestrictedfields) {
             // Add the "supportpersons" field.
-            $supportpersons = [];
-            // ...@TODO: Find better query to select users!
-            $sqlsupport = "SELECT DISTINCT u.*
-                  FROM {user} u
-                  WHERE u.deleted = 0 AND u.suspended = 0
-                  ORDER BY lastname, firstname";
-            $users = $DB->get_records_sql($sqlsupport, []);
-            foreach ($users as $id => $user) {
-                $supportpersons[$id] = fullname($user);
-            }
+            // Do not use the 'enrol_manual/form-potential-user-selector' ajax-form-element.
+            unset($userselectoroptions['ajax']);
+            // Support users can be users with the roles "serviceteam" and "supportonsite".
+            $supportpersons = event_manager::get_support_person_candidates(
+                $context,
+                $existingevent->supportpersons ?? ''
+            );
             $supportpersonselementname = 'supportpersons';
             // Assigned Support may edit support persons (same gate as internal notes); others stay RO.
             if (!$caneditinternal && !$caneditinternalnotes && $existingevent) {
@@ -561,76 +618,6 @@ class edit_event_form extends dynamic_form {
             $mform->setType('extratimebefore', PARAM_ALPHANUM);
             $mform->addElement('hidden', 'extratimeafter');
             $mform->setType('extratimeafter', PARAM_ALPHANUM);
-        }
-
-        $bookingstatusoptions = [];
-        $currentbookingstatus = (int)($existingevent->bookingstatus ?? self::BOOKINGSTATUS_NEW);
-        if ($caneditinternal) {
-            foreach ([0, 1, 2, 3, 4] as $statusvalue) {
-                $bookingstatusoptions[$statusvalue] = event_manager::get_booking_status_label($statusvalue);
-            }
-        } else if ($showbookingstatus) {
-            $bookingstatusoptions[$currentbookingstatus] = get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit');
-            if (
-                ($cancancelonly || $canselfcancelnew)
-                && event_access_manager::can_transition_booking_status(
-                    $currentbookingstatus,
-                    event_access_manager::BOOKINGSTATUS_CANCELED
-                )
-            ) {
-                $bookingstatusoptions[event_access_manager::BOOKINGSTATUS_CANCELED] = get_string(
-                    'event_bookingstatus_' . event_access_manager::BOOKINGSTATUS_CANCELED,
-                    'mod_bookit'
-                );
-            }
-        }
-
-        // Add the "bookingstatus" field.
-        if ($participantpastreadonly) {
-            $mform->addElement(
-                'static',
-                'bookingstatusreadonly',
-                get_string('event_bookingstatus', 'mod_bookit'),
-                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
-            );
-        } else if ($showbookingstatus) {
-            $mform->addElement(
-                'select',
-                'bookingstatus',
-                get_string('event_bookingstatus', 'mod_bookit'),
-                $bookingstatusoptions
-            );
-            $mform->setDefault('bookingstatus', $currentbookingstatus);
-            $mform->disabledIf('bookingstatus', 'editbookingstatus', 'neq', 1);
-            $mform->addHelpButton('bookingstatus', 'event_bookingstatus', 'mod_bookit');
-        } else if ($showbookingstatusreadonly) {
-            $mform->addElement(
-                'static',
-                'bookingstatusreadonly',
-                get_string('event_bookingstatus', 'mod_bookit'),
-                get_string('event_bookingstatus_' . $currentbookingstatus, 'mod_bookit')
-            );
-            $mform->addElement('hidden', 'bookingstatus');
-            $mform->setType('bookingstatus', PARAM_INT);
-        } else {
-            $mform->addElement('hidden', 'bookingstatus');
-            $mform->setType('bookingstatus', PARAM_INT);
-        }
-
-        if ($participantpastreadonly) {
-            $mform->addElement(
-                'static',
-                'pastparticipantnotice',
-                '',
-                get_string('event_past_participant_notice', 'mod_bookit')
-            );
-        } else if ($cancancelonly) {
-            $mform->addElement(
-                'static',
-                'cancelonlynotice',
-                '',
-                get_string('event_cancel_only_notice', 'mod_bookit')
-            );
         }
 
         // Add the "internalnotes" field.
