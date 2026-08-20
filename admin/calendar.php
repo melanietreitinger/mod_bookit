@@ -47,7 +47,7 @@ $mform = new settings_calendar_form();
 // Standard form processing if statement.
 if ($mform->is_cancelled()) {
     redirect($returnurl);
-// Fix for #211: The Code should not store the configuration in the database because of caching. 
+    // Fix for #211: The Code should not store the configuration in the database because of caching.
 } else if ($data = $mform->get_data()) {
     unset($data->submitbutton);
     foreach ($data as $key => $value) {

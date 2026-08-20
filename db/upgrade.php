@@ -36,8 +36,6 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
     $dbman = $DB->get_manager();
 
     $newversion = 2025411305;
-    
-
 
     if ($oldversion < $newversion) {
         $table = new xmldb_table('bookit_event');
@@ -52,7 +50,7 @@ function xmldb_bookit_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, $newversion, 'bookit');
     }
 
-        // Update new filed amounts of participants. 
+        // Update new filed amounts of participants.
     $newversion = 2026080501;
     if ($oldversion < $newversion) {
         $table = new xmldb_table('bookit_event_history');

@@ -13,7 +13,9 @@
 	<allowswitch/>
 	<allowview>
 		<shortname>bookit_serviceteam</shortname>
+		<shortname>bookit_bookingperson</shortname>
 		<shortname>bookit_examiner</shortname>
+		<shortname>bookit_supportonsite</shortname>
 	</allowview>
 	<permissions>
 		<allow>mod/bookit:view</allow>
