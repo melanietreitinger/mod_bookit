@@ -168,15 +168,29 @@ class event_manager {
         $events = [];
 
         foreach ($records as $record) {
-            if (!event_access_manager::can_user_view_event_in_calendar($record, $context, (int)$USER->id)) {
+            $canview = event_access_manager::can_user_view_event_in_calendar(
+                $record,
+                $context,
+                (int)$USER->id
+            );
+            $isconfirmed = (int)$record->bookingstatus === event_access_manager::BOOKINGSTATUS_CONFIRMED;
+
+            if (!$canview && !$isconfirmed) {
                 continue;
             }
 
-            if ($observerrestricted && (int)$record->bookingstatus !== event_access_manager::BOOKINGSTATUS_CONFIRMED) {
+            if ($observerrestricted && !$isconfirmed) {
                 continue;
             }
 
-            $events[] = self::build_calendar_read_event($record, $observerrestricted, $facultylabels, $context, (int)$USER->id);
+            $reserved = $observerrestricted || !$canview;
+            $events[] = self::build_calendar_read_event(
+                $record,
+                $reserved,
+                $facultylabels,
+                $context,
+                (int)$USER->id
+            );
         }
         return $events;
     }
@@ -615,6 +629,65 @@ class event_manager {
 
         return (($year - 1) * 10) + 2;
     }
+    /**
+     * Return the date range covered by one or more semester IDs.
+     *
+     * Semester IDs use the format YYYYT:
+     * - T = 1: summer semester, 1 April to 30 September.
+     * - T = 2: winter semester, 1 October to 31 March of the following year.
+     *
+     * When multiple semesters are selected, the combined range starts with
+     * the earliest semester and ends with the latest semester.
+     *
+     * @param int[] $semesterids
+     * @return int[]|null Start and end timestamps, or null for no valid semesters.
+     */
+    public static function get_semester_date_range(array $semesterids): ?array {
+        $starts = [];
+        $ends = [];
+
+        foreach (self::normalise_filter_ids($semesterids) as $semesterid) {
+            $year = intdiv($semesterid, 10);
+            $term = $semesterid % 10;
+
+            if ($year < 1) {
+                continue;
+            }
+
+            if ($term === 1) {
+                $start = (new DateTime())
+                    ->setDate($year, 4, 1)
+                    ->setTime(0, 0, 0)
+                    ->getTimestamp();
+
+                $end = (new DateTime())
+                    ->setDate($year, 9, 30)
+                    ->setTime(23, 59, 59)
+                    ->getTimestamp();
+            } else if ($term === 2) {
+                $start = (new DateTime())
+                    ->setDate($year, 10, 1)
+                    ->setTime(0, 0, 0)
+                    ->getTimestamp();
+
+                $end = (new DateTime())
+                    ->setDate($year + 1, 3, 31)
+                    ->setTime(23, 59, 59)
+                    ->getTimestamp();
+            } else {
+                continue;
+            }
+
+            $starts[] = $start;
+            $ends[] = $end;
+        }
+
+        if ($starts === []) {
+            return null;
+        }
+
+        return [min($starts), max($ends)];
+    }
 
     /**
      * Return the default reporting range for the year of the given reference time.
@@ -1007,6 +1080,7 @@ class event_manager {
             'notes' => 'event_notes',
             'otherexaminers' => 'event_otherexaminers',
             'participantsamount' => 'event_students',
+            'totalparticipantsamount' => 'event_totalparticipants',
             'personinchargeid' => 'event_personincharge',
             'roomid' => 'event_room',
             'starttime' => 'event_start',
@@ -2301,6 +2375,7 @@ class event_manager {
             'duration',
             'roomid',
             'participantsamount',
+            'totalparticipantsamount',
             'timecompensation',
             'compensationfordisadvantages',
             'bookingstatus',

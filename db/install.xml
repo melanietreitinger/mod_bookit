@@ -1,5 +1,8 @@
-<?xml version='1.0' encoding='utf-8'?>
-<XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="mod/bookit/db" VERSION="2026072100" COMMENT="XMLDB file for Moodle mod_bookit" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/bookit/db" VERSION="2026080502" COMMENT="XMLDB file for Moodle mod_bookit"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
   <TABLES>
     <TABLE NAME="bookit" COMMENT="Stores the bookit activity module instances.">
       <FIELDS>
