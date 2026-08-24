@@ -2081,8 +2081,9 @@ class event_manager {
             $roominfo .= ': ' . implode(', ', $addinfos);
         }
 
+        # Implementation of #213: Room is displayed too now. 
         $title = $observerrestricted
-            ? get_string('event_reserved', 'mod_bookit')
+            ? get_string('event_reserved', 'mod_bookit') . " ($roominfo)"
             : $record->name . " ($roominfo)";
         $titlehtml = '<h6 class="w-100 text-center">' . date('H:i', $record->starttime) . '-' .
             date('H:i', $record->endtime) . '</h6>' . $title;
