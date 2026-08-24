@@ -72,6 +72,11 @@ define([
                     modal.modal.setButtonText('cancel', okstring);
                     return okstring;
                 }).catch(Notification.exception);
+            } else {
+                Str.get_string('close_and_discard_changes', 'mod_bookit').then(function(cancelstring) {
+                    modal.modal.setButtonText('cancel', cancelstring);
+                    return cancelstring;
+                }).catch(Notification.exception);
             }
         });
 

@@ -144,6 +144,7 @@ $string['checklistitemupdatesuccess'] = 'Checklisten-Element erfolgreich aktuali
 $string['checklistrole_required'] = 'Mindestens eine Rolle ist erforderlich.';
 $string['checklistrooms_required'] = 'Mindestens ein Raum ist erforderlich.';
 $string['chooseevent'] = 'Bitte wählen Sie mindestens ein Ereignis aus.';
+$string['close_and_discard_changes'] = 'Schließen und Änderungen verwerfen';
 $string['color'] = 'Farbe';
 $string['could_not_parse_line'] = 'Zeile konnte nicht gelesen werden';
 $string['could_not_parse_time_period_x'] = 'Zeitraum in Zeile {$a} konnte nicht gelesen werden';
