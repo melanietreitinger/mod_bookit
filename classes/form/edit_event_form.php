@@ -1857,14 +1857,24 @@ class edit_event_form extends dynamic_form {
      * @param int[] $userids
      * @return void
      */
-    private function merge_examiner_autocomplete_options(\MoodleQuickForm $mform, string $fieldname, array $userids): void {
+    private function merge_examiner_autocomplete_options(
+        \MoodleQuickForm $mform,
+        string $fieldname,
+        array $userids
+    ): void {
         $element = $mform->getElement($fieldname);
-        if (!is_object($element) || !method_exists($element, 'addOption')) {
+        if (
+            !is_object($element)
+            || !method_exists($element, 'addOption')
+            || !method_exists($element, 'optionExists')
+        ) {
             return;
         }
 
         foreach (examiner_pool_resolver::build_options_for_user_ids($userids) as $value => $label) {
-            $element->addOption($label, (string)$value);
+            if (!$element->optionExists((string)$value)) {
+                $element->addOption($label, (string)$value);
+            }
         }
     }
 
