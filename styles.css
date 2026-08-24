@@ -613,32 +613,32 @@
 }
 
 /* Status badge as a faint tinted chip instead of plain grey. */
-.bookit-export-status-0 .badge {
+#bookit-export-modal .bookit-export-status-0 .badge {
     background: #e2e3e5;
-    border-color: #c6c8ca !important;
+    border-color: #c6c8ca;
     color: #212529;
 }
 
-.bookit-export-status-1 .badge {
+#bookit-export-modal .bookit-export-status-1 .badge {
     background: #fff3cd;
-    border-color: #ffe08a !important;
+    border-color: #ffe08a;
     color: #664d03;
 }
 
-.bookit-export-status-2 .badge {
+#bookit-export-modal .bookit-export-status-2 .badge {
     background: #d1e7dd;
-    border-color: #a3cfbb !important;
+    border-color: #a3cfbb;
     color: #0f5132;
 }
 
-.bookit-export-status-3 .badge {
+#bookit-export-modal .bookit-export-status-3 .badge {
     background: #343a40;
-    border-color: #343a40 !important;
+    border-color: #343a40;
     color: #fff;
 }
 
-.bookit-export-status-4 .badge {
+#bookit-export-modal .bookit-export-status-4 .badge {
     background: #f8d7da;
-    border-color: #f1aeb5 !important;
+    border-color: #f1aeb5;
     color: #842029;
 }
