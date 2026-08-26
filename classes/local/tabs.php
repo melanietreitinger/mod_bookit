@@ -127,6 +127,14 @@ class tabs {
                 get_string('calendar', 'mod_bookit')
             );
 
+            // Events settings.
+            $targeturl = new moodle_url('/mod/bookit/admin/events.php', ['id' => 'events']);
+            $tabrow[] = new tabobject(
+                'events',
+                $targeturl,
+                get_string('events', 'mod_bookit')
+            );
+
             // Tab to the rooms page.
             $targeturl = new moodle_url('/mod/bookit/admin/rooms.php', ['id' => 'rooms']);
             $tabrow[] = new tabobject(
@@ -179,6 +187,14 @@ class tabs {
                 get_string('checklist', 'mod_bookit')
             );
         }
+
+        // Tab to the notifications page.
+        $targeturl = new moodle_url('/mod/bookit/admin/notifications.php', ['id' => 'notifications']);
+        $tabrow[] = new tabobject(
+                'notifications',
+                $targeturl,
+                get_string('notifications', 'mod_bookit')
+        );
 
         // Real admin settings.
         if (has_capability('moodle/site:config', $context)) {
