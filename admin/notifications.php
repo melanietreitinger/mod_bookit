@@ -15,15 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Admin-Backend for calendar settings.
+ * Configure notifications for mod_bookit.
  *
  * @package    mod_bookit
- * @copyright  2025 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+ * @copyright  2026 ssystems GmbH <oss@ssystems.de>
+ * @author     Andreas Rosenthal
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
-use mod_bookit\form\settings_calendar_form;
+use mod_bookit\form\settings_notifications_form;
 use mod_bookit\local\tabs;
 
 require_once(__DIR__ . '/../../../config.php');
@@ -33,17 +33,17 @@ require_login();
 
 $context = context_system::instance();
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/mod/bookit/admin/calendar.php'));
+$PAGE->set_url(new moodle_url('/mod/bookit/admin/notifications.php'));
 $PAGE->set_primary_active_tab('bookit_settings');
 $PAGE->set_pagelayout('admin');
-$PAGE->set_title(get_string('calendar', 'mod_bookit'));
+$PAGE->set_title(get_string('bookingstatus_notifications_heading', 'mod_bookit'));
 $PAGE->set_heading(get_string('settings_overview', 'mod_bookit'));
 
-$returnurl = new moodle_url('/mod/bookit/admin/calendar.php');
+$returnurl = new moodle_url('/mod/bookit/admin/notifications.php');
 
 require_capability('mod/bookit:managebasics', $context);
 
-$mform = new settings_calendar_form();
+$mform = new settings_notifications_form();
 
 // Standard form processing if statement.
 if ($mform->is_cancelled()) {
@@ -53,9 +53,9 @@ if ($mform->is_cancelled()) {
     unset($data->submitbutton);
     foreach ($data as $key => $value) {
         set_config(
-            $key,
-            is_array($value) ? implode(',', $value) : $value,
-            'mod_bookit'
+                $key,
+                is_array($value) ? implode(',', $value) : $value,
+                'mod_bookit'
         );
     }
 }
@@ -64,12 +64,12 @@ $config = get_config('mod_bookit');
 $mform->set_data($config);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('calendar', 'mod_bookit'));
+echo $OUTPUT->heading(get_string('bookingstatus_notifications_heading', 'mod_bookit'));
 
 // Show tabs.
 $renderer = $PAGE->get_renderer('mod_bookit');
 $tabrow = tabs::get_tabrow($context);
-$id = optional_param('id', 'calendar', PARAM_TEXT);
+$id = optional_param('id', 'settings', PARAM_TEXT);
 echo $renderer->tabs($tabrow, $id);
 
 $mform->display();

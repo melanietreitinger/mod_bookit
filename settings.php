@@ -41,6 +41,14 @@ if ($hassiteconfig) {
     );
     $ADMIN->add('bookit_settings_category', $calendarsettings);
 
+    /*$eventssettings = new admin_externalpage(
+        'bookit_events_settings',
+        get_string('events', 'mod_bookit'),
+        new moodle_url('/mod/bookit/admin/events.php?id=events'),
+        'mod/bookit:managebasics',
+    );
+    $ADMIN->add('bookit_settings_category', $eventssettings);*/
+
     // NOTE: real admin settings stay here - all other settings under /mod/bookit/admin/... .
     $context = context_system::instance();
     $tabrow = tabs::get_tabrow($context);
@@ -76,114 +84,6 @@ if ($hassiteconfig) {
         get_string('optional_checklist_enabled_desc', 'mod_bookit'),
         0
     ));
-
-    $settings->add(new admin_setting_heading(
-        'mod_bookit_bookingstatus_notifications_heading',
-        get_string('bookingstatus_notifications_heading', 'mod_bookit'),
-        get_string('bookingstatus_notifications_desc', 'mod_bookit')
-    ));
-
-    $settings->add(new admin_setting_configtext(
-        'mod_bookit/bookingstatus_service_addresses',
-        get_string('bookingstatus_service_addresses', 'mod_bookit'),
-        get_string('bookingstatus_service_addresses_desc', 'mod_bookit'),
-        '',
-        PARAM_TEXT
-    ));
-
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_bookit/bookingstatus_notify_serviceteam',
-        get_string('bookingstatus_notify_serviceteam', 'mod_bookit'),
-        get_string('bookingstatus_notify_serviceteam_desc', 'mod_bookit'),
-        1
-    ));
-
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_bookit/bookingstatus_notify_bookingperson',
-        get_string('bookingstatus_notify_bookingperson', 'mod_bookit'),
-        get_string('bookingstatus_notify_bookingperson_desc', 'mod_bookit'),
-        1
-    ));
-
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_bookit/bookingstatus_notify_personincharge',
-        get_string('bookingstatus_notify_personincharge', 'mod_bookit'),
-        get_string('bookingstatus_notify_personincharge_desc', 'mod_bookit'),
-        1
-    ));
-
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_bookit/bookingstatus_notify_otherexaminers',
-        get_string('bookingstatus_notify_otherexaminers', 'mod_bookit'),
-        get_string('bookingstatus_notify_otherexaminers_desc', 'mod_bookit'),
-        1
-    ));
-
-    foreach (install_helper::get_booking_status_notification_statuses() as $statuskey => $statusdata) {
-        $settings->add(new admin_setting_heading(
-            'mod_bookit_bookingstatus_heading_' . $statuskey,
-            get_string('event_bookingstatus_' . $statusdata['id'], 'mod_bookit'),
-            ''
-        ));
-
-        $enabledsetting = new admin_setting_configcheckbox(
-            'mod_bookit/' . $statusdata['enabledconfig'],
-            get_string($statusdata['enabledstring'], 'mod_bookit'),
-            '',
-            1
-        );
-        $settings->add($enabledsetting);
-
-        $subjectsettingname = 'mod_bookit/' . install_helper::get_booking_status_notification_template_config_key(
-            $statuskey,
-            'subject'
-        );
-        $settings->add(new admin_setting_configtext(
-            $subjectsettingname,
-            get_string($statusdata['subjectstring'], 'mod_bookit'),
-            get_string('bookingstatus_subject_desc', 'mod_bookit'),
-            install_helper::get_booking_status_notification_default_subject($statuskey),
-            PARAM_TEXT
-        ));
-        $settings->hide_if($subjectsettingname, 'mod_bookit/' . $statusdata['enabledconfig']);
-
-        $bodysettingname = 'mod_bookit/' . install_helper::get_booking_status_notification_template_config_key(
-            $statuskey,
-            'body'
-        );
-        $settings->add(new admin_setting_configtextarea(
-            $bodysettingname,
-            get_string($statusdata['bodystring'], 'mod_bookit'),
-            get_string('bookingstatus_body_desc', 'mod_bookit'),
-            install_helper::get_booking_status_notification_default_body($statuskey),
-            PARAM_RAW
-        ));
-        $settings->hide_if($bodysettingname, 'mod_bookit/' . $statusdata['enabledconfig']);
-    }
-
-    $settings->add(new admin_setting_heading(
-        'mod_bookit_calendar_profile_heading',
-        get_string('calendar_profile_heading', 'mod_bookit'),
-        get_string('calendar_profile_desc', 'mod_bookit')
-    ));
-
-
-    $settings->add(new admin_setting_configtextarea(
-        'mod_bookit/examiner_pool_usernames',
-        get_string('examiner_pool_usernames', 'mod_bookit'),
-        get_string('examiner_pool_usernames_desc', 'mod_bookit'),
-        '',
-        PARAM_RAW_TRIMMED
-    ));
-
-    $settings->add(new admin_setting_configtext(
-        'mod_bookit/calendar_optional_fields',
-        get_string('calendar_optional_fields', 'mod_bookit'),
-        get_string('calendar_optional_fields_desc', 'mod_bookit'),
-        'timecompensation,compensationfordisadvantages,notes,refcourseid,coursetemplate',
-        PARAM_RAW_TRIMMED
-    ));
-
     $installhelperfinished = (int)get_config('mod_bookit', 'installhelperfinished');
     $installhelperstatus = optional_param('installhelperstatus', '', PARAM_ALPHAEXT);
     $rolesimported = optional_param('rolesimported', 0, PARAM_INT);
