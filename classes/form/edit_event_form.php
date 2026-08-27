@@ -58,11 +58,6 @@ use function bookit_allowed_weekdays;
  */
 class edit_event_form extends dynamic_form {
 // phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
-    /**
-     * @var int BOOKINGSTATUS_NEW: event is not processed yet and can be edited by the creator.
-     */
-    public const BOOKINGSTATUS_NEW = 0;
-
     /** @var bookit_event|stdClass|null An event, if an existing one is getting edited. */
     private bookit_event|stdClass|null $event = null;
 
@@ -366,7 +361,7 @@ class edit_event_form extends dynamic_form {
 
         // Add the "compensationfordisadvantages" field; hidden for new bookings.
         $mform->addElement(
-            'textarea',
+            'editor',
             'compensationfordisadvantages',
             get_string(
                 'event_compensationfordisadvantages_label',
@@ -375,7 +370,7 @@ class edit_event_form extends dynamic_form {
             ['size' => '64']
         );
         $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
-        $mform->setType('compensationfordisadvantages', PARAM_TEXT);
+        $mform->setType('compensationfordisadvantages', PARAM_RAW);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
 
         // Hide for new bookings (status 0) – examiners won't have this info yet.
@@ -402,7 +397,7 @@ class edit_event_form extends dynamic_form {
 
         // Add the "bookingstatus" field.
         $bookingstatusoptions = [];
-        $currentbookingstatus = (int)($existingevent->bookingstatus ?? self::BOOKINGSTATUS_NEW);
+        $currentbookingstatus = (int)($existingevent->bookingstatus ?? event_access_manager::BOOKINGSTATUS_NEW);
         if ($caneditinternal) {
             foreach ([0, 1, 2, 3, 4] as $statusvalue) {
                 $bookingstatusoptions[$statusvalue] = event_manager::get_booking_status_label($statusvalue);

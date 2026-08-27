@@ -243,7 +243,6 @@ final class edit_event_form_support_resources_test extends advanced_testcase {
             120,
             $this->create_room(),
             10,
-            0,
             '',
             event_access_manager::BOOKINGSTATUS_NEW,
             (int)$examiner->id,

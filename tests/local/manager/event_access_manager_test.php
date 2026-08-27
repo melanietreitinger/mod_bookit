@@ -1380,7 +1380,6 @@ final class event_access_manager_test extends advanced_testcase {
             120,
             $roomid,
             10,
-            0,
             '',
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
             null,
