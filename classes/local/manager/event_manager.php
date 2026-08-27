@@ -2376,7 +2376,6 @@ class event_manager {
             'roomid',
             'participantsamount',
             'totalparticipantsamount',
-            'timecompensation',
             'compensationfordisadvantages',
             'bookingstatus',
             'personinchargeid',

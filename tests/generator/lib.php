@@ -104,7 +104,6 @@ class mod_bookit_generator extends testing_module_generator {
             (int)($event['duration'] ?? 90),
             $roomid,
             (int)($event['participantsamount'] ?? rand(20, 250)),
-            (int)($event['timecompensation'] ?? 1),
             $event['compensationfordisadvantages'] ?? '',
             $event['bookingstatus'],
             $personinchargeid,

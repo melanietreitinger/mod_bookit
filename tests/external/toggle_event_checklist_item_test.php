@@ -60,7 +60,6 @@ final class toggle_event_checklist_item_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 12,
-            'timecompensation' => 0,
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,

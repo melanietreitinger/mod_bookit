@@ -149,7 +149,6 @@ final class edit_event_form_resource_persistence_test extends advanced_testcase 
             'otherexaminers' => $event->otherexaminers,
             'supportpersons' => $event->supportpersons,
             'coursetemplate' => $event->coursetemplate,
-            'timecompensation' => $event->timecompensation,
             'compensationfordisadvantages' => $event->compensationfordisadvantages,
             'notes' => $event->notes,
             'internalnotes' => $event->internalnotes,
@@ -362,7 +361,7 @@ final class edit_event_form_resource_persistence_test extends advanced_testcase 
             'otherexaminers' => '',
             'supportpersons' => '',
             'coursetemplate' => 0,
-            'timecompensation' => 0,
+            
             'compensationfordisadvantages' => '',
             'notes' => 'Initial',
             'internalnotes' => '',

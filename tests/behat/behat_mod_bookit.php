@@ -3005,7 +3005,6 @@ class behat_mod_bookit extends behat_base {
                 'duration' => 60,
                 'roomid' => null,
                 'participantsamount' => 1,
-                'timecompensation' => 0,
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => $status,
                 'personinchargeid' => $userid,

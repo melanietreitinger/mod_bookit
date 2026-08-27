@@ -54,7 +54,6 @@ class bookit_event {
      * @param int|null $duration
      * @param int $roomid
      * @param int|null $participantsamount
-     * @param int|null $timecompensation
      * @param string|null $compensationfordisadvantages
      * @param int|null $bookingstatus
      * @param int|null $personinchargeid
@@ -92,8 +91,6 @@ class bookit_event {
         public int $roomid,
         /** @var int|null $participantsamount */
         public ?int $participantsamount,
-        /** @var int|null $timecompensation */
-        public ?int $timecompensation,
         /** @var string|null $compensationfordisadvantages */
         public ?string $compensationfordisadvantages,
         /** @var int|null $bookingstatus */
@@ -178,7 +175,6 @@ class bookit_event {
             $record->duration,
             $record->roomid,
             $record->participantsamount ?? null,
-            $record->timecompensation ?? null,
             $record->compensationfordisadvantages ?? null,
             $record->bookingstatus ?? 0,
             $record->personinchargeid ?? null,

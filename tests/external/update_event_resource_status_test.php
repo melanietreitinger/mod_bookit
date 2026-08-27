@@ -73,7 +73,6 @@ final class update_event_resource_status_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => $roomid,
             'participantsamount' => 12,
-            'timecompensation' => 0,
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,

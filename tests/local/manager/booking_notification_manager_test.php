@@ -474,7 +474,6 @@ final class booking_notification_manager_test extends advanced_testcase {
             'duration' => 60,
             'roomid' => 0,
             'participantsamount' => null,
-            'timecompensation' => null,
             'compensationfordisadvantages' => null,
             'bookingstatus' => $bookingstatus,
             'personinchargeid' => $personinchargeid,
