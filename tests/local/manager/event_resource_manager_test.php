@@ -110,7 +110,7 @@ final class event_resource_manager_test extends advanced_testcase {
         $record->duration = null;
         $record->roomid = 0;
         $record->participantsamount = null;
-        $record->timecompensation = null;
+        
         $record->compensationfordisadvantages = null;
         $record->bookingstatus = 0;
         $record->personinchargeid = null;

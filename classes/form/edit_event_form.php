@@ -323,6 +323,7 @@ class edit_event_form extends dynamic_form {
             );
             $mform->disabledIf('personinchargeid', 'editevent', 'neq');
             $mform->setType('personinchargeid', PARAM_TEXT);
+            // The person in charge is by default the booking person.
             $mform->setDefault('personinchargeid', '');
         }
         if ($requirepublicfields) {
@@ -376,6 +377,7 @@ class edit_event_form extends dynamic_form {
         $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
         $mform->setType('compensationfordisadvantages', PARAM_TEXT);
         $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
+
         // Hide for new bookings (status 0) – examiners won't have this info yet.
         $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
 
@@ -701,7 +703,7 @@ class edit_event_form extends dynamic_form {
      * @throws coding_exception|dml_exception
      */
     public function definition_after_data(): void {
-        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection.
+        global $DB, $USER, $PAGE;   // The $PAGE is needed for JS injection; $User for prefilling the Booking person.
         $mform =& $this->_form;
         $data = $this->get_submitted_data() ?? $this->event;
         $caneditinternal = (bool)($mform->getElementValue('editinternal')[0] ?? 0);
@@ -851,7 +853,7 @@ class edit_event_form extends dynamic_form {
     private function is_optional_field_enabled(\stdClass $config, string $fieldname): bool {
         $rawfields = (string)($config->calendar_optional_fields ?? '');
         if ($rawfields === '') {
-            $rawfields = 'timecompensation,compensationfordisadvantages,notes,refcourseid,coursetemplate';
+            $rawfields = 'compensationfordisadvantages,notes,refcourseid,coursetemplate';
         }
         $enabledfields = array_values(array_filter(array_map('trim', explode(',', $rawfields))));
 
@@ -1056,7 +1058,6 @@ class edit_event_form extends dynamic_form {
             $formdata->institutionid = $currentevent->institutionid;
             $formdata->roomid = $currentevent->roomid;
             $formdata->participantsamount = $currentevent->participantsamount;
-            $formdata->timecompensation = $currentevent->timecompensation;
             $formdata->compensationfordisadvantages = $currentevent->compensationfordisadvantages;
             $formdata->personinchargeid = $currentevent->personinchargeid;
             $formdata->otherexaminers = $currentevent->otherexaminers;
@@ -1518,7 +1519,6 @@ class edit_event_form extends dynamic_form {
                 $data['personinchargeid'] = $data['personinchargeid'] ?? $existingevent->personinchargeid;
                 $data['otherexaminers'] = $data['otherexaminers'] ?? $existingevent->otherexaminers;
                 $data['coursetemplate'] = $data['coursetemplate'] ?? $existingevent->coursetemplate;
-                $data['timecompensation'] = $data['timecompensation'] ?? $existingevent->timecompensation;
                 $data['compensationfordisadvantages'] = $data['compensationfordisadvantages']
                     ?? $existingevent->compensationfordisadvantages;
                 $data['notes'] = $data['notes'] ?? $existingevent->notes;
@@ -1632,7 +1632,6 @@ class edit_event_form extends dynamic_form {
             'personinchargeid' => (string)($currentevent->personinchargeid ?? ''),
             'otherexaminers' => $this->normalise_comma_separated_ids($currentevent->otherexaminers ?? ''),
             'coursetemplate' => (string)($currentevent->coursetemplate ?? ''),
-            'timecompensation' => (string)($currentevent->timecompensation ?? ''),
             'compensationfordisadvantages' => $this->normalise_editor_text_value(
                 $currentevent->compensationfordisadvantages ?? ''
             ),
@@ -1654,7 +1653,6 @@ class edit_event_form extends dynamic_form {
                 $formdata->otherexaminers ?? $currentevent->otherexaminers ?? ''
             ),
             'coursetemplate' => (string)($formdata->coursetemplate ?? $currentevent->coursetemplate ?? ''),
-            'timecompensation' => (string)($formdata->timecompensation ?? $currentevent->timecompensation ?? ''),
             'compensationfordisadvantages' => $this->normalise_editor_text_value(
                 $formdata->compensationfordisadvantages ?? $currentevent->compensationfordisadvantages ?? ''
             ),

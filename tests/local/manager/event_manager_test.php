@@ -116,7 +116,6 @@ final class event_manager_test extends advanced_testcase {
             $overrides['duration'] ?? 120,
             $overrides['roomid'] ?? $roomid,
             $overrides['participantsamount'] ?? 10,
-            $overrides['timecompensation'] ?? 0,
             $overrides['compensationfordisadvantages'] ?? '',
             $overrides['bookingstatus'] ?? event_access_manager::BOOKINGSTATUS_NEW,
             $overrides['personinchargeid'] ?? null,
@@ -175,7 +174,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => null,
@@ -687,7 +686,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
@@ -747,7 +746,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
@@ -804,7 +803,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -859,7 +858,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1458,7 +1457,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => null,
@@ -1623,7 +1622,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1678,7 +1677,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1726,7 +1725,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1778,7 +1777,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1831,7 +1830,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1882,7 +1881,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1934,7 +1933,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -1984,7 +1983,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'personinchargeid' => null,
             'otherexaminers' => '',
@@ -2614,7 +2613,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => null,
@@ -2680,7 +2679,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => null,
@@ -2740,7 +2739,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => null,
@@ -2793,7 +2792,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => null,
@@ -3606,7 +3605,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => null,
@@ -3671,7 +3670,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => null,
@@ -3741,7 +3740,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             'personinchargeid' => null,
@@ -3930,7 +3929,7 @@ final class event_manager_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 12,
-            'timecompensation' => 0,
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
@@ -4174,7 +4173,7 @@ final class event_manager_test extends advanced_testcase {
                 'duration' => 120,
                 'roomid' => null,
                 'participantsamount' => 12,
-                'timecompensation' => 0,
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
                 'personinchargeid' => 0,
@@ -4248,7 +4247,7 @@ final class event_manager_test extends advanced_testcase {
                 'duration' => 60,
                 'roomid' => null,
                 'participantsamount' => 12,
-                'timecompensation' => 0,
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
                 'personinchargeid' => 0,
@@ -4322,7 +4321,7 @@ final class event_manager_test extends advanced_testcase {
                 'duration' => 60,
                 'roomid' => null,
                 'participantsamount' => 12,
-                'timecompensation' => 0,
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
                 'personinchargeid' => 0,
@@ -4410,7 +4409,7 @@ final class event_manager_test extends advanced_testcase {
                 'duration' => 120,
                 'roomid' => null,
                 'participantsamount' => 12,
-                'timecompensation' => 0,
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
                 'personinchargeid' => 0,
@@ -4483,7 +4482,7 @@ final class event_manager_test extends advanced_testcase {
                 'duration' => 120,
                 'roomid' => null,
                 'participantsamount' => 12,
-                'timecompensation' => 0,
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
                 'personinchargeid' => 0,
@@ -4555,7 +4554,7 @@ final class event_manager_test extends advanced_testcase {
                 'duration' => 120,
                 'roomid' => null,
                 'participantsamount' => 12,
-                'timecompensation' => 0,
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
                 'personinchargeid' => 0,

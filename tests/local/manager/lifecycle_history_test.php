@@ -81,7 +81,6 @@ final class lifecycle_history_test extends advanced_testcase {
             $overrides['duration'] ?? 120,
             $overrides['roomid'] ?? $roomid,
             $overrides['participantsamount'] ?? 10,
-            $overrides['timecompensation'] ?? 0,
             $overrides['compensationfordisadvantages'] ?? '',
             $overrides['bookingstatus'] ?? event_access_manager::BOOKINGSTATUS_NEW,
             $overrides['personinchargeid'] ?? null,

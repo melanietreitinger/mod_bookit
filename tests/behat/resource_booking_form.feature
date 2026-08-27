@@ -225,7 +225,6 @@ Feature: Resource integration in the BookIt booking workflow
     When I click on ".ec-addButton" "css_element"
     And I wait "2" seconds
     Then the Bookit event details control "notes" should be enabled
-    And the Bookit event details control "timecompensation" should not be visible
     And the Bookit event details control "coursetemplate" should not be visible
     And the Bookit event details control "refcourseid" should not be visible
     When I close the currently open dialog
@@ -237,6 +236,5 @@ Feature: Resource integration in the BookIt booking workflow
     When I click on ".ec-addButton" "css_element"
     And I wait "2" seconds
     Then the Bookit event details control "notes" should be enabled
-    And the Bookit event details control "timecompensation" should not be visible
     And the Bookit event details control "coursetemplate" should not be visible
     And the Bookit event details control "refcourseid" should not be visible

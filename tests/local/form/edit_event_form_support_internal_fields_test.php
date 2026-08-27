@@ -264,7 +264,7 @@ final class edit_event_form_support_internal_fields_test extends advanced_testca
             'otherexaminers' => $event->otherexaminers,
             'supportpersons' => $event->supportpersons,
             'coursetemplate' => $event->coursetemplate,
-            'timecompensation' => $event->timecompensation,
+            
             'compensationfordisadvantages' => $event->compensationfordisadvantages,
             'notes' => $event->notes,
             'internalnotes' => $event->internalnotes,
