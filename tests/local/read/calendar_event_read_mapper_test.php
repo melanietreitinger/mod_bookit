@@ -17,6 +17,7 @@
 namespace mod_bookit\local\read;
 
 use advanced_testcase;
+use mod_bookit\local\manager\event_access_manager;
 
 /**
  * Unit tests for the canonical calendar event read mapper.
@@ -43,7 +44,7 @@ final class calendar_event_read_mapper_test extends advanced_testcase {
             'classNames' => ['hide-event-time'],
             'extendedProps' => [
                 'titlehtml' => '<h6>09:00-11:00</h6>Exam',
-                'bookingstatus' => 2,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
                 'semesterid' => 20261,
                 'visibilitymode' => 'full',
                 'modalfootermode' => 'edit',
@@ -84,7 +85,7 @@ final class calendar_event_read_mapper_test extends advanced_testcase {
             'end' => '2026-05-08 11:00',
             'extendedprops' => [
                 'titleHTML' => 'ignored',
-                'bookingstatus' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             ],
             'institutionid' => 5,
             'department' => 'Old dept',

@@ -177,7 +177,6 @@ final class edit_event_form_support_status_test extends advanced_testcase {
             120,
             $roomid,
             10,
-            0,
             '',
             event_access_manager::BOOKINGSTATUS_NEW,
             (int)$examiner->id,

@@ -51,7 +51,7 @@ require_once(__DIR__ . '/../../external/read_contract_assertions_trait.php');
 final class event_manager_test extends advanced_testcase {
     use read_contract_assertions_trait;
 
-// phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
+    // phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
     /**
      * Set up the message providers and default notification configuration for workflow tests.
      *
@@ -77,8 +77,8 @@ final class event_manager_test extends advanced_testcase {
     private function create_bookit_context(): context_module {
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Lifecycle notifications',
+                'course' => $course->id,
+                'name' => 'Lifecycle notifications',
         ]);
         return context_module::instance($bookit->cmid);
     }
@@ -92,8 +92,8 @@ final class event_manager_test extends advanced_testcase {
         /** @var \mod_bookit_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
         return $generator->create_room([
-            'name' => 'Lifecycle notification room',
-            'shortname' => 'NTF001',
+                'name' => 'Lifecycle notification room',
+                'shortname' => 'NTF001',
         ]);
     }
 
@@ -107,31 +107,31 @@ final class event_manager_test extends advanced_testcase {
      */
     private function build_bookit_event(int $roomid, int $userid, array $overrides = []): bookit_event {
         return new bookit_event(
-            0,
-            $overrides['name'] ?? 'Lifecycle notification event',
-            $overrides['semester'] ?? 20261,
-            $overrides['institutionid'] ?? 1,
-            $overrides['starttime'] ?? strtotime('2026-05-08 09:00:00'),
-            $overrides['endtime'] ?? strtotime('2026-05-08 11:00:00'),
-            $overrides['duration'] ?? 120,
-            $overrides['roomid'] ?? $roomid,
-            $overrides['participantsamount'] ?? 10,
-            $overrides['compensationfordisadvantages'] ?? '',
-            $overrides['bookingstatus'] ?? event_access_manager::BOOKINGSTATUS_NEW,
-            $overrides['personinchargeid'] ?? null,
-            $overrides['otherexaminers'] ?? '',
-            $overrides['coursetemplate'] ?? 0,
-            $overrides['notes'] ?? 'External note',
-            $overrides['internalnotes'] ?? 'Internal note',
-            $overrides['supportpersons'] ?? '',
-            $overrides['extratimebefore'] ?? 0,
-            $overrides['extratimeafter'] ?? 0,
-            $overrides['refcourseid'] ?? null,
-            $overrides['usercreated'] ?? $userid,
-            $overrides['usermodified'] ?? $userid,
-            time(),
-            time(),
-            $overrides['resources'] ?? [],
+                0,
+                $overrides['name'] ?? 'Lifecycle notification event',
+                $overrides['semester'] ?? 20261,
+                $overrides['institutionid'] ?? 1,
+                $overrides['starttime'] ?? strtotime('2026-05-08 09:00:00'),
+                $overrides['endtime'] ?? strtotime('2026-05-08 11:00:00'),
+                $overrides['duration'] ?? 120,
+                $overrides['roomid'] ?? $roomid,
+                $overrides['participantsamount'] ?? 10,
+                $overrides['compensationfordisadvantages'] ?? '',
+                $overrides['bookingstatus'] ?? event_access_manager::BOOKINGSTATUS_NEW,
+                $overrides['personinchargeid'] ?? null,
+                $overrides['otherexaminers'] ?? '',
+                $overrides['coursetemplate'] ?? 0,
+                $overrides['notes'] ?? 'External note',
+                $overrides['internalnotes'] ?? 'Internal note',
+                $overrides['supportpersons'] ?? '',
+                $overrides['extratimebefore'] ?? 0,
+                $overrides['extratimeafter'] ?? 0,
+                $overrides['refcourseid'] ?? null,
+                $overrides['usercreated'] ?? $userid,
+                $overrides['usermodified'] ?? $userid,
+                time(),
+                time(),
+                $overrides['resources'] ?? [],
         );
     }
 
@@ -166,30 +166,30 @@ final class event_manager_test extends advanced_testcase {
         global $DB;
 
         $defaults = [
-            'name' => 'Test event',
-            'semester' => 20261,
-            'institutionid' => 1,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Test event',
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => 0,
-            'usermodified' => 0,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => 0,
+                'usermodified' => 0,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ];
 
         $record = array_merge($defaults, $overrides);
@@ -294,16 +294,16 @@ final class event_manager_test extends advanced_testcase {
         $futureend = strtotime('+2 days 11:00:00');
         $base = ['starttime' => $futurestart, 'endtime' => $futureend];
         $events = [
-            (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
-            (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
-            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
-            (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
-            (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
+                (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
+                (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
+                (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
+                (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
+                (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
         ];
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            ['bookingstatuses' => event_manager::get_reporting_default_booking_status_filter()]
+                $events,
+                ['bookingstatuses' => event_manager::get_reporting_default_booking_status_filter()]
         );
 
         $this->assertSame([1, 2, 3], array_map(static fn($event): int => (int)$event->id, $filtered));
@@ -338,13 +338,13 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_overview_booking_status_filter_ids_explicit_subset(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_CANCELED],
-            true
+                [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_CANCELED],
+                true
         );
 
         $this->assertSame(
-            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_CANCELED],
-            $resolved
+                [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_CANCELED],
+                $resolved
         );
     }
 
@@ -355,25 +355,25 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_overview_booking_status_filter_ids_all_five(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [
-                event_access_manager::BOOKINGSTATUS_NEW,
-                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                event_access_manager::BOOKINGSTATUS_CANCELED,
-                event_access_manager::BOOKINGSTATUS_REJECTED,
-            ],
-            true
+                [
+                        event_access_manager::BOOKINGSTATUS_NEW,
+                        event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        event_access_manager::BOOKINGSTATUS_CANCELED,
+                        event_access_manager::BOOKINGSTATUS_REJECTED,
+                ],
+                true
         );
 
         $this->assertSame(
-            [
-                event_access_manager::BOOKINGSTATUS_NEW,
-                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                event_access_manager::BOOKINGSTATUS_CANCELED,
-                event_access_manager::BOOKINGSTATUS_REJECTED,
-            ],
-            $resolved
+                [
+                        event_access_manager::BOOKINGSTATUS_NEW,
+                        event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        event_access_manager::BOOKINGSTATUS_CANCELED,
+                        event_access_manager::BOOKINGSTATUS_REJECTED,
+                ],
+                $resolved
         );
     }
 
@@ -384,13 +384,13 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_overview_navigation_params_status_array_for_service_team(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_IN_PROGRESS],
-            true
+                [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_IN_PROGRESS],
+                true
         );
 
         $this->assertSame(
-            [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_IN_PROGRESS],
-            $resolved
+                [event_access_manager::BOOKINGSTATUS_NEW, event_access_manager::BOOKINGSTATUS_IN_PROGRESS],
+                $resolved
         );
     }
 
@@ -401,14 +401,14 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_get_history_default_booking_status_filter_returns_all_statuses(): void {
         $this->assertSame(
-            [
-                event_access_manager::BOOKINGSTATUS_NEW,
-                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                event_access_manager::BOOKINGSTATUS_CANCELED,
-                event_access_manager::BOOKINGSTATUS_REJECTED,
-            ],
-            event_manager::get_history_default_booking_status_filter()
+                [
+                        event_access_manager::BOOKINGSTATUS_NEW,
+                        event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        event_access_manager::BOOKINGSTATUS_CANCELED,
+                        event_access_manager::BOOKINGSTATUS_REJECTED,
+                ],
+                event_manager::get_history_default_booking_status_filter()
         );
     }
 
@@ -485,16 +485,16 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_overview_booking_status_filter_ids_rejectedcancelled_default(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [],
-            false,
-            false,
-            false,
-            true
+                [],
+                false,
+                false,
+                false,
+                true
         );
 
         $this->assertSame(
-            event_manager::get_rejectedcancelled_default_booking_status_filter(),
-            $resolved
+                event_manager::get_rejectedcancelled_default_booking_status_filter(),
+                $resolved
         );
     }
 
@@ -505,14 +505,14 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_overview_booking_status_filter_ids_rejectedcancelled_strips_active(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [
-                event_access_manager::BOOKINGSTATUS_NEW,
-                event_access_manager::BOOKINGSTATUS_REJECTED,
-            ],
-            true,
-            false,
-            false,
-            true
+                [
+                        event_access_manager::BOOKINGSTATUS_NEW,
+                        event_access_manager::BOOKINGSTATUS_REJECTED,
+                ],
+                true,
+                false,
+                false,
+                true
         );
 
         $this->assertSame([event_access_manager::BOOKINGSTATUS_REJECTED], $resolved);
@@ -525,16 +525,16 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_overview_booking_status_filter_ids_rejectedcancelled_empty_explicit(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [],
-            true,
-            false,
-            false,
-            true
+                [],
+                true,
+                false,
+                false,
+                true
         );
 
         $this->assertSame(
-            event_manager::get_rejectedcancelled_default_booking_status_filter(),
-            $resolved
+                event_manager::get_rejectedcancelled_default_booking_status_filter(),
+                $resolved
         );
     }
 
@@ -545,9 +545,9 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_overview_booking_status_filter_ids_explicit_overrides_history_default(): void {
         $resolved = event_manager::resolve_overview_booking_status_filter_ids(
-            [event_access_manager::BOOKINGSTATUS_CONFIRMED],
-            true,
-            true
+                [event_access_manager::BOOKINGSTATUS_CONFIRMED],
+                true,
+                true
         );
 
         $this->assertSame([event_access_manager::BOOKINGSTATUS_CONFIRMED], $resolved);
@@ -563,20 +563,20 @@ final class event_manager_test extends advanced_testcase {
         $pastend = strtotime('-5 days 11:00:00');
         $base = ['starttime' => $paststart, 'endtime' => $pastend];
         $events = [
-            (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
-            (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
-            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
-            (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
-            (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
+                (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
+                (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
+                (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
+                (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
+                (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
         ];
 
         $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true, true);
         $this->assertSame(event_manager::get_history_default_booking_status_filter(), $resolved);
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            ['bookingstatuses' => $resolved],
-            true
+                $events,
+                ['bookingstatuses' => $resolved],
+                true
         );
 
         $this->assertSame([1, 2, 3, 4, 5], array_map(static fn($event): int => (int)$event->id, $filtered));
@@ -593,39 +593,39 @@ final class event_manager_test extends advanced_testcase {
         $futurestart = strtotime('+2 days 09:00:00');
         $futureend = strtotime('+2 days 11:00:00');
         $events = [
-            (object) [
-                'id' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'starttime' => $futurestart,
-                'endtime' => $futureend,
-            ],
-            (object) [
-                'id' => 3,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'starttime' => $paststart,
-                'endtime' => $pastend,
-            ],
-            (object) [
-                'id' => 4,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'starttime' => $futurestart,
-                'endtime' => $futureend,
-            ],
-            (object) [
-                'id' => 5,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-                'starttime' => $futurestart,
-                'endtime' => $futureend,
-            ],
+                (object) [
+                        'id' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                        'starttime' => $futurestart,
+                        'endtime' => $futureend,
+                ],
+                (object) [
+                        'id' => 3,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        'starttime' => $paststart,
+                        'endtime' => $pastend,
+                ],
+                (object) [
+                        'id' => 4,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                        'starttime' => $futurestart,
+                        'endtime' => $futureend,
+                ],
+                (object) [
+                        'id' => 5,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                        'starttime' => $futurestart,
+                        'endtime' => $futureend,
+                ],
         ];
 
         $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false, true, false);
         $this->assertSame([], $resolved);
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            ['bookingstatuses' => $resolved],
-            true
+                $events,
+                ['bookingstatuses' => $resolved],
+                true
         );
 
         $filteredids = array_map(static fn($event): int => (int)$event->id, $filtered);
@@ -645,11 +645,11 @@ final class event_manager_test extends advanced_testcase {
         $futureend = strtotime('+2 days 11:00:00');
         $base = ['starttime' => $futurestart, 'endtime' => $futureend];
         $events = [
-            (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
-            (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
-            (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
-            (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
-            (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
+                (object) array_merge(['id' => 1, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW], $base),
+                (object) array_merge(['id' => 2, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS], $base),
+                (object) array_merge(['id' => 3, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED], $base),
+                (object) array_merge(['id' => 4, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED], $base),
+                (object) array_merge(['id' => 5, 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED], $base),
         ];
 
         $resolved = event_manager::resolve_overview_booking_status_filter_ids([], false);
@@ -668,8 +668,8 @@ final class event_manager_test extends advanced_testcase {
 
         $this->resetAfterTest(true);
         $creator = $this->getDataGenerator()->create_user([
-            'firstname' => 'Casey',
-            'lastname' => 'Creator',
+                'firstname' => 'Casey',
+                'lastname' => 'Creator',
         ]);
         $this->setAdminUser();
 
@@ -678,38 +678,38 @@ final class event_manager_test extends advanced_testcase {
         $context = context_module::instance($bookit->cmid);
 
         $eventid = (int)$DB->insert_record('bookit_event', (object)[
-            'name' => 'Created-by reporting event',
-            'semester' => 20261,
-            'institutionid' => 1,
-            'starttime' => strtotime('2026-05-20 09:00:00'),
-            'endtime' => strtotime('2026-05-20 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Created-by reporting event',
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-05-20 09:00:00'),
+                'endtime' => strtotime('2026-05-20 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'personinchargeid' => 0,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => (int)$creator->id,
-            'usermodified' => (int)$creator->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => (int)$creator->id,
+                'usermodified' => (int)$creator->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
 
         $events = event_manager::get_events_for_reporting(
-            $context,
-            (int)get_admin()->id,
-            strtotime('2026-05-01 00:00:00'),
-            strtotime('2026-05-31 23:59:59'),
-            []
+                $context,
+                (int)get_admin()->id,
+                strtotime('2026-05-01 00:00:00'),
+                strtotime('2026-05-31 23:59:59'),
+                []
         );
         $event = null;
         foreach ($events as $candidate) {
@@ -741,45 +741,45 @@ final class event_manager_test extends advanced_testcase {
         $context = context_module::instance($bookit->cmid);
 
         $common = [
-            'semester' => 20261,
-            'institutionid' => 1,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'personinchargeid' => 0,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usermodified' => (int)get_admin()->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => (int)get_admin()->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ];
 
         $olderid = (int)$DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Older reporting event',
-            'starttime' => strtotime('2026-05-10 09:00:00'),
-            'endtime' => strtotime('2026-05-10 11:00:00'),
-        ]));
+                        'name' => 'Older reporting event',
+                        'starttime' => strtotime('2026-05-10 09:00:00'),
+                        'endtime' => strtotime('2026-05-10 11:00:00'),
+                ]));
         $newerid = (int)$DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Newer reporting event',
-            'starttime' => strtotime('2026-05-20 09:00:00'),
-            'endtime' => strtotime('2026-05-20 11:00:00'),
-        ]));
+                        'name' => 'Newer reporting event',
+                        'starttime' => strtotime('2026-05-20 09:00:00'),
+                        'endtime' => strtotime('2026-05-20 11:00:00'),
+                ]));
 
         $events = event_manager::get_events_for_reporting(
-            $context,
-            (int)get_admin()->id,
-            strtotime('2026-05-01 00:00:00'),
-            strtotime('2026-05-31 23:59:59'),
-            []
+                $context,
+                (int)get_admin()->id,
+                strtotime('2026-05-01 00:00:00'),
+                strtotime('2026-05-31 23:59:59'),
+                []
         );
 
         $ids = array_map(static fn($event): int => (int)$event->id, $events);
@@ -798,40 +798,40 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
         $booker = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $booker->id,
-            'usermodified' => $booker->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $booker->id,
+                'usermodified' => $booker->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ];
 
         $canceledid = $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Booker canceled',
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-        ]));
+                        'name' => 'Booker canceled',
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                ]));
         event_manager::record_booking_history(
-            (int)$canceledid,
-            'status_changed',
-            (int)$booker->id,
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            event_access_manager::BOOKINGSTATUS_CANCELED
+                (int)$canceledid,
+                'status_changed',
+                (int)$booker->id,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
         $requests = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled')['events'];
@@ -853,40 +853,40 @@ final class event_manager_test extends advanced_testcase {
         $booker = $this->getDataGenerator()->create_user();
         $serviceteam = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $booker->id,
-            'usermodified' => $booker->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $booker->id,
+                'usermodified' => $booker->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ];
 
         $canceledid = $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Service canceled',
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-        ]));
+                        'name' => 'Service canceled',
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                ]));
         event_manager::record_booking_history(
-            (int)$canceledid,
-            'status_changed',
-            (int)$serviceteam->id,
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            event_access_manager::BOOKINGSTATUS_CANCELED
+                (int)$canceledid,
+                'status_changed',
+                (int)$serviceteam->id,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
         $requests = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled')['events'];
@@ -911,12 +911,12 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_resolve_effective_semester_filter_ids_preserves_explicit_selection(): void {
         $this->assertSame(
-            [20261],
-            event_manager::resolve_effective_semester_filter_ids([], false, strtotime('2026-05-07 10:00:00'))
+                [20261],
+                event_manager::resolve_effective_semester_filter_ids([], false, strtotime('2026-05-07 10:00:00'))
         );
         $this->assertSame(
-            [20262],
-            event_manager::resolve_effective_semester_filter_ids([20262], true, strtotime('2026-05-07 10:00:00'))
+                [20262],
+                event_manager::resolve_effective_semester_filter_ids([20262], true, strtotime('2026-05-07 10:00:00'))
         );
     }
 
@@ -932,16 +932,16 @@ final class event_manager_test extends advanced_testcase {
         $this->setUser($observer);
 
         $this->create_event_record([
-            'name' => 'Observer hidden request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'starttime' => strtotime('2026-05-08 08:00:00'),
-            'endtime' => strtotime('2026-05-08 09:00:00'),
+                'name' => 'Observer hidden request',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-05-08 08:00:00'),
+                'endtime' => strtotime('2026-05-08 09:00:00'),
         ]);
         $acceptedid = $this->create_event_record([
-            'name' => 'Observer accepted booking',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('2026-05-08 10:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
+                'name' => 'Observer accepted booking',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 10:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
         ]);
 
         $events = event_manager::get_events_in_timerange('2026-05-08 00:00', '2026-05-08 23:59', (int)$context->instanceid);
@@ -978,38 +978,38 @@ final class event_manager_test extends advanced_testcase {
 
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
         $roomid = $generator->create_room([
-            'name' => 'Governed room',
-            'shortname' => 'GR-1',
-            'location' => 'Campus A',
+                'name' => 'Governed room',
+                'shortname' => 'GR-1',
+                'location' => 'Campus A',
         ]);
 
         $visibleid = $this->create_event_record([
-            'name' => 'Governed Physics',
-            'institutionid' => 1,
-            'roomid' => $roomid,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('2026-05-20 09:00:00'),
-            'endtime' => strtotime('2026-05-20 11:00:00'),
+                'name' => 'Governed Physics',
+                'institutionid' => 1,
+                'roomid' => $roomid,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-20 09:00:00'),
+                'endtime' => strtotime('2026-05-20 11:00:00'),
         ]);
         $this->create_event_record([
-            'name' => 'Governed Hidden',
-            'institutionid' => 1,
-            'roomid' => $roomid,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('2026-05-20 13:00:00'),
-            'endtime' => strtotime('2026-05-20 14:00:00'),
+                'name' => 'Governed Hidden',
+                'institutionid' => 1,
+                'roomid' => $roomid,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-20 13:00:00'),
+                'endtime' => strtotime('2026-05-20 14:00:00'),
         ]);
 
         $events = event_manager::get_governed_calendar_events(
-            $context,
-            (int)$teacher->id,
-            '2026-05-20 00:00',
-            '2026-05-20 23:59',
-            [
-                'roomids' => [$roomid],
-                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
-                'search' => 'Physics',
-            ]
+                $context,
+                (int)$teacher->id,
+                '2026-05-20 00:00',
+                '2026-05-20 23:59',
+                [
+                        'roomids' => [$roomid],
+                        'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
+                        'search' => 'Physics',
+                ]
         );
 
         $this->assertCount(1, $events);
@@ -1041,10 +1041,10 @@ final class event_manager_test extends advanced_testcase {
         $this->setUser($user);
 
         $visibleid = $this->create_event_record([
-            'name' => 'Admin visible booking',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('2026-05-09 10:00:00'),
-            'endtime' => strtotime('2026-05-09 11:00:00'),
+                'name' => 'Admin visible booking',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-09 10:00:00'),
+                'endtime' => strtotime('2026-05-09 11:00:00'),
         ]);
 
         $events = event_manager::get_events_in_timerange('2026-05-09 00:00', '2026-05-09 23:59', (int)$context->instanceid);
@@ -1063,38 +1063,38 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_filter_overview_events_ignores_legacy_semester_zero(): void {
         $activeevent = (object)[
-            'id' => 1,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('+1 day'),
-            'endtime' => strtotime('+1 day +2 hours'),
+                'id' => 1,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('+1 day'),
+                'endtime' => strtotime('+1 day +2 hours'),
         ];
         $legacyevent = (object)[
-            'id' => 2,
-            'semester' => 0,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('+2 days'),
-            'endtime' => strtotime('+2 days +2 hours'),
+                'id' => 2,
+                'semester' => 0,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('+2 days'),
+                'endtime' => strtotime('+2 days +2 hours'),
         ];
 
         $filtered = event_manager::filter_overview_events([$activeevent, $legacyevent], [
-            'semesterids' => [20261],
+                'semesterids' => [20261],
         ]);
 
         $this->assertCount(1, $filtered);
         $this->assertSame(1, (int)$filtered[0]->id);
 
         $filteredwithignoredzero = event_manager::filter_overview_events([$activeevent, $legacyevent], [
-            'semesterids' => [20261, 0],
+                'semesterids' => [20261, 0],
         ]);
 
         $this->assertCount(1, $filteredwithignoredzero);
         $this->assertSame(1, (int)$filteredwithignoredzero[0]->id);
 
         $legacyonly = event_manager::filter_overview_events([$activeevent, $legacyevent], [
-            'semesterids' => [0],
+                'semesterids' => [0],
         ]);
 
         $this->assertCount(2, $legacyonly);
@@ -1108,39 +1108,39 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_splits_history_and_applies_personal_filters(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $futureevent = (object)[
-            'id' => 11,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
+                'id' => 11,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
         $pastevent = (object)[
-            'id' => 12,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('2026-05-01 09:00:00'),
-            'endtime' => strtotime('2026-05-01 11:00:00'),
+                'id' => 12,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-01 09:00:00'),
+                'endtime' => strtotime('2026-05-01 11:00:00'),
         ];
         $filteredout = (object)[
-            'id' => 13,
-            'semester' => 20262,
-            'institutionid' => 2,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'starttime' => strtotime('2026-05-09 09:00:00'),
-            'endtime' => strtotime('2026-05-09 11:00:00'),
+                'id' => 13,
+                'semester' => 20262,
+                'institutionid' => 2,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-05-09 09:00:00'),
+                'endtime' => strtotime('2026-05-09 11:00:00'),
         ];
 
         $active = event_manager::filter_overview_events([$futureevent, $pastevent, $filteredout], [
-            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
-            'facultyids' => [1],
-            'semesterids' => [20261],
+                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
+                'facultyids' => [1],
+                'semesterids' => [20261],
         ], false, $referencetime);
         $history = event_manager::filter_overview_events([$futureevent, $pastevent, $filteredout], [
-            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
-            'facultyids' => [1],
-            'semesterids' => [20261],
+                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
+                'facultyids' => [1],
+                'semesterids' => [20261],
         ], true, $referencetime);
 
         $this->assertCount(1, $active);
@@ -1166,18 +1166,18 @@ final class event_manager_test extends advanced_testcase {
         $context = context_module::instance($bookit->cmid);
 
         $eventid = $this->create_event_record([
-            'name' => 'Preserve booking person',
-            'usercreated' => (int)$bookingperson->id,
-            'usermodified' => (int)$bookingperson->id,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'name' => 'Preserve booking person',
+                'usercreated' => (int)$bookingperson->id,
+                'usermodified' => (int)$bookingperson->id,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
         event_manager::transition_booking_status(
-            $event,
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            (int)$serviceuser->id,
-            $context
+                $event,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                (int)$serviceuser->id,
+                $context
         );
 
         $updated = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
@@ -1219,9 +1219,9 @@ final class event_manager_test extends advanced_testcase {
      * @return void
      */
     private function assign_service_role(
-        context_module $context,
-        int $userid,
-        string $roleshortname = 'bookitserviceforeign'
+            context_module $context,
+            int $userid,
+            string $roleshortname = 'bookitserviceforeign'
     ): void {
         global $DB;
 
@@ -1244,9 +1244,9 @@ final class event_manager_test extends advanced_testcase {
      * @return void
      */
     private function assert_foreign_save_preserves_booking_person(
-        int $actorid,
-        ?context_module $context = null,
-        ?int $bookingpersonid = null
+            int $actorid,
+            ?context_module $context = null,
+            ?int $bookingpersonid = null
     ): void {
         global $DB;
 
@@ -1261,14 +1261,14 @@ final class event_manager_test extends advanced_testcase {
 
         $this->setUser($bookingpersonid);
         $event = $this->build_bookit_event($roomid, $bookingpersonid, [
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'name' => 'Foreign save identity',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'name' => 'Foreign save identity',
         ]);
         $saved = event_manager::save_event_with_lifecycle_tracking(
-            $event,
-            null,
-            $bookingpersonid,
-            $context
+                $event,
+                null,
+                $bookingpersonid,
+                $context
         );
 
         $before = bookit_event::from_database($saved->id);
@@ -1277,10 +1277,10 @@ final class event_manager_test extends advanced_testcase {
 
         $this->setUser($actorid);
         event_manager::save_event_with_lifecycle_tracking(
-            $updated,
-            $before,
-            $actorid,
-            $context
+                $updated,
+                $before,
+                $actorid,
+                $context
         );
 
         $persisted = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
@@ -1289,10 +1289,10 @@ final class event_manager_test extends advanced_testcase {
 
         $this->setUser($bookingpersonid);
         $this->assertTrue(
-            event_access_manager::can_user_view_event_in_calendar($persisted, $context, $bookingpersonid)
+                event_access_manager::can_user_view_event_in_calendar($persisted, $context, $bookingpersonid)
         );
         $this->assertTrue(
-            event_access_manager::can_user_view_event_in_overview($persisted, $context, $bookingpersonid)
+                event_access_manager::can_user_view_event_in_overview($persisted, $context, $bookingpersonid)
         );
     }
 
@@ -1321,9 +1321,9 @@ final class event_manager_test extends advanced_testcase {
         $this->assign_service_role($context, (int)$serviceuser->id);
 
         $this->assert_foreign_save_preserves_booking_person(
-            (int)$serviceuser->id,
-            $context,
-            (int)$bookingperson->id
+                (int)$serviceuser->id,
+                $context,
+                (int)$bookingperson->id
         );
     }
 
@@ -1365,14 +1365,14 @@ final class event_manager_test extends advanced_testcase {
 
         $this->setUser($bookingperson);
         $event = $this->build_bookit_event($roomid, (int)$bookingperson->id, [
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'name' => 'Self save identity',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'name' => 'Self save identity',
         ]);
         $saved = event_manager::save_event_with_lifecycle_tracking(
-            $event,
-            null,
-            (int)$bookingperson->id,
-            $context
+                $event,
+                null,
+                (int)$bookingperson->id,
+                $context
         );
 
         $before = bookit_event::from_database($saved->id);
@@ -1380,10 +1380,10 @@ final class event_manager_test extends advanced_testcase {
         $updated->notes = 'Updated by booking person';
 
         event_manager::save_event_with_lifecycle_tracking(
-            $updated,
-            $before,
-            (int)$bookingperson->id,
-            $context
+                $updated,
+                $before,
+                (int)$bookingperson->id,
+                $context
         );
 
         $record = $DB->get_record('bookit_event', ['id' => $saved->id], '*', MUST_EXIST);
@@ -1408,20 +1408,20 @@ final class event_manager_test extends advanced_testcase {
         $context = context_module::instance($bookit->cmid);
 
         $eventid = $this->create_event_record([
-            'name' => 'Overview after transition',
-            'usercreated' => (int)$bookingperson->id,
-            'usermodified' => (int)$bookingperson->id,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'starttime' => strtotime('2026-05-20 09:00:00'),
-            'endtime' => strtotime('2026-05-20 11:00:00'),
+                'name' => 'Overview after transition',
+                'usercreated' => (int)$bookingperson->id,
+                'usermodified' => (int)$bookingperson->id,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-05-20 09:00:00'),
+                'endtime' => strtotime('2026-05-20 11:00:00'),
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
         event_manager::transition_booking_status(
-            $event,
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            (int)$serviceuser->id,
-            $context
+                $event,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                (int)$serviceuser->id,
+                $context
         );
 
         $personalevents = array_values(event_manager::get_events_for_examiner((int)$bookingperson->id));
@@ -1429,10 +1429,10 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame($eventid, (int)$personalevents[0]->id);
 
         $filtered = array_values(event_manager::filter_overview_events(
-            $personalevents,
-            [],
-            false,
-            strtotime('2026-05-07 10:00:00')
+                $personalevents,
+                [],
+                false,
+                strtotime('2026-05-07 10:00:00')
         ));
         $this->assertCount(1, $filtered);
         $this->assertSame($eventid, (int)$filtered[0]->id);
@@ -1449,40 +1449,43 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user();
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'History test event',
-            'semester' => 20261,
-            'institutionid' => null,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'History test event',
+                'semester' => 20261,
+                'institutionid' => null,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
 
         event_manager::record_booking_history(
-            $eventid,
-            'rejected',
-            (int)$user->id,
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_REJECTED,
-            ['bookingstatus' => ['from' => 1, 'to' => 4]],
-            false
+                $eventid,
+                'rejected',
+                (int)$user->id,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+                ['bookingstatus' => [
+                        'from' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        'to' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                ]],
+                false
         );
 
         $history = array_values(event_manager::get_booking_history($eventid));
@@ -1492,8 +1495,11 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame(event_access_manager::BOOKINGSTATUS_REJECTED, (int)$history[0]->newstatus);
         $this->assertSame((int)$user->id, (int)$history[0]->usermodified);
         $this->assertSame(
-            ['bookingstatus' => ['from' => 1, 'to' => 4]],
-            json_decode($history[0]->changedfields, true)
+                ['bookingstatus' => [
+                        'from' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        'to' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                ]],
+                json_decode($history[0]->changedfields, true)
         );
     }
 
@@ -1513,11 +1519,11 @@ final class event_manager_test extends advanced_testcase {
 
         $sink = $this->redirectMessages();
         event_manager::save_event_with_lifecycle_tracking(
-            $event,
-            null,
-            (int)$user->id,
-            $context,
-            (int)$context->instanceid
+                $event,
+                null,
+                (int)$user->id,
+                $context,
+                (int)$context->instanceid
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -1540,8 +1546,8 @@ final class event_manager_test extends advanced_testcase {
         $context = $this->create_bookit_context();
         $roomid = $this->create_room();
         $event = $this->build_bookit_event($roomid, (int)$user->id, [
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'name' => 'Reactivated notification',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'name' => 'Reactivated notification',
         ]);
 
         $saved = event_manager::save_event_with_lifecycle_tracking($event, null, (int)$user->id, $context);
@@ -1557,11 +1563,11 @@ final class event_manager_test extends advanced_testcase {
 
         $sink = $this->redirectMessages();
         event_manager::save_event_with_lifecycle_tracking(
-            $reactivated,
-            $beforerestore,
-            (int)$user->id,
-            $context,
-            (int)$context->instanceid
+                $reactivated,
+                $beforerestore,
+                (int)$user->id,
+                $context,
+                (int)$context->instanceid
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -1592,11 +1598,11 @@ final class event_manager_test extends advanced_testcase {
 
         $sink = $this->redirectMessages();
         event_manager::transition_booking_status(
-            $record,
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            (int)$user->id,
-            $context,
-            (int)$context->instanceid
+                $record,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                (int)$user->id,
+                $context,
+                (int)$context->instanceid
         );
         $messages = $sink->get_messages();
         $sink->close();
@@ -1617,40 +1623,40 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ];
 
         $futureid = $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Future rejected',
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-        ]));
+                        'name' => 'Future rejected',
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                ]));
         $pastid = $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Past rejected',
-            'starttime' => strtotime('2026-05-01 09:00:00'),
-            'endtime' => strtotime('2026-05-01 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-        ]));
+                        'name' => 'Past rejected',
+                        'starttime' => strtotime('2026-05-01 09:00:00'),
+                        'endtime' => strtotime('2026-05-01 11:00:00'),
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                ]));
 
         $result = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled');
         $rejected = $result['events'];
@@ -1672,35 +1678,35 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ];
         $referencetime = time();
 
         $acceptedid = $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Future accepted',
-            'starttime' => strtotime('+2 days 09:00'),
-            'endtime' => strtotime('+2 days 11:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-        ]));
+                        'name' => 'Future accepted',
+                        'starttime' => strtotime('+2 days 09:00'),
+                        'endtime' => strtotime('+2 days 11:00'),
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                ]));
 
         $accepted = $this->get_workspace_query_result($context, $adminid, 'confirmedrequests')['events'];
         $this->assertCount(1, $accepted);
@@ -1720,41 +1726,41 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ];
         $referencetime = time();
 
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Past accepted',
-            'starttime' => strtotime('-3 days 09:00'),
-            'endtime' => strtotime('-3 days 11:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-        ]));
+                        'name' => 'Past accepted',
+                        'starttime' => strtotime('-3 days 09:00'),
+                        'endtime' => strtotime('-3 days 11:00'),
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Canceled accepted',
-            'starttime' => strtotime('+2 days 09:00'),
-            'endtime' => strtotime('+2 days 11:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-        ]));
+                        'name' => 'Canceled accepted',
+                        'starttime' => strtotime('+2 days 09:00'),
+                        'endtime' => strtotime('+2 days 11:00'),
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                ]));
 
         $accepted = $this->get_workspace_query_result($context, $adminid, 'confirmedrequests')['events'];
         $this->assertCount(0, $accepted);
@@ -1772,42 +1778,42 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
-            'starttime' => strtotime('+2 days 09:00'),
-            'endtime' => strtotime('+2 days 11:00'),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+                'starttime' => strtotime('+2 days 09:00'),
+                'endtime' => strtotime('+2 days 11:00'),
         ];
 
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'New request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-        ]));
+                        'name' => 'New request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'In progress request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-        ]));
+                        'name' => 'In progress request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Accepted request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-        ]));
+                        'name' => 'Accepted request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                ]));
 
         $this->assertSame(2, event_manager::count_open_requests());
         $this->assertSame(1, event_manager::count_new_requests());
@@ -1825,42 +1831,42 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
-            'starttime' => strtotime('+2 days 09:00'),
-            'endtime' => strtotime('+2 days 11:00'),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+                'starttime' => strtotime('+2 days 09:00'),
+                'endtime' => strtotime('+2 days 11:00'),
         ];
 
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'New request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-        ]));
+                        'name' => 'New request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'In progress request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-        ]));
+                        'name' => 'In progress request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Accepted request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-        ]));
+                        'name' => 'Accepted request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                ]));
 
         $this->assertSame(1, event_manager::count_new_requests());
     }
@@ -1876,42 +1882,42 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
-            'starttime' => strtotime('+2 days 09:00'),
-            'endtime' => strtotime('+2 days 11:00'),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+                'starttime' => strtotime('+2 days 09:00'),
+                'endtime' => strtotime('+2 days 11:00'),
         ];
 
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'New request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-        ]));
+                        'name' => 'New request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'In progress request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-        ]));
+                        'name' => 'In progress request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Accepted request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-        ]));
+                        'name' => 'Accepted request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                ]));
 
         $this->assertSame(1, event_manager::count_in_progress_requests());
     }
@@ -1928,38 +1934,38 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
 
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Open request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-        ]));
+                        'name' => 'Open request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                ]));
         $DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Accepted request',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-        ]));
+                        'name' => 'Accepted request',
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                ]));
 
         $open = $this->get_workspace_query_result($context, $adminid, 'openrequests')['events'];
         $this->assertCount(1, $open);
@@ -1978,39 +1984,39 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
         $user = $this->getDataGenerator()->create_user();
         $common = [
-            'semester' => 20261,
-            'institutionid' => null,
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'semester' => 20261,
+                'institutionid' => null,
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'compensationfordisadvantages' => '',
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
         ];
 
         $olderid = (int)$DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Older request',
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-        ]));
+                        'name' => 'Older request',
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                ]));
         $newerid = (int)$DB->insert_record('bookit_event', (object)($common + [
-            'name' => 'Newer request',
-            'starttime' => strtotime('2026-05-10 09:00:00'),
-            'endtime' => strtotime('2026-05-10 11:00:00'),
-        ]));
+                        'name' => 'Newer request',
+                        'starttime' => strtotime('2026-05-10 09:00:00'),
+                        'endtime' => strtotime('2026-05-10 11:00:00'),
+                ]));
 
         $open = $this->get_workspace_query_result($context, $adminid, 'openrequests')['events'];
         $this->assertCount(2, $open);
@@ -2026,20 +2032,20 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_hides_rejected_requests_from_active_projection(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $accepted = (object)[
-            'id' => 101,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
+                'id' => 101,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
         $rejected = (object)[
-            'id' => 102,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'starttime' => strtotime('2026-05-08 12:00:00'),
-            'endtime' => strtotime('2026-05-08 14:00:00'),
+                'id' => 102,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
         ];
 
         $active = event_manager::filter_overview_events([$accepted, $rejected], [], false, $referencetime);
@@ -2049,10 +2055,10 @@ final class event_manager_test extends advanced_testcase {
         $this->assertTrue(event_manager::is_hidden_from_active_overview($rejected));
 
         $explicitrejected = event_manager::filter_overview_events(
-            [$accepted, $rejected],
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
-            false,
-            $referencetime
+                [$accepted, $rejected],
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+                false,
+                $referencetime
         );
         $this->assertCount(1, $explicitrejected);
         $this->assertSame(102, (int)$explicitrejected[0]->id);
@@ -2066,19 +2072,19 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_explicit_canceled_on_active_tab(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $canceled = (object)[
-            'id' => 201,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
+                'id' => 201,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$canceled],
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
-            false,
-            $referencetime
+                [$canceled],
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2093,19 +2099,19 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_explicit_rejected_on_active_tab(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $rejected = (object)[
-            'id' => 202,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'starttime' => strtotime('2026-05-08 12:00:00'),
-            'endtime' => strtotime('2026-05-08 14:00:00'),
+                'id' => 202,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$rejected],
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
-            false,
-            $referencetime
+                [$rejected],
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2120,45 +2126,45 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_canceled_only_excludes_active_statuses(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $events = [
-            (object)[
-                'id' => 301,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'starttime' => strtotime('2026-05-08 09:00:00'),
-                'endtime' => strtotime('2026-05-08 11:00:00'),
-            ],
-            (object)[
-                'id' => 302,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                'starttime' => strtotime('2026-05-08 12:00:00'),
-                'endtime' => strtotime('2026-05-08 14:00:00'),
-            ],
-            (object)[
-                'id' => 303,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'starttime' => strtotime('2026-05-08 15:00:00'),
-                'endtime' => strtotime('2026-05-08 17:00:00'),
-            ],
-            (object)[
-                'id' => 304,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'starttime' => strtotime('2026-05-08 18:00:00'),
-                'endtime' => strtotime('2026-05-08 20:00:00'),
-            ],
+                (object)[
+                        'id' => 301,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                ],
+                (object)[
+                        'id' => 302,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        'starttime' => strtotime('2026-05-08 12:00:00'),
+                        'endtime' => strtotime('2026-05-08 14:00:00'),
+                ],
+                (object)[
+                        'id' => 303,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        'starttime' => strtotime('2026-05-08 15:00:00'),
+                        'endtime' => strtotime('2026-05-08 17:00:00'),
+                ],
+                (object)[
+                        'id' => 304,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                        'starttime' => strtotime('2026-05-08 18:00:00'),
+                        'endtime' => strtotime('2026-05-08 20:00:00'),
+                ],
         ];
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
-            false,
-            $referencetime
+                $events,
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2173,32 +2179,32 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_new_and_canceled_mixed_on_active(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $newevent = (object)[
-            'id' => 311,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
+                'id' => 311,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
         $canceled = (object)[
-            'id' => 312,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('2026-05-08 12:00:00'),
-            'endtime' => strtotime('2026-05-08 14:00:00'),
+                'id' => 312,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-05-08 12:00:00'),
+                'endtime' => strtotime('2026-05-08 14:00:00'),
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$newevent, $canceled],
-            [
-                'bookingstatuses' => [
-                    event_access_manager::BOOKINGSTATUS_NEW,
-                    event_access_manager::BOOKINGSTATUS_CANCELED,
+                [$newevent, $canceled],
+                [
+                        'bookingstatuses' => [
+                                event_access_manager::BOOKINGSTATUS_NEW,
+                                event_access_manager::BOOKINGSTATUS_CANCELED,
+                        ],
                 ],
-            ],
-            false,
-            $referencetime
+                false,
+                $referencetime
         );
 
         $this->assertCount(2, $filtered);
@@ -2213,29 +2219,29 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_rejected_only_excludes_active_statuses(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $events = [
-            (object)[
-                'id' => 401,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'starttime' => strtotime('2026-05-08 09:00:00'),
-                'endtime' => strtotime('2026-05-08 11:00:00'),
-            ],
-            (object)[
-                'id' => 402,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-                'starttime' => strtotime('2026-05-08 12:00:00'),
-                'endtime' => strtotime('2026-05-08 14:00:00'),
-            ],
+                (object)[
+                        'id' => 401,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                ],
+                (object)[
+                        'id' => 402,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                        'starttime' => strtotime('2026-05-08 12:00:00'),
+                        'endtime' => strtotime('2026-05-08 14:00:00'),
+                ],
         ];
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
-            false,
-            $referencetime
+                $events,
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2250,67 +2256,67 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_all_five_statuses_on_active(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $events = [
-            (object)[
-                'id' => 501,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'starttime' => strtotime('2026-05-08 09:00:00'),
-                'endtime' => strtotime('2026-05-08 10:00:00'),
-            ],
-            (object)[
-                'id' => 502,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                'starttime' => strtotime('2026-05-08 10:00:00'),
-                'endtime' => strtotime('2026-05-08 11:00:00'),
-            ],
-            (object)[
-                'id' => 503,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'starttime' => strtotime('2026-05-08 11:00:00'),
-                'endtime' => strtotime('2026-05-08 12:00:00'),
-            ],
-            (object)[
-                'id' => 504,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'starttime' => strtotime('2026-05-08 12:00:00'),
-                'endtime' => strtotime('2026-05-08 13:00:00'),
-            ],
-            (object)[
-                'id' => 505,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-                'starttime' => strtotime('2026-05-08 13:00:00'),
-                'endtime' => strtotime('2026-05-08 14:00:00'),
-            ],
+                (object)[
+                        'id' => 501,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 10:00:00'),
+                ],
+                (object)[
+                        'id' => 502,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        'starttime' => strtotime('2026-05-08 10:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                ],
+                (object)[
+                        'id' => 503,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        'starttime' => strtotime('2026-05-08 11:00:00'),
+                        'endtime' => strtotime('2026-05-08 12:00:00'),
+                ],
+                (object)[
+                        'id' => 504,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                        'starttime' => strtotime('2026-05-08 12:00:00'),
+                        'endtime' => strtotime('2026-05-08 13:00:00'),
+                ],
+                (object)[
+                        'id' => 505,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                        'starttime' => strtotime('2026-05-08 13:00:00'),
+                        'endtime' => strtotime('2026-05-08 14:00:00'),
+                ],
         ];
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            [
-                'bookingstatuses' => [
-                    event_access_manager::BOOKINGSTATUS_NEW,
-                    event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                    event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                    event_access_manager::BOOKINGSTATUS_CANCELED,
-                    event_access_manager::BOOKINGSTATUS_REJECTED,
+                $events,
+                [
+                        'bookingstatuses' => [
+                                event_access_manager::BOOKINGSTATUS_NEW,
+                                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                                event_access_manager::BOOKINGSTATUS_CANCELED,
+                                event_access_manager::BOOKINGSTATUS_REJECTED,
+                        ],
                 ],
-            ],
-            false,
-            $referencetime
+                false,
+                $referencetime
         );
 
         $this->assertCount(5, $filtered);
         $this->assertEqualsCanonicalizing(
-            [501, 502, 503, 504, 505],
-            array_map(static fn($event): int => (int)$event->id, $filtered)
+                [501, 502, 503, 504, 505],
+                array_map(static fn($event): int => (int)$event->id, $filtered)
         );
     }
 
@@ -2322,43 +2328,43 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_default_triplet_hides_terminal_on_active(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $events = [
-            (object)[
-                'id' => 601,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'starttime' => strtotime('2026-05-08 09:00:00'),
-                'endtime' => strtotime('2026-05-08 11:00:00'),
-            ],
-            (object)[
-                'id' => 602,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-                'starttime' => strtotime('2026-05-08 12:00:00'),
-                'endtime' => strtotime('2026-05-08 14:00:00'),
-            ],
-            (object)[
-                'id' => 603,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'starttime' => strtotime('2026-05-08 15:00:00'),
-                'endtime' => strtotime('2026-05-08 17:00:00'),
-            ],
+                (object)[
+                        'id' => 601,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                ],
+                (object)[
+                        'id' => 602,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                        'starttime' => strtotime('2026-05-08 12:00:00'),
+                        'endtime' => strtotime('2026-05-08 14:00:00'),
+                ],
+                (object)[
+                        'id' => 603,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        'starttime' => strtotime('2026-05-08 15:00:00'),
+                        'endtime' => strtotime('2026-05-08 17:00:00'),
+                ],
         ];
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            [
-                'bookingstatuses' => [
-                    event_access_manager::BOOKINGSTATUS_NEW,
-                    event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-                    event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                $events,
+                [
+                        'bookingstatuses' => [
+                                event_access_manager::BOOKINGSTATUS_NEW,
+                                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        ],
                 ],
-            ],
-            false,
-            $referencetime
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2373,42 +2379,42 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_terminal_only_both_on_active(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $events = [
-            (object)[
-                'id' => 701,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'starttime' => strtotime('2026-05-08 09:00:00'),
-                'endtime' => strtotime('2026-05-08 11:00:00'),
-            ],
-            (object)[
-                'id' => 702,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'starttime' => strtotime('2026-05-08 12:00:00'),
-                'endtime' => strtotime('2026-05-08 14:00:00'),
-            ],
-            (object)[
-                'id' => 703,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-                'starttime' => strtotime('2026-05-08 15:00:00'),
-                'endtime' => strtotime('2026-05-08 17:00:00'),
-            ],
+                (object)[
+                        'id' => 701,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                ],
+                (object)[
+                        'id' => 702,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                        'starttime' => strtotime('2026-05-08 12:00:00'),
+                        'endtime' => strtotime('2026-05-08 14:00:00'),
+                ],
+                (object)[
+                        'id' => 703,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                        'starttime' => strtotime('2026-05-08 15:00:00'),
+                        'endtime' => strtotime('2026-05-08 17:00:00'),
+                ],
         ];
 
         $filtered = event_manager::filter_overview_events(
-            $events,
-            [
-                'bookingstatuses' => [
-                    event_access_manager::BOOKINGSTATUS_CANCELED,
-                    event_access_manager::BOOKINGSTATUS_REJECTED,
+                $events,
+                [
+                        'bookingstatuses' => [
+                                event_access_manager::BOOKINGSTATUS_CANCELED,
+                                event_access_manager::BOOKINGSTATUS_REJECTED,
+                        ],
                 ],
-            ],
-            false,
-            $referencetime
+                false,
+                $referencetime
         );
 
         $this->assertCount(2, $filtered);
@@ -2486,23 +2492,23 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_examiner_explicit_canceled_on_active(): void {
         $referencetime = strtotime('2026-06-01 10:00:00');
         $canceled = (object)[
-            'id' => 801,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('2026-06-10 09:00:00'),
-            'endtime' => strtotime('2026-06-10 11:00:00'),
-            'personinchargeid' => 42,
-            'usermodified' => 99,
-            'otherexaminers' => '',
-            'supportpersons' => '',
+                'id' => 801,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-06-10 09:00:00'),
+                'endtime' => strtotime('2026-06-10 11:00:00'),
+                'personinchargeid' => 42,
+                'usermodified' => 99,
+                'otherexaminers' => '',
+                'supportpersons' => '',
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$canceled],
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
-            false,
-            $referencetime
+                [$canceled],
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2517,23 +2523,23 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_examiner_explicit_rejected_on_active(): void {
         $referencetime = strtotime('2026-06-01 10:00:00');
         $rejected = (object)[
-            'id' => 802,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'starttime' => strtotime('2026-06-11 09:00:00'),
-            'endtime' => strtotime('2026-06-11 11:00:00'),
-            'personinchargeid' => 42,
-            'usermodified' => 99,
-            'otherexaminers' => '',
-            'supportpersons' => '',
+                'id' => 802,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('2026-06-11 09:00:00'),
+                'endtime' => strtotime('2026-06-11 11:00:00'),
+                'personinchargeid' => 42,
+                'usermodified' => 99,
+                'otherexaminers' => '',
+                'supportpersons' => '',
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$rejected],
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
-            false,
-            $referencetime
+                [$rejected],
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2548,30 +2554,30 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_participant_canceled_outside_semester_hidden(): void {
         $referencetime = strtotime('2026-06-01 10:00:00');
         $insamesemester = (object)[
-            'id' => 901,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('2026-06-10 09:00:00'),
-            'endtime' => strtotime('2026-06-10 11:00:00'),
+                'id' => 901,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-06-10 09:00:00'),
+                'endtime' => strtotime('2026-06-10 11:00:00'),
         ];
         $outsidesemester = (object)[
-            'id' => 902,
-            'semester' => 20262,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('2026-11-10 09:00:00'),
-            'endtime' => strtotime('2026-11-10 11:00:00'),
+                'id' => 902,
+                'semester' => 20262,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-11-10 09:00:00'),
+                'endtime' => strtotime('2026-11-10 11:00:00'),
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$insamesemester, $outsidesemester],
-            [
-                'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED],
-                'semesterids' => [20261],
-            ],
-            false,
-            $referencetime
+                [$insamesemester, $outsidesemester],
+                [
+                        'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED],
+                        'semesterids' => [20261],
+                ],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -2605,30 +2611,30 @@ final class event_manager_test extends advanced_testcase {
         $referencetime = strtotime('2026-05-07 10:00:00');
 
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'Reactivatable request',
-            'semester' => 20261,
-            'institutionid' => null,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Reactivatable request',
+                'semester' => 20261,
+                'institutionid' => null,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
@@ -2636,20 +2642,20 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame(1, event_manager::count_rejected_requests());
 
         event_manager::transition_booking_status(
-            $event,
-            event_access_manager::BOOKINGSTATUS_NEW,
-            (int)$user->id,
-            $context
+                $event,
+                event_access_manager::BOOKINGSTATUS_NEW,
+                (int)$user->id,
+                $context
         );
 
         $this->assertSame(1, event_manager::count_open_requests());
         $this->assertSame(0, event_manager::count_rejected_requests());
 
         $DB->set_field(
-            'bookit_event',
-            'bookingstatus',
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            ['id' => $eventid]
+                'bookit_event',
+                'bookingstatus',
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                ['id' => $eventid]
         );
         $this->assertSame(1, event_manager::count_open_requests());
     }
@@ -2671,39 +2677,39 @@ final class event_manager_test extends advanced_testcase {
         $context = context_module::instance($bookit->cmid);
 
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'Transition event',
-            'semester' => 20261,
-            'institutionid' => null,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Transition event',
+                'semester' => 20261,
+                'institutionid' => null,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
         $sink = $this->redirectEvents();
         event_manager::transition_booking_status(
-            $event,
-            event_access_manager::BOOKINGSTATUS_NEW,
-            (int)$user->id,
-            $context
+                $event,
+                event_access_manager::BOOKINGSTATUS_NEW,
+                (int)$user->id,
+                $context
         );
         $events = $sink->get_events();
         $sink->close();
@@ -2731,44 +2737,47 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user();
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'Restorable event',
-            'semester' => 20261,
-            'institutionid' => null,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Restorable event',
+                'semester' => 20261,
+                'institutionid' => null,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
         event_manager::record_booking_history(
-            $eventid,
-            'canceled',
-            (int)$user->id,
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            event_access_manager::BOOKINGSTATUS_CANCELED,
-            ['bookingstatus' => ['from' => 2, 'to' => 3]]
+                $eventid,
+                'canceled',
+                (int)$user->id,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                ['bookingstatus' => [
+                        'from' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                        'to' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                ]]
         );
 
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
         $this->assertSame(
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            event_manager::resolve_requested_booking_status($event, event_access_manager::BOOKINGSTATUS_NEW)
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                event_manager::resolve_requested_booking_status($event, event_access_manager::BOOKINGSTATUS_NEW)
         );
     }
 
@@ -2784,49 +2793,52 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user();
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'Cancelled request',
-            'semester' => 20261,
-            'institutionid' => 1,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Cancelled request',
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
         event_manager::record_booking_history(
-            $eventid,
-            'self_canceled',
-            (int)$user->id,
-            event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_CANCELED,
-            ['bookingstatus' => ['from' => 0, 'to' => 3]]
+                $eventid,
+                'self_canceled',
+                (int)$user->id,
+                event_access_manager::BOOKINGSTATUS_NEW,
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                ['bookingstatus' => [
+                        'from' => event_access_manager::BOOKINGSTATUS_NEW,
+                        'to' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                ]]
         );
 
         $visible = event_manager::filter_overview_events([
-            (object)[
-                'id' => $eventid,
-                'semester' => 20261,
-                'institutionid' => 1,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'starttime' => strtotime('2026-05-08 09:00:00'),
-                'endtime' => strtotime('2026-05-08 11:00:00'),
-            ],
+                (object)[
+                        'id' => $eventid,
+                        'semester' => 20261,
+                        'institutionid' => 1,
+                        'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                        'starttime' => strtotime('2026-05-08 09:00:00'),
+                        'endtime' => strtotime('2026-05-08 11:00:00'),
+                ],
         ], [], false, strtotime('2026-05-07 10:00:00'));
 
         $this->assertSame([], $visible);
@@ -2855,19 +2867,19 @@ final class event_manager_test extends advanced_testcase {
         $this->setUser($requester);
 
         $eventid = $this->create_event_record([
-            'name' => 'Requester self cancel',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'personinchargeid' => $requester->id,
-            'usercreated' => $requester->id,
-            'usermodified' => $requester->id,
+                'name' => 'Requester self cancel',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => $requester->id,
+                'usercreated' => $requester->id,
+                'usermodified' => $requester->id,
         ]);
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
 
         event_manager::transition_booking_status(
-            $event,
-            event_access_manager::BOOKINGSTATUS_CANCELED,
-            (int)$requester->id,
-            $context
+                $event,
+                event_access_manager::BOOKINGSTATUS_CANCELED,
+                (int)$requester->id,
+                $context
         );
 
         $history = array_values(event_manager::get_booking_history($eventid));
@@ -2875,7 +2887,7 @@ final class event_manager_test extends advanced_testcase {
         $this->assertSame('self_canceled', $history[0]->action);
         $this->assertSame((int)$requester->id, (int)$history[0]->usermodified);
         $this->assertTrue(event_manager::is_hidden_from_active_overview(
-            $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST)
+                $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST)
         ));
     }
 
@@ -2886,8 +2898,8 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_is_event_in_history_treats_canceled_as_history(): void {
         $canceled = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'endtime' => strtotime('+2 days'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'endtime' => strtotime('+2 days'),
         ];
 
         $this->assertTrue(event_manager::is_event_in_history($canceled));
@@ -2900,8 +2912,8 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_is_event_in_history_treats_rejected_as_history(): void {
         $rejected = (object)[
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'endtime' => strtotime('+2 days'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'endtime' => strtotime('+2 days'),
         ];
 
         $this->assertTrue(event_manager::is_event_in_history($rejected));
@@ -2915,12 +2927,12 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_includes_canceled_in_history_view(): void {
         $referencetime = time();
         $canceled = (object)[
-            'id' => 21,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('+2 days'),
-            'endtime' => strtotime('+2 days +2 hours'),
+                'id' => 21,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('+2 days'),
+                'endtime' => strtotime('+2 days +2 hours'),
         ];
 
         $active = event_manager::filter_overview_events([$canceled], [], false, $referencetime);
@@ -2939,12 +2951,12 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_includes_rejected_in_history_view(): void {
         $referencetime = time();
         $rejected = (object)[
-            'id' => 22,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'starttime' => strtotime('+2 days'),
-            'endtime' => strtotime('+2 days +2 hours'),
+                'id' => 22,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'starttime' => strtotime('+2 days'),
+                'endtime' => strtotime('+2 days +2 hours'),
         ];
 
         $active = event_manager::filter_overview_events([$rejected], [], false, $referencetime);
@@ -2976,19 +2988,19 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest();
 
         $this->assertSame('open', event_manager::get_booking_status_group_key(
-            event_access_manager::BOOKINGSTATUS_NEW
+                event_access_manager::BOOKINGSTATUS_NEW
         ));
         $this->assertSame('open', event_manager::get_booking_status_group_key(
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS
         ));
         $this->assertSame('confirmed', event_manager::get_booking_status_group_key(
-            event_access_manager::BOOKINGSTATUS_CONFIRMED
+                event_access_manager::BOOKINGSTATUS_CONFIRMED
         ));
         $this->assertSame('closed', event_manager::get_booking_status_group_key(
-            event_access_manager::BOOKINGSTATUS_CANCELED
+                event_access_manager::BOOKINGSTATUS_CANCELED
         ));
         $this->assertSame('closed', event_manager::get_booking_status_group_key(
-            event_access_manager::BOOKINGSTATUS_REJECTED
+                event_access_manager::BOOKINGSTATUS_REJECTED
         ));
     }
 
@@ -3001,12 +3013,12 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest();
 
         $this->assertSame(
-            get_string('overview_status_group_open', 'mod_bookit'),
-            event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_NEW)
+                get_string('overview_status_group_open', 'mod_bookit'),
+                event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_NEW)
         );
         $this->assertSame(
-            get_string('overview_status_group_confirmed', 'mod_bookit'),
-            event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_CONFIRMED)
+                get_string('overview_status_group_confirmed', 'mod_bookit'),
+                event_manager::get_booking_status_group_label(event_access_manager::BOOKINGSTATUS_CONFIRMED)
         );
     }
 
@@ -3019,7 +3031,7 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest();
 
         $definition = event_manager::get_booking_status_definition(
-            event_access_manager::BOOKINGSTATUS_CONFIRMED
+                event_access_manager::BOOKINGSTATUS_CONFIRMED
         );
 
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, $definition['value']);
@@ -3112,30 +3124,30 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_overview_events_explicit_empty_semester_includes_all_terms(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $summer = (object)[
-            'id' => 1001,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'starttime' => strtotime('2026-06-10 09:00:00'),
-            'endtime' => strtotime('2026-06-10 11:00:00'),
+                'id' => 1001,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-06-10 09:00:00'),
+                'endtime' => strtotime('2026-06-10 11:00:00'),
         ];
         $winter = (object)[
-            'id' => 1002,
-            'semester' => 20262,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'starttime' => strtotime('2026-11-10 09:00:00'),
-            'endtime' => strtotime('2026-11-10 11:00:00'),
+                'id' => 1002,
+                'semester' => 20262,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'starttime' => strtotime('2026-11-10 09:00:00'),
+                'endtime' => strtotime('2026-11-10 11:00:00'),
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$summer, $winter],
-            [
-                'bookingstatuses' => event_manager::get_reporting_default_booking_status_filter(),
-                'semesterids' => [],
-            ],
-            false,
-            $referencetime
+                [$summer, $winter],
+                [
+                        'bookingstatuses' => event_manager::get_reporting_default_booking_status_filter(),
+                        'semesterids' => [],
+                ],
+                false,
+                $referencetime
         );
 
         $this->assertCount(2, $filtered);
@@ -3159,45 +3171,45 @@ final class event_manager_test extends advanced_testcase {
     public function test_filter_events_by_assignment_assigned_includes_involvement_roles(): void {
         $userid = 42;
         $ascreator = (object)[
-            'id' => 1,
-            'usercreated' => 42,
-            'personinchargeid' => 0,
-            'otherexaminers' => '',
-            'supportpersons' => '',
+                'id' => 1,
+                'usercreated' => 42,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'supportpersons' => '',
         ];
         $aspic = (object)[
-            'id' => 2,
-            'usercreated' => 1,
-            'personinchargeid' => 42,
-            'otherexaminers' => '',
-            'supportpersons' => '',
+                'id' => 2,
+                'usercreated' => 1,
+                'personinchargeid' => 42,
+                'otherexaminers' => '',
+                'supportpersons' => '',
         ];
         $asother = (object)[
-            'id' => 3,
-            'usercreated' => 1,
-            'personinchargeid' => 0,
-            'otherexaminers' => '41,42',
-            'supportpersons' => '',
+                'id' => 3,
+                'usercreated' => 1,
+                'personinchargeid' => 0,
+                'otherexaminers' => '41,42',
+                'supportpersons' => '',
         ];
         $assupport = (object)[
-            'id' => 4,
-            'usercreated' => 1,
-            'personinchargeid' => 0,
-            'otherexaminers' => '',
-            'supportpersons' => '41,42,43',
+                'id' => 4,
+                'usercreated' => 1,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'supportpersons' => '41,42,43',
         ];
         $uninvolved = (object)[
-            'id' => 5,
-            'usercreated' => 1,
-            'personinchargeid' => 2,
-            'otherexaminers' => '99',
-            'supportpersons' => '99',
+                'id' => 5,
+                'usercreated' => 1,
+                'personinchargeid' => 2,
+                'otherexaminers' => '99',
+                'supportpersons' => '99',
         ];
 
         $filtered = event_manager::filter_events_by_assignment(
-            [$ascreator, $aspic, $asother, $assupport, $uninvolved],
-            $userid,
-            'assigned'
+                [$ascreator, $aspic, $asother, $assupport, $uninvolved],
+                $userid,
+                'assigned'
         );
 
         $this->assertSame([1, 2, 3, 4], array_map(static fn($event): int => (int)$event->id, $filtered));
@@ -3239,27 +3251,27 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
 
         $insideid = $this->create_event_record([
-            'name' => 'Open inside range',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-06-10 09:00:00'),
-            'endtime' => strtotime('2026-06-10 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'name' => 'Open inside range',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-06-10 09:00:00'),
+                'endtime' => strtotime('2026-06-10 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
         ]);
         $outsideid = $this->create_event_record([
-            'name' => 'Open outside range',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-08-10 09:00:00'),
-            'endtime' => strtotime('2026-08-10 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'name' => 'Open outside range',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-08-10 09:00:00'),
+                'endtime' => strtotime('2026-08-10 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
         ]);
 
         $result = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'openrequests',
-            [],
-            strtotime('2026-06-01 00:00:00'),
-            strtotime('2026-06-30 23:59:59')
+                $context,
+                $adminid,
+                'openrequests',
+                [],
+                strtotime('2026-06-01 00:00:00'),
+                strtotime('2026-06-30 23:59:59')
         );
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
@@ -3277,33 +3289,33 @@ final class event_manager_test extends advanced_testcase {
         [$context, $adminid] = $this->create_admin_workspace_context();
 
         $inyear = $this->create_event_record([
-            'name' => 'Rejected in 2026',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-03-10 09:00:00'),
-            'endtime' => strtotime('2026-03-10 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'name' => 'Rejected in 2026',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-03-10 09:00:00'),
+                'endtime' => strtotime('2026-03-10 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
         ]);
         $outyear = $this->create_event_record([
-            'name' => 'Rejected in 2025',
-            'semester' => 20252,
-            'starttime' => strtotime('2025-06-10 09:00:00'),
-            'endtime' => strtotime('2025-06-10 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'name' => 'Rejected in 2025',
+                'semester' => 20252,
+                'starttime' => strtotime('2025-06-10 09:00:00'),
+                'endtime' => strtotime('2025-06-10 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
         ]);
 
         [$start, $end] = event_manager::get_reporting_default_range(
-            strtotime('2026-05-07 10:00:00'),
-            true,
-            false,
-            true
+                strtotime('2026-05-07 10:00:00'),
+                true,
+                false,
+                true
         );
         $result = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'rejectedcancelled',
-            [],
-            $start,
-            $end
+                $context,
+                $adminid,
+                'rejectedcancelled',
+                [],
+                $start,
+                $end
         );
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
@@ -3322,34 +3334,34 @@ final class event_manager_test extends advanced_testcase {
         $booker = $this->getDataGenerator()->create_user();
 
         $rejectedid = $this->create_event_record([
-            'name' => 'Rejected only fixture',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-04-10 09:00:00'),
-            'endtime' => strtotime('2026-04-10 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'usercreated' => $booker->id,
+                'name' => 'Rejected only fixture',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-04-10 09:00:00'),
+                'endtime' => strtotime('2026-04-10 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'usercreated' => $booker->id,
         ]);
         $canceledid = $this->create_event_record([
-            'name' => 'Canceled only fixture',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-04-11 09:00:00'),
-            'endtime' => strtotime('2026-04-11 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'usercreated' => $booker->id,
+                'name' => 'Canceled only fixture',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-04-11 09:00:00'),
+                'endtime' => strtotime('2026-04-11 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'usercreated' => $booker->id,
         ]);
         event_manager::record_booking_history(
-            $canceledid,
-            'status_changed',
-            (int)$booker->id,
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            event_access_manager::BOOKINGSTATUS_CANCELED
+                $canceledid,
+                'status_changed',
+                (int)$booker->id,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
         $result = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'rejectedcancelled',
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]]
+                $context,
+                $adminid,
+                'rejectedcancelled',
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_REJECTED]]
         );
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
@@ -3368,34 +3380,34 @@ final class event_manager_test extends advanced_testcase {
         $booker = $this->getDataGenerator()->create_user();
 
         $rejectedid = $this->create_event_record([
-            'name' => 'Rejected for cancel filter',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-04-12 09:00:00'),
-            'endtime' => strtotime('2026-04-12 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'usercreated' => $booker->id,
+                'name' => 'Rejected for cancel filter',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-04-12 09:00:00'),
+                'endtime' => strtotime('2026-04-12 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'usercreated' => $booker->id,
         ]);
         $canceledid = $this->create_event_record([
-            'name' => 'Canceled for cancel filter',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-04-13 09:00:00'),
-            'endtime' => strtotime('2026-04-13 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'usercreated' => $booker->id,
+                'name' => 'Canceled for cancel filter',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-04-13 09:00:00'),
+                'endtime' => strtotime('2026-04-13 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'usercreated' => $booker->id,
         ]);
         event_manager::record_booking_history(
-            $canceledid,
-            'status_changed',
-            (int)$booker->id,
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            event_access_manager::BOOKINGSTATUS_CANCELED
+                $canceledid,
+                'status_changed',
+                (int)$booker->id,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
         $result = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'rejectedcancelled',
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]]
+                $context,
+                $adminid,
+                'rejectedcancelled',
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]]
         );
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
@@ -3414,36 +3426,36 @@ final class event_manager_test extends advanced_testcase {
         $booker = $this->getDataGenerator()->create_user();
 
         $rejectedid = $this->create_event_record([
-            'name' => 'Rejected both default',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-04-14 09:00:00'),
-            'endtime' => strtotime('2026-04-14 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'usercreated' => $booker->id,
+                'name' => 'Rejected both default',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-04-14 09:00:00'),
+                'endtime' => strtotime('2026-04-14 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'usercreated' => $booker->id,
         ]);
         $canceledid = $this->create_event_record([
-            'name' => 'Canceled both default',
-            'semester' => 20261,
-            'starttime' => strtotime('2026-04-15 09:00:00'),
-            'endtime' => strtotime('2026-04-15 11:00:00'),
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'usercreated' => $booker->id,
+                'name' => 'Canceled both default',
+                'semester' => 20261,
+                'starttime' => strtotime('2026-04-15 09:00:00'),
+                'endtime' => strtotime('2026-04-15 11:00:00'),
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'usercreated' => $booker->id,
         ]);
         event_manager::record_booking_history(
-            $canceledid,
-            'status_changed',
-            (int)$booker->id,
-            event_access_manager::BOOKINGSTATUS_CONFIRMED,
-            event_access_manager::BOOKINGSTATUS_CANCELED
+                $canceledid,
+                'status_changed',
+                (int)$booker->id,
+                event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                event_access_manager::BOOKINGSTATUS_CANCELED
         );
 
         $result = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'rejectedcancelled',
-            [
-                'bookingstatuses' => event_manager::get_rejectedcancelled_default_booking_status_filter(),
-            ]
+                $context,
+                $adminid,
+                'rejectedcancelled',
+                [
+                        'bookingstatuses' => event_manager::get_rejectedcancelled_default_booking_status_filter(),
+                ]
         );
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
@@ -3458,8 +3470,8 @@ final class event_manager_test extends advanced_testcase {
      */
     public function test_workspace_allrequests_default_status_triplet(): void {
         $this->assertSame(
-            event_manager::get_reporting_default_booking_status_filter(),
-            event_manager::resolve_overview_booking_status_filter_ids([], false, false, false)
+                event_manager::get_reporting_default_booking_status_filter(),
+                event_manager::resolve_overview_booking_status_filter_ids([], false, false, false)
         );
     }
 
@@ -3471,19 +3483,19 @@ final class event_manager_test extends advanced_testcase {
     public function test_workspace_allrequests_explicit_terminal_status_includes_canceled_rejected(): void {
         $referencetime = strtotime('2026-06-01 10:00:00');
         $canceled = (object)[
-            'id' => 1101,
-            'semester' => 20261,
-            'institutionid' => 1,
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'starttime' => strtotime('2026-06-10 09:00:00'),
-            'endtime' => strtotime('2026-06-10 11:00:00'),
+                'id' => 1101,
+                'semester' => 20261,
+                'institutionid' => 1,
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                'starttime' => strtotime('2026-06-10 09:00:00'),
+                'endtime' => strtotime('2026-06-10 11:00:00'),
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$canceled],
-            ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
-            false,
-            $referencetime
+                [$canceled],
+                ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
+                false,
+                $referencetime
         );
 
         $this->assertCount(1, $filtered);
@@ -3497,8 +3509,8 @@ final class event_manager_test extends advanced_testcase {
     public function test_workspace_history_default_status_and_dates(): void {
         $referencetime = strtotime('2026-06-15 10:00:00');
         $this->assertSame(
-            event_manager::get_history_default_booking_status_filter(),
-            event_manager::resolve_overview_booking_status_filter_ids([], false, true, true)
+                event_manager::get_history_default_booking_status_filter(),
+                event_manager::resolve_overview_booking_status_filter_ids([], false, true, true)
         );
         [$start, $end] = event_manager::get_reporting_default_range($referencetime, true, true);
         $this->assertSame('2026-01-01', date('Y-m-d', $start));
@@ -3526,8 +3538,8 @@ final class event_manager_test extends advanced_testcase {
         $profile = event_manager::get_workspace_filter_profile('myevents', false);
         $this->assertTrue($profile['show_assignment_filter']);
         $this->assertSame(
-            event_manager::get_reporting_default_booking_status_filter(),
-            event_manager::resolve_overview_booking_status_filter_ids([], false, false, false)
+                event_manager::get_reporting_default_booking_status_filter(),
+                event_manager::resolve_overview_booking_status_filter_ids([], false, false, false)
         );
     }
 
@@ -3597,40 +3609,43 @@ final class event_manager_test extends advanced_testcase {
         \accesslib_clear_all_caches_for_unit_testing();
 
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'Workflow overview event',
-            'semester' => 20261,
-            'institutionid' => null,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Workflow overview event',
+                'semester' => 20261,
+                'institutionid' => null,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $user->id,
-            'usermodified' => $user->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $user->id,
+                'usermodified' => $user->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
 
         event_manager::record_booking_history(
-            $eventid,
-            'rejected',
-            (int)$user->id,
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            event_access_manager::BOOKINGSTATUS_REJECTED,
-            ['bookingstatus' => ['from' => 1, 'to' => 4]],
-            false
+                $eventid,
+                'rejected',
+                (int)$user->id,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                event_access_manager::BOOKINGSTATUS_REJECTED,
+                ['bookingstatus' => [
+                        'from' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        'to' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                ]],
+                false
         );
 
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
@@ -3662,42 +3677,45 @@ final class event_manager_test extends advanced_testcase {
         \accesslib_clear_all_caches_for_unit_testing();
 
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'Support history sanitization event',
-            'semester' => 20261,
-            'institutionid' => null,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Support history sanitization event',
+                'semester' => 20261,
+                'institutionid' => null,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => 'secret',
-            'supportpersons' => (string)$support->id,
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usermodified' => $actor->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => 'secret',
+                'supportpersons' => (string)$support->id,
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => $actor->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
 
         event_manager::record_booking_history(
-            $eventid,
-            'updated',
-            (int)$actor->id,
-            event_access_manager::BOOKINGSTATUS_NEW,
-            event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            [
-                'bookingstatus' => ['from' => 0, 'to' => 1],
-                'internalnotes' => ['from' => 'old secret', 'to' => 'secret'],
-            ],
-            false
+                $eventid,
+                'updated',
+                (int)$actor->id,
+                event_access_manager::BOOKINGSTATUS_NEW,
+                event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                [
+                        'bookingstatus' => [
+                                'from' => event_access_manager::BOOKINGSTATUS_NEW,
+                                'to' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                        ],
+                        'internalnotes' => ['from' => 'old secret', 'to' => 'secret'],
+                ],
+                false
         );
 
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
@@ -3706,8 +3724,8 @@ final class event_manager_test extends advanced_testcase {
         $this->assertStringNotContainsString('secret', $entries[0]['summary']);
         $this->assertStringNotContainsString('Service Actor', $entries[0]['summary']);
         $this->assertStringContainsString(
-            get_string('event_bookingstatus', 'mod_bookit'),
-            $entries[0]['changes'][0]['text']
+                get_string('event_bookingstatus', 'mod_bookit'),
+                $entries[0]['changes'][0]['text']
         );
     }
 
@@ -3732,40 +3750,40 @@ final class event_manager_test extends advanced_testcase {
         \accesslib_clear_all_caches_for_unit_testing();
 
         $eventid = $DB->insert_record('bookit_event', (object)[
-            'name' => 'Booker history sanitization event',
-            'semester' => 20261,
-            'institutionid' => null,
-            'starttime' => strtotime('2026-05-08 09:00:00'),
-            'endtime' => strtotime('2026-05-08 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 10,
+                'name' => 'Booker history sanitization event',
+                'semester' => 20261,
+                'institutionid' => null,
+                'starttime' => strtotime('2026-05-08 09:00:00'),
+                'endtime' => strtotime('2026-05-08 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 10,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
-            'personinchargeid' => null,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usercreated' => $booker->id,
-            'usermodified' => $booker->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
+                'personinchargeid' => null,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usercreated' => $booker->id,
+                'usermodified' => $booker->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
 
         event_manager::record_booking_history(
-            $eventid,
-            'updated',
-            (int)$actor->id,
-            null,
-            null,
-            ['internalnotes' => ['from' => 'hidden', 'to' => 'still hidden']],
-            false
+                $eventid,
+                'updated',
+                (int)$actor->id,
+                null,
+                null,
+                ['internalnotes' => ['from' => 'hidden', 'to' => 'still hidden']],
+                false
         );
 
         $event = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
@@ -3800,35 +3818,35 @@ final class event_manager_test extends advanced_testcase {
      * @return array{events:array,count:int}
      */
     private function get_workspace_query_result(
-        context_module $context,
-        int $userid,
-        string $workspace,
-        array $filters = [],
-        ?int $reportstart = null,
-        ?int $reportend = null,
-        int $offset = 0,
-        int $limit = 0
+            context_module $context,
+            int $userid,
+            string $workspace,
+            array $filters = [],
+            ?int $reportstart = null,
+            ?int $reportend = null,
+            int $offset = 0,
+            int $limit = 0
     ): array {
         global $DB;
 
         $query = event_manager::get_request_workspace_query(
-            $context,
-            $userid,
-            $workspace,
-            $filters,
-            $reportstart,
-            $reportend
+                $context,
+                $userid,
+                $workspace,
+                $filters,
+                $reportstart,
+                $reportend
         );
         $events = $DB->get_records_sql(
-            "SELECT {$query['fields']} FROM {$query['from']} WHERE {$query['where']} ORDER BY e.starttime DESC, e.id DESC",
-            $query['params'],
-            $offset,
-            $limit
+                "SELECT {$query['fields']} FROM {$query['from']} WHERE {$query['where']} ORDER BY e.starttime DESC, e.id DESC",
+                $query['params'],
+                $offset,
+                $limit
         );
 
         return [
-            'events' => array_values($events),
-            'count' => (int)$DB->count_records_sql($query['countsql'], $query['countparams']),
+                'events' => array_values($events),
+                'count' => (int)$DB->count_records_sql($query['countsql'], $query['countparams']),
         ];
     }
 
@@ -3847,32 +3865,32 @@ final class event_manager_test extends advanced_testcase {
             $ispast = $i <= 15;
             $starttime = $ispast ? $now - ($i * HOURSECS) : $now + ($i * HOURSECS);
             $this->create_event_record([
-                'name' => sprintf('Mixed SQL scope %02d', $i),
-                'semester' => event_manager::get_current_semester($starttime),
-                'starttime' => $starttime,
-                'endtime' => $starttime + HOURSECS,
-                'bookingstatus' => $ispast
-                    ? event_access_manager::BOOKINGSTATUS_CANCELED
-                    : event_access_manager::BOOKINGSTATUS_NEW,
-                'usermodified' => (int)get_admin()->id,
+                    'name' => sprintf('Mixed SQL scope %02d', $i),
+                    'semester' => event_manager::get_current_semester($starttime),
+                    'starttime' => $starttime,
+                    'endtime' => $starttime + HOURSECS,
+                    'bookingstatus' => $ispast
+                            ? event_access_manager::BOOKINGSTATUS_CANCELED
+                            : event_access_manager::BOOKINGSTATUS_NEW,
+                    'usermodified' => (int)get_admin()->id,
             ]);
         }
 
         $active = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'allrequests',
-            [],
-            $now - (2 * DAYSECS),
-            $now + (2 * DAYSECS)
+                $context,
+                (int)get_admin()->id,
+                'allrequests',
+                [],
+                $now - (2 * DAYSECS),
+                $now + (2 * DAYSECS)
         );
         $history = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'history',
-            [],
-            $now - (2 * DAYSECS),
-            $now + (2 * DAYSECS)
+                $context,
+                (int)get_admin()->id,
+                'history',
+                [],
+                $now - (2 * DAYSECS),
+                $now + (2 * DAYSECS)
         );
 
         $this->assertSame(15, $active['count']);
@@ -3898,8 +3916,8 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Support queue viewer test',
+                'course' => $course->id,
+                'name' => 'Support queue viewer test',
         ]);
         $context = context_module::instance($bookit->cmid);
 
@@ -3921,35 +3939,35 @@ final class event_manager_test extends advanced_testcase {
         $this->setUser($supportuser);
 
         $DB->insert_record('bookit_event', (object)[
-            'name' => 'Support visible open request',
-            'semester' => 20261,
-            'institutionid' => 1,
-            'starttime' => strtotime('2026-05-20 09:00:00'),
-            'endtime' => strtotime('2026-05-20 11:00:00'),
-            'duration' => 120,
-            'roomid' => null,
-            'participantsamount' => 12,
+                'name' => 'Support visible open request',
+                'semester' => 20261,
+                'institutionid' => 1,
+                'starttime' => strtotime('2026-05-20 09:00:00'),
+                'endtime' => strtotime('2026-05-20 11:00:00'),
+                'duration' => 120,
+                'roomid' => null,
+                'participantsamount' => 12,
 
-            'compensationfordisadvantages' => '',
-            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-            'personinchargeid' => 0,
-            'otherexaminers' => '',
-            'coursetemplate' => null,
-            'notes' => '',
-            'internalnotes' => '',
-            'supportpersons' => '',
-            'extratimebefore' => 0,
-            'extratimeafter' => 0,
-            'refcourseid' => null,
-            'usermodified' => (int)$supportuser->id,
-            'timecreated' => time(),
-            'timemodified' => time(),
+                'compensationfordisadvantages' => '',
+                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                'personinchargeid' => 0,
+                'otherexaminers' => '',
+                'coursetemplate' => null,
+                'notes' => '',
+                'internalnotes' => '',
+                'supportpersons' => '',
+                'extratimebefore' => 0,
+                'extratimeafter' => 0,
+                'refcourseid' => null,
+                'usermodified' => (int)$supportuser->id,
+                'timecreated' => time(),
+                'timemodified' => time(),
         ]);
 
         $result = $this->get_workspace_query_result(
-            $context,
-            (int)$supportuser->id,
-            'openrequests'
+                $context,
+                (int)$supportuser->id,
+                'openrequests'
         );
 
         $this->assertSame(1, $result['count']);
@@ -3968,16 +3986,16 @@ final class event_manager_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Support history pagination',
+                'course' => $course->id,
+                'name' => 'Support history pagination',
         ]);
         $context = context_module::instance($bookit->cmid);
 
         \update_capabilities('mod_bookit');
         $supportrole = $DB->get_record('role', ['shortname' => 'bookit_supportonsite']);
         $supportroleid = $supportrole
-            ? (int)$supportrole->id
-            : \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
+                ? (int)$supportrole->id
+                : \create_role('Bookit support on site', 'bookit_supportonsite', 'student');
         \assign_capability('mod/bookit:view', CAP_ALLOW, $supportroleid, $context->id, true);
         \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $supportroleid, $context->id, true);
         \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $supportroleid, $context->id, true);
@@ -3991,53 +4009,53 @@ final class event_manager_test extends advanced_testcase {
         $start = strtotime('-40 days 09:00:00');
         for ($i = 1; $i <= 26; $i++) {
             $this->create_event_record([
-                'name' => sprintf('Support assigned history %02d', $i),
-                'starttime' => $start + ($i * DAYSECS),
-                'endtime' => $start + ($i * DAYSECS) + HOURSECS,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'supportpersons' => (string)$supportuser->id,
-                'usermodified' => (int)$supportuser->id,
+                    'name' => sprintf('Support assigned history %02d', $i),
+                    'starttime' => $start + ($i * DAYSECS),
+                    'endtime' => $start + ($i * DAYSECS) + HOURSECS,
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                    'supportpersons' => (string)$supportuser->id,
+                    'usermodified' => (int)$supportuser->id,
             ]);
         }
         for ($i = 1; $i <= 3; $i++) {
             $this->create_event_record([
-                'name' => sprintf('Support hidden history %02d', $i),
-                'starttime' => $start + (($i + 30) * DAYSECS),
-                'endtime' => $start + (($i + 30) * DAYSECS) + HOURSECS,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'supportpersons' => (string)$otheruser->id,
-                'usermodified' => (int)$otheruser->id,
+                    'name' => sprintf('Support hidden history %02d', $i),
+                    'starttime' => $start + (($i + 30) * DAYSECS),
+                    'endtime' => $start + (($i + 30) * DAYSECS) + HOURSECS,
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                    'supportpersons' => (string)$otheruser->id,
+                    'usermodified' => (int)$otheruser->id,
             ]);
         }
 
         $filters = ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED]];
         $pagezero = $this->get_workspace_query_result(
-            $context,
-            (int)$supportuser->id,
-            'history',
-            $filters,
-            $start,
-            strtotime('+1 day 23:59:59'),
-            0,
-            25
+                $context,
+                (int)$supportuser->id,
+                'history',
+                $filters,
+                $start,
+                strtotime('+1 day 23:59:59'),
+                0,
+                25
         );
         $pageone = $this->get_workspace_query_result(
-            $context,
-            (int)$supportuser->id,
-            'history',
-            $filters,
-            $start,
-            strtotime('+1 day 23:59:59'),
-            25,
-            25
+                $context,
+                (int)$supportuser->id,
+                'history',
+                $filters,
+                $start,
+                strtotime('+1 day 23:59:59'),
+                25,
+                25
         );
 
         $this->assertSame(29, $pagezero['count']);
         $this->assertCount(25, $pagezero['events']);
         $this->assertCount(4, $pageone['events']);
         $names = array_map(static fn($event): string => $event->name, array_merge(
-            $pagezero['events'],
-            $pageone['events']
+                $pagezero['events'],
+                $pageone['events']
         ));
         $this->assertContains('Support assigned history 01', $names);
         $this->assertContains('Support hidden history 01', $names);
@@ -4054,8 +4072,8 @@ final class event_manager_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Service queue visibility',
+                'course' => $course->id,
+                'name' => 'Service queue visibility',
         ]);
         $context = context_module::instance($bookit->cmid);
         $adminid = (int)get_admin()->id;
@@ -4064,65 +4082,65 @@ final class event_manager_test extends advanced_testcase {
 
         for ($i = 1; $i <= 26; $i++) {
             $this->create_event_record([
-                'name' => sprintf('Service assigned request %02d', $i),
-                'starttime' => $start + ($i * HOURSECS),
-                'endtime' => $start + ($i * HOURSECS) + HOURSECS,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'supportpersons' => (string)$adminid,
-                'usermodified' => $adminid,
+                    'name' => sprintf('Service assigned request %02d', $i),
+                    'starttime' => $start + ($i * HOURSECS),
+                    'endtime' => $start + ($i * HOURSECS) + HOURSECS,
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                    'supportpersons' => (string)$adminid,
+                    'usermodified' => $adminid,
             ]);
         }
         for ($i = 1; $i <= 2; $i++) {
             $this->create_event_record([
-                'name' => sprintf('Service unassigned request %02d', $i),
-                'starttime' => $start + (($i + 30) * HOURSECS),
-                'endtime' => $start + (($i + 30) * HOURSECS) + HOURSECS,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'supportpersons' => (string)$otheruser->id,
-                'usermodified' => (int)$otheruser->id,
+                    'name' => sprintf('Service unassigned request %02d', $i),
+                    'starttime' => $start + (($i + 30) * HOURSECS),
+                    'endtime' => $start + (($i + 30) * HOURSECS) + HOURSECS,
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                    'supportpersons' => (string)$otheruser->id,
+                    'usermodified' => (int)$otheruser->id,
             ]);
             // Keep creator/support off admin so Spec-092 Assigned-to-me stays at the 26 support fixtures.
             $this->create_event_record([
-                'name' => sprintf('Service confirmed request %02d', $i),
-                'starttime' => $start + (($i + 40) * HOURSECS),
-                'endtime' => $start + (($i + 40) * HOURSECS) + HOURSECS,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'supportpersons' => '',
-                'usercreated' => (int)$otheruser->id,
-                'usermodified' => (int)$otheruser->id,
+                    'name' => sprintf('Service confirmed request %02d', $i),
+                    'starttime' => $start + (($i + 40) * HOURSECS),
+                    'endtime' => $start + (($i + 40) * HOURSECS) + HOURSECS,
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                    'supportpersons' => '',
+                    'usercreated' => (int)$otheruser->id,
+                    'usermodified' => (int)$otheruser->id,
             ]);
             $this->create_event_record([
-                'name' => sprintf('Service rejected request %02d', $i),
-                'starttime' => $start + (($i + 50) * HOURSECS),
-                'endtime' => $start + (($i + 50) * HOURSECS) + HOURSECS,
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-                'supportpersons' => '',
-                'usercreated' => (int)$otheruser->id,
-                'usermodified' => (int)$otheruser->id,
+                    'name' => sprintf('Service rejected request %02d', $i),
+                    'starttime' => $start + (($i + 50) * HOURSECS),
+                    'endtime' => $start + (($i + 50) * HOURSECS) + HOURSECS,
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                    'supportpersons' => '',
+                    'usercreated' => (int)$otheruser->id,
+                    'usermodified' => (int)$otheruser->id,
             ]);
         }
 
         $assigned = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'allrequests',
-            ['assignmentfilter' => 'assigned'],
-            $start,
-            $start + (60 * HOURSECS),
-            25,
-            25
+                $context,
+                $adminid,
+                'allrequests',
+                ['assignmentfilter' => 'assigned'],
+                $start,
+                $start + (60 * HOURSECS),
+                25,
+                25
         );
         $openassigned = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'openrequests',
-            ['assignmentfilter' => 'assigned']
+                $context,
+                $adminid,
+                'openrequests',
+                ['assignmentfilter' => 'assigned']
         );
         $openall = $this->get_workspace_query_result(
-            $context,
-            $adminid,
-            'openrequests',
-            ['assignmentfilter' => 'all']
+                $context,
+                $adminid,
+                'openrequests',
+                ['assignmentfilter' => 'all']
         );
         $open = $this->get_workspace_query_result($context, $adminid, 'openrequests');
         $confirmed = $this->get_workspace_query_result($context, $adminid, 'confirmedrequests');
@@ -4158,58 +4176,58 @@ final class event_manager_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Queue pagination slice test',
+                'course' => $course->id,
+                'name' => 'Queue pagination slice test',
         ]);
         $context = context_module::instance($bookit->cmid);
 
         for ($i = 1; $i <= 26; $i++) {
             $DB->insert_record('bookit_event', (object)[
-                'name' => sprintf('Queue slice %02d', $i),
-                'semester' => 20261,
-                'institutionid' => 1,
-                'starttime' => strtotime('2026-05-20 09:00:00') + $i,
-                'endtime' => strtotime('2026-05-20 11:00:00') + $i,
-                'duration' => 120,
-                'roomid' => null,
-                'participantsamount' => 12,
+                    'name' => sprintf('Queue slice %02d', $i),
+                    'semester' => 20261,
+                    'institutionid' => 1,
+                    'starttime' => strtotime('2026-05-20 09:00:00') + $i,
+                    'endtime' => strtotime('2026-05-20 11:00:00') + $i,
+                    'duration' => 120,
+                    'roomid' => null,
+                    'participantsamount' => 12,
 
-                'compensationfordisadvantages' => '',
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'personinchargeid' => 0,
-                'otherexaminers' => '',
-                'coursetemplate' => null,
-                'notes' => '',
-                'internalnotes' => '',
-                'supportpersons' => '',
-                'extratimebefore' => 0,
-                'extratimeafter' => 0,
-                'refcourseid' => null,
-                'usermodified' => get_admin()->id,
-                'timecreated' => time(),
-                'timemodified' => time(),
+                    'compensationfordisadvantages' => '',
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                    'personinchargeid' => 0,
+                    'otherexaminers' => '',
+                    'coursetemplate' => null,
+                    'notes' => '',
+                    'internalnotes' => '',
+                    'supportpersons' => '',
+                    'extratimebefore' => 0,
+                    'extratimeafter' => 0,
+                    'refcourseid' => null,
+                    'usermodified' => get_admin()->id,
+                    'timecreated' => time(),
+                    'timemodified' => time(),
             ]);
         }
 
         $pagezero = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'openrequests',
-            [],
-            null,
-            null,
-            0,
-            25
+                $context,
+                (int)get_admin()->id,
+                'openrequests',
+                [],
+                null,
+                null,
+                0,
+                25
         );
         $pageone = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'openrequests',
-            [],
-            null,
-            null,
-            25,
-            25
+                $context,
+                (int)get_admin()->id,
+                'openrequests',
+                [],
+                null,
+                null,
+                25,
+                25
         );
 
         $this->assertSame(26, $pagezero['count']);
@@ -4231,59 +4249,59 @@ final class event_manager_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'All requests pagination test',
+                'course' => $course->id,
+                'name' => 'All requests pagination test',
         ]);
         $context = context_module::instance($bookit->cmid);
         $start = strtotime('+1 day 09:00:00');
 
         for ($i = 1; $i <= 26; $i++) {
             $DB->insert_record('bookit_event', (object)[
-                'name' => sprintf('All requests slice %02d', $i),
-                'semester' => 20261,
-                'institutionid' => 1,
-                'starttime' => $start + ($i * DAYSECS),
-                'endtime' => $start + ($i * DAYSECS) + HOURSECS,
-                'duration' => 60,
-                'roomid' => null,
-                'participantsamount' => 12,
+                    'name' => sprintf('All requests slice %02d', $i),
+                    'semester' => 20261,
+                    'institutionid' => 1,
+                    'starttime' => $start + ($i * DAYSECS),
+                    'endtime' => $start + ($i * DAYSECS) + HOURSECS,
+                    'duration' => 60,
+                    'roomid' => null,
+                    'participantsamount' => 12,
 
-                'compensationfordisadvantages' => '',
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'personinchargeid' => 0,
-                'otherexaminers' => '',
-                'coursetemplate' => null,
-                'notes' => '',
-                'internalnotes' => '',
-                'supportpersons' => '',
-                'extratimebefore' => 0,
-                'extratimeafter' => 0,
-                'refcourseid' => null,
-                'usermodified' => get_admin()->id,
-                'timecreated' => time(),
-                'timemodified' => time(),
+                    'compensationfordisadvantages' => '',
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                    'personinchargeid' => 0,
+                    'otherexaminers' => '',
+                    'coursetemplate' => null,
+                    'notes' => '',
+                    'internalnotes' => '',
+                    'supportpersons' => '',
+                    'extratimebefore' => 0,
+                    'extratimeafter' => 0,
+                    'refcourseid' => null,
+                    'usermodified' => get_admin()->id,
+                    'timecreated' => time(),
+                    'timemodified' => time(),
             ]);
         }
 
         $pagezero = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'allrequests',
-            [],
-            $start,
-            $start + (30 * DAYSECS),
-            0,
-            25
+                $context,
+                (int)get_admin()->id,
+                'allrequests',
+                [],
+                $start,
+                $start + (30 * DAYSECS),
+                0,
+                25
         );
         $pageone = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'allrequests',
-            [],
-            $start,
-            $start + (30 * DAYSECS),
-            25,
-            25
+                $context,
+                (int)get_admin()->id,
+                'allrequests',
+                [],
+                $start,
+                $start + (30 * DAYSECS),
+                25,
+                25
         );
 
         $this->assertCount(25, $pagezero['events']);
@@ -4305,59 +4323,59 @@ final class event_manager_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'History pagination test',
+                'course' => $course->id,
+                'name' => 'History pagination test',
         ]);
         $context = context_module::instance($bookit->cmid);
         $end = strtotime('-1 day 11:00:00');
 
         for ($i = 1; $i <= 26; $i++) {
             $DB->insert_record('bookit_event', (object)[
-                'name' => sprintf('History slice %02d', $i),
-                'semester' => 20261,
-                'institutionid' => 1,
-                'starttime' => $end - ($i * DAYSECS) - HOURSECS,
-                'endtime' => $end - ($i * DAYSECS),
-                'duration' => 60,
-                'roomid' => null,
-                'participantsamount' => 12,
+                    'name' => sprintf('History slice %02d', $i),
+                    'semester' => 20261,
+                    'institutionid' => 1,
+                    'starttime' => $end - ($i * DAYSECS) - HOURSECS,
+                    'endtime' => $end - ($i * DAYSECS),
+                    'duration' => 60,
+                    'roomid' => null,
+                    'participantsamount' => 12,
 
-                'compensationfordisadvantages' => '',
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'personinchargeid' => 0,
-                'otherexaminers' => '',
-                'coursetemplate' => null,
-                'notes' => '',
-                'internalnotes' => '',
-                'supportpersons' => '',
-                'extratimebefore' => 0,
-                'extratimeafter' => 0,
-                'refcourseid' => null,
-                'usermodified' => get_admin()->id,
-                'timecreated' => time(),
-                'timemodified' => time(),
+                    'compensationfordisadvantages' => '',
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
+                    'personinchargeid' => 0,
+                    'otherexaminers' => '',
+                    'coursetemplate' => null,
+                    'notes' => '',
+                    'internalnotes' => '',
+                    'supportpersons' => '',
+                    'extratimebefore' => 0,
+                    'extratimeafter' => 0,
+                    'refcourseid' => null,
+                    'usermodified' => get_admin()->id,
+                    'timecreated' => time(),
+                    'timemodified' => time(),
             ]);
         }
 
         $pagezero = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'history',
-            [],
-            $end - (30 * DAYSECS),
-            $end,
-            0,
-            25
+                $context,
+                (int)get_admin()->id,
+                'history',
+                [],
+                $end - (30 * DAYSECS),
+                $end,
+                0,
+                25
         );
         $pageone = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'history',
-            [],
-            $end - (30 * DAYSECS),
-            $end,
-            25,
-            25
+                $context,
+                (int)get_admin()->id,
+                'history',
+                [],
+                $end - (30 * DAYSECS),
+                $end,
+                25,
+                25
         );
 
         $this->assertCount(25, $pagezero['events']);
@@ -4379,73 +4397,73 @@ final class event_manager_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $emptybookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Empty paging boundary',
+                'course' => $course->id,
+                'name' => 'Empty paging boundary',
         ]);
         $emptycontext = context_module::instance($emptybookit->cmid);
 
         $empty = $this->get_workspace_query_result(
-            $emptycontext,
-            (int)get_admin()->id,
-            'openrequests'
+                $emptycontext,
+                (int)get_admin()->id,
+                'openrequests'
         );
 
         $this->assertSame(0, $empty['count']);
         $this->assertSame([], $empty['events']);
 
         $fullbookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Full paging boundary',
+                'course' => $course->id,
+                'name' => 'Full paging boundary',
         ]);
         $fullcontext = context_module::instance($fullbookit->cmid);
 
         for ($i = 1; $i <= 26; $i++) {
             $DB->insert_record('bookit_event', (object)[
-                'name' => sprintf('Boundary open %02d', $i),
-                'semester' => 20261,
-                'institutionid' => 1,
-                'starttime' => strtotime('2026-06-20 09:00:00') + $i,
-                'endtime' => strtotime('2026-06-20 11:00:00') + $i,
-                'duration' => 120,
-                'roomid' => null,
-                'participantsamount' => 12,
+                    'name' => sprintf('Boundary open %02d', $i),
+                    'semester' => 20261,
+                    'institutionid' => 1,
+                    'starttime' => strtotime('2026-06-20 09:00:00') + $i,
+                    'endtime' => strtotime('2026-06-20 11:00:00') + $i,
+                    'duration' => 120,
+                    'roomid' => null,
+                    'participantsamount' => 12,
 
-                'compensationfordisadvantages' => '',
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
-                'personinchargeid' => 0,
-                'otherexaminers' => '',
-                'coursetemplate' => null,
-                'notes' => '',
-                'internalnotes' => '',
-                'supportpersons' => '',
-                'extratimebefore' => 0,
-                'extratimeafter' => 0,
-                'refcourseid' => null,
-                'usermodified' => get_admin()->id,
-                'timecreated' => time(),
-                'timemodified' => time(),
+                    'compensationfordisadvantages' => '',
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
+                    'personinchargeid' => 0,
+                    'otherexaminers' => '',
+                    'coursetemplate' => null,
+                    'notes' => '',
+                    'internalnotes' => '',
+                    'supportpersons' => '',
+                    'extratimebefore' => 0,
+                    'extratimeafter' => 0,
+                    'refcourseid' => null,
+                    'usermodified' => get_admin()->id,
+                    'timecreated' => time(),
+                    'timemodified' => time(),
             ]);
         }
 
         $firstpage = $this->get_workspace_query_result(
-            $fullcontext,
-            (int)get_admin()->id,
-            'openrequests',
-            [],
-            null,
-            null,
-            0,
-            25
+                $fullcontext,
+                (int)get_admin()->id,
+                'openrequests',
+                [],
+                null,
+                null,
+                0,
+                25
         );
         $secondpage = $this->get_workspace_query_result(
-            $fullcontext,
-            (int)get_admin()->id,
-            'openrequests',
-            [],
-            null,
-            null,
-            25,
-            25
+                $fullcontext,
+                (int)get_admin()->id,
+                'openrequests',
+                [],
+                null,
+                null,
+                25,
+                25
         );
 
         $this->assertSame(26, $firstpage['count']);
@@ -4467,58 +4485,58 @@ final class event_manager_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Confirmed pagination test',
+                'course' => $course->id,
+                'name' => 'Confirmed pagination test',
         ]);
         $context = context_module::instance($bookit->cmid);
 
         for ($i = 1; $i <= 26; $i++) {
             $DB->insert_record('bookit_event', (object)[
-                'name' => sprintf('Confirmed slice %02d', $i),
-                'semester' => 20261,
-                'institutionid' => 1,
-                'starttime' => strtotime('+10 days 09:00:00') + $i,
-                'endtime' => strtotime('+10 days 11:00:00') + $i,
-                'duration' => 120,
-                'roomid' => null,
-                'participantsamount' => 12,
+                    'name' => sprintf('Confirmed slice %02d', $i),
+                    'semester' => 20261,
+                    'institutionid' => 1,
+                    'starttime' => strtotime('+10 days 09:00:00') + $i,
+                    'endtime' => strtotime('+10 days 11:00:00') + $i,
+                    'duration' => 120,
+                    'roomid' => null,
+                    'participantsamount' => 12,
 
-                'compensationfordisadvantages' => '',
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
-                'personinchargeid' => 0,
-                'otherexaminers' => '',
-                'coursetemplate' => null,
-                'notes' => '',
-                'internalnotes' => '',
-                'supportpersons' => '',
-                'extratimebefore' => 0,
-                'extratimeafter' => 0,
-                'refcourseid' => null,
-                'usermodified' => get_admin()->id,
-                'timecreated' => time(),
-                'timemodified' => time(),
+                    'compensationfordisadvantages' => '',
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
+                    'personinchargeid' => 0,
+                    'otherexaminers' => '',
+                    'coursetemplate' => null,
+                    'notes' => '',
+                    'internalnotes' => '',
+                    'supportpersons' => '',
+                    'extratimebefore' => 0,
+                    'extratimeafter' => 0,
+                    'refcourseid' => null,
+                    'usermodified' => get_admin()->id,
+                    'timecreated' => time(),
+                    'timemodified' => time(),
             ]);
         }
 
         $pagezero = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'confirmedrequests',
-            [],
-            null,
-            null,
-            0,
-            25
+                $context,
+                (int)get_admin()->id,
+                'confirmedrequests',
+                [],
+                null,
+                null,
+                0,
+                25
         );
         $pageone = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'confirmedrequests',
-            [],
-            null,
-            null,
-            25,
-            25
+                $context,
+                (int)get_admin()->id,
+                'confirmedrequests',
+                [],
+                null,
+                null,
+                25,
+                25
         );
 
         $this->assertCount(25, $pagezero['events']);
@@ -4539,58 +4557,58 @@ final class event_manager_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
-            'course' => $course->id,
-            'name' => 'Rejected pagination test',
+                'course' => $course->id,
+                'name' => 'Rejected pagination test',
         ]);
         $context = context_module::instance($bookit->cmid);
 
         for ($i = 1; $i <= 26; $i++) {
             $DB->insert_record('bookit_event', (object)[
-                'name' => sprintf('Rejected slice %02d', $i),
-                'semester' => 20261,
-                'institutionid' => 1,
-                'starttime' => strtotime('-10 days 09:00:00') + $i,
-                'endtime' => strtotime('-10 days 11:00:00') + $i,
-                'duration' => 120,
-                'roomid' => null,
-                'participantsamount' => 12,
+                    'name' => sprintf('Rejected slice %02d', $i),
+                    'semester' => 20261,
+                    'institutionid' => 1,
+                    'starttime' => strtotime('-10 days 09:00:00') + $i,
+                    'endtime' => strtotime('-10 days 11:00:00') + $i,
+                    'duration' => 120,
+                    'roomid' => null,
+                    'participantsamount' => 12,
 
-                'compensationfordisadvantages' => '',
-                'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
-                'personinchargeid' => 0,
-                'otherexaminers' => '',
-                'coursetemplate' => null,
-                'notes' => '',
-                'internalnotes' => '',
-                'supportpersons' => '',
-                'extratimebefore' => 0,
-                'extratimeafter' => 0,
-                'refcourseid' => null,
-                'usermodified' => get_admin()->id,
-                'timecreated' => time(),
-                'timemodified' => time(),
+                    'compensationfordisadvantages' => '',
+                    'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
+                    'personinchargeid' => 0,
+                    'otherexaminers' => '',
+                    'coursetemplate' => null,
+                    'notes' => '',
+                    'internalnotes' => '',
+                    'supportpersons' => '',
+                    'extratimebefore' => 0,
+                    'extratimeafter' => 0,
+                    'refcourseid' => null,
+                    'usermodified' => get_admin()->id,
+                    'timecreated' => time(),
+                    'timemodified' => time(),
             ]);
         }
 
         $pagezero = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'rejectedcancelled',
-            [],
-            null,
-            null,
-            0,
-            25
+                $context,
+                (int)get_admin()->id,
+                'rejectedcancelled',
+                [],
+                null,
+                null,
+                0,
+                25
         );
         $pageone = $this->get_workspace_query_result(
-            $context,
-            (int)get_admin()->id,
-            'rejectedcancelled',
-            [],
-            null,
-            null,
-            25,
-            25
+                $context,
+                (int)get_admin()->id,
+                'rejectedcancelled',
+                [],
+                null,
+                null,
+                25,
+                25
         );
 
         $this->assertCount(25, $pagezero['events']);

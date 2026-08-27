@@ -29,6 +29,7 @@ namespace mod_bookit\external;
 use advanced_testcase;
 use context_module;
 use mod_bookit\local\install_helper;
+use mod_bookit\local\manager\event_access_manager;
 
 /**
  * Unit tests for get_possible_starttimes.
@@ -166,7 +167,7 @@ final class get_possible_starttimes_test extends advanced_testcase {
             'name' => 'PHPUnit service exam',
             'startdate' => date('Y-m-d H:i:s', $starttime),
             'enddate' => date('Y-m-d H:i:s', $starttime + 7200),
-            'bookingstatus' => 0,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'institution' => $baseline['institutionid'],
             'roomid' => $baseline['roomid'],
         ]);
@@ -214,7 +215,7 @@ final class get_possible_starttimes_test extends advanced_testcase {
             'name' => 'PHPUnit participant exam',
             'startdate' => date('Y-m-d H:i:s', $starttime),
             'enddate' => date('Y-m-d H:i:s', $starttime + 7200),
-            'bookingstatus' => 0,
+            'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'institution' => $baseline['institutionid'],
             'roomid' => $baseline['roomid'],
         ]);

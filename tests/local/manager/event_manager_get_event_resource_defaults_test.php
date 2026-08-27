@@ -116,7 +116,6 @@ final class event_manager_get_event_resource_defaults_test extends advanced_test
             120,
             $roomid ?? $this->roomid,
             10,
-            0,
             '',
             event_access_manager::BOOKINGSTATUS_NEW,
             (int) $examiner->id,

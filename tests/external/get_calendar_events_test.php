@@ -259,7 +259,6 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             120,
             $roomid,
             12,
-            0,
             '',
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
             0,
