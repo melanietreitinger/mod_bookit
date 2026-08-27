@@ -167,18 +167,23 @@ class edit_event_form extends dynamic_form {
             $semesters[($currentyear + $i) * 10 + 2] = get_string('winter_semester', 'mod_bookit') . " " . ($currentyear + $i);
         }
 
-        $mform->addElement('select', 'semester', get_string('select_semester', 'mod_bookit'), $semesters);
-        if (empty($eventid)) {
-            $currentsemester = event_manager::get_current_semester();
-            if (array_key_exists($currentsemester, $semesters)) {
-                $mform->setDefault('semester', $currentsemester);
+        if ($this->is_optional_field_enabled($config, 'semester')) {
+            $mform->addElement('select', 'semester', get_string('select_semester', 'mod_bookit'), $semesters);
+            if (empty($eventid)) {
+                $currentsemester = event_manager::get_current_semester();
+                if (array_key_exists($currentsemester, $semesters)) {
+                    $mform->setDefault('semester', $currentsemester);
+                }
             }
+            $mform->disabledIf('semester', 'editevent', 'neq');
+            if ($requirepublicfields) {
+                $mform->addRule('semester', null, 'required', null, 'client');
+            }
+            $mform->addHelpButton('semester', 'select_semester', 'mod_bookit');
+        } else {
+            $mform->addElement('hidden', 'semester');
+            $mform->setType('semester', PARAM_INT);
         }
-        $mform->disabledIf('semester', 'editevent', 'neq');
-        if ($requirepublicfields) {
-            $mform->addRule('semester', null, 'required', null, 'client');
-        }
-        $mform->addHelpButton('semester', 'select_semester', 'mod_bookit');
 
         // Add the "institutionid" field.
         $institutions = institution::get_records(['active' => true]);
@@ -187,16 +192,31 @@ class edit_event_form extends dynamic_form {
             $institutionoptions[$institution->get('id')] = $institution->get('name');
         }
 
-        if (empty($institutionoptions)) {
-            $mform->addElement('static', 'institutionid_empty_notice', '', get_string('institutionid_empty_notice', 'mod_bookit'));
-        }
+        if ($this->is_optional_field_enabled($config, 'institutionid')) {
+            if (empty($institutionoptions)) {
+                $mform->addElement(
+                    'static',
+                    'institutionid_empty_notice',
+                    '',
+                    get_string('institutionid_empty_notice', 'mod_bookit'),
+                );
+            }
 
-        $mform->addElement('select', 'institutionid', get_string('event_department', 'mod_bookit'), $institutionoptions);
-        $mform->disabledIf('institutionid', 'editevent', 'neq');
-        if ($requirepublicfields) {
-            $mform->addRule('institutionid', null, 'required', null, 'client');
+            $mform->addElement(
+                'select',
+                'institutionid',
+                get_string('event_department', 'mod_bookit'),
+                $institutionoptions,
+            );
+            $mform->disabledIf('institutionid', 'editevent', 'neq');
+            if ($requirepublicfields) {
+                $mform->addRule('institutionid', null, 'required', null, 'client');
+            }
+            $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
+        } else {
+            $mform->addElement('hidden', 'institutionid');
+            $mform->setType('institutionid', PARAM_INT);
         }
-        $mform->addHelpButton('institutionid', 'event_department', 'mod_bookit');
 
         // Add the "roomid" field.
         $rooms = room::get_records(['active' => true]);
@@ -329,60 +349,66 @@ class edit_event_form extends dynamic_form {
         // Add the "otherexaminers" field.
         $userselectoroptions['multiple'] = true;
         $otherexaminerselementname = 'otherexaminers';
-        if (!$caneditevent && $existingevent) {
-            $otherexaminerselementname = 'otherexaminers_readonly';
-            $mform->addElement(
-                'static',
-                $otherexaminerselementname,
-                get_string(
-                    'event_otherexaminers',
-                    'mod_bookit'
-                ),
-                s($this->format_selector_display($existingevent->otherexaminers ?? '', $examinerlist))
-            );
+        if ($this->is_optional_field_enabled($config, 'otherexaminers')) {
+            if (!$caneditevent && $existingevent) {
+                $otherexaminerselementname = 'otherexaminers_readonly';
+                $mform->addElement(
+                    'static',
+                    $otherexaminerselementname,
+                    get_string(
+                        'event_otherexaminers',
+                        'mod_bookit'
+                    ),
+                    s($this->format_selector_display($existingevent->otherexaminers ?? '', $examinerlist))
+                );
+                $mform->addElement('hidden', 'otherexaminers');
+                $mform->setType('otherexaminers', PARAM_TEXT);
+            } else {
+                $mform->addElement(
+                    'autocomplete',
+                    'otherexaminers',
+                    get_string(
+                        'event_otherexaminers',
+                        'mod_bookit'
+                    ),
+                    $examinerlist,
+                    $userselectoroptions
+                );
+                $mform->disabledIf('otherexaminers', 'editevent', 'neq');
+                $mform->setType('otherexaminers', PARAM_TEXT);
+            }
+            $mform->addHelpButton($otherexaminerselementname, 'event_otherexaminers', 'mod_bookit');
+        } else {
             $mform->addElement('hidden', 'otherexaminers');
             $mform->setType('otherexaminers', PARAM_TEXT);
-        } else {
-            $mform->addElement(
-                'autocomplete',
-                'otherexaminers',
-                get_string(
-                    'event_otherexaminers',
-                    'mod_bookit'
-                ),
-                $examinerlist,
-                $userselectoroptions
-            );
-            $mform->disabledIf('otherexaminers', 'editevent', 'neq');
-            $mform->setType('otherexaminers', PARAM_TEXT);
         }
-        $mform->addHelpButton($otherexaminerselementname, 'event_otherexaminers', 'mod_bookit');
 
-
-        // Add the "compensationfordisadvantages" field; hidden for new bookings.
-        $mform->addElement(
-            'editor',
-            'compensationfordisadvantages',
-            get_string(
-                'event_compensationfordisadvantages',
-                'mod_bookit'
-            ),
-            ['size' => '64']
-        );
-        $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
-        $mform->setType('compensationfordisadvantages', PARAM_RAW);
-        $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
-
-        // Hide for new bookings (status 0) – examiners won't have this info yet.
-        $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
+        if ($this->is_optional_field_enabled($config, 'compensationfordisadvantages')) {
+            $mform->addElement(
+                'editor',
+                'compensationfordisadvantages',
+                get_string('event_compensationfordisadvantages', 'mod_bookit'),
+                ['rows' => 5],
+                ['maxfiles' => 0, 'noclean' => false]
+            );
+            $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
+            $mform->setType('compensationfordisadvantages', PARAM_RAW);
+            $mform->addHelpButton('compensationfordisadvantages', 'event_compensationfordisadvantages', 'mod_bookit');
+            $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
+        } else {
+            $mform->addElement('hidden', 'compensationfordisadvantages');
+            $mform->setType('compensationfordisadvantages', PARAM_TEXT);
+        }
 
         if ($this->is_optional_field_enabled($config, 'notes')) {
             $mform->addElement(
-                'textarea',
+                'editor',
                 'notes',
                 get_string("event_notes", "mod_bookit"),
-                'wrap="virtual" rows="5" cols="50"'
+                ['rows' => 5],
+                ['maxfiles' => 0, 'noclean' => false]
             );
+            $mform->setType('notes', PARAM_RAW);
             $mform->disabledIf('notes', 'editevent', 'neq');
             $mform->addHelpButton('notes', 'event_notes', 'mod_bookit');
         } else {
@@ -464,43 +490,6 @@ class edit_event_form extends dynamic_form {
                 '',
                 get_string('event_cancel_only_notice', 'mod_bookit')
             );
-        }
-
-        if ($this->is_optional_field_enabled($config, 'refcourseid')) {
-            if ($caneditinternal) {
-                $mform->addElement(
-                    'course',
-                    'refcourseid',
-                    get_string(
-                        'event_refcourseid',
-                        'mod_bookit'
-                    ),
-                    ['multiple' => false, 'showhidden' => true, 'exclude' => '']
-                );
-                $mform->setType('refcourseid', PARAM_INT);
-                $mform->setDefault('refcourseid', 0);
-                $mform->hideIf('refcourseid', 'editinternal', 'neq');
-                $mform->addHelpButton('refcourseid', 'event_refcourseid', 'mod_bookit');
-            } else if ($canviewrestrictedfields) {
-                $refcourselabel = get_string('event_refcourseid', 'mod_bookit');
-                $refcoursedisplay = '';
-                $refcoursevalue = 0;
-                if ($existingevent && !empty($existingevent->refcourseid)) {
-                    $refcoursevalue = (int)$existingevent->refcourseid;
-                    $refcourse = get_course($refcoursevalue, false);
-                    $refcoursedisplay = $refcourse ? format_string($refcourse->fullname) : '';
-                }
-                $mform->addElement('static', 'refcourseid_readonly', $refcourselabel, s($refcoursedisplay));
-                $mform->addHelpButton('refcourseid_readonly', 'event_refcourseid', 'mod_bookit');
-                $mform->addElement('hidden', 'refcourseid', $refcoursevalue);
-                $mform->setType('refcourseid', PARAM_INT);
-            } else {
-                $mform->addElement('hidden', 'refcourseid');
-                $mform->setType('refcourseid', PARAM_INT);
-            }
-        } else {
-            $mform->addElement('hidden', 'refcourseid');
-            $mform->setType('refcourseid', PARAM_INT);
         }
 
         if ($canviewrestrictedfields) {
@@ -588,13 +577,18 @@ class edit_event_form extends dynamic_form {
         }
 
         // Add the "internalnotes" field.
-        if ($canviewrestrictedfields || $caneditinternalnotes) {
+        if (
+            $this->is_optional_field_enabled($config, 'internalnotes')
+            && ($canviewrestrictedfields || $caneditinternalnotes)
+        ) {
             $mform->addElement(
-                'textarea',
+                'editor',
                 'internalnotes',
                 get_string("event_internalnotes", "mod_bookit"),
-                'wrap="virtual" rows="5" cols="50"'
+                ['rows' => 5],
+                ['maxfiles' => 0, 'noclean' => false]
             );
+            $mform->setType('internalnotes', PARAM_RAW);
             $mform->disabledIf('internalnotes', 'editinternalnotes', 'neq', 1);
             $mform->addHelpButton('internalnotes', 'event_internalnotes', 'mod_bookit');
             if (!$caneditinternal && $caneditinternalnotes) {
@@ -885,6 +879,16 @@ class edit_event_form extends dynamic_form {
                 'format' => FORMAT_HTML,
             ];
         }
+        foreach (['notes', 'internalnotes'] as $fieldname) {
+            $rawvalue = $e->$fieldname ?? '';
+            $element = $this->_form->getElement($fieldname);
+            if ($element && $element->getType() === 'editor') {
+                $e->$fieldname = [
+                    'text' => $this->normalise_editor_text_value($rawvalue),
+                    'format' => FORMAT_HTML,
+                ];
+            }
+        }
 
         $this->set_data($e);
     }
@@ -934,6 +938,7 @@ class edit_event_form extends dynamic_form {
     public function process_dynamic_submission(): array {
         global $USER;
         $formdata = $this->get_data();
+        $config = get_config('mod_bookit');
         $context = $this->get_context_for_dynamic_submission();
         $currentevent = null;
         $submittedstarttime = $this->optional_param('starttime', null, PARAM_INT);
@@ -1062,7 +1067,7 @@ class edit_event_form extends dynamic_form {
         if (is_array($formdata->supportpersons)) {
             $formdata->supportpersons = implode(',', array_filter($formdata->supportpersons));
         }
-        if (is_array($formdata->refcourseid)) {
+        if (is_array($formdata->refcourseid ?? null)) {
             $r = $formdata->refcourseid;
             $formdata->refcourseid = $r[0];
         }
@@ -1072,9 +1077,19 @@ class edit_event_form extends dynamic_form {
             unset($formdata->usercreated);
         }
 
-        // Unwrap MCE editor array to plain text for persistence.
-        if (is_array($formdata->compensationfordisadvantages ?? null)) {
-            $formdata->compensationfordisadvantages = $formdata->compensationfordisadvantages['text'] ?? '';
+        // Unwrap editor values to plain text for persistence.
+        foreach (['compensationfordisadvantages', 'notes', 'internalnotes'] as $fieldname) {
+            if (is_array($formdata->{$fieldname} ?? null)) {
+                $formdata->{$fieldname} = $formdata->{$fieldname}['text'] ?? '';
+            }
+        }
+
+        if ($currentevent) {
+            foreach (['compensationfordisadvantages', 'notes', 'internalnotes'] as $fieldname) {
+                if (!$this->is_optional_field_enabled($config, $fieldname)) {
+                    $formdata->$fieldname = $currentevent->$fieldname;
+                }
+            }
         }
 
         if (!is_int($formdata->extratimebefore)) {
@@ -1627,7 +1642,7 @@ class edit_event_form extends dynamic_form {
             'compensationfordisadvantages' => $this->normalise_editor_text_value(
                 $currentevent->compensationfordisadvantages ?? ''
             ),
-            'notes' => (string)($currentevent->notes ?? ''),
+            'notes' => $this->normalise_editor_text_value($currentevent->notes ?? ''),
             'refcourseid' => (string)($currentevent->refcourseid ?? ''),
             'bookingstatus' => (string)($currentevent->bookingstatus ?? ''),
         ];
@@ -1648,7 +1663,7 @@ class edit_event_form extends dynamic_form {
             'compensationfordisadvantages' => $this->normalise_editor_text_value(
                 $formdata->compensationfordisadvantages ?? $currentevent->compensationfordisadvantages ?? ''
             ),
-            'notes' => (string)($formdata->notes ?? $currentevent->notes ?? ''),
+            'notes' => $this->normalise_editor_text_value($formdata->notes ?? $currentevent->notes ?? ''),
             'refcourseid' => (string)($formdata->refcourseid ?? $currentevent->refcourseid ?? ''),
             'bookingstatus' => (string)($formdata->bookingstatus ?? $currentevent->bookingstatus ?? ''),
         ];

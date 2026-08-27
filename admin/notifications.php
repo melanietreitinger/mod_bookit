@@ -53,9 +53,9 @@ if ($mform->is_cancelled()) {
     unset($data->submitbutton);
     foreach ($data as $key => $value) {
         set_config(
-                $key,
-                is_array($value) ? implode(',', $value) : $value,
-                'mod_bookit'
+            $key,
+            is_array($value) ? implode(',', $value) : $value,
+            'mod_bookit'
         );
     }
 }

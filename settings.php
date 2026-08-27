@@ -41,14 +41,6 @@ if ($hassiteconfig) {
     );
     $ADMIN->add('bookit_settings_category', $calendarsettings);
 
-    /*$eventssettings = new admin_externalpage(
-        'bookit_events_settings',
-        get_string('events', 'mod_bookit'),
-        new moodle_url('/mod/bookit/admin/events.php?id=events'),
-        'mod/bookit:managebasics',
-    );
-    $ADMIN->add('bookit_settings_category', $eventssettings);*/
-
     // NOTE: real admin settings stay here - all other settings under /mod/bookit/admin/... .
     $context = context_system::instance();
     $tabrow = tabs::get_tabrow($context);

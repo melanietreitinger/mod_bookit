@@ -247,7 +247,7 @@ final class edit_event_form_support_status_test extends advanced_testcase {
             'otherexaminers' => $event->otherexaminers,
             'supportpersons' => $event->supportpersons,
             'coursetemplate' => $event->coursetemplate,
-            
+
             'compensationfordisadvantages' => $event->compensationfordisadvantages,
             'notes' => $event->notes,
             'internalnotes' => $event->internalnotes,
