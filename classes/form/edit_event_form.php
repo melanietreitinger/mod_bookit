@@ -267,7 +267,7 @@ class edit_event_form extends dynamic_form {
         $mform->addElement(
             'static',
             'extratime_label',
-            get_string('event_extratime_label', 'mod_bookit'),
+            get_string('event_extratime', 'mod_bookit'),
             get_string('event_extratime_description', 'mod_bookit')
         );
 
@@ -364,7 +364,7 @@ class edit_event_form extends dynamic_form {
             'editor',
             'compensationfordisadvantages',
             get_string(
-                'event_compensationfordisadvantages_label',
+                'event_compensationfordisadvantages',
                 'mod_bookit'
             ),
             ['size' => '64']
@@ -847,9 +847,6 @@ class edit_event_form extends dynamic_form {
      */
     private function is_optional_field_enabled(\stdClass $config, string $fieldname): bool {
         $rawfields = (string)($config->calendar_optional_fields ?? '');
-        if ($rawfields === '') {
-            $rawfields = 'compensationfordisadvantages,notes,refcourseid,coursetemplate';
-        }
         $enabledfields = array_values(array_filter(array_map('trim', explode(',', $rawfields))));
 
         return in_array($fieldname, $enabledfields, true);

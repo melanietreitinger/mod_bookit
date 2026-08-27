@@ -27,22 +27,28 @@ class settings_events_form extends moodleform {
     public function definition(): void {
         $mform =& $this->_form;
 
-
+        $optionalfields = [
+            'compensationfordisadvantages' => get_string('event_compensationfordisadvantages', 'mod_bookit'),
+            'notes' => get_string('event_notes', 'mod_bookit'),
+            'refcourseid' => get_string('event_refcourseid', 'mod_bookit'),
+            'coursetemplate' => get_string('select_coursetemplate', 'mod_bookit'),
+        ];
         $mform->addElement(
-                'text',
-                'calendar_optional_fields',
-                get_string('calendar_optional_fields', 'mod_bookit') . '<br>' .
+            'select',
+            'calendar_optional_fields',
+            get_string('calendar_optional_fields', 'mod_bookit') . '<br>' .
                 '<code class="text-muted small">mod_bookit/calendar_optional_fields</code>',
-                ['size' => 64]
+            $optionalfields,
+            ['multiple' => true, 'size' => count($optionalfields)]
         );
-        $mform->setType('calendar_optional_fields', PARAM_RAW_TRIMMED);
+        $mform->setType('calendar_optional_fields', PARAM_ALPHANUMEXT);
+        $mform->setDefault('calendar_optional_fields', array_keys($optionalfields));
         $mform->addElement(
                 'static',
                 'calendar_optional_fields_desc',
                 '',
                 \html_writer::div(get_string('calendar_optional_fields_desc', 'mod_bookit'), 'mb-0')
         );
-
 
         $thisyear = (int) date('Y');
         $yearlistmin = array_combine(range($thisyear, $thisyear - 10), range($thisyear, $thisyear - 10));
