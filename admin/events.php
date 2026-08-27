@@ -44,7 +44,11 @@ if ($mform->is_cancelled()) {
     }
 }
 
-$mform->set_data(get_config('mod_bookit'));
+$config = get_config('mod_bookit');
+$config->calendar_optional_fields = array_values(array_filter(
+    array_map('trim', explode(',', (string)($config->calendar_optional_fields ?? '')))
+));
+$mform->set_data($config);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('events', 'mod_bookit'));
