@@ -360,7 +360,7 @@ final class edit_event_form_resource_persistence_test extends advanced_testcase 
             'otherexaminers' => '',
             'supportpersons' => '',
             'coursetemplate' => 0,
-            
+
             'compensationfordisadvantages' => '',
             'notes' => 'Initial',
             'internalnotes' => '',

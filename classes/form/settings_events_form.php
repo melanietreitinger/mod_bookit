@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_bookit\form;
 
@@ -18,6 +26,7 @@ use moodleform;
  * Form for the event admin settings.
  *
  * @package     mod_bookit
+ * @copyright   2026 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class settings_events_form extends moodleform {
@@ -28,10 +37,12 @@ class settings_events_form extends moodleform {
         $mform =& $this->_form;
 
         $optionalfields = [
+            'semester' => get_string('select_semester', 'mod_bookit'),
+            'institutionid' => get_string('event_department', 'mod_bookit'),
+            'otherexaminers' => get_string('event_otherexaminers', 'mod_bookit'),
             'compensationfordisadvantages' => get_string('event_compensationfordisadvantages', 'mod_bookit'),
             'notes' => get_string('event_notes', 'mod_bookit'),
-            'refcourseid' => get_string('event_refcourseid', 'mod_bookit'),
-            'coursetemplate' => get_string('select_coursetemplate', 'mod_bookit'),
+            'internalnotes' => get_string('event_internalnotes', 'mod_bookit'),
         ];
         $mform->addElement(
             'select',
@@ -44,10 +55,10 @@ class settings_events_form extends moodleform {
         $mform->setType('calendar_optional_fields', PARAM_ALPHANUMEXT);
         $mform->setDefault('calendar_optional_fields', array_keys($optionalfields));
         $mform->addElement(
-                'static',
-                'calendar_optional_fields_desc',
-                '',
-                \html_writer::div(get_string('calendar_optional_fields_desc', 'mod_bookit'), 'mb-0')
+            'static',
+            'calendar_optional_fields_desc',
+            '',
+            \html_writer::div(get_string('calendar_optional_fields_desc', 'mod_bookit'), 'mb-0')
         );
 
         $thisyear = (int) date('Y');
@@ -84,10 +95,11 @@ class settings_events_form extends moodleform {
             \html_writer::div(get_string('settings_eventmaxyear_desc', 'mod_bookit'), 'mb-0')
         );
 
-        foreach ([
+        $semesterdefaults = [
             'semesterlookbackyears' => 0,
             'semesterlookaheadyears' => 2,
-        ] as $settingname => $default) {
+        ];
+        foreach ($semesterdefaults as $settingname => $default) {
             $mform->addElement(
                 'select',
                 $settingname,
@@ -104,10 +116,11 @@ class settings_events_form extends moodleform {
             );
         }
 
-        foreach ([
+        $durationdefaults = [
             'eventdefaultduration' => 60,
             'eventmaxduration' => 480,
-        ] as $settingname => $default) {
+        ];
+        foreach ($durationdefaults as $settingname => $default) {
             $mform->addElement(
                 'text',
                 $settingname,
@@ -130,10 +143,11 @@ class settings_events_form extends moodleform {
             );
         }
 
-        foreach ([
+        $extratimesettings = [
             'extratimebefore' => 'settings_extratime_before',
             'extratimeafter' => 'settings_extratime_after',
-        ] as $settingname => $stringname) {
+        ];
+        foreach ($extratimesettings as $settingname => $stringname) {
             $mform->addElement(
                 'text',
                 $settingname,

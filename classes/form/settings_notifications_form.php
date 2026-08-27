@@ -57,11 +57,11 @@ class settings_notifications_form extends moodleform {
         );
 
         $mform->addElement(
-                'html',
-                \html_writer::div(
-                        get_string('bookingstatus_notifications_desc', 'mod_bookit'),
-                        'mt-3 mb-3 ml-1'
-                )
+            'html',
+            \html_writer::div(
+                get_string('bookingstatus_notifications_desc', 'mod_bookit'),
+                'mt-3 mb-3 ml-1'
+            )
         );
 
         $mform->addElement(
@@ -69,7 +69,7 @@ class settings_notifications_form extends moodleform {
             'bookingstatus_service_addresses',
             get_string('bookingstatus_service_addresses', 'mod_bookit') . '<br>' .
                 '<code class="text-muted small">mod_bookit/bookingstatus_service_addresses</code>',
-                  ['size' => 64]
+            ['size' => 64]
         );
         $mform->setType('bookingstatus_service_addresses', PARAM_TEXT);
 
@@ -80,12 +80,13 @@ class settings_notifications_form extends moodleform {
             get_string('bookingstatus_service_addresses_desc', 'mod_bookit')
         );
 
-        foreach ([
+        $recipients = [
             'serviceteam',
             'bookingperson',
             'personincharge',
             'otherexaminers',
-        ] as $recipient) {
+        ];
+        foreach ($recipients as $recipient) {
             $elementname = 'bookingstatus_notify_' . $recipient;
             $mform->addElement(
                 'select',

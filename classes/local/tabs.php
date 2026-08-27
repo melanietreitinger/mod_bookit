@@ -191,9 +191,9 @@ class tabs {
         // Tab to the notifications page.
         $targeturl = new moodle_url('/mod/bookit/admin/notifications.php', ['id' => 'notifications']);
         $tabrow[] = new tabobject(
-                'notifications',
-                $targeturl,
-                get_string('notifications', 'mod_bookit')
+            'notifications',
+            $targeturl,
+            get_string('notifications', 'mod_bookit')
         );
 
         // Real admin settings.

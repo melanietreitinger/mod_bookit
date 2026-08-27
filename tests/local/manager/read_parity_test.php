@@ -65,7 +65,7 @@ final class read_parity_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => $roomid,
             'participantsamount' => 10,
-            
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
@@ -91,7 +91,7 @@ final class read_parity_test extends advanced_testcase {
             'duration' => 60,
             'roomid' => $roomid,
             'participantsamount' => 10,
-            
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
             'personinchargeid' => 0,
@@ -166,7 +166,7 @@ final class read_parity_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => $roomid,
             'participantsamount' => 10,
-            
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => 0,
@@ -238,7 +238,7 @@ final class read_parity_test extends advanced_testcase {
             'duration' => 120,
             'roomid' => null,
             'participantsamount' => 10,
-            
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
             'personinchargeid' => 0,

@@ -154,7 +154,7 @@ final class request_workspace_table_test extends advanced_testcase {
                 'duration' => 60,
                 'roomid' => null,
                 'participantsamount' => 1,
-                
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
                 'personinchargeid' => $adminid,
@@ -211,7 +211,7 @@ final class request_workspace_table_test extends advanced_testcase {
                 'duration' => 60,
                 'roomid' => null,
                 'participantsamount' => 1,
-                
+
                 'compensationfordisadvantages' => '',
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
                 'personinchargeid' => $adminid,
@@ -290,7 +290,7 @@ final class request_workspace_table_test extends advanced_testcase {
                 'duration' => 60,
                 'roomid' => null,
                 'participantsamount' => 1,
-                
+
                 'compensationfordisadvantages' => '',
                 'personinchargeid' => $other->id,
                 'otherexaminers' => '',
@@ -343,7 +343,7 @@ final class request_workspace_table_test extends advanced_testcase {
             'duration' => 60,
             'roomid' => null,
             'participantsamount' => 1,
-            
+
             'compensationfordisadvantages' => '',
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_NEW,
             'personinchargeid' => $adminid,
