@@ -246,16 +246,29 @@ class edit_event_form extends dynamic_form {
         $starttimearray = [
                 'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
         ];
+        $thisyear = (int)date('Y');
+
+        $eventminyear = (int)($config->eventminyear ?? -1);
+        $eventmaxyear = (int)($config->eventmaxyear ?? 1);
+
+        // Relative values are offsets; absolute values remain supported for existing configurations.
+        if ($eventminyear >= -2 && $eventminyear <= 0) {
+            $eventminyear += $thisyear;
+        }
+        if ($eventmaxyear >= 0 && $eventmaxyear <= 2) {
+            $eventmaxyear += $thisyear;
+        }
+
         // Set time restrictions based on "editinternal" capability.
         if ($caneditinternal) {
-            $starttimearray['startyear'] = $config->eventminyear ?? (date("Y") - 1);
+            $starttimearray['startyear'] = $eventminyear;
         } else if ($participantpastreadonly && !empty($existingevent->starttime)) {
-            $starttimearray['startyear'] = min((int)date("Y"), (int)date("Y", (int)$existingevent->starttime));
+            $starttimearray['startyear'] = min($thisyear, (int)date('Y', (int)$existingevent->starttime));
         } else {
-            $starttimearray['startyear'] = date("Y");
+            $starttimearray['startyear'] = $thisyear;
         }
-        $starttimearray['stopyear'] = $config->eventmaxyear ?? (date("Y") + 1);
-
+        
+        $starttimearray['stopyear'] = $eventmaxyear;
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('startdate', 'editevent', 'neq');
         if ($requirepublicfields) {

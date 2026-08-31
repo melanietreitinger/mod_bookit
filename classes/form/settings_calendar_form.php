@@ -72,10 +72,17 @@ class settings_calendar_form extends moodleform {
         // Default: Mon-Fri is selected.
         $mform->getElement('weekdaysvisible')->setSelected([1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5]);
 
-        // Min / max selectable year +/- 10 years.
-        $thisyear = (int) date('Y');
-        $yearlistmin = array_combine(range($thisyear, $thisyear - 10), range($thisyear, $thisyear - 10));
-        $yearlistmax = array_combine(range($thisyear, $thisyear + 10), range($thisyear, $thisyear + 10));
+        // Min / max selectable year relative to the current year (Implements #211)
+        $yearlistmin = [
+            0 => get_string('settings_eventyear_current', 'mod_bookit'),
+            -1 => get_string('settings_eventyear_minus1', 'mod_bookit'),
+            -2 => get_string('settings_eventyear_minus2', 'mod_bookit'),
+        ];
+        $yearlistmax = [
+            0 => get_string('settings_eventyear_current', 'mod_bookit'),
+            1 => get_string('settings_eventyear_plus1', 'mod_bookit'),
+            2 => get_string('settings_eventyear_plus2', 'mod_bookit'),
+        ];
 
         // Minimum year to select, default last year (service-team only).
         $mform->addElement(
@@ -86,8 +93,9 @@ class settings_calendar_form extends moodleform {
                 get_string('settings_eventminyear_desc', 'mod_bookit'),
             $yearlistmin,
         );
-        $mform->getElement('eventminyear')->setSelected(($thisyear - 1));
 
+        $mform->getElement('eventminyear')->setSelected(-1);
+        
         // Maximum year to select, default next year (service-team only).
         $mform->addElement(
             'select',
@@ -98,7 +106,7 @@ class settings_calendar_form extends moodleform {
                 get_string('settings_eventmaxyear_desc', 'mod_bookit'),
             $yearlistmax,
         );
-        $mform->getElement('eventmaxyear')->setSelected(($thisyear + 1));
+        $mform->getElement('eventmaxyear')->setSelected(1);
 
         // Event default duration, default 60 minutes.
         $mform->addElement(

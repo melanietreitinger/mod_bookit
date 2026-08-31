@@ -59,7 +59,15 @@ if ($mform->is_cancelled()) {
     }
 }
 
+# Implementation of dynamic year selection #211. 
 $config = get_config('mod_bookit');
+$thisyear = (int)date('Y');
+if (isset($config->eventminyear) && abs((int)$config->eventminyear) > 2) {
+    $config->eventminyear = max(-2, min(0, (int)$config->eventminyear - $thisyear));
+}
+if (isset($config->eventmaxyear) && abs((int)$config->eventmaxyear) > 2) {
+    $config->eventmaxyear = max(0, min(2, (int)$config->eventmaxyear - $thisyear));
+}
 $mform->set_data($config);
 
 echo $OUTPUT->header();
