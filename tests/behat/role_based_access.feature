@@ -52,11 +52,11 @@ Feature: Enforce role-based visibility and editing for booking requests
     And I should see "New support exam"
     When I open the Bookit event details for "Accepted support exam"
     Then the Bookit event details control "name" should be disabled
-    And the Bookit event details control "institutionid" should be disabled
+    And the Bookit event details control "institutionid" should not be visible
     And the Bookit event details control "starttime" should be disabled
     And the Bookit event details control "bookingstatus" should not be visible
     And the Bookit event details control "supportpersons" should be enabled
-    And the Bookit event details control "internalnotes" should be enabled
+    And the Bookit event details control "internalnotes" should not be visible
     And I should see "Internal fields"
 
   Scenario: Booking person cancels a new request from the overview row

@@ -27,7 +27,7 @@ Feature: Preserve notification slot messages
     And I click on "Master checklist" "link"
     And I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
-    And I click on "Notifications" "link"
+    And I click on "Notifications" "link" in the ".modal-dialog" "css_element"
     And I set the field "Before due" to "1"
     And I wait "1" seconds
     And I set the field "before_due_time[number]" to "7"
@@ -43,7 +43,7 @@ Feature: Preserve notification slot messages
     And I click on "button[data-action='save']" "css_element"
     And I wait "1" seconds
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
-    And I click on "Notifications" "link"
+    And I click on "Notifications" "link" in the ".modal-dialog" "css_element"
     And I set the field "Before due" to "1"
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
 
@@ -54,7 +54,7 @@ Feature: Preserve notification slot messages
     And I click on "Master checklist" "link"
     And I should see "Reserve room"
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
-    And I click on "Notifications" "link"
+    And I click on "Notifications" "link" in the ".modal-dialog" "css_element"
     And I set the field "Before due" to "1"
     And I wait "1" seconds
     And I set the field "before_due_time[number]" to "7"
@@ -70,6 +70,6 @@ Feature: Preserve notification slot messages
     And I click on "button[data-action='save']" "css_element"
     And I wait "1" seconds
     And I click on "button[id^='edit-checklistitem-']" "css_element" in the "Reserve room" "table_row"
-    And I click on "Notifications" "link"
+    And I click on "Notifications" "link" in the ".modal-dialog" "css_element"
     And I set the field "Before due" to "1"
     And the field "before_due_messagetext[text]" matches value "This is my behat notification edit test message. Cool."
