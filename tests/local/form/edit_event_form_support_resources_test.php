@@ -62,6 +62,7 @@ final class edit_event_form_support_resources_test extends advanced_testcase {
         message_update_providers('mod_bookit');
         install_helper::ensure_booking_status_notification_defaults();
         set_config(install_helper::CONFIG_RESOURCES_ENABLED, 1, 'mod_bookit');
+        set_config('calendar_optional_fields', 'term,department,otherexaminers,notes,internalnotes', 'mod_bookit');
 
         /** @var \mod_bookit_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
@@ -317,7 +318,6 @@ final class edit_event_form_support_resources_test extends advanced_testcase {
             'otherexaminers' => $event->otherexaminers,
             'supportpersons' => $event->supportpersons,
             'coursetemplate' => $event->coursetemplate,
-
             'compensationfordisadvantages' => $event->compensationfordisadvantages,
             'notes' => $event->notes,
             'internalnotes' => $event->internalnotes,
