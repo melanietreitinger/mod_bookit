@@ -89,6 +89,11 @@
     <div class="mb-3">
         <h3 class="h5 mb-0">{{sectiontitle}}</h3>
     </div>
+    {{#showexportevents}}
+    <button id="bookit-export" class="btn btn-secondary mb-3">
+        {{#str}}exportevents, mod_bookit{{/str}}
+    </button>
+    {{/showexportevents}}
     {{> mod_bookit/view/partials/overview_search_field }}
     {{#showoverviewfilters}}
     {{< mod_bookit/view/partials/overview_filter_form }}
@@ -259,6 +264,11 @@
     <div class="mb-3">
         <h3 class="h5 mb-0">{{sectiontitle}}</h3>
     </div>
+    {{#showexportevents}}
+    <button id="bookit-export" class="btn btn-secondary mb-3">
+        {{#str}}exportevents, mod_bookit{{/str}}
+    </button>
+    {{/showexportevents}}
     {{#showoverviewfilters}}
     {{< mod_bookit/view/partials/overview_filter_form }}
         {{$idprefix}}bookit-workspace-{{/idprefix}}
@@ -269,4 +279,8 @@
     {{/workspacetableprofile.showtablesearch}}
     {{{coretablehtml}}}
     {{/showworkspacetable}}
+
+    {{#showexportevents}}
+    {{> mod_bookit/view/export_events_modal }}
+    {{/showexportevents}}
 </div>
