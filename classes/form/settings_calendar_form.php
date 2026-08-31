@@ -64,18 +64,113 @@ class settings_calendar_form extends moodleform {
             'select',
             'weekdaysvisible',
             get_string('settings_weekdaysvisible', 'mod_bookit') . '<br>' .
-                '<code class="text-muted small">mod_bookit/weekdaysvisible</code>',
+                '<code class="text-muted small">mod_bookit/weekdaysvisible</code>' . '<br><br>' .
+                get_string('settings_weekdaysvisible_desc', 'mod_bookit'),
             $weekdaychoices,
         );
         $weekdaysvisible->setMultiple(true);
-        $mform->addElement(
-            'static',
-            'weekdaysvisible_desc',
-            '',
-            \html_writer::div(get_string('settings_weekdaysvisible_desc', 'mod_bookit'), 'mb-0')
-        );
         // Default: Mon-Fri is selected.
         $mform->getElement('weekdaysvisible')->setSelected([1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5]);
+
+        // Min / max selectable year relative to the current year (Implements #211)
+        $yearlistmin = [
+            0 => get_string('settings_eventyear_current', 'mod_bookit'),
+            -1 => get_string('settings_eventyear_minus1', 'mod_bookit'),
+            -2 => get_string('settings_eventyear_minus2', 'mod_bookit'),
+        ];
+        $yearlistmax = [
+            0 => get_string('settings_eventyear_current', 'mod_bookit'),
+            1 => get_string('settings_eventyear_plus1', 'mod_bookit'),
+            2 => get_string('settings_eventyear_plus2', 'mod_bookit'),
+        ];
+
+        // Minimum year to select, default last year (service-team only).
+        $mform->addElement(
+            'select',
+            'eventminyear',
+            get_string('settings_eventminyear', 'mod_bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/eventminyear</code>' . '<br><br>' .
+                get_string('settings_eventminyear_desc', 'mod_bookit'),
+            $yearlistmin,
+        );
+
+        $mform->getElement('eventminyear')->setSelected(-1);
+        
+        // Maximum year to select, default next year (service-team only).
+        $mform->addElement(
+            'select',
+            'eventmaxyear',
+            get_string('settings_eventmaxyear', 'mod_bookit')
+                . '<br>' .
+                '<code class="text-muted small">mod_bookit/eventmaxyear</code>' . '<br><br>' .
+                get_string('settings_eventmaxyear_desc', 'mod_bookit'),
+            $yearlistmax,
+        );
+        $mform->getElement('eventmaxyear')->setSelected(1);
+
+        // Event default duration, default 60 minutes.
+        $mform->addElement(
+            'text',
+            'eventdefaultduration',
+            get_string('settings_eventdefaultduration', 'mod_bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/eventdefaultduration</code>',
+            ['size' => 4]
+        );
+        $mform->setType('eventdefaultduration', PARAM_INT);
+        $mform->getElement('eventdefaultduration')->setValue(60);
+
+        // Event max duration, default 480 minutes.
+        $mform->addElement(
+            'text',
+            'eventmaxduration',
+            get_string('settings_eventmaxduration', 'mod_bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/eventmaxduration</code>',
+            ['size' => 4]
+        );
+        $mform->setType('eventmaxduration', PARAM_INT);
+        $mform->getElement('eventmaxduration')->setValue(480);
+
+        $steparray = [5 => '5', 10 => '10', 15 => '15', 30 => '30', 60 => '60'];
+
+        // Event duration step width in minutes, default 15 minutes.
+        $mform->addElement(
+            'select',
+            'eventdurationstepwidth',
+            get_string('settings_eventdurationstepwidth', 'mod_bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/eventdurationstepwidth</code>',
+            $steparray,
+        );
+
+        // Event startime step width, default 15 minutes.
+        $mform->addElement(
+            'select',
+            'eventstartstepwidth',
+            get_string('settings_eventstartstepwidth', 'mod_bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/eventstartstepwidth</code>',
+            $steparray,
+        );
+
+        // Event extra time before.
+        $mform->addElement(
+            'text',
+            'extratimebefore',
+            get_string('settings_extratime_before_desc', 'mod_bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/extratimebefore</code>',
+            ['size' => 4],
+        );
+        $mform->setType('extratimebefore', PARAM_INT);
+        $mform->getElement('extratimebefore')->setValue(15);
+
+        // Event extra time after.
+        $mform->addElement(
+            'text',
+            'extratimeafter',
+            get_string('settings_extratime_after_desc', 'mod_bookit') . '<br>' .
+                '<code class="text-muted small">mod_bookit/extratimeafter</code>',
+            ['size' => 4],
+        );
+        $mform->setType('extratimeafter', PARAM_INT);
+        $mform->getElement('extratimeafter')->setValue(15);
 
         $this->add_action_buttons();
     }
