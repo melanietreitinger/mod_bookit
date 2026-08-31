@@ -222,6 +222,13 @@ $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/semester_date_sync', 'init');
 
+if (!$isobserverrestricted) {
+    $calendarreadconfig = [
+        'methodname' => 'mod_bookit_get_calendar_events',
+        'cmid' => (int)$cm->id,
+    ];
+    $PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$calendarreadconfig]);
+}
 /* =======================================================================
    2.  Page headings
    ======================================================================= */
@@ -378,6 +385,8 @@ $templatecontext = [
     ]),
     'coretablehtml' => $coretablehtml,
     'showmyeventssection' => !$canviewrequestworkspace,
+    'showexportevents' => !$isobserverrestricted
+        && ($canviewrequestworkspace || $currenttab === 'myevents'),
     'showhistorytab' => !$isobserverrestricted,
     'showoverviewnavigation' => !$canviewrequestworkspace && count($overviewtabrow) > 1,
     'overviewtabtree' => count($overviewtabrow) > 1
