@@ -199,8 +199,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                                             (e.extendedProps?.titlehtml || e.title || '') +
                                             statusBadge +
                                         '</span>' +
-                                        '<small class="text-muted d-block">' + metaLine + '</small>' +
-                                    '</span>' +
+                                    '<small class="bookit-export-item-meta d-block">' + metaLine + '</small>' +                                    '</span>' +
                                 '</label>'
                             );
                             list.append(row);

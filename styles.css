@@ -556,10 +556,12 @@
 
 #bookit-export-selection-count {
     display: inline-block;
-    padding: 0.15rem 0.6rem;
+    padding: 0.3rem 0.75rem;
     border-radius: 999px;
-    background: rgba(15, 108, 191, 0.08);
-    color: var(--primary, #0f6cbf);
+    background: var(--primary, #0f6cbf);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
 }
 
 .bookit-export-list {
@@ -641,4 +643,16 @@
     background: #f8d7da;
     border-color: #f1aeb5;
     color: #842029;
+}
+
+#bookit-export-modal .bookit-export-instruction {
+    color: #343a40;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+#bookit-export-modal .bookit-export-item-meta {
+    color: #495057;
+    font-size: 0.95rem;
+    line-height: 1.4;
 }
