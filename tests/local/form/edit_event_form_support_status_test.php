@@ -391,6 +391,7 @@ final class edit_event_form_support_status_test extends advanced_testcase {
         set_config('bookingstatus_service_addresses', '', 'mod_bookit');
         set_config(install_helper::CONFIG_RESOURCES_ENABLED, 0, 'mod_bookit');
         set_config(install_helper::CONFIG_CHECKLIST_ENABLED, 0, 'mod_bookit');
+        set_config('calendar_optional_fields', 'term,department,otherexaminers,notes,internalnotes', 'mod_bookit');
     }
 
     /**
