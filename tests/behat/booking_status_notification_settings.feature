@@ -7,6 +7,12 @@ Feature: Manage booking status notification settings
   Background:
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I click on "Notifications" "link"
+    And I click on "New" "link"
+    And I click on "In Progress" "link"
+    And I click on "Confirmed" "link"
+    And I click on "Canceled" "link"
+    And I click on "Rejected" "link"
 
   Scenario: Admin sees the concise intro and prefilled expressive templates
     Then I should see "Configure recipients and message templates for booking-status changes."
@@ -23,13 +29,13 @@ Feature: Manage booking status notification settings
     And the Bookit editor field "Message body for Rejected" should equal "Thank you for your request ""###EVENTNAME###"" for ###BOOKINGDATE###. Unfortunately, we must decline the request due to the current circumstances."
 
   Scenario: Admin can hide only one status template group with its own toggle
-    When I uncheck "Send message for Rejected"
+    When I set the field "bookingstatus_enabled_rejected" to "0"
     And I press "Save changes"
     Then I should not see "Message subject for Rejected"
     And I should not see "Message body for Rejected"
     And I should see "Message subject for Confirmed"
     And I should see "Message body for Confirmed"
-    When I check "Send message for Rejected"
+    When I set the field "bookingstatus_enabled_rejected" to "1"
     And I press "Save changes"
     Then the field "Message subject for Rejected" matches value "Booking request rejected: ###EVENTNAME### on ###BOOKINGDATE###"
     And the Bookit editor field "Message body for Rejected" should equal "Thank you for your request ""###EVENTNAME###"" for ###BOOKINGDATE###. Unfortunately, we must decline the request due to the current circumstances."

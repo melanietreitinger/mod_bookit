@@ -187,6 +187,7 @@ Feature: Resource integration in the BookIt booking workflow
   Scenario: Configured examiner pool is shared between requester and service team
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
+    And I click on "Events" "link"
     And I set the field "Examiner pool usernames" to "examiner1"
     And I press "Save changes"
     And I log out
@@ -212,10 +213,11 @@ Feature: Resource integration in the BookIt booking workflow
     And the Bookit event details control "personinchargeid" should not contain option "Bella Booker | bookinguser@example.com"
 
   @javascript
-  Scenario: Optional calendar fields stay aligned for requester and service team
+  Scenario: Optional event booking form fields stay aligned for requester and service team
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > BookIt" in site administration
-    And I set the field "Enabled optional calendar fields" to "notes"
+    And I click on "Events" "link"
+    And I set the field "Optional booking fields" to "notes"
     And I press "Save changes"
     And I log out
     And I log in as "susiservice"
@@ -225,8 +227,8 @@ Feature: Resource integration in the BookIt booking workflow
     When I click on ".ec-addButton" "css_element"
     And I wait "2" seconds
     Then the Bookit event details control "notes" should be enabled
-    And the Bookit event details control "coursetemplate" should not be visible
-    And the Bookit event details control "refcourseid" should not be visible
+    And the Bookit event details control "internalnotes" should not be visible
+    And the Bookit event details control "compensationsfordisadvantages" should not be visible
     When I close the currently open dialog
     And I log out
     And I log in as "bookinguser"
@@ -236,5 +238,5 @@ Feature: Resource integration in the BookIt booking workflow
     When I click on ".ec-addButton" "css_element"
     And I wait "2" seconds
     Then the Bookit event details control "notes" should be enabled
-    And the Bookit event details control "coursetemplate" should not be visible
-    And the Bookit event details control "refcourseid" should not be visible
+    And the Bookit event details control "internalnotes" should not be visible
+    And the Bookit event details control "compensationsfordisadvantages" should not be visible
