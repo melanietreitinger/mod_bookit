@@ -37,7 +37,6 @@ $capabilities = [
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'archetypes' => [],
-                'clonepermissionsfrom' => 'moodle/course:manageactivities',
         ],
         // Edit an existing event.
         'mod/bookit:editevent' => [
