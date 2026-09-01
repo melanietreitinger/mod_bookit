@@ -60,7 +60,7 @@ class bookit_checklist_master implements named_templatable, \renderable {
     public const DISPLAY_TABLE_COLUMNS = [
         'checklistitem',
         'rooms',
-        'responsibility',
+        'checklist_responsibility',
         'edit',
         'sort',
     ];

@@ -41,7 +41,7 @@ if ($id) {
     $params['id'] = $id;
     $weekplan = $DB->get_record('bookit_weekplan', ['id' => $id], '*', MUST_EXIST);
     $weekplan->weekplan = weekplan_manager::create_string_weekplan_from_db($id);
-    $title = get_string('edit_weekplan', 'mod_bookit');
+    $title = get_string('weekplan_edit', 'mod_bookit');
 } else {
     $title = get_string('new_weekplan', 'mod_bookit');
 }

@@ -71,7 +71,7 @@ class rooms_table extends \table_sql {
             get_string('room_seats', 'mod_bookit'),
             get_string('room_location', 'mod_bookit'),
             get_string('description'),
-            get_string('active_weekplan', 'mod_bookit'),
+            get_string('weekplan_active', 'mod_bookit'),
             get_string('tools', 'mod_bookit'),
         ]);
     }

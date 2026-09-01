@@ -39,7 +39,7 @@ $weekplanroom = null;
 if ($id) {
     $params['id'] = $id;
     $weekplanroom = \mod_bookit\local\persistent\weekplan_room::get_record(['id' => $id], MUST_EXIST);
-    $title = get_string('edit_weekplan_assignment', 'mod_bookit');
+    $title = get_string('weekplan_assignment_edit', 'mod_bookit');
 } else {
     $title = get_string('new_weekplan_assignment', 'mod_bookit');
 }

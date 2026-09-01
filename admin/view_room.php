@@ -84,7 +84,7 @@ echo $renderer->tabs($tabrow, $id);
 
 echo \core\output\html_writer::link(
     new moodle_url('/mod/bookit/admin/edit_room.php', ['id' => $id]),
-    get_string('edit_room_data', 'mod_bookit'),
+    get_string('room_data_edit', 'mod_bookit'),
     ['class' => 'btn btn-primary mb-3']
 );
 

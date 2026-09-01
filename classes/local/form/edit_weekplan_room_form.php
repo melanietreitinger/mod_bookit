@@ -74,14 +74,14 @@ class edit_weekplan_room_form extends persistent {
         $mform->addElement(
             'date_selector',
             'starttime',
-            get_string('start_of_period', 'mod_bookit'),
+            get_string('weekplan_start_of_period', 'mod_bookit'),
             ['startyear' => 2020]
         );
 
         $mform->addElement(
             'date_selector',
             'endtime',
-            get_string('end_of_period', 'mod_bookit'),
+            get_string('weekplan_end_of_period', 'mod_bookit'),
             ['optional' => true, 'startyear' => 2020]
         );
 
@@ -93,7 +93,7 @@ class edit_weekplan_room_form extends persistent {
         // Set endtime to null if it is zero.
         $data->endtime = $data->endtime ?: null;
         if ($data->endtime && $data->endtime < $data->starttime) {
-            $errors['endtime'] = get_string('end_before_start', 'mod_bookit');
+            $errors['endtime'] = get_string('weekplan_end_before_start', 'mod_bookit');
         }
 
         $collision = (new weekplan_room($this->get_persistent()?->get('id') ?? 0, $data))->check_for_collision();

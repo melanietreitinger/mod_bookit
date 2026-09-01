@@ -142,7 +142,7 @@ class event_resources_checklist_catalog implements renderable, templatable {
                 $duedatetype = $checklistitem->get_duedatetype();
                 $rawduedate = $checklistitem->get_duedate();
                 $dateformat = get_string('strftimedate', 'langconfig');
-                if ($duedatetype === 'before_event' && !empty($this->event->starttime)) {
+                if ($duedatetype === 'checklist_due_before_event' && !empty($this->event->starttime)) {
                     $duetimestamp = (int)$this->event->starttime - (int)$rawduedate;
                     $duedate = userdate($duetimestamp, $dateformat);
                 } else if ($duedatetype === 'after_event' && !empty($this->event->endtime)) {
