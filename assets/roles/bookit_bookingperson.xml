@@ -17,6 +17,11 @@
 		<shortname>bookit_examiner</shortname>
 		<shortname>bookit_supportonsite</shortname>
 		<shortname>bookit_observer</shortname>
+		<shortname>manager</shortname>
+		<shortname>coursecreator</shortname>
+		<shortname>editingteacher</shortname>
+		<shortname>teacher</shortname>
+		<shortname>student</shortname>
 	</allowview>
 	<permissions>
 		<allow>mod/bookit:addevent</allow>
