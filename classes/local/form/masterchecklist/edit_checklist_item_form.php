@@ -115,12 +115,12 @@ class edit_checklist_item_form extends dynamic_form {
         $mform->addHelpButton('roleids', 'role', 'mod_bookit');
 
         $duedateradio = [
-            $mform->createElement('radio', 'duedate', '', get_string('noduedate', 'mod_bookit'), 'none'),
-            $mform->createElement('radio', 'duedate', '', get_string('before_event', 'mod_bookit'), 'before'),
-            $mform->createElement('radio', 'duedate', '', get_string('afterexam', 'mod_bookit'), 'after'),
+            $mform->createElement('radio', 'duedate', '', get_string('checklist_due_noduedate', 'mod_bookit'), 'none'),
+            $mform->createElement('radio', 'duedate', '', get_string('checklist_due_before_event', 'mod_bookit'), 'before'),
+            $mform->createElement('radio', 'duedate', '', get_string('checklist_due_after_event', 'mod_bookit'), 'after'),
         ];
 
-        $mform->addGroup($duedateradio, 'duedategroup', get_string('duedate', 'mod_bookit'), null, false);
+        $mform->addGroup($duedateradio, 'duedategroup', get_string('checklist_duedate', 'mod_bookit'), null, false);
         $mform->setDefault('duedate', 'none');
         $duedaterequired = get_string('checklistduedate_required', 'mod_bookit');
         $mform->addRule('duedategroup', $duedaterequired, 'required', null, 'client');

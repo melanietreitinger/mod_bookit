@@ -163,8 +163,8 @@ class edit_event_form extends dynamic_form {
         $lookbackyears = max(0, (int)($config->semesterlookbackyears ?? 1));
         $lookaheadyears = max(0, (int)($config->semesterlookaheadyears ?? 1));
         for ($i = -$lookbackyears; $i <= $lookaheadyears; $i++) {
-            $semesters[($currentyear + $i) * 10 + 1] = get_string('summer_semester', 'mod_bookit') . " " . ($currentyear + $i);
-            $semesters[($currentyear + $i) * 10 + 2] = get_string('winter_semester', 'mod_bookit') . " " . ($currentyear + $i);
+            $semesters[($currentyear + $i) * 10 + 1] = get_string('event_semester_summer', 'mod_bookit') . " " . ($currentyear + $i);
+            $semesters[($currentyear + $i) * 10 + 2] = get_string('event_semester_winter', 'mod_bookit') . " " . ($currentyear + $i);
         }
 
         if ($this->is_optional_field_enabled($config, 'semester')) {

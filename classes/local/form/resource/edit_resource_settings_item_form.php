@@ -83,25 +83,25 @@ class edit_resource_settings_item_form extends dynamic_form {
 
         // Due date — radio group matching masterchecklist style.
         $duedateradio = [
-            $mform->createElement('radio', 'duedatetype', '', get_string('noduedate', 'mod_bookit'), 'none'),
+            $mform->createElement('radio', 'duedatetype', '', get_string('checklist_due_noduedate', 'mod_bookit'), 'none'),
             $mform->createElement(
                 'radio',
                 'duedatetype',
                 '',
-                get_string('duedate_before_event', 'mod_bookit'),
-                'before_event'
+                get_string('checklist_due_before_event', 'mod_bookit'),
+                'checklist_due_before_event'
             ),
             $mform->createElement(
                 'radio',
                 'duedatetype',
                 '',
-                get_string('duedate_after_event', 'mod_bookit'),
+                get_string('checklist_due_after_event', 'mod_bookit'),
                 'after_event'
             ),
         ];
-        $mform->addGroup($duedateradio, 'duedatetypegroup', get_string('duedate', 'mod_bookit'), null, false);
+        $mform->addGroup($duedateradio, 'duedatetypegroup', get_string('checklist_duedate', 'mod_bookit'), null, false);
         $mform->setDefault('duedatetype', 'none');
-        $mform->addHelpButton('duedatetypegroup', 'duedate', 'mod_bookit');
+        $mform->addHelpButton('duedatetypegroup', 'checklist_duedate', 'mod_bookit');
 
         // Days offset (duration element, hidden when none).
         $mform->addElement('duration', 'duedaysoffset', get_string('time', 'mod_bookit'), ['units' => [DAYSECS]]);
@@ -369,7 +369,7 @@ class edit_resource_settings_item_form extends dynamic_form {
         $duedatetype = $item->get_duedatetype();
         if (!empty($duedate) && !empty($duedatetype) && $duedatetype !== 'none') {
             $days = (int)round((int)$duedate / DAYSECS);
-            if ($duedatetype === 'before_event') {
+            if ($duedatetype === 'checklist_due_before_event') {
                 $duedatedisplay = get_string('checklist_duedate_days_before', 'mod_bookit', $days);
             } else if ($duedatetype === 'after_event') {
                 $duedatedisplay = get_string('checklist_duedate_days_after', 'mod_bookit', $days);

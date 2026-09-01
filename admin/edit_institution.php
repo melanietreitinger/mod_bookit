@@ -36,7 +36,7 @@ $institution = null;
 if ($id) {
     $params['id'] = $id;
     $institution = \mod_bookit\local\persistent\institution::get_record(['id' => $id], MUST_EXIST);
-    $title = get_string('edit_institution', 'mod_bookit');
+    $title = get_string('institution_edit', 'mod_bookit');
 } else {
     $title = get_string('new_institution', 'mod_bookit');
 }

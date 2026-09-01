@@ -42,10 +42,10 @@ export async function init(readconfig, capabilities, lang) {
     const toolbarbuttons = 'prev, next, today, addButton';
 
     // String variables.
-    prefetchStrings('mod_bookit', ['add_blocker']);
+    prefetchStrings('mod_bookit', ['blocker_add']);
     prefetchStrings('core', ['today', 'month', 'week']);
     prefetchStrings('calendar', ['day', 'upcomingevents']);
-    const strrequestbooking = await getString('add_blocker', 'mod_bookit');
+    const strrequestbooking = await getString('blocker_add', 'mod_bookit');
     const strtoday = await getString('today');
     const strmonth = await getString('month');
     const strweek = await getString('week');
@@ -106,7 +106,7 @@ export async function init(readconfig, capabilities, lang) {
                         formClass: "mod_bookit\\local\\form\\edit_blocker_form",
                         args: {
                         },
-                        modalConfig: {title: getString('add_blocker', 'mod_bookit')},
+                        modalConfig: {title: getString('blocker_add', 'mod_bookit')},
                     });
                     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                         calendar.refetchEvents();
@@ -125,7 +125,7 @@ export async function init(readconfig, capabilities, lang) {
                     args: {
                         startdate: startdate,
                     },
-                    modalConfig: {title: getString('add_blocker', 'mod_bookit')},
+                    modalConfig: {title: getString('blocker_add', 'mod_bookit')},
                 });
                 modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
                     calendar.refetchEvents();
@@ -141,7 +141,7 @@ export async function init(readconfig, capabilities, lang) {
                         id: info.event.id.split("-")[1],
                     },
                     modalConfig: {
-                        title: getString('edit_blocker', 'mod_bookit'),
+                        title: getString('blocker_edit', 'mod_bookit'),
                     },
                     moduleName: 'mod_bookit/modal_delete_save_cancel',
                 });

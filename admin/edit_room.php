@@ -36,7 +36,7 @@ $room = null;
 if ($id) {
     $params['id'] = $id;
     $room = \mod_bookit\local\persistent\room::get_record(['id' => $id], MUST_EXIST);
-    $title = get_string('edit_room', 'mod_bookit');
+    $title = get_string('room_edit', 'mod_bookit');
 } else {
     $title = get_string('new_room', 'mod_bookit');
 }

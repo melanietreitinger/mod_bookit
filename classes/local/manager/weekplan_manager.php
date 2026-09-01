@@ -70,7 +70,7 @@ class weekplan_manager {
                 if (!array_key_exists($dayofweek, self::INDEXED_WEEKDAYS)) {
                     if (!empty($line)) {
                         $errors[] = get_string('line_x', 'mod_bookit', $i) . ' ' .
-                            get_string('did_not_begin_with_weekday', 'mod_bookit');
+                            get_string('weekplan_did_not_begin_with_weekday', 'mod_bookit');
                     }
                     continue;
                 }

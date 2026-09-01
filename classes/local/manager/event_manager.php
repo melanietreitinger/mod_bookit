@@ -874,8 +874,8 @@ class event_manager {
         $options = [];
 
         for ($year = $baseyear - 1; $year <= $baseyear + 1; $year++) {
-            $options[($year * 10) + 1] = get_string('summer_semester', 'mod_bookit') . ' ' . $year;
-            $options[($year * 10) + 2] = get_string('winter_semester', 'mod_bookit') . ' ' . $year;
+            $options[($year * 10) + 1] = get_string('event_semester_summer', 'mod_bookit') . ' ' . $year;
+            $options[($year * 10) + 2] = get_string('event_semester_winter', 'mod_bookit') . ' ' . $year;
         }
 
         return $options;

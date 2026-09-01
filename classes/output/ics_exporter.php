@@ -283,7 +283,7 @@ class ics_exporter {
             return '';
         }
         $year = (int)floor($semester / 10);
-        $term = ((int)$semester % 10) === 1 ? 'summer_semester' : 'winter_semester';
+        $term = ((int)$semester % 10) === 1 ? 'event_semester_summer' : 'event_semester_winter';
         return get_string($term, 'mod_bookit') . ' ' . $year;
     }
 

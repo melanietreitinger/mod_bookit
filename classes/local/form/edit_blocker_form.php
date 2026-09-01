@@ -56,16 +56,16 @@ class edit_blocker_form extends dynamic_form {
         $mform->setType('name', PARAM_TEXT);
 
         $rooms = room::get_records();
-        $options = [0 => get_string('globally', 'mod_bookit')];
+        $options = [0 => get_string('blocker_globally', 'mod_bookit')];
         foreach ($rooms as $room) {
             $options[$room->get('id')] = $room->get('name');
         }
         $mform->addElement('select', 'roomid', get_string('room', 'mod_bookit'), $options);
 
-        $mform->addElement('date_time_selector', 'starttime', get_string('start', 'mod_bookit'));
+        $mform->addElement('date_time_selector', 'starttime', get_string('blocker_start', 'mod_bookit'));
         $mform->setType('starttime', PARAM_TEXT);
 
-        $mform->addElement('date_time_selector', 'endtime', get_string('end', 'mod_bookit'));
+        $mform->addElement('date_time_selector', 'endtime', get_string('blocker_end', 'mod_bookit'));
         $mform->setType('endtime', PARAM_TEXT);
     }
 
@@ -78,7 +78,7 @@ class edit_blocker_form extends dynamic_form {
     public function validation($data, $files) {
         $errors = [];
         if ($data['endtime'] < $data['starttime']) {
-            $errors['endtime'] = get_string('end_before_start', 'mod_bookit');
+            $errors['endtime'] = get_string('weekplan_end_before_start', 'mod_bookit');
         }
         return $errors;
     }
