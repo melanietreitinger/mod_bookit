@@ -171,10 +171,10 @@ class edit_event_form extends dynamic_form {
 
         if ($this->is_optional_field_enabled($config, 'semester')) {
             $mform->addElement(
-                    'select',
-                    'semester',
-                    get_string('select_semester', 'mod_bookit'),
-                    $semesters
+                'select',
+                'semester',
+                get_string('select_semester', 'mod_bookit'),
+                $semesters
             );
             if (empty($eventid)) {
                 $currentsemester = event_manager::get_current_semester();
@@ -245,10 +245,10 @@ class edit_event_form extends dynamic_form {
 
         if (empty($roomoptions)) {
             $mform->addElement(
-                    'static',
-                    'roomid_empty_notice',
-                    '',
-                    get_string('roomid_empty_notice', 'mod_bookit')
+                'static',
+                'roomid_empty_notice',
+                '',
+                get_string('roomid_empty_notice', 'mod_bookit')
             );
         }
         $mform->addElement('select', 'roomid', get_string('event_room', 'mod_bookit'), $roomoptions);
@@ -265,10 +265,10 @@ class edit_event_form extends dynamic_form {
             $duration[$i] = $i;
         }
         $select = $mform->addElement(
-                'select',
-                'duration',
-                get_string('event_duration', 'mod_bookit'),
-                $duration
+            'select',
+            'duration',
+            get_string('event_duration', 'mod_bookit'),
+            $duration
         );
         $select->setSelected($eventdefaultduration);
         $mform->disabledIf('duration', 'editevent', 'neq');
@@ -289,10 +289,10 @@ class edit_event_form extends dynamic_form {
         $starttimearray['stopyear'] = $config->eventmaxyear ?? (date("Y") + 1);
 
         $mform->addElement(
-                'date_selector',
-                'startdate',
-                get_string('event_start', 'mod_bookit'),
-                $starttimearray
+            'date_selector',
+            'startdate',
+            get_string('event_start', 'mod_bookit'),
+            $starttimearray
         );
         $mform->disabledIf('startdate', 'editevent', 'neq');
         if ($requirepublicfields) {
@@ -315,10 +315,10 @@ class edit_event_form extends dynamic_form {
 
         // Add "amount of students" field.
         $mform->addElement(
-                'text',
-                'participantsamount',
-                get_string('event_students', 'mod_bookit'),
-                ['size' => '4']
+            'text',
+            'participantsamount',
+            get_string('event_students', 'mod_bookit'),
+            ['size' => '4']
         );
         $mform->disabledIf('participantsamount', 'editevent', 'neq');
         $mform->setType('participantsamount', PARAM_INT);
@@ -421,9 +421,9 @@ class edit_event_form extends dynamic_form {
             $mform->disabledIf('compensationfordisadvantages', 'editevent', 'neq');
             $mform->setType('compensationfordisadvantages', PARAM_RAW);
             $mform->addHelpButton(
-                    'compensationfordisadvantages',
-                    'event_compensationfordisadvantages',
-                    'mod_bookit'
+                'compensationfordisadvantages',
+                'event_compensationfordisadvantages',
+                'mod_bookit'
             );
             $mform->hideIf('compensationfordisadvantages', 'bookingstatus', 'eq', 0);
         } else {
@@ -593,17 +593,17 @@ class edit_event_form extends dynamic_form {
                 $mform->setType('extratimeafter', PARAM_ALPHANUM);
             } else {
                 $mform->addElement(
-                        'text',
-                        'extratimebefore',
-                        get_string('settings_extratime_before', 'mod_bookit')
+                    'text',
+                    'extratimebefore',
+                    get_string('settings_extratime_before', 'mod_bookit')
                 );
                 $mform->setType('extratimebefore', PARAM_ALPHANUM);
                 $mform->addRule('extratimebefore', null, 'numeric', null, 'client');
                 $mform->disabledIf('extratimebefore', 'editinternal', 'neq', 1);
                 $mform->addElement(
-                        'text',
-                        'extratimeafter',
-                        get_string('settings_extratime_after', 'mod_bookit')
+                    'text',
+                    'extratimeafter',
+                    get_string('settings_extratime_after', 'mod_bookit')
                 );
                 $mform->setType('extratimeafter', PARAM_ALPHANUM);
                 $mform->addRule('extratimeafter', null, 'numeric', null, 'client');
