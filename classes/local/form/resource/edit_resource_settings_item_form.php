@@ -89,7 +89,7 @@ class edit_resource_settings_item_form extends dynamic_form {
                 'duedatetype',
                 '',
                 get_string('checklist_due_before_event', 'mod_bookit'),
-                'checklist_due_before_event'
+                'due_before_event'
             ),
             $mform->createElement(
                 'radio',
@@ -369,7 +369,7 @@ class edit_resource_settings_item_form extends dynamic_form {
         $duedatetype = $item->get_duedatetype();
         if (!empty($duedate) && !empty($duedatetype) && $duedatetype !== 'none') {
             $days = (int)round((int)$duedate / DAYSECS);
-            if ($duedatetype === 'checklist_due_before_event') {
+            if ($duedatetype === 'due_before_event') {
                 $duedatedisplay = get_string('checklist_duedate_days_before', 'mod_bookit', $days);
             } else if ($duedatetype === 'after_event') {
                 $duedatedisplay = get_string('checklist_duedate_days_after', 'mod_bookit', $days);
