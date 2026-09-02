@@ -234,133 +234,17 @@ if (!$canviewrequestworkspace) {
     $initialsortcolumn = $sortpreference['column'];
     $initialsortdirection = $sortpreference['direction'];
 
-    $PAGE->requires->js_init_code("
-        require(['jquery', 'core_user/repository'], function($, UserRepository) {
-            const table = document.getElementById('{$tableid}');
-            if (!table) {
-                return;
-            }
-
-            // Keep the existing text filter.
-            $('#bookit-filter').on('keyup', function () {
-                const val = $(this).val().toLowerCase();
-                $('#{$tableid} tbody tr').each(function () {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(val) !== -1);
-                });
-            });
-
-            let currentColumn = '{$initialsortcolumn}';
-            let currentDirection = '{$initialsortdirection}';
-
-            // Sort the currently rendered rows by the selected column.
-            const sortTable = function(column, direction) {
-                const header = table.querySelector(
-                    'thead th[data-sort-key=\"' + column + '\"]'
-                );
-
-                if (!header) {
-                    return;
-                }
-
-                const headers = Array.from(table.querySelectorAll('thead th'));
-                const columnIndex = headers.indexOf(header);
-                const tbody = table.querySelector('tbody');
-
-                if (!tbody || columnIndex < 0) {
-                    return;
-                }
-
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-
-                rows.sort(function(rowA, rowB) {
-                    const cellA = rowA.children[columnIndex];
-                    const cellB = rowB.children[columnIndex];
-
-                    const valueA = cellA.dataset.sort !== undefined
-                        ? cellA.dataset.sort
-                        : cellA.textContent.trim().toLowerCase();
-
-                    const valueB = cellB.dataset.sort !== undefined
-                        ? cellB.dataset.sort
-                        : cellB.textContent.trim().toLowerCase();
-
-                    const numberA = Number(valueA);
-                    const numberB = Number(valueB);
-                    let result;
-
-                    // Compare numbers numerically, everything else as text.
-                    if (
-                        valueA !== ''
-                        && valueB !== ''
-                        && !Number.isNaN(numberA)
-                        && !Number.isNaN(numberB)
-                    ) {
-                        result = numberA - numberB;
-                    } else {
-                        result = String(valueA).localeCompare(
-                            String(valueB),
-                            undefined,
-                            {numeric: true, sensitivity: 'base'}
-                        );
-                    }
-
-                    return direction === 'asc' ? result : -result;
-                });
-
-                rows.forEach(function(row) {
-                    tbody.appendChild(row);
-                });
-
-                // Show the active sort direction in the table header.
-                table.querySelectorAll('thead th[data-sort-key]').forEach(function(th) {
-                    const oldArrow = th.querySelector('.bookit-sort-arrow');
-                    if (oldArrow) {
-                        oldArrow.remove();
-                    }
-                    th.removeAttribute('aria-sort');
-                });
-
-                const arrow = document.createElement('span');
-                arrow.className = 'bookit-sort-arrow';
-                arrow.textContent = direction === 'asc' ? ' ↑' : ' ↓';
-                header.appendChild(arrow);
-                header.setAttribute(
-                    'aria-sort',
-                    direction === 'asc' ? 'ascending' : 'descending'
-                );
-
-                currentColumn = column;
-                currentDirection = direction;
-            };
-
-            // Make sortable headers clickable and remember the user's choice.
-            table.querySelectorAll('thead th[data-sort-key]').forEach(function(header) {
-                header.style.cursor = 'pointer';
-
-                header.addEventListener('click', function() {
-                    const column = header.dataset.sortKey;
-                    const direction = currentColumn === column && currentDirection === 'asc'
-                        ? 'desc'
-                        : 'asc';
-
-                    sortTable(column, direction);
-
-                    UserRepository.setUserPreference(
-                        '{$sortpreferencekey}',
-                        JSON.stringify({
-                            column: column,
-                            direction: direction,
-                        })
-                    ).catch(function() {
-                        // Sorting should still work if the preference cannot be saved.
-                    });
-                });
-            });
-
-            // Apply the saved or default sort order on page load.
-            sortTable(currentColumn, currentDirection);
-        });
-    ");
+  // Initialise sorting with the saved or default user preference.
+$PAGE->requires->js_call_amd(
+    'mod_bookit/overview/my_booked_events_sort',
+    'init',
+    [
+        $tableid,
+        $sortpreferencekey,
+        $initialsortcolumn,
+        $initialsortdirection,
+    ]
+);
 }
 
 /* ----- inline ModalForm handler -------------------------------------- */
