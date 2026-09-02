@@ -125,7 +125,7 @@ class edit_checklist_item_form extends dynamic_form {
         $duedaterequired = get_string('checklistduedate_required', 'mod_bookit');
         $mform->addRule('duedategroup', $duedaterequired, 'required', null, 'client');
         $mform->addRule('duedategroup', $duedaterequired, 'required', null, 'server');
-        $mform->addHelpButton('duedategroup', 'duedate', 'mod_bookit');
+        $mform->addHelpButton('duedategroup', 'checklist_duedate', 'mod_bookit');
 
         $mform->addElement('duration', 'duedaysoffset', get_string('time', 'mod_bookit'), ['units' => [DAYSECS]]);
         $mform->setDefault('duedaysoffset', [

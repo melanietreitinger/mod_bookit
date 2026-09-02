@@ -375,7 +375,7 @@ export default class extends BaseComponent {
      * @param {string} type The notification type
      */
     async _performReset(modalForm, type) {
-        const defaultMessage = await getString(`customtemplatedefaultmessage_${type}`, 'mod_bookit');
+        const defaultMessage = await getString(`customtemplatedefaultmessage_ressource_${type}`, 'mod_bookit');
 
         const editorSelector = `[name="${type}_messagetext[text]"]`;
         const textarea = modalForm.getFormNode().querySelector(editorSelector);

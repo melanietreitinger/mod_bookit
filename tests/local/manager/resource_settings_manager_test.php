@@ -125,7 +125,7 @@ final class resource_settings_manager_test extends advanced_testcase {
             null,
             $this->resourceid1,
             86400,
-            'checklist_due_before_event',
+            'due_before_event',
             0,
             null,
             null,
@@ -147,7 +147,7 @@ final class resource_settings_manager_test extends advanced_testcase {
         $this->assertInstanceOf(bookit_resource_settings::class, $retrieved);
         $this->assertEquals($this->resourceid1, $retrieved->get_resourceid());
         $this->assertEquals(86400, $retrieved->get_duedate());
-        $this->assertEquals('checklist_due_before_event', $retrieved->get_duedatetype());
+        $this->assertEquals('due_before_event', $retrieved->get_duedatetype());
     }
 
     /**

@@ -35,8 +35,8 @@ namespace mod_bookit\local\entity;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 enum bookit_notification_type: string {
-    case BEFORE_DUE = 'ressource_before_due';
-    case WHEN_DUE = 'ressource_when_due';
-    case OVERDUE = 'ressource_overdue';
-    case WHEN_DONE = 'ressource_when_done';
+    case BEFORE_DUE = 'before_due';
+    case WHEN_DUE = 'when_due';
+    case OVERDUE = 'overdue';
+    case WHEN_DONE = 'when_done';
 }
