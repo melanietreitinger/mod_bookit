@@ -668,3 +668,12 @@
     font-size: 0.95rem;
     line-height: 1.4;
 }
+
+/* Non-overlapping (abgegrenzt): solid colours, no status fade. */
+.bookit-separated .ec-event.bookit-bookingstatus-0,
+.bookit-separated .ec-event.bookit-bookingstatus-1,
+.bookit-separated .ec-event.bookit-bookingstatus-3,
+.bookit-separated .ec-event.bookit-bookingstatus-4 {
+    opacity: 1 !important; /*TODO: find better solution */
+    border-style: solid !important;
+}

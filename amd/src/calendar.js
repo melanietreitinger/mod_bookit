@@ -82,7 +82,6 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
 
     // String variables
     await prefetchStrings('mod_bookit', ['calendar_addbooking', 'calendar_editevent', 'calendar_eventlist']);
-    await prefetchStrings('core', ['today', 'month', 'week']);
     await prefetchStrings('calendar', ['day']);
     const strRequestBooking = await getString('calendar_addbooking', 'mod_bookit');
     const editevent = await getString('calendar_editevent', 'mod_bookit');
@@ -92,9 +91,34 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     const strDay = await getString('day', 'calendar');
     const strList = await getString('calendar_eventlist', 'bookit');
     const strCollapse = await getString('calendar_collapsegroups', 'mod_bookit');
+
+    // Layout per view: horizontal = time-grid (side by side), vertical = day-grid
+    // (stacked per day). Month has no horizontal variant -> always dayGridMonth.
+    const layoutView = (logical) => {
+        const key = 'layout_' + logical;
+        const vertical = Object.prototype.hasOwnProperty.call(config, key) && Number(config[key]) !== 0;
+        if (logical === 'day') { return vertical ? 'dayGridDay' : 'timeGridDay'; }
+        if (logical === 'week') { return vertical ? 'dayGridWeek' : 'timeGridWeek'; }
+        return 'dayGridMonth';
+    };
+    const dayViewType = layoutView('day');
+    const weekViewType = layoutView('week');
+    const monthViewType = layoutView('month');
+
+    // day-grid day/week map to their time-grid key for summary/max-events lookups.
+    const canonicalView = (viewtype) => {
+        if (viewtype === 'dayGridDay') { return 'timeGridDay'; }
+        if (viewtype === 'dayGridWeek') { return 'timeGridWeek'; }
+        return viewtype;
+    };
+
+    // The standalone "Eventlist" (listWeek) button shows all events raw, no settings.
+    const isRawList = (viewtype) =>
+        viewtype === 'listDay' || viewtype === 'listWeek' || viewtype === 'listMonth';
+
+
     // Define viewtype
-    // Define viewtype
-    let viewType = 'timeGridWeek';
+    let viewType = weekViewType;
     if (window.screen.width <= 1000) {
         viewType = 'listWeek';
     }
@@ -172,8 +196,8 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 bookingstatuses: parseIds(extraFilterParams.status),
                 search: extraFilterParams.search || '',
                 exportmode: false,
-                aggregate: summaryFor(activeView),
-                maxevents: maxEventsFor(activeView),
+                aggregate: isRawList(activeView) ? false : summaryFor(canonicalView(activeView)),
+                maxevents: isRawList(activeView) ? 0 : maxEventsFor(canonicalView(activeView)),
             },
         }])[0]
             .then((response) => {
@@ -195,6 +219,25 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         slotMinTime: '07:00:00',
         dayMaxEvents: false,
         lazyFetching: false,
+        
+        viewDidMount: function(info) {
+            const ec = document.getElementById('ec');
+            if (!ec) {
+                return;
+            }
+            const type = info && info.view ? info.view.type : '';
+            // Events only overlap in a time-grid with overlap on; everywhere else
+            // (abgegrenzt time-grid, day-grid, month, lists) they sit apart.
+            let separated = true;
+            if (type === 'timeGridDay' && dayOverlap) {
+                separated = false;
+            }
+            if (type === 'timeGridWeek' && weekOverlap) {
+                separated = false;
+            }
+            ec.classList.toggle('bookit-separated', separated);
+        },
+        
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,
@@ -212,7 +255,9 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             text.today = strToday;
             text.dayGridMonth = strMonth;
             text.timeGridWeek = strWeek;
+            text.dayGridWeek = strWeek;
             text.timeGridDay = strDay;
+            text.dayGridDay = strDay;
             text.listWeek = strList;
             return text;
         },
@@ -337,7 +382,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         headerToolbar: {
             start: toolbarbuttons,
             center: 'title',
-            end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            end: monthViewType + ',' + weekViewType + ',' + dayViewType + ',listWeek'
         },
 
         resources: [],

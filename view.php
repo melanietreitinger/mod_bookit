@@ -133,6 +133,10 @@ foreach (['day', 'week', 'month'] as $mv) {
     $val = get_config('mod_bookit', 'maxevents_' . $mv);
     $configcalendar['maxevents_' . $mv] = ($val === false || $val === '') ? 0 : (int)$val;
 }
+foreach (['day', 'week', 'month'] as $lv) {
+    $val = get_config('mod_bookit', 'layout_' . $lv);
+    $configcalendar['layout_' . $lv] = ($val === false || $val === '') ? 0 : (int)$val;
+}
 
 
 // Inject allowed weekdays for JS. 
