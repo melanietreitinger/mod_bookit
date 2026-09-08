@@ -548,6 +548,7 @@ $string['settings_summary_on'] = 'An — „N Prüfungen" pro Slot, Klick zum Au
 $string['settings_maxevents_label'] = 'Max. Termine pro Slot';
 $string['settings_vertical_label'] = 'Vertikale (gestapelte) Anzeige';
 $string['calendar_summary_count'] = '{$a} Prüfungen';
+$string['calendar_collapsegroups'] = 'Einklappen';
 $string['settings_eventdefaultduration'] = 'Default duration of an event (min)';
 $string['settings_eventdurationstepwidth'] = 'The step width for the duration of an event (min)';
 $string['settings_eventmaxduration'] = 'Maximum duration of an event (min)';

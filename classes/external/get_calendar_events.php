@@ -53,7 +53,7 @@ class get_calendar_events extends external_api {
             'search' => new external_value(PARAM_RAW_TRIMMED, 'Free-text search', VALUE_DEFAULT, ''),
             'exportmode' => new external_value(PARAM_BOOL, 'Whether export preview consumes the read', VALUE_DEFAULT, false),
             'aggregate' => new external_value(PARAM_BOOL, 'Whether to return per-slot summary blocks', VALUE_DEFAULT, false),
-        ]);
+            'maxevents' => new external_value(PARAM_INT, 'Max events per slot before a "+N more" block (0 = off)', VALUE_DEFAULT, 0),        ]);
     }
 
     /**
@@ -78,7 +78,8 @@ class get_calendar_events extends external_api {
         array $bookingstatuses = [],
         string $search = '',
         bool $exportmode = false,
-        bool $aggregate = false
+        bool $aggregate = false,
+        int $maxevents = 0
     ): array {
         global $USER;
 
@@ -92,6 +93,7 @@ class get_calendar_events extends external_api {
             'search' => $search,
             'exportmode' => $exportmode,
             'aggregate' => $aggregate,
+            'maxevents' => $maxevents,
         ]);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
@@ -113,9 +115,11 @@ class get_calendar_events extends external_api {
             $filters['end'],
             $filters
                );
-
+               
         if ($params['aggregate'] && !empty($events)) {
             $events = self::aggregate_events($events);
+        } else if ($params['maxevents'] > 0 && !empty($events)) {
+            $events = self::cap_events($events, (int)$params['maxevents']);
         }
 
         return event_access_manager::build_governed_empty_response(
@@ -143,6 +147,9 @@ class get_calendar_events extends external_api {
             $groups[$key][] = $event;
         }
 
+        // Distinct, solid colours so adjacent slot blocks are easy to tell apart.
+        $palette = ['#035AA3', '#8E44AD', '#1E8449', '#B9770E', '#A93226',
+                    '#117A65', '#6C3483', '#2E86C1', '#CA6F1E', '#5D6D7E'];
         $summaries = [];
         $index = 0;
         foreach ($groups as $key => $groupevents) {
@@ -155,8 +162,7 @@ class get_calendar_events extends external_api {
                 'title' => $label,
                 'start' => $gstart,
                 'end' => $gend,
-                'backgroundColor' => '#3B4A5A',
-                'textColor' => '#ffffff',
+                'backgroundColor' => $palette[($index - 1) % count($palette)],                'textColor' => '#ffffff',
                 'classNames' => ['bookit-summary-event'],
                 'extendedProps' => [
                     'titlehtml' => $label,
@@ -171,8 +177,74 @@ class get_calendar_events extends external_api {
                 ],
             ];
         }
-
         return $summaries;
+    }
+
+    /**
+     * Cap each slot to a maximum number of events, adding a "+N more" block.
+     *
+     * Slots (identical start and end) with more than $max events keep the first
+     * $max and gain one clickable "+N more" block carrying the rest as JSON, so
+     * the client can expand them inline. The count reflects the filtered set.
+     *
+     * @param array $events Individual calendar events (read-mapper shape).
+     * @param int $max Maximum events shown per slot before collapsing the rest.
+     * @return array
+     */
+    private static function cap_events(array $events, int $max): array {
+        if ($max < 1) {
+            return $events;
+        }
+
+        $groups = [];
+        foreach ($events as $event) {
+            $key = ($event['start'] ?? '') . '|' . ($event['end'] ?? '');
+            $groups[$key][] = $event;
+        }
+
+        $result = [];
+        $index = 0;
+        foreach ($groups as $key => $groupevents) {
+            if (count($groupevents) <= $max) {
+                foreach ($groupevents as $event) {
+                    $result[] = $event;
+                }
+                continue;
+            }
+
+            $index++;
+            [$gstart, $gend] = array_pad(explode('|', $key, 2), 2, '');
+            $visible = array_slice($groupevents, 0, $max);
+            $hidden = array_slice($groupevents, $max);
+            foreach ($visible as $event) {
+                $result[] = $event;
+            }
+
+            $morecount = count($hidden);
+            $label = get_string('calendar_moreevents', 'mod_bookit', $morecount);
+            $result[] = [
+                'id' => -1000 - $index,
+                'title' => $label,
+                'start' => $gstart,
+                'end' => $gend,
+                'backgroundColor' => '#5D6D7E',
+                'textColor' => '#ffffff',
+                'classNames' => ['bookit-summary-event', 'bookit-more-event'],
+                'extendedProps' => [
+                    'titlehtml' => $label,
+                    'bookingstatus' => -1,
+                    'semesterid' => 0,
+                    'visibilitymode' => 'summary',
+                    'modalfootermode' => 'readonly',
+                    'room' => ['roomid' => 0, 'roomname' => '', 'location' => '', 'shortname' => ''],
+                    'issummary' => true,
+                    'summarycount' => $morecount,
+                    'childrenjson' => json_encode(array_values($hidden)),
+                ],
+            ];
+        }
+
+        return $result;
     }
 
     /**

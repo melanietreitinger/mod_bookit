@@ -350,6 +350,7 @@
 .ec .bookit-summary-event {
     cursor: pointer;
     font-weight: 600;
+    opacity: 1;
 }
 
 .ec-event.bookit-bookingstatus-0 {

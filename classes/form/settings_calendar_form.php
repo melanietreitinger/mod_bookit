@@ -186,9 +186,9 @@ class settings_calendar_form extends moodleform {
             get_string('settings_vertical_label', 'mod_bookit'),
         ];
         $matrix = [
-            [get_string('settings_display_day', 'mod_bookit'),   $on, $on, $planned, $planned],
-            [get_string('settings_display_week', 'mod_bookit'),  $on, $on, $planned, $planned],
-            [get_string('settings_display_month', 'mod_bookit'), $na, $on, $planned, $planned],
+            [get_string('settings_display_day', 'mod_bookit'),   $on, $on, $on, $planned],
+            [get_string('settings_display_week', 'mod_bookit'),  $on, $on, $on, $planned],
+            [get_string('settings_display_month', 'mod_bookit'), $na, $on, $on, $planned],
         ];
         $thead = '';
         foreach ($cols as $c) {
@@ -231,6 +231,9 @@ class settings_calendar_form extends moodleform {
         $mform->getElement('eventoverlap_day')->setSelected(1);
         $mform->addElement('select', 'summary_day', get_string('settings_summary_label', 'mod_bookit'), $summarychoices);
         $mform->getElement('summary_day')->setSelected(0);
+        $mform->addElement('text', 'maxevents_day', get_string('settings_maxevents_label', 'mod_bookit'), ['size' => 4]);
+        $mform->setType('maxevents_day', PARAM_INT);
+        $mform->getElement('maxevents_day')->setValue(0);
 
         // Week view.
         $mform->addElement('header', 'displayweek', get_string('settings_display_week', 'mod_bookit'));
@@ -239,6 +242,9 @@ class settings_calendar_form extends moodleform {
         $mform->getElement('eventoverlap_week')->setSelected(1);
         $mform->addElement('select', 'summary_week', get_string('settings_summary_label', 'mod_bookit'), $summarychoices);
         $mform->getElement('summary_week')->setSelected(0);
+        $mform->addElement('text', 'maxevents_week', get_string('settings_maxevents_label', 'mod_bookit'), ['size' => 4]);
+        $mform->setType('maxevents_week', PARAM_INT);
+        $mform->getElement('maxevents_week')->setValue(0);
 
         // Month view (no time overlap in dayGrid).
         $mform->addElement('header', 'displaymonth', get_string('settings_display_month', 'mod_bookit'));
@@ -247,7 +253,9 @@ class settings_calendar_form extends moodleform {
             get_string('settings_display_na', 'mod_bookit'));
         $mform->addElement('select', 'summary_month', get_string('settings_summary_label', 'mod_bookit'), $summarychoices);
         $mform->getElement('summary_month')->setSelected(0);
-
+        $mform->addElement('text', 'maxevents_month', get_string('settings_maxevents_label', 'mod_bookit'), ['size' => 4]);
+        $mform->setType('maxevents_month', PARAM_INT);
+        $mform->getElement('maxevents_month')->setValue(0);
         $this->add_action_buttons();
     }
 }

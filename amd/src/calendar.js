@@ -72,6 +72,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     };
     const dayOverlap = overlapFor('day');
     const weekOverlap = overlapFor('week');
+    window.console.log('[bookit] overlap', {config, dayOverlap, weekOverlap});
 
     // Define toolbarbuttons.
     let toolbarbuttons = 'prev,next today';
@@ -90,7 +91,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     const strWeek = await getString('week');
     const strDay = await getString('day', 'calendar');
     const strList = await getString('calendar_eventlist', 'bookit');
-
+    const strCollapse = await getString('calendar_collapsegroups', 'mod_bookit');
     // Define viewtype
     // Define viewtype
     let viewType = 'timeGridWeek';
@@ -107,6 +108,21 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     const summaryDay = summaryEnabled('day');
     const summaryWeek = summaryEnabled('week');
     const summaryMonth = summaryEnabled('month');
+
+    // Max events per slot before a "+N more" block (0 = off), per view.
+    const maxEventsFor = (viewtype) => {
+        let key = null;
+        if (viewtype === 'timeGridDay') { key = 'maxevents_day'; }
+        if (viewtype === 'timeGridWeek' || viewtype === 'listWeek') { key = 'maxevents_week'; }
+        if (viewtype === 'dayGridMonth') { key = 'maxevents_month'; }
+        if (key && Object.prototype.hasOwnProperty.call(config, key)) {
+            return Number(config[key]) || 0;
+        }
+        return 0;
+    };
+    if (summaryDay || summaryWeek || summaryMonth) {
+        toolbarbuttons += ' collapseButton';
+    }
     const summaryFor = (viewtype) => {
         if (viewtype === 'timeGridDay') {
             return summaryDay;
@@ -157,6 +173,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 search: extraFilterParams.search || '',
                 exportmode: false,
                 aggregate: summaryFor(activeView),
+                maxevents: maxEventsFor(activeView),
             },
         }])[0]
             .then((response) => {
@@ -177,6 +194,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         scrollTime: '09:00:00',
         slotMinTime: '07:00:00',
         dayMaxEvents: false,
+        lazyFetching: false,
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,
@@ -217,8 +235,16 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         },
         /* Custom toolbar button (“Add booking”) */
         customButtons: {
+            collapseButton: {
+                text: strCollapse,
+                click: function() {
+                    if (window.bookitCalendar) {
+                        window.bookitCalendar.refetchEvents();
+                    }
+                }
+            },
             addButton: {
-                text: strRequestBooking,
+                text: strRequestBooking,    
                 click: function() {
                     const modalForm = new ModalForm({
                         formClass: 'mod_bookit\\form\\edit_event_form',
@@ -320,7 +346,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         eventSources: [{
             events: loadEvents,
         }],
-        
+
         views: {
             timeGridDay: {slotEventOverlap: dayOverlap},
             timeGridWeek: {pointer: true, slotEventOverlap: weekOverlap},
