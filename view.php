@@ -114,15 +114,24 @@ $capabilities   = [
     'addevent' => has_capability('mod/bookit:addevent', $modulecontext),
 ];
 
-// Minor change to main: Handles edge cases better now.
 $configcalendar = [];
 $tc = get_config('mod_bookit', 'textcolor');
 if ($tc !== false && $tc !== null && $tc !== '') {
     $configcalendar['textcolor'] = $tc;
 }
 
+// Per-view display settings (overlap for day/week, summary for day/week/month).
+foreach (['day', 'week'] as $ov) {
+    $val = get_config('mod_bookit', 'eventoverlap_' . $ov);
+    $configcalendar['eventoverlap_' . $ov] = ($val === false || $val === '') ? 1 : (int)$val;
+}
+foreach (['day', 'week', 'month'] as $sv) {
+    $val = get_config('mod_bookit', 'summary_' . $sv);
+    $configcalendar['summary_' . $sv] = ($val === false || $val === '') ? 0 : (int)$val;
+}
 
-// Inject allowed weekdays for JS (NEW FEATURE).
+
+// Inject allowed weekdays for JS. 
 $PAGE->requires->js_init_code(
     'M.cfg.bookit_allowedweekdays = [' . implode(',', bookit_allowed_weekdays()) . '];'
 );

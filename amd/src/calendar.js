@@ -61,6 +61,18 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         textcolor = config.textcolor;
     }
 
+    // Overlap mode per view (overlapping or fixed borders). true = overlapping (default),
+    // false = equal-width columns, no overlap. Day and week only (time-grid views).
+    const overlapFor = (view) => {
+        const key = 'eventoverlap_' + view;
+        if (Object.prototype.hasOwnProperty.call(config, key)) {
+            return Number(config[key]) !== 0;
+        }
+        return true;
+    };
+    const dayOverlap = overlapFor('day');
+    const weekOverlap = overlapFor('week');
+
     // Define toolbarbuttons.
     let toolbarbuttons = 'prev,next today';
     if (capabilities.addevent) {
@@ -80,10 +92,33 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     const strList = await getString('calendar_eventlist', 'bookit');
 
     // Define viewtype
+    // Define viewtype
     let viewType = 'timeGridWeek';
     if (window.screen.width <= 1000) {
         viewType = 'listWeek';
     }
+
+    // Summary (slot) mode per view, from admin settings. Maps the active view
+    // type to whether the event feed should request server-side aggregation.
+    const summaryEnabled = (view) => {
+        const key = 'summary_' + view;
+        return Object.prototype.hasOwnProperty.call(config, key) && Number(config[key]) !== 0;
+    };
+    const summaryDay = summaryEnabled('day');
+    const summaryWeek = summaryEnabled('week');
+    const summaryMonth = summaryEnabled('month');
+    const summaryFor = (viewtype) => {
+        if (viewtype === 'timeGridDay') {
+            return summaryDay;
+        }
+        if (viewtype === 'timeGridWeek' || viewtype === 'listWeek') {
+            return summaryWeek;
+        }
+        if (viewtype === 'dayGridMonth') {
+            return summaryMonth;
+        }
+        return false;
+    };
     // Weekday visibility from admin settings (injected by PHP)
     const allowedWeekdays = (window.M && M.cfg && Array.isArray(M.cfg.bookit_allowedweekdays))
         ? M.cfg.bookit_allowedweekdays.map(x => Number(x))
@@ -106,7 +141,10 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             .filter((item) => !Number.isNaN(item));
     };
 
-    const loadEvents = (fetchInfo, successCallback, failureCallback) => {
+        const loadEvents = (fetchInfo, successCallback, failureCallback) => {
+        const activeView = (window.bookitCalendar && window.bookitCalendar.getView)
+            ? window.bookitCalendar.getView().type
+            : viewType;
         Ajax.call([{
             methodname: readconfig.methodname,
             args: {
@@ -118,6 +156,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 bookingstatuses: parseIds(extraFilterParams.status),
                 search: extraFilterParams.search || '',
                 exportmode: false,
+                aggregate: summaryFor(activeView),
             },
         }])[0]
             .then((response) => {
@@ -231,8 +270,27 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         },
 
         /* Event click (edit) */
+                /* Event click (edit) */
         eventClick: function(info) {
             let id = info.event.id;
+
+            // Summary block: expand into the individual exams of that slot, inline.
+            if (info.event.extendedProps.issummary) {
+                let children = [];
+                try {
+                    children = JSON.parse(info.event.extendedProps.childrenjson || '[]');
+                } catch (e) {
+                    children = [];
+                }
+                children.forEach((child) => {
+                    if (!calendar.getEventById(String(child.id))) {
+                        calendar.addEvent(child);
+                    }
+                });
+                calendar.removeEventById(id);
+                return;
+            }
+
             if (info.event.extendedProps.visibilitymode === 'reserved_projection') {
                 return;
             }
@@ -262,10 +320,11 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         eventSources: [{
             events: loadEvents,
         }],
-
+        
         views: {
-            timeGridWeek: {pointer: true},
-            resourceTimeGridWeek: {pointer: true},
+            timeGridDay: {slotEventOverlap: dayOverlap},
+            timeGridWeek: {pointer: true, slotEventOverlap: weekOverlap},
+            resourceTimeGridWeek: {pointer: true, slotEventOverlap: weekOverlap},
             resourceTimelineWeek: {
                 pointer: true,
                 slotMinTime: '09:00',
@@ -274,6 +333,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 resources: []
             }
         }
+        
     });
 
     window.bookitCalendar = calendar;

@@ -172,6 +172,82 @@ class settings_calendar_form extends moodleform {
         $mform->setType('extratimeafter', PARAM_INT);
         $mform->getElement('extratimeafter')->setValue(15);
 
+                // ---- Calendar display per view (overlap + summary; placeholders for planned modes) ----
+        $on      = \html_writer::span('&#10003;', 'text-success');
+        $planned = \html_writer::span(get_string('settings_display_planned', 'mod_bookit'), 'text-muted');
+        $na      = \html_writer::span(get_string('settings_display_na', 'mod_bookit'), 'text-muted');
+
+        // At-a-glance matrix (rows = views, columns = display modes).
+        $cols = [
+            '',
+            get_string('settings_overlap_label', 'mod_bookit'),
+            get_string('settings_summary_label', 'mod_bookit'),
+            get_string('settings_maxevents_label', 'mod_bookit'),
+            get_string('settings_vertical_label', 'mod_bookit'),
+        ];
+        $matrix = [
+            [get_string('settings_display_day', 'mod_bookit'),   $on, $on, $planned, $planned],
+            [get_string('settings_display_week', 'mod_bookit'),  $on, $on, $planned, $planned],
+            [get_string('settings_display_month', 'mod_bookit'), $na, $on, $planned, $planned],
+        ];
+        $thead = '';
+        foreach ($cols as $c) {
+            $thead .= \html_writer::tag('th', $c, ['class' => 'small p-2']);
+        }
+        $tbody = '';
+        foreach ($matrix as $row) {
+            $cells = \html_writer::tag('th', $row[0], ['class' => 'small p-2 text-nowrap']);
+            for ($i = 1; $i < count($row); $i++) {
+                $cells .= \html_writer::tag('td', $row[$i], ['class' => 'small p-2 text-center']);
+            }
+            $tbody .= \html_writer::tag('tr', $cells);
+        }
+        $overviewtable = \html_writer::tag(
+            'table',
+            \html_writer::tag('thead', \html_writer::tag('tr', $thead)) . \html_writer::tag('tbody', $tbody),
+            ['class' => 'table table-sm table-bordered w-auto mt-2 mb-3']
+        );
+
+        $mform->addElement(
+            'static',
+            'displayoverview',
+            get_string('settings_display_heading', 'mod_bookit'),
+            \html_writer::div(get_string('settings_display_heading_desc', 'mod_bookit'), 'mb-2') . $overviewtable
+        );
+
+        $overlapchoices = [
+            1 => get_string('settings_overlap_overlapping', 'mod_bookit'),
+            0 => get_string('settings_overlap_separated', 'mod_bookit'),
+        ];
+        $summarychoices = [
+            0 => get_string('settings_summary_off', 'mod_bookit'),
+            1 => get_string('settings_summary_on', 'mod_bookit'),
+        ];
+
+        // Day view.
+        $mform->addElement('header', 'displayday', get_string('settings_display_day', 'mod_bookit'));
+        $mform->setExpanded('displayday', true);
+        $mform->addElement('select', 'eventoverlap_day', get_string('settings_overlap_label', 'mod_bookit'), $overlapchoices);
+        $mform->getElement('eventoverlap_day')->setSelected(1);
+        $mform->addElement('select', 'summary_day', get_string('settings_summary_label', 'mod_bookit'), $summarychoices);
+        $mform->getElement('summary_day')->setSelected(0);
+
+        // Week view.
+        $mform->addElement('header', 'displayweek', get_string('settings_display_week', 'mod_bookit'));
+        $mform->setExpanded('displayweek', true);
+        $mform->addElement('select', 'eventoverlap_week', get_string('settings_overlap_label', 'mod_bookit'), $overlapchoices);
+        $mform->getElement('eventoverlap_week')->setSelected(1);
+        $mform->addElement('select', 'summary_week', get_string('settings_summary_label', 'mod_bookit'), $summarychoices);
+        $mform->getElement('summary_week')->setSelected(0);
+
+        // Month view (no time overlap in dayGrid).
+        $mform->addElement('header', 'displaymonth', get_string('settings_display_month', 'mod_bookit'));
+        $mform->setExpanded('displaymonth', true);
+        $mform->addElement('static', 'overlap_month_na', get_string('settings_overlap_label', 'mod_bookit'),
+            get_string('settings_display_na', 'mod_bookit'));
+        $mform->addElement('select', 'summary_month', get_string('settings_summary_label', 'mod_bookit'), $summarychoices);
+        $mform->getElement('summary_month')->setSelected(0);
+
         $this->add_action_buttons();
     }
 }

@@ -52,6 +52,7 @@ class get_calendar_events extends external_api {
             ),
             'search' => new external_value(PARAM_RAW_TRIMMED, 'Free-text search', VALUE_DEFAULT, ''),
             'exportmode' => new external_value(PARAM_BOOL, 'Whether export preview consumes the read', VALUE_DEFAULT, false),
+            'aggregate' => new external_value(PARAM_BOOL, 'Whether to return per-slot summary blocks', VALUE_DEFAULT, false),
         ]);
     }
 
@@ -76,7 +77,8 @@ class get_calendar_events extends external_api {
         array $facultyids = [],
         array $bookingstatuses = [],
         string $search = '',
-        bool $exportmode = false
+        bool $exportmode = false,
+        bool $aggregate = false
     ): array {
         global $USER;
 
@@ -89,6 +91,7 @@ class get_calendar_events extends external_api {
             'bookingstatuses' => $bookingstatuses,
             'search' => $search,
             'exportmode' => $exportmode,
+            'aggregate' => $aggregate,
         ]);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
@@ -109,13 +112,67 @@ class get_calendar_events extends external_api {
             $filters['start'],
             $filters['end'],
             $filters
-        );
+               );
+
+        if ($params['aggregate'] && !empty($events)) {
+            $events = self::aggregate_events($events);
+        }
 
         return event_access_manager::build_governed_empty_response(
             'calendar',
             $filters,
             empty($events) ? 'no_matches' : 'none'
         ) + ['events' => $events];
+    }
+
+      /**
+     * Aggregate individual events into per-slot summary blocks.
+     *
+     * Groups events that share the same start and end into one block titled with
+     * the number of exams. The underlying events are embedded as JSON so the client
+     * can expand them inline without a second request. The count reflects the
+     * already-filtered set.
+     *
+     * @param array $events Individual calendar events (read-mapper shape).
+     * @return array Summary blocks (same event shape).
+     */
+    private static function aggregate_events(array $events): array {
+        $groups = [];
+        foreach ($events as $event) {
+            $key = ($event['start'] ?? '') . '|' . ($event['end'] ?? '');
+            $groups[$key][] = $event;
+        }
+
+        $summaries = [];
+        $index = 0;
+        foreach ($groups as $key => $groupevents) {
+            $index++;
+            [$gstart, $gend] = array_pad(explode('|', $key, 2), 2, '');
+            $count = count($groupevents);
+            $label = get_string('calendar_summary_count', 'mod_bookit', $count);
+            $summaries[] = [
+                'id' => -$index,
+                'title' => $label,
+                'start' => $gstart,
+                'end' => $gend,
+                'backgroundColor' => '#3B4A5A',
+                'textColor' => '#ffffff',
+                'classNames' => ['bookit-summary-event'],
+                'extendedProps' => [
+                    'titlehtml' => $label,
+                    'bookingstatus' => -1,
+                    'semesterid' => 0,
+                    'visibilitymode' => 'summary',
+                    'modalfootermode' => 'readonly',
+                    'room' => ['roomid' => 0, 'roomname' => '', 'location' => '', 'shortname' => ''],
+                    'issummary' => true,
+                    'summarycount' => $count,
+                    'childrenjson' => json_encode(array_values($groupevents)),
+                ],
+            ];
+        }
+
+        return $summaries;
     }
 
     /**
@@ -160,10 +217,13 @@ class get_calendar_events extends external_api {
                         'location' => new external_value(PARAM_RAW, 'Room location'),
                         'shortname' => new external_value(PARAM_RAW, 'Room shortname'),
                     ]),
-                    'faculty' => new external_single_structure([
+                        'faculty' => new external_single_structure([
                         'facultyid' => new external_value(PARAM_INT, 'Faculty id'),
                         'label' => new external_value(PARAM_RAW, 'Faculty label'),
                     ], 'Faculty metadata', VALUE_OPTIONAL),
+                    'issummary' => new external_value(PARAM_BOOL, 'Whether this is an aggregated summary block', VALUE_OPTIONAL),
+                    'summarycount' => new external_value(PARAM_INT, 'Number of exams in the summary slot', VALUE_OPTIONAL),
+                    'childrenjson' => new external_value(PARAM_RAW, 'JSON of underlying events for inline expansion', VALUE_OPTIONAL),
                 ]),
             ])),
         ]);

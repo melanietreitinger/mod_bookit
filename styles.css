@@ -346,6 +346,11 @@
     border-width: 6px;
     box-shadow: none;
 }
+/* Summary (slot) blocks in the calendar. */
+.ec .bookit-summary-event {
+    cursor: pointer;
+    font-weight: 600;
+}
 
 .ec-event.bookit-bookingstatus-0 {
     border-color: #c6c8ca;
