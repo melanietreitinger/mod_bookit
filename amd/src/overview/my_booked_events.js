@@ -8,7 +8,7 @@
 /**
  * Sorting and filtering for the "My booked events" table.
  *
- * @module     mod_bookit/overview/my_booked_events_sort
+ * @module     mod_bookit/overview/my_booked_events
  * @copyright  2026 Humboldt-Universität zu Berlin
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

@@ -236,7 +236,7 @@ if (!$canviewrequestworkspace) {
 
   // Initialise sorting with the saved or default user preference.
 $PAGE->requires->js_call_amd(
-    'mod_bookit/overview/my_booked_events_sort',
+    'mod_bookit/overview/my_booked_events',
     'init',
     [
         $tableid,
