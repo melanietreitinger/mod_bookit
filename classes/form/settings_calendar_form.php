@@ -247,11 +247,18 @@ class settings_calendar_form extends moodleform {
         $summarychoices = [
             0 => get_string('settings_summary_off', 'mod_bookit'),
             1 => get_string('settings_summary_on', 'mod_bookit'),
+            2 => get_string('settings_summary_hover', 'mod_bookit'),
         ];
         $layoutchoices = [
             0 => get_string('settings_layout_horizontal', 'mod_bookit'),
             1 => get_string('settings_layout_vertical', 'mod_bookit'),
         ];
+        // Day view.
+      
+                // Global: colour summary/cluster blocks by room instead of a random palette.
+        $mform->addElement('advcheckbox', 'calendar_roomcolors', get_string('settings_roomcolors_label', 'mod_bookit'),
+            get_string('settings_roomcolors_desc', 'mod_bookit'));
+        $mform->setDefault('calendar_roomcolors', 0);
         // Day view.
         $mform->addElement('header', 'displayday', get_string('settings_display_day', 'mod_bookit'));
         $mform->setExpanded('displayday', true);

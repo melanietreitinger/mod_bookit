@@ -22,6 +22,7 @@ use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\color_manager;
 use mod_bookit\local\manager\event_manager;
 
 /**
@@ -150,6 +151,7 @@ class get_calendar_events extends external_api {
         // Distinct, solid colours so adjacent slot blocks are easy to tell apart.
         $palette = ['#035AA3', '#8E44AD', '#1E8449', '#B9770E', '#A93226',
                     '#117A65', '#6C3483', '#2E86C1', '#CA6F1E', '#5D6D7E'];
+        $roomcolors = (bool)get_config('mod_bookit', 'calendar_roomcolors');
         $summaries = [];
         $index = 0;
         foreach ($groups as $key => $groupevents) {
@@ -157,12 +159,27 @@ class get_calendar_events extends external_api {
             [$gstart, $gend] = array_pad(explode('|', $key, 2), 2, '');
             $count = count($groupevents);
             $label = get_string('calendar_summary_count', 'mod_bookit', $count);
+            $bg = $palette[($index - 1) % count($palette)];
+            $txt = '#ffffff';
+            if ($roomcolors) {
+                $colors = array_values(array_unique(array_map(
+                    static fn($e) => (string)($e['backgroundColor'] ?? ''),
+                    $groupevents
+                )));
+                if (count($colors) === 1 && $colors[0] !== '') {
+                    $bg = $colors[0];
+                    $txt = color_manager::get_textcolor_for_background($bg);
+                }
+            }
             $summaries[] = [
                 'id' => -$index,
                 'title' => $label,
                 'start' => $gstart,
                 'end' => $gend,
-                'backgroundColor' => $palette[($index - 1) % count($palette)],                'textColor' => '#ffffff',
+                'backgroundColor' => $bg,
+                'textColor' => $txt,
+
+
                 'classNames' => ['bookit-summary-event'],
                 'extendedProps' => [
                     'titlehtml' => $label,

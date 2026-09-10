@@ -144,9 +144,22 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         }
         return 0;
     };
+    
     if (summaryDay || summaryWeek || summaryMonth) {
         toolbarbuttons += ' collapseButton';
     }
+
+    // Summary interaction mode per view: 'click' = expand, 'hover' = tooltip.
+    const summaryModeFor = (viewtype) => {
+        const c = canonicalView(viewtype);
+        let raw = 0;
+        if (c === 'timeGridDay') { raw = Number(config.summary_day) || 0; }
+        else if (c === 'timeGridWeek' || c === 'listWeek') { raw = Number(config.summary_week) || 0; }
+        else if (c === 'dayGridMonth') { raw = Number(config.summary_month) || 0; }
+        return raw === 2 ? 'hover' : 'click';
+    };
+    let currentSummaryMode = summaryModeFor(viewType);
+
     const summaryFor = (viewtype) => {
         if (viewtype === 'timeGridDay') {
             return summaryDay;
@@ -219,6 +232,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         slotMinTime: '07:00:00',
         dayMaxEvents: false,
         lazyFetching: false,
+                eventOrder: (a, b) => (a.start - b.start) || (a.end - b.end),
         
         viewDidMount: function(info) {
             const ec = document.getElementById('ec');
@@ -236,6 +250,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 separated = false;
             }
             ec.classList.toggle('bookit-separated', separated);
+            currentSummaryMode = summaryModeFor(type);
         },
         
         nowIndicator: true,
@@ -340,13 +355,38 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             }
         },
 
+        eventDidMount: function(info) {
+            if (!info.event || !info.event.extendedProps || !info.event.extendedProps.issummary) {
+                return;
+            }
+            if (currentSummaryMode !== 'hover') {
+                return;
+            }
+            let children = [];
+            try {
+                children = JSON.parse(info.event.extendedProps.childrenjson || '[]');
+            } catch (e) {
+                children = [];
+            }
+            const lines = children.map((c) => {
+                const ts = (c.start || '').slice(11, 16);
+                const te = (c.end || '').slice(11, 16);
+                const time = ts ? (te ? ts + '–' + te : ts) : '';
+                return (time ? time + '  ' : '') + (c.title || '');
+            }).filter(Boolean).join('\n');
+            if (info.el && lines) {
+                info.el.setAttribute('title', lines);
+            }
+        },
+
         /* Event click (edit) */
-                /* Event click (edit) */
         eventClick: function(info) {
             let id = info.event.id;
-
             // Summary block: expand into the individual exams of that slot, inline.
             if (info.event.extendedProps.issummary) {
+                if (currentSummaryMode === 'hover') {
+                    return;
+                }
                 let children = [];
                 try {
                     children = JSON.parse(info.event.extendedProps.childrenjson || '[]');
