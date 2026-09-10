@@ -614,3 +614,4 @@ $string['settings_val_vertikal'] = 'vertikal';
 $string['settings_roomcolors_label'] = 'Summary-Blöcke nach Raumfarbe';
 $string['settings_roomcolors_desc'] = 'Wenn alle Prüfungen eines Slots denselben Raum haben, den Summary-Block in der Raumfarbe einfärben statt in einer Palettenfarbe.';
 $string['settings_summary_hover'] = 'An — „N Prüfungen" pro Slot, Details bei Mouseover';
+$string['customfields'] = 'Eigene Buchungsfelder';

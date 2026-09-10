@@ -454,6 +454,9 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('hidden', 'notes');
             $mform->setType('notes', PARAM_TEXT);
         }
+        // Admin-configurable custom fields (#97) — appended to the public fields.
+        \mod_bookit\customfield\event_handler::create()->instance_form_definition($mform, (int)$eventid);
+
         // Internal fields.
         if ($caneditinternal || $canviewrestrictedfields) {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
@@ -938,7 +941,7 @@ class edit_event_form extends dynamic_form {
                 ];
             }
         }
-
+        \mod_bookit\customfield\event_handler::create()->instance_form_before_set_data($e);
         $this->set_data($e);
     }
 
@@ -1223,7 +1226,11 @@ class edit_event_form extends dynamic_form {
                 $cmid > 0 ? $cmid : null
             );
         }
-
+        // Save admin-configurable custom fields (#97) — only when public fields are editable.
+        if ($caneditpublic) {
+            $formdata->id = (int)$persistedevent->id;
+            \mod_bookit\customfield\event_handler::create()->instance_form_save($formdata, empty($currentevent));
+        }
         return [];
     }
 
@@ -1662,10 +1669,15 @@ class edit_event_form extends dynamic_form {
             isset($data['otherexaminers']) ? (string)$data['otherexaminers'] : null,
             $legacyexaminerids
         );
+        
         foreach ($poolerrors as $fieldname => $message) {
             $errors[$fieldname] = $message;
         }
 
+        $errors = array_merge(
+            $errors,
+            \mod_bookit\customfield\event_handler::create()->instance_form_validation($data, $files)
+        );
         return $errors;
     }
 

@@ -134,6 +134,13 @@ class tabs {
                 $targeturl,
                 get_string('events', 'mod_bookit')
             );
+            // Custom booking fields.
+            $targeturl = new moodle_url('/mod/bookit/admin/customfield.php', ['id' => 'customfields']);
+            $tabrow[] = new tabobject(
+                'customfields',
+                $targeturl,
+                get_string('customfields', 'mod_bookit')
+            );
 
             // Tab to the rooms page.
             $targeturl = new moodle_url('/mod/bookit/admin/rooms.php', ['id' => 'rooms']);

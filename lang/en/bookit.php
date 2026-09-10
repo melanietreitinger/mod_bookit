@@ -628,3 +628,4 @@ $string['settings_val_vertical'] = 'vertikal';
 $string['settings_roomcolors_label'] = 'Colour summary blocks by room';
 $string['settings_roomcolors_desc'] = 'When all exams in a slot share a room, colour the summary block with that room\'s colour instead of a palette colour.';
 $string['settings_summary_hover'] = 'On — show "N exams" per slot, details on hover';
+$string['customfields'] = 'Custom booking fields';
