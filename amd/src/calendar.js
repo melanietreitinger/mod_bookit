@@ -222,6 +222,96 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             });
     };
 
+        // Summary hover: floating, clickable overlay panel (stays open while hovered).
+    let summaryPanel = null;
+    let summaryPanelTimer = null;
+
+    const hideSummaryPanelNow = () => {
+        if (summaryPanelTimer) {
+            window.clearTimeout(summaryPanelTimer);
+            summaryPanelTimer = null;
+        }
+        if (summaryPanel) {
+            summaryPanel.style.display = 'none';
+        }
+    };
+
+    const scheduleSummaryPanelHide = () => {
+        if (summaryPanelTimer) {
+            window.clearTimeout(summaryPanelTimer);
+        }
+        summaryPanelTimer = window.setTimeout(hideSummaryPanelNow, 250);
+    };
+
+    const ensureSummaryPanel = () => {
+        if (summaryPanel) {
+            return summaryPanel;
+        }
+        summaryPanel = document.createElement('div');
+        summaryPanel.className = 'bookit-summary-panel';
+        summaryPanel.style.display = 'none';
+        summaryPanel.addEventListener('mouseenter', () => {
+            if (summaryPanelTimer) {
+                window.clearTimeout(summaryPanelTimer);
+                summaryPanelTimer = null;
+            }
+        });
+        summaryPanel.addEventListener('mouseleave', scheduleSummaryPanelHide);
+        document.body.appendChild(summaryPanel);
+        return summaryPanel;
+    };
+
+    const showSummaryPanel = (anchorEl, children) => {
+        if (summaryPanelTimer) {
+            window.clearTimeout(summaryPanelTimer);
+            summaryPanelTimer = null;
+        }
+        const panel = ensureSummaryPanel();
+        panel.innerHTML = '';
+        children.forEach((child) => {
+            const row = document.createElement('div');
+            row.className = 'bookit-summary-panel-row';
+            const ts = (child.start || '').slice(11, 16);
+            const te = (child.end || '').slice(11, 16);
+            const time = ts ? (te ? ts + '–' + te : ts) : '';
+            row.textContent = (time ? time + '  ' : '') + (child.title || '');
+            const props = child.extendedProps || {};
+            if (props.visibilitymode === 'reserved_projection') {
+                row.classList.add('bookit-summary-panel-row-disabled');
+            } else {
+                row.addEventListener('click', () => {
+                    hideSummaryPanelNow();
+                    openEditEventModal({
+                        cmid: cmid,
+                        eventid: child.id,
+                        title: editevent,
+                        modalfootermode: props.modalfootermode || 'editable',
+                        reloadOnSubmit: false,
+                        onSubmitted: () => {
+                            calendar.refetchEvents();
+                        },
+                    });
+                });
+            }
+            panel.appendChild(row);
+        });
+        panel.style.display = 'block';
+        const rect = anchorEl.getBoundingClientRect();
+        let left = rect.right + 8 + window.scrollX;
+        let top = rect.top + window.scrollY;
+        const pw = panel.offsetWidth;
+        const viewright = window.scrollX + document.documentElement.clientWidth;
+        if (left + pw > viewright) {
+            left = rect.left + window.scrollX - pw - 8;
+            if (left < window.scrollX) {
+                left = rect.left + window.scrollX;
+                top = rect.bottom + window.scrollY + 8;
+            }
+        }
+        panel.style.left = left + 'px';
+        panel.style.top = top + 'px';
+    };
+
     const calendar = window.EventCalendar.create(document.getElementById('ec'), {
         /* Appearance / behaviour */
         locale: lang,
@@ -354,7 +444,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 modalForm.show();
             }
         },
-
+        
         eventDidMount: function(info) {
             if (!info.event || !info.event.extendedProps || !info.event.extendedProps.issummary) {
                 return;
@@ -368,15 +458,13 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             } catch (e) {
                 children = [];
             }
-            const lines = children.map((c) => {
-                const ts = (c.start || '').slice(11, 16);
-                const te = (c.end || '').slice(11, 16);
-                const time = ts ? (te ? ts + '–' + te : ts) : '';
-                return (time ? time + '  ' : '') + (c.title || '');
-            }).filter(Boolean).join('\n');
-            if (info.el && lines) {
-                info.el.setAttribute('title', lines);
+            if (!info.el || !children.length) {
+                return;
             }
+            info.el.addEventListener('mouseenter', () => {
+                showSummaryPanel(info.el, children);
+            });
+            info.el.addEventListener('mouseleave', scheduleSummaryPanelHide);
         },
 
         /* Event click (edit) */
