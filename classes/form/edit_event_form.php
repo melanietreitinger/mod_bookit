@@ -1222,16 +1222,12 @@ class edit_event_form extends dynamic_form {
                     ? null
                     : (int)$submittedextratimebefore;
             }
-
             if ($submittedextratimeafter !== null) {
                 $submittedextratimeafter = trim((string)$submittedextratimeafter);
                 $formdata->extratimeafter = $submittedextratimeafter === ''
                     ? null
                     : (int)$submittedextratimeafter;
             }
-        }
-
-        $event = bookit_event::from_record($formdata);
 
         $event = bookit_event::from_record($formdata);
         $cmid = (int)$this->optional_param('cmid', 0, PARAM_INT);
