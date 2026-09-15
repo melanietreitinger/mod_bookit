@@ -254,8 +254,8 @@ class settings_calendar_form extends moodleform {
 
         // Global: colour summary/cluster blocks by room instead of a random palette.
         $mform->addElement(
-            'advcheckbox', 
-            'calendar_roomcolors', 
+            'advcheckbox',
+            'calendar_roomcolors',
             get_string('settings_roomcolors_label', 'mod_bookit'),
             get_string('settings_roomcolors_desc', 'mod_bookit')
         );
@@ -288,8 +288,8 @@ class settings_calendar_form extends moodleform {
 
         // Month view (no time overlap in dayGrid).
         $mform->addElement(
-            'header', 
-            'displaymonth', 
+            'header',
+            'displaymonth',
             get_string('settings_display_month', 'mod_bookit')
         );
         $mform->setExpanded('displaymonth', true);

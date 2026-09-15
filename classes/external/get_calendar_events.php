@@ -56,10 +56,10 @@ class get_calendar_events extends external_api {
             'aggregate' => new external_value(PARAM_BOOL, 'Whether to return per-slot summary blocks', VALUE_DEFAULT, false),
             'maxevents' => new external_value(
                 PARAM_INT,
-                'Max events per slot before a "+N more" block (0 = off)', 
-                VALUE_DEFAULT, 
+                'Max events per slot before a "+N more" block (0 = off)',
+                VALUE_DEFAULT,
                 0
-                ),
+            ),
             ]);
     }
 
@@ -139,16 +139,16 @@ class get_calendar_events extends external_api {
     }
 
     /**
-    * Aggregate individual events into per-slot summary blocks.
-    *
-    * Groups events that share the same start and end into one block titled with
-    * the number of exams. The underlying events are embedded as JSON so the client
-    * can expand them inline without a second request. The count reflects the
-    * already-filtered set.
-    *
-    * @param array $events Individual calendar events (read-mapper shape).
-    * @return array Summary blocks (same event shape).
-    */
+     * Aggregate individual events into per-slot summary blocks.
+     *
+     * Groups events that share the same start and end into one block titled with
+     * the number of exams. The underlying events are embedded as JSON so the client
+     * can expand them inline without a second request. The count reflects the
+     * already-filtered set.
+     *
+     * @param array $events Individual calendar events (read-mapper shape).
+     * @return array Summary blocks (same event shape).
+     */
     private static function aggregate_events(array $events): array {
         $groups = [];
         foreach ($events as $event) {
