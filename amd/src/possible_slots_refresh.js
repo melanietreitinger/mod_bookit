@@ -235,7 +235,6 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
 
             saveButton?.before(errorEl);
         }
-
         if (timeEl.value) {
             timeEl.dataset.currentStarttime = timeEl.value;
         }
