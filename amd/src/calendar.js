@@ -170,7 +170,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             raw = Number(config.summary_day) || 0;
         } else if (c === 'timeGridWeek' || c === 'listWeek') {
             raw = Number(config.summary_week) || 0;
-        } else if (c === 'dayGridMonth') { 
+        } else if (c === 'dayGridMonth') {
             raw = Number(config.summary_month) || 0;
         }
         return raw === 2 ? 'hover' : 'click';

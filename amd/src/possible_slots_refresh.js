@@ -142,6 +142,25 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
 
         saveButton?.before(errorEl);
     };
+    const getRequestTimeValues = (
+        currentSelectionValue,
+        extraBefore,
+        extraAfter,
+        parsedExtraBefore,
+        parsedExtraAfter
+    ) => {
+        return {
+            currentstarttime: currentSelectionValue
+                ? parseInt(currentSelectionValue, 10)
+                : 0,
+            extratimebefore: extraBefore === '' || Number.isNaN(parsedExtraBefore)
+                ? -1
+                : parsedExtraBefore,
+            extratimeafter: extraAfter === '' || Number.isNaN(parsedExtraAfter)
+                ? -1
+                : parsedExtraAfter,
+        };
+    };
 
     const refreshStarttimes = async() => {
         const year = parseInt(dateYearEl.value);
@@ -156,6 +175,14 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
 
         const parsedExtraBefore = parseInt(extraBefore, 10);
         const parsedExtraAfter = parseInt(extraAfter, 10);
+
+        const requestTimes = getRequestTimeValues(
+            currentSelectionValue,
+            extraBefore,
+            extraAfter,
+            parsedExtraBefore,
+            parsedExtraAfter
+        );
 
         const {
             slots: starttimes,
@@ -172,18 +199,9 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                 duration: durationEl.value,
                 roomid: roomEl.value,
                 excepteventid: exceptEventId,
-                currentstarttime:
-                    currentSelectionValue
-                        ? parseInt(currentSelectionValue, 10)
-                        : 0,
-                extratimebefore:
-                    extraBefore === '' || Number.isNaN(parsedExtraBefore)
-                        ? -1
-                        : parsedExtraBefore,
-                extratimeafter:
-                    extraAfter === '' || Number.isNaN(parsedExtraAfter)
-                        ? -1
-                        : parsedExtraAfter,
+                currentstarttime: requestTimes.currentstarttime,
+                extratimebefore: requestTimes.extratimebefore,
+                extratimeafter: requestTimes.extratimeafter,
             }
         }])[0];
         const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
