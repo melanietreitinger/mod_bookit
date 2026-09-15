@@ -61,11 +61,11 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
     );
 
     const updateWeekplanValidation = async(
-    beforeoutside,
-    afteroutside,
-    currentSelectionValue,
-    parsedExtraBefore,
-    parsedExtraAfter
+        beforeoutside,
+        afteroutside,
+        currentSelectionValue,
+        parsedExtraBefore,
+        parsedExtraAfter
     ) => {
         const outsideWeekplan = beforeoutside || afteroutside;
 
