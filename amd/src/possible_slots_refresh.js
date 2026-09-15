@@ -60,6 +60,89 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         '.form-control-static[data-name="starttime_explanation"]'
     );
 
+    const updateWeekplanValidation = async(
+    beforeoutside,
+    afteroutside,
+    currentSelectionValue,
+    parsedExtraBefore,
+    parsedExtraAfter
+    ) => {
+        const outsideWeekplan = beforeoutside || afteroutside;
+
+        const errorId = 'bookit-extra-time-weekplan-error';
+        const modalEl = formEl.closest('.modal');
+        const saveButton = modalEl
+            ?.querySelector('.modal-footer [data-action="save"]');
+
+        modalEl?.querySelector('#' + errorId)?.remove();
+
+        if (saveButton) {
+            saveButton.hidden = outsideWeekplan;
+        }
+
+        if (!outsideWeekplan || !currentSelectionValue) {
+            return;
+        }
+
+        let before = parsedExtraBefore;
+        if (Number.isNaN(before)) {
+            before = 0;
+        }
+
+        let after = parsedExtraAfter;
+        if (Number.isNaN(after)) {
+            after = 0;
+        }
+
+        const selectedTimeText = timeEl.options[timeEl.selectedIndex]?.textContent?.trim() ?? '';
+        const match = selectedTimeText.match(/^(\d{1,2}):(\d{2})/);
+
+        let rangeStart = selectedTimeText;
+        let rangeEnd = selectedTimeText;
+
+        if (match) {
+            const startMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+
+            const formatMinutes = (minutes) => {
+                const normalized = ((minutes % 1440) + 1440) % 1440;
+                const hours = Math.floor(normalized / 60);
+                const mins = normalized % 60;
+
+                return String(hours).padStart(2, '0') + ':' +
+                    String(mins).padStart(2, '0');
+            };
+
+            rangeStart = formatMinutes(startMinutes - before);
+            rangeEnd = formatMinutes(
+                startMinutes + parseInt(durationEl.value, 10) + after
+            );
+        }
+
+        let stringKey = 'event_error_weekplan_after';
+
+        if (beforeoutside && afteroutside) {
+            stringKey = 'event_error_weekplan_both';
+        } else if (beforeoutside) {
+            stringKey = 'event_error_weekplan_before';
+        }
+
+        const errorEl = document.createElement('div');
+
+        errorEl.id = errorId;
+        errorEl.className = 'text-danger small me-2';
+
+        errorEl.textContent = await getString(
+            stringKey,
+            'mod_bookit',
+            {
+                start: rangeStart,
+                end: rangeEnd,
+            }
+        );
+
+        saveButton?.before(errorEl);
+    };
+
     const refreshStarttimes = async() => {
         const year = parseInt(dateYearEl.value);
         const month = parseInt(dateMonthEl.value);
@@ -161,78 +244,13 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             return;
         }
 
-        const outsideWeekplan = beforeoutside || afteroutside;
-
-        const errorId = 'bookit-extra-time-weekplan-error';
-        const modalEl = formEl.closest('.modal');
-        const saveButton = modalEl
-            ?.querySelector('.modal-footer [data-action="save"]');
-
-        modalEl?.querySelector('#' + errorId)?.remove();
-
-        if (saveButton) {
-            saveButton.hidden = outsideWeekplan;
-        }
-
-        if (outsideWeekplan && currentSelectionValue) {
-            let before = parsedExtraBefore;
-            if (Number.isNaN(before)) {
-                before = 0;
-            }
-
-            let after = parsedExtraAfter;
-            if (Number.isNaN(after)) {
-                after = 0;
-            }
-
-            const selectedTimeText = timeEl.options[timeEl.selectedIndex]?.textContent?.trim() ?? '';
-            const match = selectedTimeText.match(/^(\d{1,2}):(\d{2})/);
-
-            let rangeStart = selectedTimeText;
-            let rangeEnd = selectedTimeText;
-
-            if (match) {
-                const startMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
-
-                const formatMinutes = (minutes) => {
-                    const normalized = ((minutes % 1440) + 1440) % 1440;
-                    const hours = Math.floor(normalized / 60);
-                    const mins = normalized % 60;
-
-                    return String(hours).padStart(2, '0') + ':' +
-                        String(mins).padStart(2, '0');
-                };
-
-                rangeStart = formatMinutes(startMinutes - before);
-                rangeEnd = formatMinutes(
-                    startMinutes + parseInt(durationEl.value, 10) + after
-                );
-            }
-
-            let stringKey = 'event_error_weekplan_after';
-
-            if (beforeoutside && afteroutside) {
-                stringKey = 'event_error_weekplan_both';
-            } else if (beforeoutside) {
-                stringKey = 'event_error_weekplan_before';
-            }
-
-            const errorEl = document.createElement('div');
-
-            errorEl.id = errorId;
-            errorEl.className = 'text-danger small me-2';
-
-            errorEl.textContent = await getString(
-                stringKey,
-                'mod_bookit',
-                {
-                    start: rangeStart,
-                    end: rangeEnd,
-                }
-            );
-
-            saveButton?.before(errorEl);
-        }
+        await updateWeekplanValidation(
+            beforeoutside,
+            afteroutside,
+            currentSelectionValue,
+            parsedExtraBefore,
+            parsedExtraAfter
+        );
         if (timeEl.value) {
             timeEl.dataset.currentStarttime = timeEl.value;
         }
