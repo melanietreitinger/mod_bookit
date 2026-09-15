@@ -54,7 +54,13 @@ class get_calendar_events extends external_api {
             'search' => new external_value(PARAM_RAW_TRIMMED, 'Free-text search', VALUE_DEFAULT, ''),
             'exportmode' => new external_value(PARAM_BOOL, 'Whether export preview consumes the read', VALUE_DEFAULT, false),
             'aggregate' => new external_value(PARAM_BOOL, 'Whether to return per-slot summary blocks', VALUE_DEFAULT, false),
-            'maxevents' => new external_value(PARAM_INT, 'Max events per slot before a "+N more" block (0 = off)', VALUE_DEFAULT, 0),        ]);
+            'maxevents' => new external_value(
+                PARAM_INT,
+                'Max events per slot before a "+N more" block (0 = off)', 
+                VALUE_DEFAULT, 
+                0
+                ),
+            ]);
     }
 
     /**
@@ -68,6 +74,8 @@ class get_calendar_events extends external_api {
      * @param array $bookingstatuses
      * @param string $search
      * @param bool $exportmode
+     * @param bool $aggregate
+     * @param int $maxevents
      * @return array
      */
     public static function execute(
@@ -115,8 +123,8 @@ class get_calendar_events extends external_api {
             $filters['start'],
             $filters['end'],
             $filters
-               );
-               
+        );
+
         if ($params['aggregate'] && !empty($events)) {
             $events = self::aggregate_events($events);
         } else if ($params['maxevents'] > 0 && !empty($events)) {
@@ -130,17 +138,17 @@ class get_calendar_events extends external_api {
         ) + ['events' => $events];
     }
 
-      /**
-     * Aggregate individual events into per-slot summary blocks.
-     *
-     * Groups events that share the same start and end into one block titled with
-     * the number of exams. The underlying events are embedded as JSON so the client
-     * can expand them inline without a second request. The count reflects the
-     * already-filtered set.
-     *
-     * @param array $events Individual calendar events (read-mapper shape).
-     * @return array Summary blocks (same event shape).
-     */
+    /**
+    * Aggregate individual events into per-slot summary blocks.
+    *
+    * Groups events that share the same start and end into one block titled with
+    * the number of exams. The underlying events are embedded as JSON so the client
+    * can expand them inline without a second request. The count reflects the
+    * already-filtered set.
+    *
+    * @param array $events Individual calendar events (read-mapper shape).
+    * @return array Summary blocks (same event shape).
+    */
     private static function aggregate_events(array $events): array {
         $groups = [];
         foreach ($events as $event) {
@@ -178,8 +186,6 @@ class get_calendar_events extends external_api {
                 'end' => $gend,
                 'backgroundColor' => $bg,
                 'textColor' => $txt,
-
-
                 'classNames' => ['bookit-summary-event'],
                 'extendedProps' => [
                     'titlehtml' => $label,
@@ -312,7 +318,11 @@ class get_calendar_events extends external_api {
                     ], 'Faculty metadata', VALUE_OPTIONAL),
                     'issummary' => new external_value(PARAM_BOOL, 'Whether this is an aggregated summary block', VALUE_OPTIONAL),
                     'summarycount' => new external_value(PARAM_INT, 'Number of exams in the summary slot', VALUE_OPTIONAL),
-                    'childrenjson' => new external_value(PARAM_RAW, 'JSON of underlying events for inline expansion', VALUE_OPTIONAL),
+                    'childrenjson' => new external_value(
+                        PARAM_RAW,
+                        'JSON of underlying events for inline expansion',
+                        VALUE_OPTIONAL
+                    ),
                 ]),
             ])),
         ]);

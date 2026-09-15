@@ -174,8 +174,8 @@ class ics_exporter {
                 . ': ' . $ev->technicalneeds;
         }
         if (!empty($ev->participantsamount)) {
-    $descrrows[] = get_string('exportevents_ics_participants', 'mod_bookit')
-        . ': ' . $ev->participantsamount;
+            $descrrows[] = get_string('exportevents_ics_participants', 'mod_bookit')
+                . ': ' . $ev->participantsamount;
         }
 
         if (!empty($ev->bookingurl)) {

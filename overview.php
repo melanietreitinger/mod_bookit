@@ -236,17 +236,17 @@ if (!$canviewrequestworkspace) {
     $initialsortcolumn = $sortpreference['column'];
     $initialsortdirection = $sortpreference['direction'];
 
-  // Initialise sorting with the saved or default user preference.
-$PAGE->requires->js_call_amd(
-    'mod_bookit/overview/my_booked_events',
-    'init',
-    [
-        $tableid,
-        $sortpreferencekey,
-        $initialsortcolumn,
-        $initialsortdirection,
-    ]
-);
+    // Initialise sorting with the saved or default user preference.
+    $PAGE->requires->js_call_amd(
+        'mod_bookit/overview/my_booked_events',
+        'init',
+        [
+            $tableid,
+            $sortpreferencekey,
+            $initialsortcolumn,
+            $initialsortdirection,
+        ]
+    );
 }
 
 /* ----- inline ModalForm handler -------------------------------------- */

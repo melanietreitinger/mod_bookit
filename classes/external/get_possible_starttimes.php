@@ -103,7 +103,7 @@ class get_possible_starttimes extends external_api {
                     'Submitted extra time after',
                     VALUE_DEFAULT,
                     -1
-                ),     
+                ),
         ]);
     }
 
@@ -291,19 +291,19 @@ class get_possible_starttimes extends external_api {
     }
 
     /**
-    * Execution for get_possible_slots external api.
-    *
-    * @param int $cmid
-    * @param int $year
-    * @param int $month
-    * @param int $day
-    * @param int $duration
-    * @param int $roomid
+     * Execution for get_possible_slots external api.
+     *
+     * @param int $cmid
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @param int $duration
+     * @param int $roomid
      * @param ?int $excepteventid Optionally, an eventid to exclude from the blocking events.
-    * @param int $currentstarttime Currently selected event start timestamp.
-    * @param int $extratimebefore Submitted extra time before, or -1 when unchanged.
-    * @param int $extratimeafter Submitted extra time after, or -1 when unchanged.
-    * @return array
+     * @param int $currentstarttime Currently selected event start timestamp.
+     * @param int $extratimebefore Submitted extra time before, or -1 when unchanged.
+     * @param int $extratimeafter Submitted extra time after, or -1 when unchanged.
+     * @return array
      */
     public static function execute(
         int $cmid,
@@ -334,7 +334,6 @@ class get_possible_starttimes extends external_api {
             'month' => $month,
             'day' => $day,
             'duration' => $duration,
-            'roomid' => $roomid,
             'roomid' => $roomid,
             'excepteventid' => $excepteventid,
             'currentstarttime' => $currentstarttime,

@@ -139,7 +139,7 @@ foreach (['day', 'week', 'month'] as $lv) {
 }
 
 
-// Inject allowed weekdays for JS. 
+// Inject allowed weekdays for JS.
 $PAGE->requires->js_init_code(
     'M.cfg.bookit_allowedweekdays = [' . implode(',', bookit_allowed_weekdays()) . '];'
 );

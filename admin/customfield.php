@@ -45,10 +45,7 @@ $managepage = new \core_customfield\output\management($handler);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('customfields', 'mod_bookit'));
-
 $renderer = $PAGE->get_renderer('mod_bookit');
 echo $renderer->tabs(tabs::get_tabrow($context), 'customfields');
-
 echo $output->render($managepage);
-
 echo $OUTPUT->footer();

@@ -299,7 +299,6 @@ class edit_event_form extends dynamic_form {
         } else {
             $starttimearray['startyear'] = $thisyear;
         }
-        
         $starttimearray['stopyear'] = $eventmaxyear;
         $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('startdate', 'editevent', 'neq');
@@ -1154,8 +1153,6 @@ class edit_event_form extends dynamic_form {
             }
         }
 
-   
-
         if ($currentevent && !$caneditinternal) {
             // Support with notes-gate may update supportpersons; other internal fields stay locked.
             if (!$caneditinternalnotes) {
@@ -1168,7 +1165,6 @@ class edit_event_form extends dynamic_form {
                 $formdata->bookingstatus = $currentevent->bookingstatus;
             }
         }
-
         if ($currentevent && !$caneditinternalnotes) {
             $formdata->internalnotes = $currentevent->internalnotes;
         }
@@ -1211,7 +1207,7 @@ class edit_event_form extends dynamic_form {
             }
         }
 
-        # Bugfix for Issue 222 - robust handling of the strings. 
+        // Bugfix for Issue 222 - robust handling of the strings.
         if ($caneditinternal) {
             $submittedextratimebefore = $this->optional_param('extratimebefore', null, PARAM_RAW);
             $submittedextratimeafter = $this->optional_param('extratimeafter', null, PARAM_RAW);
@@ -1271,7 +1267,7 @@ class edit_event_form extends dynamic_form {
     }
 
     /**
-     * Resolve resource 
+     * Resolve resource
      * @param stdClass $formdata Submitted form data
      * @param bool $resourcesenabled Whether the resources module is enabled
      * @param bool $caneditpublic Whether public event fields may be edited
@@ -1690,7 +1686,6 @@ class edit_event_form extends dynamic_form {
             isset($data['otherexaminers']) ? (string)$data['otherexaminers'] : null,
             $legacyexaminerids
         );
-        
         foreach ($poolerrors as $fieldname => $message) {
             $errors[$fieldname] = $message;
         }

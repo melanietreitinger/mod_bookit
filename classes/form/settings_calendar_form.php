@@ -72,7 +72,7 @@ class settings_calendar_form extends moodleform {
         // Default: Mon-Fri is selected.
         $mform->getElement('weekdaysvisible')->setSelected([1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5]);
 
-        // Min / max selectable year relative to the current year (Implements #211)
+        // Min / max selectable year relative to the current year (Implements #211).
         $yearlistmin = [
             0 => get_string('settings_eventyear_current', 'mod_bookit'),
             -1 => get_string('settings_eventyear_minus1', 'mod_bookit'),
@@ -93,9 +93,7 @@ class settings_calendar_form extends moodleform {
                 get_string('settings_eventminyear_desc', 'mod_bookit'),
             $yearlistmin,
         );
-
         $mform->getElement('eventminyear')->setSelected(-1);
-        
         // Maximum year to select, default next year (service-team only).
         $mform->addElement(
             'select',
@@ -173,20 +171,20 @@ class settings_calendar_form extends moodleform {
         $mform->getElement('extratimeafter')->setValue(15);
 
         $na = \html_writer::span(get_string('settings_display_na', 'mod_bookit'), 'text-muted');
-        $cfg = function($key, $default) {
+        $cfg = function ($key, $default) {
             $v = get_config('mod_bookit', $key);
             return ($v === false || $v === '') ? $default : (int)$v;
         };
-        $ovl = function($v) {
+        $ovl = function ($v) {
             return get_string($v ? 'settings_val_overlapping' : 'settings_val_separated', 'mod_bookit');
         };
-        $sum = function($v) {
+        $sum = function ($v) {
             return $v ? get_string('yes') : get_string('no');
         };
-        $mx = function($v) {
+        $mx = function ($v) {
             return $v > 0 ? (string)$v : '–';
         };
-        $lay = function($v) {
+        $lay = function ($v) {
             return get_string($v ? 'settings_val_vertical' : 'settings_val_horizontal', 'mod_bookit');
         };
 
@@ -253,11 +251,14 @@ class settings_calendar_form extends moodleform {
             0 => get_string('settings_layout_horizontal', 'mod_bookit'),
             1 => get_string('settings_layout_vertical', 'mod_bookit'),
         ];
-        // Day view.
-      
-                // Global: colour summary/cluster blocks by room instead of a random palette.
-        $mform->addElement('advcheckbox', 'calendar_roomcolors', get_string('settings_roomcolors_label', 'mod_bookit'),
-            get_string('settings_roomcolors_desc', 'mod_bookit'));
+
+        // Global: colour summary/cluster blocks by room instead of a random palette.
+        $mform->addElement(
+            'advcheckbox', 
+            'calendar_roomcolors', 
+            get_string('settings_roomcolors_label', 'mod_bookit'),
+            get_string('settings_roomcolors_desc', 'mod_bookit')
+        );
         $mform->setDefault('calendar_roomcolors', 0);
         // Day view.
         $mform->addElement('header', 'displayday', get_string('settings_display_day', 'mod_bookit'));
@@ -284,19 +285,41 @@ class settings_calendar_form extends moodleform {
         $mform->getElement('maxevents_week')->setValue(0);
         $mform->addElement('select', 'layout_week', get_string('settings_layout_label', 'mod_bookit'), $layoutchoices);
         $mform->getElement('layout_week')->setSelected(0);
-        
+
         // Month view (no time overlap in dayGrid).
-        $mform->addElement('header', 'displaymonth', get_string('settings_display_month', 'mod_bookit'));
+        $mform->addElement(
+            'header', 
+            'displaymonth', 
+            get_string('settings_display_month', 'mod_bookit')
+        );
         $mform->setExpanded('displaymonth', true);
-        $mform->addElement('static', 'overlap_month_na', get_string('settings_overlap_label', 'mod_bookit'),
-            get_string('settings_display_na', 'mod_bookit'));
-        $mform->addElement('select', 'summary_month', get_string('settings_summary_label', 'mod_bookit'), $summarychoices);
+        $mform->addElement(
+            'static',
+            'overlap_month_na',
+            get_string('settings_overlap_label', 'mod_bookit'),
+            get_string('settings_display_na', 'mod_bookit')
+        );
+        $mform->addElement(
+            'select',
+            'summary_month',
+            get_string('settings_summary_label', 'mod_bookit'),
+            $summarychoices
+        );
         $mform->getElement('summary_month')->setSelected(0);
-        $mform->addElement('text', 'maxevents_month', get_string('settings_maxevents_label', 'mod_bookit'), ['size' => 4]);
+        $mform->addElement(
+            'text',
+            'maxevents_month',
+            get_string('settings_maxevents_label', 'mod_bookit'),
+            ['size' => 4]
+        );
         $mform->setType('maxevents_month', PARAM_INT);
         $mform->getElement('maxevents_month')->setValue(0);
-        $mform->addElement('static', 'layout_month_na', get_string('settings_layout_label', 'mod_bookit'),
-        get_string('settings_display_na', 'mod_bookit'));
+        $mform->addElement(
+            'static',
+            'layout_month_na',
+            get_string('settings_layout_label', 'mod_bookit'),
+            get_string('settings_display_na', 'mod_bookit')
+        );
         $this->add_action_buttons();
     }
 }

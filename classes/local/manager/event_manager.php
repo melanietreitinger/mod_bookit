@@ -2151,7 +2151,7 @@ class event_manager {
             $roominfo .= ': ' . implode(', ', $addinfos);
         }
 
-        # Implementation of #213: Room is displayed too now. 
+        // Implementation of #213: Room is displayed too now.
         $title = $observerrestricted
             ? get_string('event_reserved', 'mod_bookit') . " ($roominfo)"
             : $record->name . " ($roominfo)";

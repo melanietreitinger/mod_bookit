@@ -60,7 +60,7 @@ if ($mform->is_cancelled()) {
     }
 }
 
-# Implementation of dynamic year selection #211. 
+// Implementation of dynamic year selection #211.
 $config = get_config('mod_bookit');
 $thisyear = (int)date('Y');
 if (isset($config->eventminyear) && abs((int)$config->eventminyear) > 2) {
