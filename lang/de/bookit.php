@@ -615,3 +615,6 @@ $string['settings_roomcolors_label'] = 'Summary-Blöcke nach Raumfarbe';
 $string['settings_roomcolors_desc'] = 'Wenn alle Prüfungen eines Slots denselben Raum haben, den Summary-Block in der Raumfarbe einfärben statt in einer Palettenfarbe.';
 $string['settings_summary_hover'] = 'An — „N Prüfungen" pro Slot, Details bei Mouseover';
 $string['customfields'] = 'Eigene Buchungsfelder';
+$string['event_error_weekplan_before'] = 'Der Termin von {$a->start}–{$a->end} kann nicht gespeichert werden: {$a->start} liegt außerhalb aller verfügbaren Wochenplan-Slots.';
+$string['event_error_weekplan_after'] = 'Der Termin von {$a->start}–{$a->end} kann nicht gespeichert werden: {$a->end} liegt außerhalb aller verfügbaren Wochenplan-Slots.';
+$string['event_error_weekplan_both'] = 'Der Termin von {$a->start}–{$a->end} kann nicht gespeichert werden: {$a->start} und {$a->end} liegen außerhalb aller verfügbaren Wochenplan-Slots.';

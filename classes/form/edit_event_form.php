@@ -1228,7 +1228,7 @@ class edit_event_form extends dynamic_form {
                     ? null
                     : (int)$submittedextratimeafter;
             }
-
+        }
         $event = bookit_event::from_record($formdata);
         $cmid = (int)$this->optional_param('cmid', 0, PARAM_INT);
         $persistedevent = event_manager::save_event_with_lifecycle_tracking(
@@ -1271,8 +1271,7 @@ class edit_event_form extends dynamic_form {
     }
 
     /**
-     * Resolve resource mappings for save from form submission and permission context.
-     *
+     * Resolve resource 
      * @param stdClass $formdata Submitted form data
      * @param bool $resourcesenabled Whether the resources module is enabled
      * @param bool $caneditpublic Whether public event fields may be edited

@@ -629,3 +629,6 @@ $string['settings_roomcolors_label'] = 'Colour summary blocks by room';
 $string['settings_roomcolors_desc'] = 'When all exams in a slot share a room, colour the summary block with that room\'s colour instead of a palette colour.';
 $string['settings_summary_hover'] = 'On — show "N exams" per slot, details on hover';
 $string['customfields'] = 'Custom booking fields';
+$string['event_error_weekplan_before'] = 'Cannot save event from {$a->start}–{$a->end}: {$a->start} is outside of any available weekplan slot.';
+$string['event_error_weekplan_after'] = 'Cannot save event from {$a->start}–{$a->end}: {$a->end} is outside of any available weekplan slot.';
+$string['event_error_weekplan_both'] = 'Cannot save event from {$a->start}–{$a->end}: {$a->start} and {$a->end} are outside of any available weekplan slot.';
