@@ -97,18 +97,26 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     const layoutView = (logical) => {
         const key = 'layout_' + logical;
         const vertical = Object.prototype.hasOwnProperty.call(config, key) && Number(config[key]) !== 0;
-        if (logical === 'day') { return vertical ? 'dayGridDay' : 'timeGridDay'; }
-        if (logical === 'week') { return vertical ? 'dayGridWeek' : 'timeGridWeek'; }
+        if (logical === 'day') {
+            return vertical ? 'dayGridDay' : 'timeGridDay';
+        }
+        if (logical === 'week') {
+            return vertical ? 'dayGridWeek' : 'timeGridWeek';
+        }
         return 'dayGridMonth';
     };
     const dayViewType = layoutView('day');
     const weekViewType = layoutView('week');
     const monthViewType = layoutView('month');
 
-    // day-grid day/week map to their time-grid key for summary/max-events lookups.
+    // Day-grid day/week map to their time-grid key for summary/max-events lookups.
     const canonicalView = (viewtype) => {
-        if (viewtype === 'dayGridDay') { return 'timeGridDay'; }
-        if (viewtype === 'dayGridWeek') { return 'timeGridWeek'; }
+        if (viewtype === 'dayGridDay') {
+            return 'timeGridDay';
+        }
+        if (viewtype === 'dayGridWeek') {
+            return 'timeGridWeek';
+        }
         return viewtype;
     };
 
@@ -136,15 +144,20 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     // Max events per slot before a "+N more" block (0 = off), per view.
     const maxEventsFor = (viewtype) => {
         let key = null;
-        if (viewtype === 'timeGridDay') { key = 'maxevents_day'; }
-        if (viewtype === 'timeGridWeek' || viewtype === 'listWeek') { key = 'maxevents_week'; }
-        if (viewtype === 'dayGridMonth') { key = 'maxevents_month'; }
+        if (viewtype === 'timeGridDay') {
+            key = 'maxevents_day';
+        }
+        if (viewtype === 'timeGridWeek' || viewtype === 'listWeek') {
+            key = 'maxevents_week';
+        }
+        if (viewtype === 'dayGridMonth') {
+            key = 'maxevents_month';
+        }
         if (key && Object.prototype.hasOwnProperty.call(config, key)) {
             return Number(config[key]) || 0;
         }
         return 0;
     };
-    
     if (summaryDay || summaryWeek || summaryMonth) {
         toolbarbuttons += ' collapseButton';
     }
@@ -153,9 +166,15 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     const summaryModeFor = (viewtype) => {
         const c = canonicalView(viewtype);
         let raw = 0;
-        if (c === 'timeGridDay') { raw = Number(config.summary_day) || 0; }
-        else if (c === 'timeGridWeek' || c === 'listWeek') { raw = Number(config.summary_week) || 0; }
-        else if (c === 'dayGridMonth') { raw = Number(config.summary_month) || 0; }
+        if (c === 'timeGridDay') {
+            raw = Number(config.summary_day) || 0;
+        }
+        else if (c === 'timeGridWeek' || c === 'listWeek') {
+            raw = Number(config.summary_week) || 0;
+        }
+        else if (c === 'dayGridMonth') { 
+            raw = Number(config.summary_month) || 0;
+        }
         return raw === 2 ? 'hover' : 'click';
     };
     let currentSummaryMode = summaryModeFor(viewType);
@@ -273,8 +292,19 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             row.className = 'bookit-summary-panel-row';
             const ts = (child.start || '').slice(11, 16);
             const te = (child.end || '').slice(11, 16);
-            const time = ts ? (te ? ts + '–' + te : ts) : '';
-            row.textContent = (time ? time + '  ' : '') + (child.title || '');
+            let time = '';
+            if (ts) {
+                time = ts;
+                if (te) {
+                    time += '–' + te;
+                }
+            }
+            let rowText = child.title || '';
+            if (time) {
+                rowText = time + '  ' + rowText;
+            }
+            row.textContent = rowText;
+
             const props = child.extendedProps || {};
             if (props.visibilitymode === 'reserved_projection') {
                 row.classList.add('bookit-summary-panel-row-disabled');
@@ -322,8 +352,8 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         slotMinTime: '07:00:00',
         dayMaxEvents: false,
         lazyFetching: false,
-                eventOrder: (a, b) => (a.start - b.start) || (a.end - b.end),
-        
+        eventOrder: (a, b) => (a.start - b.start) || (a.end - b.end),
+
         viewDidMount: function(info) {
             const ec = document.getElementById('ec');
             if (!ec) {
@@ -342,7 +372,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             ec.classList.toggle('bookit-separated', separated);
             currentSummaryMode = summaryModeFor(type);
         },
-        
+
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,
@@ -394,7 +424,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 }
             },
             addButton: {
-                text: strRequestBooking,    
+                text: strRequestBooking,
                 click: function() {
                     const modalForm = new ModalForm({
                         formClass: 'mod_bookit\\form\\edit_event_form',
@@ -444,7 +474,6 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 modalForm.show();
             }
         },
-        
         eventDidMount: function(info) {
             if (!info.event || !info.event.extendedProps || !info.event.extendedProps.issummary) {
                 return;
@@ -532,7 +561,6 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 resources: []
             }
         }
-        
     });
 
     window.bookitCalendar = calendar;

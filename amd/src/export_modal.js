@@ -1,4 +1,5 @@
-define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Ajax, Notification, str) {
+define(['jquery', 'core/ajax', 'core/notification', 'core/str'], 
+    function($, Ajax, Notification, str) {
     return {
         init: function(readConfig) {
             const cmId = Number(readConfig.cmid || 0);

@@ -103,8 +103,6 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                         : parsedExtraAfter,
             }
         }])[0];
-        
-        
         const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
         const preserveCurrentStarttime = exceptEventId !== null && currentSelectionValue !== '';
 
@@ -177,15 +175,15 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         }
 
         if (outsideWeekplan && currentSelectionValue) {
-            const start = parseInt(currentSelectionValue, 10);
-            const before = Number.isNaN(parsedExtraBefore)
-                ? 0
-                : parsedExtraBefore;
-            const after = Number.isNaN(parsedExtraAfter)
-                ? 0
-                : parsedExtraAfter;
+            let before = parsedExtraBefore;
+            if (Number.isNaN(before)) {
+                before = 0;
+            }
 
-            const end = start + parseInt(durationEl.value, 10) * 60;
+            let after = parsedExtraAfter;
+            if (Number.isNaN(after)) {
+                after = 0;
+            }
 
             const selectedTimeText = timeEl.options[timeEl.selectedIndex]?.textContent?.trim() ?? '';
             const match = selectedTimeText.match(/^(\d{1,2}):(\d{2})/);
@@ -211,13 +209,13 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                 );
             }
 
-            const stringKey = beforeoutside && afteroutside
-                ? 'event_error_weekplan_both'
-                : (
-                    beforeoutside
-                        ? 'event_error_weekplan_before'
-                        : 'event_error_weekplan_after'
-                );
+            let stringKey = 'event_error_weekplan_after';
+
+            if (beforeoutside && afteroutside) {
+                stringKey = 'event_error_weekplan_both';
+            } else if (beforeoutside) {
+                stringKey = 'event_error_weekplan_before';
+            }
 
             const errorEl = document.createElement('div');
 
@@ -252,6 +250,5 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
     ]) {
         el?.addEventListener('change', refreshStarttimes);
     }
-    
     void refreshStarttimes();
 }
