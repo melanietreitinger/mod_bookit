@@ -1154,13 +1154,7 @@ class edit_event_form extends dynamic_form {
             }
         }
 
-        if (!is_int($formdata->extratimebefore)) {
-            $formdata->extratimebefore = null;
-        }
-
-        if (!is_int($formdata->extratimeafter)) {
-            $formdata->extratimeafter = null;
-        }
+   
 
         if ($currentevent && !$caneditinternal) {
             // Support with notes-gate may update supportpersons; other internal fields stay locked.
@@ -1216,6 +1210,28 @@ class edit_event_form extends dynamic_form {
                 $formdata->bookingstatus = $requestedstatus;
             }
         }
+
+        # Bugfix for Issue 222 - robust handling of the strings. 
+        if ($caneditinternal) {
+            $submittedextratimebefore = $this->optional_param('extratimebefore', null, PARAM_RAW);
+            $submittedextratimeafter = $this->optional_param('extratimeafter', null, PARAM_RAW);
+
+            if ($submittedextratimebefore !== null) {
+                $submittedextratimebefore = trim((string)$submittedextratimebefore);
+                $formdata->extratimebefore = $submittedextratimebefore === ''
+                    ? null
+                    : (int)$submittedextratimebefore;
+            }
+
+            if ($submittedextratimeafter !== null) {
+                $submittedextratimeafter = trim((string)$submittedextratimeafter);
+                $formdata->extratimeafter = $submittedextratimeafter === ''
+                    ? null
+                    : (int)$submittedextratimeafter;
+            }
+        }
+
+        $event = bookit_event::from_record($formdata);
 
         $event = bookit_event::from_record($formdata);
         $cmid = (int)$this->optional_param('cmid', 0, PARAM_INT);

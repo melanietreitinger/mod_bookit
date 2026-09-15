@@ -151,8 +151,7 @@ class get_possible_starttimes extends external_api {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
 
         $extratimebefore = $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore');
-        $extratimeafter = $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimebefore');
-
+        $extratimeafter = $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter');
         $timestamp = $date->getTimestamp();
 
         $weekplanid = weekplan_room::get_applicable_weekplanid($timestamp, $roomid);
