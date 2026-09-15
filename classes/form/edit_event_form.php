@@ -1099,6 +1099,16 @@ class edit_event_form extends dynamic_form {
             $formdata->duration = (int)$resolvedduration;
             // Calculate endtime.
             $formdata->endtime = $formdata->starttime + $formdata->duration * 60;
+
+            // Ensure that bookings always have a semester, even when the semester
+            // field is disabled in the booking form.
+            if (empty($formdata->semester)) {
+                if ($currentevent && !empty($currentevent->semester)) {
+                    $formdata->semester = $currentevent->semester;
+                } else {
+                    $formdata->semester = event_manager::get_current_semester($formdata->starttime);
+                }
+            }
         } else if ($currentevent) {
             $formdata->starttime = $currentevent->starttime;
             $formdata->endtime = $currentevent->endtime;

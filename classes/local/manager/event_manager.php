@@ -718,7 +718,9 @@ class event_manager {
             $end = (new DateTime())->setTimestamp(usergetmidnight($timestamp))->setTime(23, 59, 59)->getTimestamp();
         } else if ($serviceteam) {
             $start = usergetmidnight($timestamp);
-            $end = $yearend;
+            // Extend beyond the current calendar year so next-year exam bookings
+            // (which routinely cross the year boundary) stay visible by default (#222).
+            $end = (new DateTime())->setDate($year + 1, 12, 31)->setTime(23, 59, 59)->getTimestamp();
         } else {
             $start = $yearstart;
             $end = $yearend;
