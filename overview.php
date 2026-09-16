@@ -117,15 +117,13 @@ if (!empty($filterprofile['show_assignment_filter'])) {
     }
 }
 if ($showreportfilters) {
-    $selectedsemesterids = ($canviewrequestworkspace && !$hasexplicitsemesterfilter)
-        ? []
-        : event_manager::resolve_effective_semester_filter_ids(
-            $selectedsemesterids,
-            $hasexplicitsemesterfilter
-        );
+    $selectedsemesterids = event_manager::resolve_effective_semester_filter_ids(
+        $selectedsemesterids,
+        $hasexplicitsemesterfilter
+    );
 
     $semesterrange = event_manager::get_semester_date_range($selectedsemesterids);
-
+    
     if ($semesterrange !== null) {
         if (!$hasexplicitreportstart) {
             $defaultreportstart = $semesterrange[0];

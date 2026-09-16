@@ -113,7 +113,7 @@ export const init = (tableId, preferenceKey, initialColumn, initialDirection) =>
 
         const arrow = document.createElement('span');
         arrow.className = 'bookit-sort-arrow';
-        arrow.textContent = direction === 'asc' ? ' ↑' : ' ↓';
+        arrow.textContent = direction === 'asc' ? ' ▲' : ' ▼';
         header.appendChild(arrow);
         header.setAttribute(
             'aria-sort',

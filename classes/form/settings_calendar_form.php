@@ -77,7 +77,7 @@ class settings_calendar_form extends moodleform {
             1 => get_string('settings_slotdisplay_weekplans', 'mod_bookit'),
         ];
 
-                $mform->addElement(
+        $mform->addElement(
             'select',
             'calendar_slotdisplay',
             get_string('settings_slotdisplay_label', 'mod_bookit') . '<br>' .
