@@ -48,7 +48,6 @@ $mform = new settings_calendar_form();
 // Standard form processing if statement.
 if ($mform->is_cancelled()) {
     redirect($returnurl);
-    // Fix for #211: The Code should not store the configuration in the database because of caching.
 } else if ($data = $mform->get_data()) {
     unset($data->submitbutton);
     foreach ($data as $key => $value) {
@@ -60,15 +59,7 @@ if ($mform->is_cancelled()) {
     }
 }
 
-// Implementation of dynamic year selection #211.
 $config = get_config('mod_bookit');
-$thisyear = (int)date('Y');
-if (isset($config->eventminyear) && abs((int)$config->eventminyear) > 2) {
-    $config->eventminyear = max(-2, min(0, (int)$config->eventminyear - $thisyear));
-}
-if (isset($config->eventmaxyear) && abs((int)$config->eventmaxyear) > 2) {
-    $config->eventmaxyear = max(0, min(2, (int)$config->eventmaxyear - $thisyear));
-}
 $mform->set_data($config);
 
 echo $OUTPUT->header();
