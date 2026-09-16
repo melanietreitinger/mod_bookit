@@ -454,8 +454,14 @@ class edit_event_form extends dynamic_form {
             $mform->setType('notes', PARAM_TEXT);
         }
         // Admin-configurable custom fields (#97) — appended to the public fields.
-        \mod_bookit\customfield\event_handler::create()->instance_form_definition($mform, (int)$eventid);
-
+        $customfieldhandler = \mod_bookit\customfield\event_handler::create();
+        $customfieldhandler->instance_form_definition($mform, (int)$eventid);
+        foreach ($customfieldhandler->get_instance_data((int)$eventid, true) as $customfielddata) {
+            $elementname = $customfielddata->get_form_element_name();
+            if ($mform->elementExists($elementname)) {
+                $mform->disabledIf($elementname, 'editevent', 'neq');
+            }
+        }
         // Internal fields.
         if ($caneditinternal || $canviewrestrictedfields) {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
