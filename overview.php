@@ -123,7 +123,7 @@ if ($showreportfilters) {
     );
 
     $semesterrange = event_manager::get_semester_date_range($selectedsemesterids);
-    
+
     if ($semesterrange !== null) {
         if (!$hasexplicitreportstart) {
             $defaultreportstart = $semesterrange[0];
