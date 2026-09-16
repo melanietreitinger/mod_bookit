@@ -674,8 +674,8 @@
 .bookit-separated .ec-event.bookit-bookingstatus-1,
 .bookit-separated .ec-event.bookit-bookingstatus-3,
 .bookit-separated .ec-event.bookit-bookingstatus-4 {
-    opacity: 1 !important; /*TODO: find better solution */
-    border-style: solid !important;
+    opacity: 1; /*TODO: find better solution */
+    border-style: solid;
 }
 
 
