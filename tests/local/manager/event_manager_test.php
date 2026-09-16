@@ -949,7 +949,7 @@ final class event_manager_test extends advanced_testcase {
         $this->assertCount(1, $events);
         $this->assert_is_canonical_calendar_event($events[0]);
         $this->assertSame($acceptedid, (int)$events[0]['id']);
-        $this->assertSame('Reserved', $events[0]['title']);
+        $this->assertSame('Reserved (All rooms)', $events[0]['title']);
         $this->assertSame('reserved_projection', $events[0]['extendedProps']['visibilitymode']);
     }
 
