@@ -175,3 +175,19 @@ function bookit_allowed_weekdays(): array {
     }
     return array_map('intval', array_filter(explode(',', $raw), 'strlen'));
 }
+
+/**
+ * Allow the "My booked events" overview sort order to be saved as a user preference.
+ *
+ * @return array
+ */
+function mod_bookit_user_preferences() {
+    return [
+        'mod_bookit_overview_sort' => [
+            'type' => PARAM_RAW,
+            'null' => NULL_NOT_ALLOWED,
+            'default' => '',
+            'permissioncallback' => [\core_user::class, 'is_current_user'],
+        ],
+    ];
+}

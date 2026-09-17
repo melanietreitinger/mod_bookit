@@ -204,17 +204,47 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/styles.css'));
 $PAGE->requires->jquery();
 
 if (!$canviewrequestworkspace) {
-    // Participant overviews retain their existing page-local search, but no custom sorting.
-    $PAGE->requires->js_init_code("
-        require(['jquery'], function($) {
-            $('#bookit-filter').on('keyup', function () {
-                const val = $(this).val().toLowerCase();
-                $('#{$tableid} tbody tr').each(function () {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(val) !== -1);
-                });
-            });
-        });
-    ");
+    // Store the selected sort order as a Moodle user preference.
+    $sortpreferencekey = 'mod_bookit_overview_sort';
+    $sortpreference = json_decode(
+        (string)get_user_preferences($sortpreferencekey, ''),
+        true
+    );
+
+    $allowedsortcolumns = [
+        'starttime',
+        'title',
+        'room',
+        'personincharge',
+        'myrole',
+    ];
+
+    // Fall back to the default: newest bookings first.
+    if (
+        !is_array($sortpreference)
+        || !in_array($sortpreference['column'] ?? '', $allowedsortcolumns, true)
+        || !in_array($sortpreference['direction'] ?? '', ['asc', 'desc'], true)
+    ) {
+        $sortpreference = [
+            'column' => 'starttime',
+            'direction' => 'desc',
+        ];
+    }
+
+    $initialsortcolumn = $sortpreference['column'];
+    $initialsortdirection = $sortpreference['direction'];
+
+    // Initialise sorting with the saved or default user preference.
+    $PAGE->requires->js_call_amd(
+        'mod_bookit/overview/my_booked_events',
+        'init',
+        [
+            $tableid,
+            $sortpreferencekey,
+            $initialsortcolumn,
+            $initialsortdirection,
+        ]
+    );
 }
 
 /* ----- inline ModalForm handler -------------------------------------- */
@@ -222,6 +252,13 @@ $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/semester_date_sync', 'init');
 
+if (!$isobserverrestricted) {
+    $calendarreadconfig = [
+        'methodname' => 'mod_bookit_get_calendar_events',
+        'cmid' => (int)$cm->id,
+    ];
+    $PAGE->requires->js_call_amd('mod_bookit/export_modal', 'init', [$calendarreadconfig]);
+}
 /* =======================================================================
    2.  Page headings
    ======================================================================= */
@@ -378,6 +415,8 @@ $templatecontext = [
     ]),
     'coretablehtml' => $coretablehtml,
     'showmyeventssection' => !$canviewrequestworkspace,
+    'showexportevents' => !$isobserverrestricted
+        && ($canviewrequestworkspace || $currenttab === 'myevents'),
     'showhistorytab' => !$isobserverrestricted,
     'showoverviewnavigation' => !$canviewrequestworkspace && count($overviewtabrow) > 1,
     'overviewtabtree' => count($overviewtabrow) > 1

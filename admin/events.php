@@ -54,6 +54,16 @@ if ($mform->is_cancelled()) {
 }
 
 $config = get_config('mod_bookit');
+
+// Implementation of dynamic year selection #211.
+$thisyear = (int)date('Y');
+if (isset($config->eventminyear) && abs((int)$config->eventminyear) > 2) {
+    $config->eventminyear = max(-2, min(0, (int)$config->eventminyear - $thisyear));
+}
+if (isset($config->eventmaxyear) && abs((int)$config->eventmaxyear) > 2) {
+    $config->eventmaxyear = max(0, min(2, (int)$config->eventmaxyear - $thisyear));
+}
+
 $config->calendar_optional_fields = array_values(array_filter(
     array_map('trim', explode(',', (string)($config->calendar_optional_fields ?? '')))
 ));

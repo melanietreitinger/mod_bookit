@@ -61,10 +61,16 @@ class settings_events_form extends moodleform {
             \html_writer::div(get_string('calendar_optional_fields_desc', 'mod_bookit'), 'mb-0')
         );
 
-        $thisyear = (int) date('Y');
-        $yearlistmin = array_combine(range($thisyear, $thisyear - 10), range($thisyear, $thisyear - 10));
-        $yearlistmax = array_combine(range($thisyear, $thisyear + 10), range($thisyear, $thisyear + 10));
-
+        $yearlistmin = [
+            0 => get_string('settings_eventyear_current', 'mod_bookit'),
+            -1 => get_string('settings_eventyear_minus1', 'mod_bookit'),
+            -2 => get_string('settings_eventyear_minus2', 'mod_bookit'),
+        ];
+        $yearlistmax = [
+            0 => get_string('settings_eventyear_current', 'mod_bookit'),
+            1 => get_string('settings_eventyear_plus1', 'mod_bookit'),
+            2 => get_string('settings_eventyear_plus2', 'mod_bookit'),
+        ];
         $mform->addElement(
             'select',
             'eventminyear',
@@ -72,7 +78,7 @@ class settings_events_form extends moodleform {
                 '<code class="text-muted small">mod_bookit/eventminyear</code>',
             $yearlistmin
         );
-        $mform->getElement('eventminyear')->setSelected($thisyear - 1);
+        $mform->getElement('eventminyear')->setSelected(-1);
         $mform->addElement(
             'static',
             'eventminyear_desc',
@@ -87,7 +93,7 @@ class settings_events_form extends moodleform {
                 '<code class="text-muted small">mod_bookit/eventmaxyear</code>',
             $yearlistmax
         );
-        $mform->getElement('eventmaxyear')->setSelected($thisyear + 1);
+        $mform->getElement('eventmaxyear')->setSelected(1);
         $mform->addElement(
             'static',
             'eventmaxyear_desc',

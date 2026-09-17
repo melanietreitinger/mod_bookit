@@ -278,22 +278,29 @@ class edit_event_form extends dynamic_form {
         $starttimearray = [
                 'optional' => false, // Setting 'optional' to true adds an 'enable' checkbox to the selector.
         ];
+        $thisyear = (int)date('Y');
+
+        $eventminyear = (int)($config->eventminyear ?? -1);
+        $eventmaxyear = (int)($config->eventmaxyear ?? 1);
+
+        // Relative values are offsets; absolute values remain supported for existing configurations.
+        if ($eventminyear >= -2 && $eventminyear <= 0) {
+            $eventminyear += $thisyear;
+        }
+        if ($eventmaxyear >= 0 && $eventmaxyear <= 2) {
+            $eventmaxyear += $thisyear;
+        }
+
         // Set time restrictions based on "editinternal" capability.
         if ($caneditinternal) {
-            $starttimearray['startyear'] = $config->eventminyear ?? (date("Y") - 1);
+            $starttimearray['startyear'] = $eventminyear;
         } else if ($participantpastreadonly && !empty($existingevent->starttime)) {
-            $starttimearray['startyear'] = min((int)date("Y"), (int)date("Y", (int)$existingevent->starttime));
+            $starttimearray['startyear'] = min($thisyear, (int)date('Y', (int)$existingevent->starttime));
         } else {
-            $starttimearray['startyear'] = date("Y");
+            $starttimearray['startyear'] = $thisyear;
         }
-        $starttimearray['stopyear'] = $config->eventmaxyear ?? (date("Y") + 1);
-
-        $mform->addElement(
-            'date_selector',
-            'startdate',
-            get_string('event_start', 'mod_bookit'),
-            $starttimearray
-        );
+        $starttimearray['stopyear'] = $eventmaxyear;
+        $mform->addElement('date_selector', 'startdate', get_string('event_start', 'mod_bookit'), $starttimearray);
         $mform->disabledIf('startdate', 'editevent', 'neq');
         if ($requirepublicfields) {
             $mform->addRule('startdate', null, 'required', null, 'client');
@@ -445,6 +452,15 @@ class edit_event_form extends dynamic_form {
         } else {
             $mform->addElement('hidden', 'notes');
             $mform->setType('notes', PARAM_TEXT);
+        }
+        // Admin-configurable custom fields (#97) — appended to the public fields.
+        $customfieldhandler = \mod_bookit\customfield\event_handler::create();
+        $customfieldhandler->instance_form_definition($mform, (int)$eventid);
+        foreach ($customfieldhandler->get_instance_data((int)$eventid, true) as $customfielddata) {
+            $elementname = $customfielddata->get_form_element_name();
+            if ($mform->elementExists($elementname)) {
+                $mform->disabledIf($elementname, 'editevent', 'neq');
+            }
         }
         // Internal fields.
         if ($caneditinternal || $canviewrestrictedfields) {
@@ -930,7 +946,7 @@ class edit_event_form extends dynamic_form {
                 ];
             }
         }
-
+        \mod_bookit\customfield\event_handler::create()->instance_form_before_set_data($e);
         $this->set_data($e);
     }
 
@@ -1088,6 +1104,16 @@ class edit_event_form extends dynamic_form {
             $formdata->duration = (int)$resolvedduration;
             // Calculate endtime.
             $formdata->endtime = $formdata->starttime + $formdata->duration * 60;
+
+            // Ensure that bookings always have a semester, even when the semester
+            // field is disabled in the booking form.
+            if (empty($formdata->semester)) {
+                if ($currentevent && !empty($currentevent->semester)) {
+                    $formdata->semester = $currentevent->semester;
+                } else {
+                    $formdata->semester = event_manager::get_current_semester($formdata->starttime);
+                }
+            }
         } else if ($currentevent) {
             $formdata->starttime = $currentevent->starttime;
             $formdata->endtime = $currentevent->endtime;
@@ -1133,14 +1159,6 @@ class edit_event_form extends dynamic_form {
             }
         }
 
-        if (!is_int($formdata->extratimebefore)) {
-            $formdata->extratimebefore = null;
-        }
-
-        if (!is_int($formdata->extratimeafter)) {
-            $formdata->extratimeafter = null;
-        }
-
         if ($currentevent && !$caneditinternal) {
             // Support with notes-gate may update supportpersons; other internal fields stay locked.
             if (!$caneditinternalnotes) {
@@ -1153,7 +1171,6 @@ class edit_event_form extends dynamic_form {
                 $formdata->bookingstatus = $currentevent->bookingstatus;
             }
         }
-
         if ($currentevent && !$caneditinternalnotes) {
             $formdata->internalnotes = $currentevent->internalnotes;
         }
@@ -1196,6 +1213,24 @@ class edit_event_form extends dynamic_form {
             }
         }
 
+        // Bugfix for Issue 222 - robust handling of the strings.
+        if ($caneditinternal) {
+            $submittedextratimebefore = $this->optional_param('extratimebefore', null, PARAM_RAW);
+            $submittedextratimeafter = $this->optional_param('extratimeafter', null, PARAM_RAW);
+
+            if ($submittedextratimebefore !== null) {
+                $submittedextratimebefore = trim((string)$submittedextratimebefore);
+                $formdata->extratimebefore = $submittedextratimebefore === ''
+                    ? null
+                    : (int)$submittedextratimebefore;
+            }
+            if ($submittedextratimeafter !== null) {
+                $submittedextratimeafter = trim((string)$submittedextratimeafter);
+                $formdata->extratimeafter = $submittedextratimeafter === ''
+                    ? null
+                    : (int)$submittedextratimeafter;
+            }
+        }
         $event = bookit_event::from_record($formdata);
         $cmid = (int)$this->optional_param('cmid', 0, PARAM_INT);
         $persistedevent = event_manager::save_event_with_lifecycle_tracking(
@@ -1215,7 +1250,11 @@ class edit_event_form extends dynamic_form {
                 $cmid > 0 ? $cmid : null
             );
         }
-
+        // Save admin-configurable custom fields (#97) — only when public fields are editable.
+        if ($caneditpublic) {
+            $formdata->id = (int)$persistedevent->id;
+            \mod_bookit\customfield\event_handler::create()->instance_form_save($formdata, empty($currentevent));
+        }
         return [];
     }
 
@@ -1234,8 +1273,7 @@ class edit_event_form extends dynamic_form {
     }
 
     /**
-     * Resolve resource mappings for save from form submission and permission context.
-     *
+     * Resolve resource
      * @param stdClass $formdata Submitted form data
      * @param bool $resourcesenabled Whether the resources module is enabled
      * @param bool $caneditpublic Whether public event fields may be edited
@@ -1658,6 +1696,10 @@ class edit_event_form extends dynamic_form {
             $errors[$fieldname] = $message;
         }
 
+        $errors = array_merge(
+            $errors,
+            \mod_bookit\customfield\event_handler::create()->instance_form_validation($data, $files)
+        );
         return $errors;
     }
 

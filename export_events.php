@@ -185,8 +185,14 @@ if (!empty($roomids)) {
 /* ------------------------------------------------------------------
    2.  Build VCALENDAR via shared exporter (rich DESCRIPTION + floating local time)
    ------------------------------------------------------------------ */
-$ics = ics_exporter::build($events, (string)parse_url($CFG->wwwroot, PHP_URL_HOST));
+foreach ($events as $event) {
+    $event->bookingurl = (new moodle_url('/mod/bookit/view.php', [
+        'id' => $cmid,
+        'eventid' => $event->id,
+    ]))->out(false);
+}
 
+$ics = ics_exporter::build($events, (string)parse_url($CFG->wwwroot, PHP_URL_HOST));
 /* ------------------------------------------------------------------
    3.  Output
    ------------------------------------------------------------------ */

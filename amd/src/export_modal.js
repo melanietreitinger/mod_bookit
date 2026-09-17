@@ -1,4 +1,5 @@
-define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Ajax, Notification, str) {
+define(['jquery', 'core/ajax', 'core/notification', 'core/str'],
+    function($, Ajax, Notification, str) {
     return {
         init: function(readConfig) {
             const cmId = Number(readConfig.cmid || 0);
@@ -77,6 +78,27 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     return {
                         startDate: toLocalDateValue(new Date(year, 0, 1)),
                         endDate: toLocalDateValue(new Date(year, 11, 31))
+                    };
+                }
+
+                /**
+                 * Get the current view time period as a local `YYYY-MM-DD` range.
+                 *
+                 * @returns {{startDate: string, endDate: string}}
+                 */
+                function getCurrentViewRange() {
+                    const view = window.bookitCalendar?.getView();
+
+                    if (!view) {
+                        return getCurrentCalendarYearRange();
+                    }
+
+                    const end = new Date(view.currentEnd);
+                    end.setDate(end.getDate() - 1);
+
+                    return {
+                        startDate: toLocalDateValue(view.currentStart),
+                        endDate: toLocalDateValue(end)
                     };
                 }
 
@@ -179,7 +201,6 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                                 metaParts.push(faculty);
                             }
                             const metaLine = metaParts.filter(Boolean).join(' | ');
-
                             const checkbox = '<span class="bookit-export-item-checkbox pr-2">' +
                                 '<input class="form-check-input mt-1" type="checkbox" value="' +
                                 e.id + '">' +
@@ -199,8 +220,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                                             (e.extendedProps?.titlehtml || e.title || '') +
                                             statusBadge +
                                         '</span>' +
-                                        '<small class="text-muted d-block">' + metaLine + '</small>' +
-                                    '</span>' +
+                                    '<small class="bookit-export-item-meta d-block">' + metaLine + '</small>' + '</span>' +
                                 '</label>'
                             );
                             list.append(row);
@@ -220,7 +240,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                  * Open the export modal and load the initial list for the current calendar year.
                  */
                 $(document).on('click', '#bookit-export', function() {
-                    const r = getCurrentCalendarYearRange();
+                    const r = getCurrentViewRange();
+
                     $('#bookit-export-start').val(r.startDate);
                     $('#bookit-export-end').val(r.endDate);
 
@@ -241,9 +262,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                  * Reset modal date range to the current calendar year and refresh list.
                  */
                 $(document).on('click', '#bookit-export-reset-range', function() {
-                    const r = getCurrentCalendarYearRange();
+                    const r = getCurrentViewRange();
+
                     $('#bookit-export-start').val(r.startDate);
                     $('#bookit-export-end').val(r.endDate);
+
                     fetchExportList();
                 });
 

@@ -86,6 +86,24 @@ class get_possible_starttimes extends external_api {
                     VALUE_DEFAULT,
                     null
                 ),
+                'currentstarttime' => new external_value(
+                    PARAM_INT,
+                    'Currently selected start time',
+                    VALUE_DEFAULT,
+                    0
+                ),
+                'extratimebefore' => new external_value(
+                    PARAM_INT,
+                    'Submitted extra time before',
+                    VALUE_DEFAULT,
+                    -1
+                ),
+                'extratimeafter' => new external_value(
+                    PARAM_INT,
+                    'Submitted extra time after',
+                    VALUE_DEFAULT,
+                    -1
+                ),
         ]);
     }
 
@@ -151,8 +169,7 @@ class get_possible_starttimes extends external_api {
         $room = room::get_record(['id' => $roomid], MUST_EXIST);
 
         $extratimebefore = $room->get('extratimebefore') ?? get_config('mod_bookit', 'extratimebefore');
-        $extratimeafter = $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimebefore');
-
+        $extratimeafter = $room->get('extratimeafter') ?? get_config('mod_bookit', 'extratimeafter');
         $timestamp = $date->getTimestamp();
 
         $weekplanid = weekplan_room::get_applicable_weekplanid($timestamp, $roomid);
@@ -283,6 +300,9 @@ class get_possible_starttimes extends external_api {
      * @param int $duration
      * @param int $roomid
      * @param ?int $excepteventid Optionally, an eventid to exclude from the blocking events.
+     * @param int $currentstarttime Currently selected event start timestamp.
+     * @param int $extratimebefore Submitted extra time before, or -1 when unchanged.
+     * @param int $extratimeafter Submitted extra time after, or -1 when unchanged.
      * @return array
      */
     public static function execute(
@@ -292,7 +312,10 @@ class get_possible_starttimes extends external_api {
         int $day,
         int $duration,
         int $roomid,
-        ?int $excepteventid
+        ?int $excepteventid,
+        int $currentstarttime = 0,
+        int $extratimebefore = -1,
+        int $extratimeafter = -1
     ): array {
         [
             'cmid' => $cmid,
@@ -302,6 +325,9 @@ class get_possible_starttimes extends external_api {
             'duration' => $duration,
             'roomid' => $roomid,
             'excepteventid' => $excepteventid,
+            'currentstarttime' => $currentstarttime,
+            'extratimebefore' => $extratimebefore,
+            'extratimeafter' => $extratimeafter,
         ] = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'year' => $year,
@@ -310,6 +336,9 @@ class get_possible_starttimes extends external_api {
             'duration' => $duration,
             'roomid' => $roomid,
             'excepteventid' => $excepteventid,
+            'currentstarttime' => $currentstarttime,
+            'extratimebefore' => $extratimebefore,
+            'extratimeafter' => $extratimeafter,
         ]);
         $context = \context_module::instance($cmid);
         self::validate_context($context);
@@ -322,6 +351,59 @@ class get_possible_starttimes extends external_api {
 
         [$starttimes, $status] = self::list_possible_starttimes($date, $duration, $roomid, $excepteventid, $allowpast);
 
+        $beforeoutside = false;
+        $afteroutside = false;
+        if ($currentstarttime > 0 && ($extratimebefore >= 0 || $extratimeafter >= 0)) {
+            $weekplanid = weekplan_room::get_applicable_weekplanid(
+                $date->getTimestamp(),
+                $roomid
+            );
+
+            if ($weekplanid) {
+                $weekday = (int)$date->format('N') - 1;
+                $weekstarttime =
+                    $date->getTimestamp() - weekplan_manager::SECONDS_PER_DAY * $weekday;
+
+                $timeline = new bool_timeline(false);
+
+                foreach (
+                    weekplan_manager::get_weekplanslots_for_weekday(
+                        $weekplanid,
+                        $weekday
+                    ) as $slot
+                ) {
+                    $timeline->set_range(
+                        event_manager::place_weekly_time_into_week(
+                            $slot->starttime,
+                            $weekstarttime
+                        ),
+                        event_manager::place_weekly_time_into_week(
+                            $slot->endtime,
+                            $weekstarttime
+                        ),
+                        true
+                    );
+                }
+
+                if ($extratimebefore > 0) {
+                    $beforeoutside = !$timeline->does_complete_range_equal(
+                        $currentstarttime - $extratimebefore * 60,
+                        $currentstarttime,
+                        true
+                    );
+                }
+
+                if ($extratimeafter > 0) {
+                    $eventend = $currentstarttime + $duration * 60;
+
+                    $afteroutside = !$timeline->does_complete_range_equal(
+                        $eventend,
+                        $eventend + $extratimeafter * 60,
+                        true
+                    );
+                }
+            }
+        }
         if ($allowpast && $excepteventid) {
             $starttimes = self::inject_editing_event_starttime($starttimes, $excepteventid, $date);
             if (!empty($starttimes)) {
@@ -346,6 +428,8 @@ class get_possible_starttimes extends external_api {
         return [
             'slots' => $transformed,
             'status' => $status,
+            'beforeoutside' => $beforeoutside,
+            'afteroutside' => $afteroutside,
         ];
     }
 
@@ -368,6 +452,8 @@ class get_possible_starttimes extends external_api {
                     'Constant describing why there are no slots',
                     VALUE_OPTIONAL,
                 ),
+                'beforeoutside' => new external_value(PARAM_BOOL),
+                'afteroutside' => new external_value(PARAM_BOOL),
             ]);
     }
 }

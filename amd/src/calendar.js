@@ -61,6 +61,19 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         textcolor = config.textcolor;
     }
 
+    // Overlap mode per view (overlapping or fixed borders). true = overlapping (default),
+    // false = equal-width columns, no overlap. Day and week only (time-grid views).
+    const overlapFor = (view) => {
+        const key = 'eventoverlap_' + view;
+        if (Object.prototype.hasOwnProperty.call(config, key)) {
+            return Number(config[key]) !== 0;
+        }
+        return true;
+    };
+    const dayOverlap = overlapFor('day');
+    const weekOverlap = overlapFor('week');
+    window.console.log('[bookit] overlap', {config, dayOverlap, weekOverlap});
+
     // Define toolbarbuttons.
     let toolbarbuttons = 'prev,next today';
     if (capabilities.addevent) {
@@ -69,7 +82,6 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
 
     // String variables
     await prefetchStrings('mod_bookit', ['calendar_addbooking', 'calendar_editevent', 'calendar_eventlist']);
-    await prefetchStrings('core', ['today', 'month', 'week']);
     await prefetchStrings('calendar', ['day']);
     const strRequestBooking = await getString('calendar_addbooking', 'mod_bookit');
     const editevent = await getString('calendar_editevent', 'mod_bookit');
@@ -78,12 +90,105 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
     const strWeek = await getString('week');
     const strDay = await getString('day', 'calendar');
     const strList = await getString('calendar_eventlist', 'bookit');
+    const strCollapse = await getString('calendar_collapsegroups', 'mod_bookit');
+
+    // Layout per view: horizontal = time-grid (side by side), vertical = day-grid
+    // (stacked per day). Month has no horizontal variant -> always dayGridMonth.
+    const layoutView = (logical) => {
+        const key = 'layout_' + logical;
+        const vertical = Object.prototype.hasOwnProperty.call(config, key) && Number(config[key]) !== 0;
+        if (logical === 'day') {
+            return vertical ? 'dayGridDay' : 'timeGridDay';
+        }
+        if (logical === 'week') {
+            return vertical ? 'dayGridWeek' : 'timeGridWeek';
+        }
+        return 'dayGridMonth';
+    };
+    const dayViewType = layoutView('day');
+    const weekViewType = layoutView('week');
+    const monthViewType = layoutView('month');
+
+    // Day-grid day/week map to their time-grid key for summary/max-events lookups.
+    const canonicalView = (viewtype) => {
+        if (viewtype === 'dayGridDay') {
+            return 'timeGridDay';
+        }
+        if (viewtype === 'dayGridWeek') {
+            return 'timeGridWeek';
+        }
+        return viewtype;
+    };
+
+    // The standalone "Eventlist" (listWeek) button shows all events raw, no settings.
+    const isRawList = (viewtype) =>
+        viewtype === 'listDay' || viewtype === 'listWeek' || viewtype === 'listMonth';
+
 
     // Define viewtype
-    let viewType = 'timeGridWeek';
+    let viewType = weekViewType;
     if (window.screen.width <= 1000) {
         viewType = 'listWeek';
     }
+
+    // Summary (slot) mode per view, from admin settings. Maps the active view
+    // type to whether the event feed should request server-side aggregation.
+    const summaryEnabled = (view) => {
+        const key = 'summary_' + view;
+        return Object.prototype.hasOwnProperty.call(config, key) && Number(config[key]) !== 0;
+    };
+    const summaryDay = summaryEnabled('day');
+    const summaryWeek = summaryEnabled('week');
+    const summaryMonth = summaryEnabled('month');
+
+    // Max events per slot before a "+N more" block (0 = off), per view.
+    const maxEventsFor = (viewtype) => {
+        let key = null;
+        if (viewtype === 'timeGridDay') {
+            key = 'maxevents_day';
+        }
+        if (viewtype === 'timeGridWeek' || viewtype === 'listWeek') {
+            key = 'maxevents_week';
+        }
+        if (viewtype === 'dayGridMonth') {
+            key = 'maxevents_month';
+        }
+        if (key && Object.prototype.hasOwnProperty.call(config, key)) {
+            return Number(config[key]) || 0;
+        }
+        return 0;
+    };
+    if (summaryDay || summaryWeek || summaryMonth) {
+        toolbarbuttons += ' collapseButton';
+    }
+
+    // Summary interaction mode per view: 'click' = expand, 'hover' = tooltip.
+    const summaryModeFor = (viewtype) => {
+        const c = canonicalView(viewtype);
+        let raw = 0;
+        if (c === 'timeGridDay') {
+            raw = Number(config.summary_day) || 0;
+        } else if (c === 'timeGridWeek' || c === 'listWeek') {
+            raw = Number(config.summary_week) || 0;
+        } else if (c === 'dayGridMonth') {
+            raw = Number(config.summary_month) || 0;
+        }
+        return raw === 2 ? 'hover' : 'click';
+    };
+    let currentSummaryMode = summaryModeFor(viewType);
+
+    const summaryFor = (viewtype) => {
+        if (viewtype === 'timeGridDay') {
+            return summaryDay;
+        }
+        if (viewtype === 'timeGridWeek' || viewtype === 'listWeek') {
+            return summaryWeek;
+        }
+        if (viewtype === 'dayGridMonth') {
+            return summaryMonth;
+        }
+        return false;
+    };
     // Weekday visibility from admin settings (injected by PHP)
     const allowedWeekdays = (window.M && M.cfg && Array.isArray(M.cfg.bookit_allowedweekdays))
         ? M.cfg.bookit_allowedweekdays.map(x => Number(x))
@@ -106,7 +211,10 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             .filter((item) => !Number.isNaN(item));
     };
 
-    const loadEvents = (fetchInfo, successCallback, failureCallback) => {
+        const loadEvents = (fetchInfo, successCallback, failureCallback) => {
+        const activeView = (window.bookitCalendar && window.bookitCalendar.getView)
+            ? window.bookitCalendar.getView().type
+            : viewType;
         Ajax.call([{
             methodname: readconfig.methodname,
             args: {
@@ -118,6 +226,8 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 bookingstatuses: parseIds(extraFilterParams.status),
                 search: extraFilterParams.search || '',
                 exportmode: false,
+                aggregate: isRawList(activeView) ? false : summaryFor(canonicalView(activeView)),
+                maxevents: isRawList(activeView) ? 0 : maxEventsFor(canonicalView(activeView)),
             },
         }])[0]
             .then((response) => {
@@ -129,6 +239,107 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             });
     };
 
+        // Summary hover: floating, clickable overlay panel (stays open while hovered).
+    let summaryPanel = null;
+    let summaryPanelTimer = null;
+
+    const hideSummaryPanelNow = () => {
+        if (summaryPanelTimer) {
+            window.clearTimeout(summaryPanelTimer);
+            summaryPanelTimer = null;
+        }
+        if (summaryPanel) {
+            summaryPanel.style.display = 'none';
+        }
+    };
+
+    const scheduleSummaryPanelHide = () => {
+        if (summaryPanelTimer) {
+            window.clearTimeout(summaryPanelTimer);
+        }
+        summaryPanelTimer = window.setTimeout(hideSummaryPanelNow, 250);
+    };
+
+    const ensureSummaryPanel = () => {
+        if (summaryPanel) {
+            return summaryPanel;
+        }
+        summaryPanel = document.createElement('div');
+        summaryPanel.className = 'bookit-summary-panel';
+        summaryPanel.style.display = 'none';
+        summaryPanel.addEventListener('mouseenter', () => {
+            if (summaryPanelTimer) {
+                window.clearTimeout(summaryPanelTimer);
+                summaryPanelTimer = null;
+            }
+        });
+        summaryPanel.addEventListener('mouseleave', scheduleSummaryPanelHide);
+        document.body.appendChild(summaryPanel);
+        return summaryPanel;
+    };
+
+    const showSummaryPanel = (anchorEl, children) => {
+        if (summaryPanelTimer) {
+            window.clearTimeout(summaryPanelTimer);
+            summaryPanelTimer = null;
+        }
+        const panel = ensureSummaryPanel();
+        panel.innerHTML = '';
+        children.forEach((child) => {
+            const row = document.createElement('div');
+            row.className = 'bookit-summary-panel-row';
+            const ts = (child.start || '').slice(11, 16);
+            const te = (child.end || '').slice(11, 16);
+            let time = '';
+            if (ts) {
+                time = ts;
+                if (te) {
+                    time += '–' + te;
+                }
+            }
+            let rowText = child.title || '';
+            if (time) {
+                rowText = time + '  ' + rowText;
+            }
+            row.textContent = rowText;
+
+            const props = child.extendedProps || {};
+            if (props.visibilitymode === 'reserved_projection') {
+                row.classList.add('bookit-summary-panel-row-disabled');
+            } else {
+                row.addEventListener('click', () => {
+                    hideSummaryPanelNow();
+                    openEditEventModal({
+                        cmid: cmid,
+                        eventid: child.id,
+                        title: editevent,
+                        modalfootermode: props.modalfootermode || 'editable',
+                        reloadOnSubmit: false,
+                        onSubmitted: () => {
+                            calendar.refetchEvents();
+                        },
+                    });
+                });
+            }
+            panel.appendChild(row);
+        });
+        panel.style.display = 'block';
+        const rect = anchorEl.getBoundingClientRect();
+        let left = rect.right + 8 + window.scrollX;
+        let top = rect.top + window.scrollY;
+        const pw = panel.offsetWidth;
+        const viewright = window.scrollX + document.documentElement.clientWidth;
+        if (left + pw > viewright) {
+            left = rect.left + window.scrollX - pw - 8;
+            if (left < window.scrollX) {
+                left = rect.left + window.scrollX;
+                top = rect.bottom + window.scrollY + 8;
+            }
+        }
+        panel.style.left = left + 'px';
+        panel.style.top = top + 'px';
+    };
+
     const calendar = window.EventCalendar.create(document.getElementById('ec'), {
         /* Appearance / behaviour */
         locale: lang,
@@ -138,6 +349,28 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         scrollTime: '09:00:00',
         slotMinTime: '07:00:00',
         dayMaxEvents: false,
+        lazyFetching: false,
+        eventOrder: (a, b) => (a.start - b.start) || (a.end - b.end),
+
+        viewDidMount: function(info) {
+            const ec = document.getElementById('ec');
+            if (!ec) {
+                return;
+            }
+            const type = info && info.view ? info.view.type : '';
+            // Events only overlap in a time-grid with overlap on; everywhere else
+            // (abgegrenzt time-grid, day-grid, month, lists) they sit apart.
+            let separated = true;
+            if (type === 'timeGridDay' && dayOverlap) {
+                separated = false;
+            }
+            if (type === 'timeGridWeek' && weekOverlap) {
+                separated = false;
+            }
+            ec.classList.toggle('bookit-separated', separated);
+            currentSummaryMode = summaryModeFor(type);
+        },
+
         nowIndicator: true,
         hiddenDays: hiddenDays,
         selectable: false,
@@ -155,7 +388,9 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             text.today = strToday;
             text.dayGridMonth = strMonth;
             text.timeGridWeek = strWeek;
+            text.dayGridWeek = strWeek;
             text.timeGridDay = strDay;
+            text.dayGridDay = strDay;
             text.listWeek = strList;
             return text;
         },
@@ -178,6 +413,14 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         },
         /* Custom toolbar button (“Add booking”) */
         customButtons: {
+            collapseButton: {
+                text: strCollapse,
+                click: function() {
+                    if (window.bookitCalendar) {
+                        window.bookitCalendar.refetchEvents();
+                    }
+                }
+            },
             addButton: {
                 text: strRequestBooking,
                 click: function() {
@@ -229,10 +472,51 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 modalForm.show();
             }
         },
+        eventDidMount: function(info) {
+            if (!info.event || !info.event.extendedProps || !info.event.extendedProps.issummary) {
+                return;
+            }
+            if (currentSummaryMode !== 'hover') {
+                return;
+            }
+            let children = [];
+            try {
+                children = JSON.parse(info.event.extendedProps.childrenjson || '[]');
+            } catch (e) {
+                children = [];
+            }
+            if (!info.el || !children.length) {
+                return;
+            }
+            info.el.addEventListener('mouseenter', () => {
+                showSummaryPanel(info.el, children);
+            });
+            info.el.addEventListener('mouseleave', scheduleSummaryPanelHide);
+        },
 
         /* Event click (edit) */
         eventClick: function(info) {
             let id = info.event.id;
+            // Summary block: expand into the individual exams of that slot, inline.
+            if (info.event.extendedProps.issummary) {
+                if (currentSummaryMode === 'hover') {
+                    return;
+                }
+                let children = [];
+                try {
+                    children = JSON.parse(info.event.extendedProps.childrenjson || '[]');
+                } catch (e) {
+                    children = [];
+                }
+                children.forEach((child) => {
+                    if (!calendar.getEventById(String(child.id))) {
+                        calendar.addEvent(child);
+                    }
+                });
+                calendar.removeEventById(id);
+                return;
+            }
+
             if (info.event.extendedProps.visibilitymode === 'reserved_projection') {
                 return;
             }
@@ -253,7 +537,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         headerToolbar: {
             start: toolbarbuttons,
             center: 'title',
-            end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            end: monthViewType + ',' + weekViewType + ',' + dayViewType + ',listWeek'
         },
 
         resources: [],
@@ -264,8 +548,9 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         }],
 
         views: {
-            timeGridWeek: {pointer: true},
-            resourceTimeGridWeek: {pointer: true},
+            timeGridDay: {slotEventOverlap: dayOverlap},
+            timeGridWeek: {pointer: true, slotEventOverlap: weekOverlap},
+            resourceTimeGridWeek: {pointer: true, slotEventOverlap: weekOverlap},
             resourceTimelineWeek: {
                 pointer: true,
                 slotMinTime: '09:00',

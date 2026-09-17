@@ -95,7 +95,9 @@ class ics_exporter {
             } else {
                 $evlines[] = 'DESCRIPTION:';
             }
-
+            if (!empty($ev->bookingurl)) {
+                $evlines[] = 'URL:' . $ev->bookingurl;
+            }
             $evlines[] = 'END:VEVENT';
             $lines = array_merge($lines, $evlines);
         }
@@ -174,6 +176,11 @@ class ics_exporter {
         if (!empty($ev->participantsamount)) {
             $descrrows[] = get_string('exportevents_ics_participants', 'mod_bookit')
                 . ': ' . $ev->participantsamount;
+        }
+
+        if (!empty($ev->bookingurl)) {
+            $descrrows[] = get_string('exportevents_ics_directlink', 'mod_bookit')
+                . ': ' . $ev->bookingurl;
         }
 
         return $descrrows;

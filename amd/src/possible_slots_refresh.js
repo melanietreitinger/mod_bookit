@@ -37,13 +37,20 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         return;
     }
 
-    void prefetchStrings('mod_bookit', ['no_slot_available', 'no_weekplan_defined']);
-
+    void prefetchStrings('mod_bookit', [
+        'no_slot_available',
+        'no_weekplan_defined',
+        'event_error_weekplan_before',
+        'event_error_weekplan_after',
+        'event_error_weekplan_both',
+    ]);
     const roomEl = formEl.querySelector('select[name="roomid"]');
     const durationEl = formEl.querySelector('select[name="duration"]');
     const dateDayEl = formEl.querySelector('select[name="startdate[day]"]');
     const dateMonthEl = formEl.querySelector('select[name="startdate[month]"]');
     const dateYearEl = formEl.querySelector('select[name="startdate[year]"]');
+    const extraBeforeEl = formEl.querySelector('input[name="extratimebefore"]');
+    const extraAfterEl = formEl.querySelector('input[name="extratimeafter"]');
 
     const timeEl = formEl.querySelector('select[name="starttime"]');
 
@@ -53,12 +60,136 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         '.form-control-static[data-name="starttime_explanation"]'
     );
 
+    const updateWeekplanValidation = async(
+        beforeoutside,
+        afteroutside,
+        currentSelectionValue,
+        parsedExtraBefore,
+        parsedExtraAfter
+    ) => {
+        const outsideWeekplan = beforeoutside || afteroutside;
+
+        const errorId = 'bookit-extra-time-weekplan-error';
+        const modalEl = formEl.closest('.modal');
+        const saveButton = modalEl
+            ?.querySelector('.modal-footer [data-action="save"]');
+
+        modalEl?.querySelector('#' + errorId)?.remove();
+
+        if (saveButton) {
+            saveButton.hidden = outsideWeekplan;
+        }
+
+        if (!outsideWeekplan || !currentSelectionValue) {
+            return;
+        }
+
+        let before = parsedExtraBefore;
+        if (Number.isNaN(before)) {
+            before = 0;
+        }
+
+        let after = parsedExtraAfter;
+        if (Number.isNaN(after)) {
+            after = 0;
+        }
+
+        const selectedTimeText = timeEl.options[timeEl.selectedIndex]?.textContent?.trim() ?? '';
+        const match = selectedTimeText.match(/^(\d{1,2}):(\d{2})/);
+
+        let rangeStart = selectedTimeText;
+        let rangeEnd = selectedTimeText;
+
+        if (match) {
+            const startMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+
+            const formatMinutes = (minutes) => {
+                const normalized = ((minutes % 1440) + 1440) % 1440;
+                const hours = Math.floor(normalized / 60);
+                const mins = normalized % 60;
+
+                return String(hours).padStart(2, '0') + ':' +
+                    String(mins).padStart(2, '0');
+            };
+
+            rangeStart = formatMinutes(startMinutes - before);
+            rangeEnd = formatMinutes(
+                startMinutes + parseInt(durationEl.value, 10) + after
+            );
+        }
+
+        let stringKey = 'event_error_weekplan_after';
+
+        if (beforeoutside && afteroutside) {
+            stringKey = 'event_error_weekplan_both';
+        } else if (beforeoutside) {
+            stringKey = 'event_error_weekplan_before';
+        }
+
+        const errorEl = document.createElement('div');
+
+        errorEl.id = errorId;
+        errorEl.className = 'text-danger small me-2';
+
+        errorEl.textContent = await getString(
+            stringKey,
+            'mod_bookit',
+            {
+                start: rangeStart,
+                end: rangeEnd,
+            }
+        );
+
+        saveButton?.before(errorEl);
+    };
+    const getRequestTimeValues = (
+        currentSelectionValue,
+        extraBefore,
+        extraAfter,
+        parsedExtraBefore,
+        parsedExtraAfter
+    ) => {
+        return {
+            currentstarttime: currentSelectionValue
+                ? parseInt(currentSelectionValue, 10)
+                : 0,
+            extratimebefore: extraBefore === '' || Number.isNaN(parsedExtraBefore)
+                ? -1
+                : parsedExtraBefore,
+            extratimeafter: extraAfter === '' || Number.isNaN(parsedExtraAfter)
+                ? -1
+                : parsedExtraAfter,
+        };
+    };
+
     const refreshStarttimes = async() => {
         const year = parseInt(dateYearEl.value);
         const month = parseInt(dateMonthEl.value);
         const day = parseInt(dateDayEl.value);
 
-        const {slots: starttimes, status} = await Ajax.call([{
+        const currentSelectionValue =
+        timeEl.value || timeEl.dataset.currentStarttime || '';
+
+        const extraBefore = extraBeforeEl?.value.trim() ?? '';
+        const extraAfter = extraAfterEl?.value.trim() ?? '';
+
+        const parsedExtraBefore = parseInt(extraBefore, 10);
+        const parsedExtraAfter = parseInt(extraAfter, 10);
+
+        const requestTimes = getRequestTimeValues(
+            currentSelectionValue,
+            extraBefore,
+            extraAfter,
+            parsedExtraBefore,
+            parsedExtraAfter
+        );
+
+        const {
+            slots: starttimes,
+            status,
+            beforeoutside,
+            afteroutside,
+        } = await Ajax.call([{
             methodname: 'mod_bookit_get_possible_starttimes',
             args: {
                 cmid: cmId,
@@ -68,10 +199,11 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                 duration: durationEl.value,
                 roomid: roomEl.value,
                 excepteventid: exceptEventId,
+                currentstarttime: requestTimes.currentstarttime,
+                extratimebefore: requestTimes.extratimebefore,
+                extratimeafter: requestTimes.extratimeafter,
             }
         }])[0];
-
-        const currentSelectionValue = timeEl.value || timeEl.dataset.currentStarttime || '';
         const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
         const preserveCurrentStarttime = exceptEventId !== null && currentSelectionValue !== '';
 
@@ -106,22 +238,53 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             const opt = document.createElement("option");
             opt.value = slot.timestamp;
             opt.innerText = slot.string;
+
             const date = new Date(slot.timestamp * 1000);
+
             if (
                 currentSelected !== null &&
-                date.getHours() * 60 + date.getMinutes() === currentSelected.getHours() * 60 + currentSelected.getMinutes()
+                date.getHours() * 60 + date.getMinutes() ===
+                    currentSelected.getHours() * 60 + currentSelected.getMinutes()
             ) {
                 opt.selected = true;
             }
+
             timeEl.options.add(opt);
         }
+
+        /*
+        * Room/date/duration changes can cause EventCalendar to select another
+        * start time while this request was running. Validate that new value once.
+        */
+        if (timeEl.value && timeEl.value !== currentSelectionValue) {
+            timeEl.dataset.currentStarttime = timeEl.value;
+            await refreshStarttimes();
+            return;
+        }
+
+        await updateWeekplanValidation(
+            beforeoutside,
+            afteroutside,
+            currentSelectionValue,
+            parsedExtraBefore,
+            parsedExtraAfter
+        );
         if (timeEl.value) {
             timeEl.dataset.currentStarttime = timeEl.value;
         }
     };
 
-    for (let el of [roomEl, durationEl, dateDayEl, dateMonthEl, dateYearEl]) {
-        el.addEventListener('change', refreshStarttimes);
+    for (let el of [
+        roomEl,
+        durationEl,
+        dateDayEl,
+        dateMonthEl,
+        dateYearEl,
+        timeEl,
+        extraBeforeEl,
+        extraAfterEl,
+    ]) {
+        el?.addEventListener('change', refreshStarttimes);
     }
     void refreshStarttimes();
 }

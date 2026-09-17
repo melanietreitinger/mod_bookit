@@ -22,6 +22,7 @@ use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\color_manager;
 use mod_bookit\local\manager\event_manager;
 
 /**
@@ -52,7 +53,14 @@ class get_calendar_events extends external_api {
             ),
             'search' => new external_value(PARAM_RAW_TRIMMED, 'Free-text search', VALUE_DEFAULT, ''),
             'exportmode' => new external_value(PARAM_BOOL, 'Whether export preview consumes the read', VALUE_DEFAULT, false),
-        ]);
+            'aggregate' => new external_value(PARAM_BOOL, 'Whether to return per-slot summary blocks', VALUE_DEFAULT, false),
+            'maxevents' => new external_value(
+                PARAM_INT,
+                'Max events per slot before a "+N more" block (0 = off)',
+                VALUE_DEFAULT,
+                0
+            ),
+            ]);
     }
 
     /**
@@ -66,6 +74,8 @@ class get_calendar_events extends external_api {
      * @param array $bookingstatuses
      * @param string $search
      * @param bool $exportmode
+     * @param bool $aggregate
+     * @param int $maxevents
      * @return array
      */
     public static function execute(
@@ -76,7 +86,9 @@ class get_calendar_events extends external_api {
         array $facultyids = [],
         array $bookingstatuses = [],
         string $search = '',
-        bool $exportmode = false
+        bool $exportmode = false,
+        bool $aggregate = false,
+        int $maxevents = 0
     ): array {
         global $USER;
 
@@ -89,6 +101,8 @@ class get_calendar_events extends external_api {
             'bookingstatuses' => $bookingstatuses,
             'search' => $search,
             'exportmode' => $exportmode,
+            'aggregate' => $aggregate,
+            'maxevents' => $maxevents,
         ]);
 
         $cm = get_coursemodule_from_id('bookit', $params['cmid'], 0, false, MUST_EXIST);
@@ -111,11 +125,149 @@ class get_calendar_events extends external_api {
             $filters
         );
 
+        if ($params['aggregate'] && !empty($events)) {
+            $events = self::aggregate_events($events);
+        } else if ($params['maxevents'] > 0 && !empty($events)) {
+            $events = self::cap_events($events, (int)$params['maxevents']);
+        }
+
         return event_access_manager::build_governed_empty_response(
             'calendar',
             $filters,
             empty($events) ? 'no_matches' : 'none'
         ) + ['events' => $events];
+    }
+
+    /**
+     * Aggregate individual events into per-slot summary blocks.
+     *
+     * Groups events that share the same start and end into one block titled with
+     * the number of exams. The underlying events are embedded as JSON so the client
+     * can expand them inline without a second request. The count reflects the
+     * already-filtered set.
+     *
+     * @param array $events Individual calendar events (read-mapper shape).
+     * @return array Summary blocks (same event shape).
+     */
+    private static function aggregate_events(array $events): array {
+        $groups = [];
+        foreach ($events as $event) {
+            $key = ($event['start'] ?? '') . '|' . ($event['end'] ?? '');
+            $groups[$key][] = $event;
+        }
+
+        // Distinct, solid colours so adjacent slot blocks are easy to tell apart.
+        $palette = ['#035AA3', '#8E44AD', '#1E8449', '#B9770E', '#A93226',
+                    '#117A65', '#6C3483', '#2E86C1', '#CA6F1E', '#5D6D7E'];
+        $roomcolors = (bool)get_config('mod_bookit', 'calendar_roomcolors');
+        $summaries = [];
+        $index = 0;
+        foreach ($groups as $key => $groupevents) {
+            $index++;
+            [$gstart, $gend] = array_pad(explode('|', $key, 2), 2, '');
+            $count = count($groupevents);
+            $label = get_string('calendar_summary_count', 'mod_bookit', $count);
+            $bg = $palette[($index - 1) % count($palette)];
+            $txt = '#ffffff';
+            if ($roomcolors) {
+                $colors = array_values(array_unique(array_map(
+                    static fn($e) => (string)($e['backgroundColor'] ?? ''),
+                    $groupevents
+                )));
+                if (count($colors) === 1 && $colors[0] !== '') {
+                    $bg = $colors[0];
+                    $txt = color_manager::get_textcolor_for_background($bg);
+                }
+            }
+            $summaries[] = [
+                'id' => -$index,
+                'title' => $label,
+                'start' => $gstart,
+                'end' => $gend,
+                'backgroundColor' => $bg,
+                'textColor' => $txt,
+                'classNames' => ['bookit-summary-event'],
+                'extendedProps' => [
+                    'titlehtml' => $label,
+                    'bookingstatus' => -1,
+                    'semesterid' => 0,
+                    'visibilitymode' => 'summary',
+                    'modalfootermode' => 'readonly',
+                    'room' => ['roomid' => 0, 'roomname' => '', 'location' => '', 'shortname' => ''],
+                    'issummary' => true,
+                    'summarycount' => $count,
+                    'childrenjson' => json_encode(array_values($groupevents)),
+                ],
+            ];
+        }
+        return $summaries;
+    }
+
+    /**
+     * Cap each slot to a maximum number of events, adding a "+N more" block.
+     *
+     * Slots (identical start and end) with more than $max events keep the first
+     * $max and gain one clickable "+N more" block carrying the rest as JSON, so
+     * the client can expand them inline. The count reflects the filtered set.
+     *
+     * @param array $events Individual calendar events (read-mapper shape).
+     * @param int $max Maximum events shown per slot before collapsing the rest.
+     * @return array
+     */
+    private static function cap_events(array $events, int $max): array {
+        if ($max < 1) {
+            return $events;
+        }
+
+        $groups = [];
+        foreach ($events as $event) {
+            $key = ($event['start'] ?? '') . '|' . ($event['end'] ?? '');
+            $groups[$key][] = $event;
+        }
+
+        $result = [];
+        $index = 0;
+        foreach ($groups as $key => $groupevents) {
+            if (count($groupevents) <= $max) {
+                foreach ($groupevents as $event) {
+                    $result[] = $event;
+                }
+                continue;
+            }
+
+            $index++;
+            [$gstart, $gend] = array_pad(explode('|', $key, 2), 2, '');
+            $visible = array_slice($groupevents, 0, $max);
+            $hidden = array_slice($groupevents, $max);
+            foreach ($visible as $event) {
+                $result[] = $event;
+            }
+
+            $morecount = count($hidden);
+            $label = get_string('calendar_moreevents', 'mod_bookit', $morecount);
+            $result[] = [
+                'id' => -1000 - $index,
+                'title' => $label,
+                'start' => $gstart,
+                'end' => $gend,
+                'backgroundColor' => '#5D6D7E',
+                'textColor' => '#ffffff',
+                'classNames' => ['bookit-summary-event', 'bookit-more-event'],
+                'extendedProps' => [
+                    'titlehtml' => $label,
+                    'bookingstatus' => -1,
+                    'semesterid' => 0,
+                    'visibilitymode' => 'summary',
+                    'modalfootermode' => 'readonly',
+                    'room' => ['roomid' => 0, 'roomname' => '', 'location' => '', 'shortname' => ''],
+                    'issummary' => true,
+                    'summarycount' => $morecount,
+                    'childrenjson' => json_encode(array_values($hidden)),
+                ],
+            ];
+        }
+
+        return $result;
     }
 
     /**
@@ -160,10 +312,17 @@ class get_calendar_events extends external_api {
                         'location' => new external_value(PARAM_RAW, 'Room location'),
                         'shortname' => new external_value(PARAM_RAW, 'Room shortname'),
                     ]),
-                    'faculty' => new external_single_structure([
+                        'faculty' => new external_single_structure([
                         'facultyid' => new external_value(PARAM_INT, 'Faculty id'),
                         'label' => new external_value(PARAM_RAW, 'Faculty label'),
                     ], 'Faculty metadata', VALUE_OPTIONAL),
+                    'issummary' => new external_value(PARAM_BOOL, 'Whether this is an aggregated summary block', VALUE_OPTIONAL),
+                    'summarycount' => new external_value(PARAM_INT, 'Number of exams in the summary slot', VALUE_OPTIONAL),
+                    'childrenjson' => new external_value(
+                        PARAM_RAW,
+                        'JSON of underlying events for inline expansion',
+                        VALUE_OPTIONAL
+                    ),
                 ]),
             ])),
         ]);
