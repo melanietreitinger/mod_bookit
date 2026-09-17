@@ -1,40 +1,53 @@
-# Exam Booking #
+# BookIt - exam booking and administration with Moodle 
 
-TODO Describe the plugin shortly here.
+BookIt is a Moodle activity which allows the booking of exam dates for teachers as well as handling these events by an exam service team. 
 
-TODO Provide more detailed description here.
+The requirements for digital exams and the associated processes vary at each institution. 
+Therefore, BookIt provides adaptability and configurability in many details.
 
-## Installing via uploaded ZIP file ##
+## Installation
 
-1. Log in to your Moodle site as an admin and go to _Site administration >
-   Plugins > Install plugins_.
-2. Upload the ZIP file with the plugin code. You should only be prompted to add
-   extra details if your plugin type is not automatically detected.
-3. Check the plugin validation report and finish the installation.
+Install the plugin to the folder `mod/bookit`.
 
-## Installing manually ##
+## Configuration
 
-The plugin can be also installed by putting the contents of this directory to
+See [config docs (GERMAN)](docs/CONFIG.md) for details.
 
-    {your/moodle/dirroot}/mod/bookit
+## Usage
 
-Afterwards, log in to your Moodle site as an admin and go to _Site administration >
-Notifications_ to complete the installation.
+See [user docs (GERMAN)](docs/USER.md) for details.
 
-Alternatively, you can run
+## BookIt roles
 
-    $ php admin/cli/upgrade.php
+See [roles docs (GERMAN)](docs/ROLES.md) for details.
 
-to complete the installation from the command line.
+## Credits
 
-## Credits ##
-This project was started on the MoodleMoot DACH 2024 DeVCamp.
+BookIt was conceived, designed and planned by a team from several universities.
+
+**The main contributors to the plugin are (in alphabetical order):**
+
+- Stefanie Berger, Humboldt-Universität zu Berlin
+- Stefan Dabrock, Moodle an Hochschulen e.V.
+- Philpp Dorok, Ruhr-Universität Bochum
+- Andreas Erbe, Humboldt-Universität zu Berlin
+- Justus Dieckmann, Moodle.NRW
+- Vadym Kuzyak, Humboldt-Universität zu Berlin
+- Denise Materna-Stuttkewitz, Technische Universität Dortmund
+- Lena Nedwed, Moodle.NRW
+- Lisa Sponholz-Lust, Hochschule Darmstadt 
+- Felix Schmandt, Hochschule Darmstadt
+- Andreas Rosenthal, ssystems GmbH
+- Melanie Treitinger, Ruhr-Universität Bochum
+- Andreas Vollmer, Humboldt-Universität zu Berlin
+
+The comunal programming of this project was started on the MoodleMoot DACH 2024 DevCamp.
 
 Contributers (in alphabetical order): Wolfgang Baier, Justus Dieckmann, Philipp Dorok, Florian Fischer, Sandra Jaeger, Valentin Koser, Christian Kupfer, Hanna Meyer zu Hörste, Lena Nedwed, Katja Neubehler, Jonas Priebe, Christopher Reimann, Melanie Treitinger.
 
-## License ##
 
-2024 Melanie Treitinger, Ruhr-Universität Bochum <melanie.treitinger@ruhr-uni-bochum.de>
+
+## License
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
