@@ -183,7 +183,13 @@ class event_manager {
                 continue;
             }
 
-            $reserved = $observerrestricted || !$canview;
+            $reserved = $observerrestricted
+                || !event_access_manager::can_user_view_event_details(
+                    $record,
+                    $context,
+                    (int)$USER->id
+                );
+
             $events[] = self::build_calendar_read_event(
                 $record,
                 $reserved,
