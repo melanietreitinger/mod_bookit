@@ -229,4 +229,59 @@ class weekplan_manager {
 
         return $records;
     }
+
+    /**
+     * Returns the weekplan slots of all active rooms, each with the date range its weekplan is assigned for.
+     *
+     * The calendar uses this to grey out timeslots outside of all weekplans in all active rooms (#218).
+     *
+     * @return array List of ['from' => 'Y-m-d', 'to' => 'Y-m-d'|null,
+     *     'slots' => [[weekday, startminute, endminute], ...]],
+     *     weekday 0 = Monday, minutes counted from midnight.
+     */
+    public static function get_active_room_weekplan_slots(): array {
+        global $DB;
+
+        $assignments = $DB->get_records_sql(
+            'SELECT wr.id, wr.weekplanid, wr.starttime, wr.endtime
+               FROM {bookit_weekplan_room} wr
+               JOIN {bookit_room} r ON r.id = wr.roomid
+              WHERE r.active = 1'
+        );
+
+        if (empty($assignments)) {
+            return [];
+        }
+
+        $slotsbyweekplan = [];
+        $weekplanids = array_unique(array_column($assignments, 'weekplanid'));
+
+        foreach ($DB->get_records_list('bookit_weekplanslot', 'weekplanid', $weekplanids) as $slot) {
+            $weekday = intdiv((int)$slot->starttime, self::SECONDS_PER_DAY);
+            $daystart = $weekday * self::SECONDS_PER_DAY;
+
+            $slotsbyweekplan[$slot->weekplanid][] = [
+                $weekday,
+                intdiv((int)$slot->starttime - $daystart, 60),
+                intdiv((int)$slot->endtime - $daystart, 60),
+            ];
+        }
+
+        $result = [];
+
+        foreach ($assignments as $assignment) {
+            if (empty($slotsbyweekplan[$assignment->weekplanid])) {
+                continue;
+            }
+
+            $result[] = [
+                'from' => date('Y-m-d', (int)$assignment->starttime),
+                'to' => $assignment->endtime === null
+                    ? null
+                    : date('Y-m-d', (int)$assignment->endtime),
+                'slots' => $slotsbyweekplan[$assignment->weekplanid],
+            ];
+        }
+        return $result;
+    }
 }

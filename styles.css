@@ -679,6 +679,18 @@
 }
 
 
+/* Timeslot display (#218): unbookable times greyed out, weekplan slots framed. */
+#ec .ec-bg-event.bookit-slot-unbookable {
+    opacity: 0.4;
+}
+
+#ec .ec-bg-event.bookit-slot-bookable {
+    box-sizing: border-box;
+    border-top: 1px solid #343a40;
+    border-bottom: 1px solid #343a40;
+    opacity: 1;
+}
+
 /* Summary hover overlay panel. */
 .bookit-summary-panel {
     position: absolute;

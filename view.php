@@ -26,6 +26,7 @@ use mod_bookit\event\course_module_viewed;
 use mod_bookit\local\manager\resource_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\weekplan_manager;
 
 
 
@@ -136,6 +137,18 @@ foreach (['day', 'week', 'month'] as $mv) {
 foreach (['day', 'week', 'month'] as $lv) {
     $val = get_config('mod_bookit', 'layout_' . $lv);
     $configcalendar['layout_' . $lv] = ($val === false || $val === '') ? 0 : (int)$val;
+}
+
+// Timeslot display (#218): 1 = grey out and disable times outside the weekplans of all active rooms.
+$val = get_config('mod_bookit', 'calendar_slotdisplay');
+$configcalendar['slotdisplay'] = ($val === false || $val === '') ? 0 : (int)$val;
+
+if ($configcalendar['slotdisplay'] === 1) {
+    $PAGE->requires->js_init_code(
+        'M.cfg.bookit_weekplanslots = ' .
+        json_encode(weekplan_manager::get_active_room_weekplan_slots()) .
+        ';'
+    );
 }
 
 

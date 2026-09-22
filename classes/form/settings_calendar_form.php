@@ -85,7 +85,7 @@ class settings_calendar_form extends moodleform {
                 get_string('settings_slotdisplay_desc', 'mod_bookit'),
             $slotdisplaychoices
         );
-        $mform->setDefault('calendar_slotdisplay', 1);
+        $mform->setDefault('calendar_slotdisplay', 0);
 
         $na = \html_writer::span(get_string('settings_display_na', 'mod_bookit'), 'text-muted');
         $cfg = function ($key, $default) {

@@ -196,6 +196,110 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
 
     const hiddenDays = [0, 1, 2, 3, 4, 5, 6].filter(d => !allowedWeekdays.includes(d));
 
+    // Timeslot display (#218): grey out and disable everything outside the weekplans of all
+    // active rooms, frame the weekplan slots. Background events only render in the time-grid.
+    const markUnbookable = Number(config.slotdisplay) === 1;
+    const weekplanSlots = (window.M && M.cfg && Array.isArray(M.cfg.bookit_weekplanslots))
+        ? M.cfg.bookit_weekplanslots
+        : [];
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    const ymd = (day) =>
+        day.getFullYear() + '-' +
+        pad(day.getMonth() + 1) + '-' +
+        pad(day.getDate());
+
+    // Wall-clock string like the PHP feed ('Y-m-d H:i'). Date objects would be shifted by
+    // EventCalendar on days whose DST offset differs from today's.
+    const wallClock = (day, minute) => {
+        const d = new Date(
+            day.getFullYear(),
+            day.getMonth(),
+            day.getDate(),
+            0,
+            minute
+        );
+
+        return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
+
+    // Bookable [start, end) ranges of one day in minutes after midnight, deduplicated and sorted.
+    const bookableRanges = (day) => {
+        const date = ymd(day);
+        const weekday = (day.getDay() + 6) % 7; // 0 = Monday, as in weekplan_manager.
+        const ranges = new Map();
+
+        weekplanSlots.forEach((assignment) => {
+            if (date < assignment.from || (assignment.to && date > assignment.to)) {
+                return;
+            }
+
+            assignment.slots.forEach(([slotday, start, end]) => {
+                if (slotday === weekday && end > start) {
+                    ranges.set(start + '-' + end, [start, end]);
+                }
+            });
+        });
+
+        return [...ranges.values()]
+            .sort((a, b) => (a[0] - b[0]) || (a[1] - b[1]));
+    };
+
+    const isBookable = (date) => {
+        const minute = date.getHours() * 60 + date.getMinutes();
+
+        return bookableRanges(date).some(
+            ([start, end]) => minute >= start && minute < end
+        );
+    };
+
+    const loadSlotBackground = (fetchInfo, successCallback) => {
+        const events = [];
+
+        const addBlock = (day, start, end, bookable) => {
+            events.push({
+                start: wallClock(day, start),
+                end: wallClock(day, end),
+                allDay: false,
+                display: 'background',
+
+                // Must be set explicitly, otherwise eventBackgroundColor (#035AA3) applies.
+                backgroundColor: bookable ? 'transparent' : '#6c757d',
+                classNames: [
+                    bookable
+                        ? 'bookit-slot-bookable'
+                        : 'bookit-slot-unbookable'
+                ],
+            });
+        };
+
+        const day = new Date(
+            fetchInfo.start.getFullYear(),
+            fetchInfo.start.getMonth(),
+            fetchInfo.start.getDate()
+        );
+
+        for (; day < fetchInfo.end; day.setDate(day.getDate() + 1)) {
+            let covered = 0;
+
+            bookableRanges(day).forEach(([start, end]) => {
+                if (start > covered) {
+                    addBlock(day, covered, start, false);
+                }
+
+                addBlock(day, start, end, true);
+                covered = Math.max(covered, end);
+            });
+
+            if (covered < 24 * 60) {
+                addBlock(day, covered, 24 * 60, false);
+            }
+        }
+
+        successCallback(events);
+    };
+
     // Runtime filter parameters – mutable via bookitCalendarUpdate()
     let extraFilterParams = {}; // {room:123, status:2, faculty:'ENG', …}
 
@@ -450,6 +554,11 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 return;
             }
 
+            // Unbookable timeslot (#218): no booking request outside the weekplans.
+            if (markUnbookable && !info.allDay && !isBookable(info.date)) {
+                return;
+            }
+
             let startdate = info.dateStr;
             const isFutureSlot = info.date.getTime() > Date.now();
 
@@ -542,10 +651,15 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
 
         resources: [],
 
-        // Feed with logged extra params
-        eventSources: [{
-            events: loadEvents,
-        }],
+        // Feed with logged extra params.
+        eventSources: markUnbookable
+            ? [
+                {events: loadEvents},
+                {events: loadSlotBackground},
+            ]
+            : [
+                {events: loadEvents},
+            ],
 
         views: {
             timeGridDay: {slotEventOverlap: dayOverlap},
