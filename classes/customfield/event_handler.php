@@ -83,6 +83,18 @@ class event_handler extends \core_customfield\handler {
     }
 
     /**
+     * Hide the core "Unique data" option and keep it disabled for BookIt fields.
+     *
+     * @param \MoodleQuickForm $mform
+     */
+    public function config_form_definition(\MoodleQuickForm $mform) {
+        $mform->removeElement('configdata[uniquevalues]');
+        $mform->addElement('hidden', 'configdata[uniquevalues]', 0);
+        $mform->setType('configdata[uniquevalues]', PARAM_BOOL);
+        $mform->setConstant('configdata[uniquevalues]', 0);
+    }
+    
+    /**
      * Who may edit a field value on an instance (form access is gated separately).
      *
      * @param field_controller $field
