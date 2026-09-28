@@ -11,15 +11,15 @@ Install the plugin to the folder `mod/bookit`.
 
 ## Configuration
 
-See [config docs (GERMAN)](docs/CONFIG.md) for details.
+See [config docs (GERMAN)](docs/CONFIG_de.md) for details.
 
 ## Usage
 
-See [user docs (GERMAN)](docs/USER.md) for details.
+See [user docs (GERMAN)](docs/USER_de.md) for details.
 
 ## BookIt roles
 
-See [roles docs (GERMAN)](docs/ROLES.md) for details.
+See [roles docs (GERMAN)](docs/ROLES_de.md) for details.
 
 ## Credits
 
@@ -29,7 +29,7 @@ BookIt was conceived, designed and planned by a team from several universities.
 
 - Stefanie Berger, Humboldt-Universität zu Berlin
 - Stefan Dabrock, Moodle an Hochschulen e.V.
-- Philpp Dorok, Ruhr-Universität Bochum
+- Philipp Dorok, Ruhr-Universität Bochum
 - Andreas Erbe, Humboldt-Universität zu Berlin
 - Justus Dieckmann, Moodle.NRW
 - Vadym Kuzyak, Humboldt-Universität zu Berlin
@@ -41,9 +41,9 @@ BookIt was conceived, designed and planned by a team from several universities.
 - Melanie Treitinger, Ruhr-Universität Bochum
 - Andreas Vollmer, Humboldt-Universität zu Berlin
 
-The comunal programming of this project was started on the MoodleMoot DACH 2024 DevCamp.
+The communal programming of this project was started on the MoodleMoot DACH 2024 DevCamp.
 
-Contributers (in alphabetical order): Wolfgang Baier, Justus Dieckmann, Philipp Dorok, Florian Fischer, Sandra Jaeger, Valentin Koser, Christian Kupfer, Hanna Meyer zu Hörste, Lena Nedwed, Katja Neubehler, Jonas Priebe, Christopher Reimann, Melanie Treitinger.
+Contributors (in alphabetical order): Wolfgang Baier, Justus Dieckmann, Philipp Dorok, Florian Fischer, Sandra Jaeger, Valentin Koser, Christian Kupfer, Hanna Meyer zu Hörste, Lena Nedwed, Katja Neubehler, Jonas Priebe, Christopher Reimann, Melanie Treitinger.
 
 
 
