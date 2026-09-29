@@ -188,22 +188,15 @@ class event_access_manager {
             || has_capability('mod/bookit:viewalldetailsofevent', $context);
     }
 
-    /**
-     * Check whether the current user may view the Request Workspace (read-only or manage).
+       /**
+     * Check whether the current user may view the Request Workspace.
      *
      * @param context_module $context
      * @param int|null $userid
      * @return bool
      */
     public static function can_view_request_workspace(context_module $context, ?int $userid = null): bool {
-        if (self::can_manage_open_requests($context)) {
-            return true;
-        }
-
-        global $USER;
-        $userid = $userid ?? (int)$USER->id;
-
-        return self::is_support_on_site_user($context, $userid);
+        return self::can_manage_open_requests($context);
     }
 
     /**
