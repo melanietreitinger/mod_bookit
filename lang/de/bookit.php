@@ -620,6 +620,7 @@ $string['weekday_thursday_short'] = 'Do';
 $string['weekday_friday_short'] = 'Fr';
 $string['weekday_saturday_short'] = 'Sa';
 $string['weekday_sunday_short'] = 'So';
+
 $string['weekplan'] = 'Wochenplan';
 $string['weekplan_active'] = 'Aktiver Wochenplan';
 $string['weekplan_assignment_edit'] = 'Wochenplan-Zuweisung bearbeiten';
