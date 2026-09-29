@@ -39,19 +39,35 @@ class weekplan_manager {
     /** @var string[] Array of Weekdays. */
     const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-    /** @var int[] Like WEEKDAYS, but flipped. */
+     /** @var int[] Accepted weekday abbreviations mapped to weekday index. */
     const INDEXED_WEEKDAYS = [
         "mo" => 0,
         "di" => 1,
+        "tu" => 1,
         "mi" => 2,
+        "we" => 2,
         "do" => 3,
+        "th" => 3,
         "fr" => 4,
         "sa" => 5,
         "so" => 6,
+        "su" => 6,
     ];
 
     /** @var int How many seconds there are in one day. */
     const SECONDS_PER_DAY = 24 * 60 * 60;
+
+    private static function get_weekdays(): array {
+        return [
+            get_string('weekday_monday_short', 'mod_bookit'),
+            get_string('weekday_tuesday_short', 'mod_bookit'),
+            get_string('weekday_wednesday_short', 'mod_bookit'),
+            get_string('weekday_thursday_short', 'mod_bookit'),
+            get_string('weekday_friday_short', 'mod_bookit'),
+            get_string('weekday_saturday_short', 'mod_bookit'),
+            get_string('weekday_sunday_short', 'mod_bookit'),
+        ];
+    }
 
     /**
      * Parses a string detailing a week plan into an array of slots (start and end time relative to start of week).
@@ -170,10 +186,13 @@ class weekplan_manager {
      */
     private static function weekplan_to_string(array $weekplan) {
         $eventsbyday = self::group_events_by_day($weekplan);
+        $weekdays = self::get_weekdays();
         $result = "";
+
         foreach ($eventsbyday as $weekdayindex => $events) {
-            $result .= self::WEEKDAYS[$weekdayindex] . ' ' . join(", ", $events) . "\n";
+            $result .= $weekdays[$weekdayindex] . ' ' . join(", ", $events) . "\n";
         }
+
         return $result;
     }
 
