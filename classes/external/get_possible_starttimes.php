@@ -342,10 +342,25 @@ class get_possible_starttimes extends external_api {
         ]);
         $context = \context_module::instance($cmid);
         self::validate_context($context);
+   
         require_capability('mod/bookit:addevent', $context);
         $allowpast = event_access_manager::can_manage_past_bookings($context);
 
+        $selectedroom = room::get_record(['id' => $roomid], MUST_EXIST);
+        $overwriteextratimebefore = $selectedroom->get('extratimebefore') !== null;
+        $overwriteextratimeafter = $selectedroom->get('extratimeafter') !== null;
+
+        // Event-level extra time is only editable when the room explicitly overrides the global value.
+        if (!$overwriteextratimebefore) {
+            $extratimebefore = -1;
+        }
+        if (!$overwriteextratimeafter) {
+            $extratimeafter = -1;
+        }
+
         $date = new \DateTime("now");
+        
+
         $date->setTime(0, 0);
         $date->setDate($year, $month, $day);
 
@@ -430,6 +445,8 @@ class get_possible_starttimes extends external_api {
             'status' => $status,
             'beforeoutside' => $beforeoutside,
             'afteroutside' => $afteroutside,
+            'overwriteextratimebefore' => $overwriteextratimebefore,
+            'overwriteextratimeafter' => $overwriteextratimeafter,
         ];
     }
 
@@ -454,6 +471,8 @@ class get_possible_starttimes extends external_api {
                 ),
                 'beforeoutside' => new external_value(PARAM_BOOL),
                 'afteroutside' => new external_value(PARAM_BOOL),
+                'overwriteextratimebefore' => new external_value(PARAM_BOOL),
+                'overwriteextratimeafter' => new external_value(PARAM_BOOL),
             ]);
     }
 }

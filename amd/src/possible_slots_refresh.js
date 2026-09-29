@@ -49,8 +49,10 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
     const dateDayEl = formEl.querySelector('select[name="startdate[day]"]');
     const dateMonthEl = formEl.querySelector('select[name="startdate[month]"]');
     const dateYearEl = formEl.querySelector('select[name="startdate[year]"]');
+   
     const extraBeforeEl = formEl.querySelector('input[name="extratimebefore"]');
     const extraAfterEl = formEl.querySelector('input[name="extratimeafter"]');
+    const editInternalEl = formEl.querySelector('input[name="editinternal"]');
 
     const timeEl = formEl.querySelector('select[name="starttime"]');
 
@@ -189,6 +191,8 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             status,
             beforeoutside,
             afteroutside,
+            overwriteextratimebefore,
+            overwriteextratimeafter,
         } = await Ajax.call([{
             methodname: 'mod_bookit_get_possible_starttimes',
             args: {
@@ -204,6 +208,15 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                 extratimeafter: requestTimes.extratimeafter,
             }
         }])[0];
+        const canEditInternal = editInternalEl?.value === '1';
+
+        if (extraBeforeEl) {
+            extraBeforeEl.disabled = !canEditInternal || !overwriteextratimebefore;
+        }
+
+        if (extraAfterEl) {
+            extraAfterEl.disabled = !canEditInternal || !overwriteextratimeafter;
+        }
         const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
         const preserveCurrentStarttime = exceptEventId !== null && currentSelectionValue !== '';
 

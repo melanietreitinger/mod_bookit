@@ -181,12 +181,24 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/c
 echo $OUTPUT->header();
 
 // Mustache for Filter Bar + Export Button.
+$publiccalendarurl = false;
+
+if ((int)get_config('mod_bookit', 'public_exam_calendar') === 1) {
+    $publiccalendarurl = (
+        new moodle_url('/mod/bookit/public_calendar.php')
+    )->out(false);
+}
+
 $templatecontext = [
     'rooms' => [],
     'faculties' => [],
     'statuses' => [],
-    'canfilterstatus' => has_capability('mod/bookit:filterstatus', $modulecontext),
+    'canfilterstatus' => has_capability(
+        'mod/bookit:filterstatus',
+        $modulecontext
+    ),
     'canexportevents' => !$observerrestricted,
+    'publiccalendarurl' => $publiccalendarurl,
 ];
 
 foreach ($rooms as $rid => $rname) {

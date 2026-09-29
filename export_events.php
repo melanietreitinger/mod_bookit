@@ -183,8 +183,50 @@ if (!empty($roomids)) {
 }
 
 /* ------------------------------------------------------------------
+   1c. Resources for the ICS DESCRIPTION
+   ------------------------------------------------------------------ */
+$eventids = array_values(array_map(static fn($event) => (int)$event->id, $events));
+
+if (!empty($eventids)) {
+    [$resourceinsql, $resourceparams] = $DB->get_in_or_equal(
+        $eventids,
+        SQL_PARAMS_NAMED,
+        're'
+    );
+
+    $resourcerows = $DB->get_records_sql(
+        "SELECT er.id, er.eventid, er.amount, r.name, r.amountirrelevant
+           FROM {bookit_event_resource} er
+           JOIN {bookit_resource} r ON r.id = er.resourceid
+          WHERE er.eventid $resourceinsql
+          ORDER BY r.name",
+        $resourceparams
+    );
+
+    $resourcesbyevent = [];
+
+    foreach ($resourcerows as $resourcerow) {
+        $label = (string)$resourcerow->name;
+
+        if (!(int)$resourcerow->amountirrelevant) {
+            $label .= ' (' . (int)$resourcerow->amount . ')';
+        }
+
+        $resourcesbyevent[(int)$resourcerow->eventid][] = $label;
+    }
+
+    foreach ($events as $event) {
+        $event->exportresources = implode(
+            ', ',
+            $resourcesbyevent[(int)$event->id] ?? []
+        );
+    }
+}
+
+/* ------------------------------------------------------------------
    2.  Build VCALENDAR via shared exporter (rich DESCRIPTION + floating local time)
    ------------------------------------------------------------------ */
+
 foreach ($events as $event) {
     $event->bookingurl = (new moodle_url('/mod/bookit/view.php', [
         'id' => $cmid,

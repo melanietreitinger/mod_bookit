@@ -87,7 +87,16 @@ class settings_calendar_form extends moodleform {
         );
         $mform->setDefault('calendar_slotdisplay', 0);
 
+        $mform->addElement(
+            'advcheckbox',
+            'public_exam_calendar',
+            get_string('settings_publicexamcalendar_label', 'mod_bookit'),
+            get_string('settings_publicexamcalendar_desc', 'mod_bookit')
+        );
+        $mform->setDefault('public_exam_calendar', 0);
+
         $na = \html_writer::span(get_string('settings_display_na', 'mod_bookit'), 'text-muted');
+
         $cfg = function ($key, $default) {
             $v = get_config('mod_bookit', $key);
             return ($v === false || $v === '') ? $default : (int)$v;

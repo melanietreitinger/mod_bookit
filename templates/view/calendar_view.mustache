@@ -144,5 +144,14 @@
 
     <div id="ec"></div>
 
+    {{#publiccalendarurl}}
+    <div class="mt-3 small">
+        <p class="mb-1">
+            {{#str}}publiccalendar_description, mod_bookit{{/str}}
+        </p>
+        <a href="{{publiccalendarurl}}">{{publiccalendarurl}}</a>
+    </div>
+    {{/publiccalendarurl}}
+
     {{> mod_bookit/view/export_events_modal }}
 </div>
