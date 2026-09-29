@@ -36,10 +36,7 @@ namespace mod_bookit\local\manager;
  */
 class weekplan_manager {
 // phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
-    /** @var string[] Array of Weekdays. */
-    const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-
-     /** @var int[] Accepted weekday abbreviations mapped to weekday index. */
+    /** @var int[] Accepted weekday abbreviations mapped to weekday index. */
     const INDEXED_WEEKDAYS = [
         "mo" => 0,
         "di" => 1,
@@ -186,9 +183,8 @@ class weekplan_manager {
      */
     private static function weekplan_to_string(array $weekplan) {
         $eventsbyday = self::group_events_by_day($weekplan);
-        $weekdays = self::get_weekdays();
+        $weekdays = self::get_weekday_abbreviations();
         $result = "";
-
         foreach ($eventsbyday as $weekdayindex => $events) {
             $result .= $weekdays[$weekdayindex] . ' ' . join(", ", $events) . "\n";
         }
@@ -248,58 +244,65 @@ class weekplan_manager {
 
         return $records;
     }
-
     /**
-     * Returns the weekplan slots of all active rooms, each with the date range its weekplan is assigned for.
+     * Return the union of all configured weekplan slots for each weekday.
      *
-     * The calendar uses this to grey out timeslots outside of all weekplans in all active rooms (#218).
+     * Room assignments are intentionally ignored. The calendar uses these ranges to mark
+     * every time covered by at least one weekplan as bookable (#218). Overlapping and
+     * directly adjacent slots are merged; real gaps remain separate and therefore blocked.
      *
-     * @return array List of ['from' => 'Y-m-d', 'to' => 'Y-m-d'|null,
-     *     'slots' => [[weekday, startminute, endminute], ...]],
-     *     weekday 0 = Monday, minutes counted from midnight.
+     * @return array List of [weekday, startminute, endminute], weekday 0 = Monday.
      */
-    public static function get_active_room_weekplan_slots(): array {
+    public static function get_combined_weekplan_slots(): array {
         global $DB;
 
-        $assignments = $DB->get_records_sql(
-            'SELECT wr.id, wr.weekplanid, wr.starttime, wr.endtime
-               FROM {bookit_weekplan_room} wr
-               JOIN {bookit_room} r ON r.id = wr.roomid
-              WHERE r.active = 1'
+        $slots = $DB->get_records(
+            'bookit_weekplanslot',
+            null,
+            'starttime ASC, endtime ASC',
+            'id, starttime, endtime'
         );
 
-        if (empty($assignments)) {
-            return [];
-        }
+        $rangesbyday = [];
 
-        $slotsbyweekplan = [];
-        $weekplanids = array_unique(array_column($assignments, 'weekplanid'));
-
-        foreach ($DB->get_records_list('bookit_weekplanslot', 'weekplanid', $weekplanids) as $slot) {
+        foreach ($slots as $slot) {
             $weekday = intdiv((int)$slot->starttime, self::SECONDS_PER_DAY);
-            $daystart = $weekday * self::SECONDS_PER_DAY;
+            if ($weekday < 0 || $weekday > 6) {
+                continue;
+            }
 
-            $slotsbyweekplan[$slot->weekplanid][] = [
-                $weekday,
-                intdiv((int)$slot->starttime - $daystart, 60),
-                intdiv((int)$slot->endtime - $daystart, 60),
-            ];
+            $daystart = $weekday * self::SECONDS_PER_DAY;
+            $startminute = intdiv((int)$slot->starttime - $daystart, 60);
+            $endminute = intdiv((int)$slot->endtime - $daystart, 60);
+
+            if ($endminute <= $startminute) {
+                continue;
+            }
+
+            $rangesbyday[$weekday][] = [$startminute, $endminute];
         }
 
         $result = [];
 
-        foreach ($assignments as $assignment) {
-            if (empty($slotsbyweekplan[$assignment->weekplanid])) {
-                continue;
-            }
+        foreach ($rangesbyday as $weekday => $ranges) {
+            usort($ranges, static function(array $a, array $b): int {
+                return ($a[0] <=> $b[0]) ?: ($a[1] <=> $b[1]);
+            });
 
-            $result[] = [
-                'from' => date('Y-m-d', (int)$assignment->starttime),
-                'to' => $assignment->endtime === null
-                    ? null
-                    : date('Y-m-d', (int)$assignment->endtime),
-                'slots' => $slotsbyweekplan[$assignment->weekplanid],
-            ];
+            $merged = [];
+
+            foreach ($ranges as [$startminute, $endminute]) {
+                $lastindex = count($merged) - 1;
+
+                if ($lastindex >= 0 && $startminute <= $merged[$lastindex][1]) {
+                    $merged[$lastindex][1] = max($merged[$lastindex][1], $endminute);
+                    continue;
+                }
+                $merged[] = [$startminute, $endminute];
+            }
+            foreach ($merged as [$startminute, $endminute]) {
+                $result[] = [(int)$weekday, $startminute, $endminute];
+            }
         }
         return $result;
     }

@@ -196,8 +196,8 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
 
     const hiddenDays = [0, 1, 2, 3, 4, 5, 6].filter(d => !allowedWeekdays.includes(d));
 
-    // Timeslot display (#218): grey out and disable everything outside the weekplans of all
-    // active rooms, frame the weekplan slots. Background events only render in the time-grid.
+    // Timeslot display (#218): grey out and disable everything outside the union of all
+    // configured weekplans. Room assignments and existing events are intentionally ignored.
     const markUnbookable = Number(config.slotdisplay) === 1;
     const weekplanSlots = (window.M && M.cfg && Array.isArray(M.cfg.bookit_weekplanslots))
         ? M.cfg.bookit_weekplanslots
@@ -224,26 +224,14 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     };
 
-    // Bookable [start, end) ranges of one day in minutes after midnight, deduplicated and sorted.
+    // Maximal [start, end) ranges covered by at least one weekplan on this weekday.
+    // The PHP side already merges overlapping/adjacent ranges, so genuine gaps stay blocked.
     const bookableRanges = (day) => {
-        const date = ymd(day);
         const weekday = (day.getDay() + 6) % 7; // 0 = Monday, as in weekplan_manager.
-        const ranges = new Map();
 
-        weekplanSlots.forEach((assignment) => {
-            if (date < assignment.from || (assignment.to && date > assignment.to)) {
-                return;
-            }
-
-            assignment.slots.forEach(([slotday, start, end]) => {
-                if (slotday === weekday && end > start) {
-                    ranges.set(start + '-' + end, [start, end]);
-                }
-            });
-        });
-
-        return [...ranges.values()]
-            .sort((a, b) => (a[0] - b[0]) || (a[1] - b[1]));
+        return weekplanSlots
+            .filter(([slotday, start, end]) => slotday === weekday && end > start)
+            .map(([, start, end]) => [start, end]);
     };
 
     const isBookable = (date) => {

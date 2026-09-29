@@ -143,14 +143,17 @@ foreach (['day', 'week', 'month'] as $lv) {
 $val = get_config('mod_bookit', 'calendar_slotdisplay');
 $configcalendar['slotdisplay'] = ($val === false || $val === '') ? 0 : (int)$val;
 
+// Timeslot display (#218): 1 = grey out and disable times outside all configured weekplans.
+$val = get_config('mod_bookit', 'calendar_slotdisplay');
+$configcalendar['slotdisplay'] = ($val === false || $val === '') ? 0 : (int)$val;
+
 if ($configcalendar['slotdisplay'] === 1) {
     $PAGE->requires->js_init_code(
         'M.cfg.bookit_weekplanslots = ' .
-        json_encode(weekplan_manager::get_active_room_weekplan_slots()) .
+        json_encode(weekplan_manager::get_combined_weekplan_slots()) .
         ';'
     );
 }
-
 
 // Inject allowed weekdays for JS.
 $PAGE->requires->js_init_code(

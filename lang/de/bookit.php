@@ -589,7 +589,7 @@ $string['settings_publicexamcalendar_label'] = 'Öffentlichen Prüfungskalender 
 $string['settings_roomcolors_desc'] = 'Wenn alle Prüfungen eines Slots denselben Raum haben, den Summary-Block in der Raumfarbe einfärben statt in einer Palettenfarbe.';
 $string['settings_roomcolors_label'] = 'Summary-Blöcke nach Raumfarbe';
 $string['settings_slotdisplay_current'] = 'Aktuelle Kalenderdarstellung';
-$string['settings_slotdisplay_desc'] = 'Legt fest, ob der Kalender die aktuelle Darstellung verwendet oder buchbare Zeitfenster anhand der Wochenpläne und nicht verfügbare Zeiten anzeigt. Zeiten außerhalb der Wochenpläne aller aktiven Räume werden dann ausgegraut und sind nicht anklickbar. Gilt nur für die horizontale Tages- und Wochenansicht.';
+$string['settings_slotdisplay_desc'] = 'Legt fest, ob der Kalender die aktuelle Darstellung verwendet oder buchbare Zeitfenster anhand der Wochenpläne und nicht verfügbare Zeiten anzeigt. Zeiten außerhalb aller konfigurierten Wochenpläne werden dann ausgegraut und sind nicht anklickbar. Raumzuweisungen der Wochenpläne werden ignoriert. Gilt nur für die horizontale Tages- und Wochenansicht.';
 $string['settings_slotdisplay_label'] = 'Darstellung der Zeitfenster';
 $string['settings_slotdisplay_weekplans'] = 'Wochenplan-Zeitfenster und nicht verfügbare Zeiten anzeigen';
 $string['settings_summary_hover'] = 'An — „N Prüfungen" pro Slot, Details bei Mouseover';
@@ -620,7 +620,6 @@ $string['weekday_thursday_short'] = 'Do';
 $string['weekday_friday_short'] = 'Fr';
 $string['weekday_saturday_short'] = 'Sa';
 $string['weekday_sunday_short'] = 'So';
-
 $string['weekplan'] = 'Wochenplan';
 $string['weekplan_active'] = 'Aktiver Wochenplan';
 $string['weekplan_assignment_edit'] = 'Wochenplan-Zuweisung bearbeiten';
