@@ -1397,7 +1397,11 @@ class install_helper {
 
         $record = self::default_weekplan_record();
         $weekplanid = (int)$DB->insert_record('bookit_weekplan', $record);
-        weekplan_manager::save_string_weekplan_to_db(self::DEFAULT_WEEKPLAN_SCHEDULE, $weekplanid);
+        weekplan_manager::save_string_weekplan_to_db(
+            self::DEFAULT_WEEKPLAN_SCHEDULE,
+            $weekplanid,
+            self::get_actor_userid()
+        );
         self::ensure_weekplan_room_assignment($weekplanid, $roomid);
         if ($verbose) {
             mtrace('Created default weekplan: ' . self::DEFAULT_WEEKPLAN_NAME . ' (ID: ' . $weekplanid . ')');
@@ -1501,7 +1505,11 @@ class install_helper {
         }
 
         if (!self::has_default_weekplan_schedule($weekplanid)) {
-            weekplan_manager::save_string_weekplan_to_db(self::DEFAULT_WEEKPLAN_SCHEDULE, $weekplanid);
+            weekplan_manager::save_string_weekplan_to_db(
+                self::DEFAULT_WEEKPLAN_SCHEDULE,
+                $weekplanid,
+                self::get_actor_userid()
+            );
             $haschanges = true;
         }
 

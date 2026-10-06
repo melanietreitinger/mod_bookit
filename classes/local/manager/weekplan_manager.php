@@ -212,12 +212,15 @@ class weekplan_manager {
      * Saves the weekplan to the DB based on the given textual representation.
      * @param string $weekplan
      * @param int $weekplanid
+     * @param int $userid
      */
-    public static function save_string_weekplan_to_db(string $weekplan, int $weekplanid) {
+    public static function save_string_weekplan_to_db(string $weekplan, int $weekplanid, int $userid) {
         global $DB;
-        $DB->delete_records('bookit_weekplanslot', ['weekplanid' => $weekplanid]); // Awful.
 
         [$parseerrors, $weekplanevents] = self::parse_weekplan($weekplan);
+        $transaction = $DB->start_delegated_transaction();
+        $DB->delete_records('bookit_weekplanslot', ['weekplanid' => $weekplanid]);
+
         foreach ($weekplanevents as $weekplanevent) {
             $DB->insert_record('bookit_weekplanslot', [
                 'weekplanid' => $weekplanid,
@@ -225,6 +228,13 @@ class weekplan_manager {
                 'endtime' => $weekplanevent[1],
             ]);
         }
+
+        $DB->update_record('bookit_weekplan', (object)[
+            'id' => $weekplanid,
+            'usermodified' => $userid,
+            'timemodified' => time(),
+        ]);
+        $transaction->allow_commit();
     }
 
     /**
