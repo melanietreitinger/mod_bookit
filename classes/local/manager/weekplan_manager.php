@@ -54,7 +54,7 @@ class weekplan_manager {
     /** @var int How many seconds there are in one day. */
     const SECONDS_PER_DAY = 24 * 60 * 60;
 
-    private static function get_weekdays(): array {
+    public static function get_weekday_abbreviations(): array {
         return [
             get_string('weekday_monday_short', 'mod_bookit'),
             get_string('weekday_tuesday_short', 'mod_bookit'),
