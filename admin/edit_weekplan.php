@@ -63,13 +63,17 @@ if ($id) {
 if ($mform->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $mform->get_data()) {
+    $now = time();
     if ($id ?? false) {
         $data->id = $id;
         $DB->update_record('bookit_weekplan', $data);
     } else {
+        $data->usermodified = (int)$USER->id;
+        $data->timecreated = $now;
+        $data->timemodified = $now;
         $id = $DB->insert_record('bookit_weekplan', $data);
     }
-    weekplan_manager::save_string_weekplan_to_db($data->weekplan, $id);
+    weekplan_manager::save_string_weekplan_to_db($data->weekplan, $id, (int)$USER->id);
     redirect($returnurl);
 } // Else display form.
 
