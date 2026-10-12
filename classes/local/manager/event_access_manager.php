@@ -196,7 +196,10 @@ class event_access_manager {
      * @return bool
      */
     public static function can_view_request_workspace(context_module $context, ?int $userid = null): bool {
-        return self::can_manage_open_requests($context);
+        global $USER;
+        $userid ??= (int)$USER->id;
+        return self::can_manage_open_requests($context)
+            || self::is_support_on_site_user($context, $userid);
     }
 
     /**
