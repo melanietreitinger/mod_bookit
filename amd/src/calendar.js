@@ -417,15 +417,15 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         });
         panel.style.display = 'block';
         const rect = anchorEl.getBoundingClientRect();
-        let left = rect.right + 8 + window.scrollX;
+        let left = rect.right + window.scrollX;
         let top = rect.top + window.scrollY;
         const pw = panel.offsetWidth;
         const viewright = window.scrollX + document.documentElement.clientWidth;
         if (left + pw > viewright) {
-            left = rect.left + window.scrollX - pw - 8;
+            left = rect.left + window.scrollX - pw;
             if (left < window.scrollX) {
                 left = rect.left + window.scrollX;
-                top = rect.bottom + window.scrollY + 8;
+                top = rect.bottom + window.scrollY;
             }
         }
         panel.style.left = left + 'px';
