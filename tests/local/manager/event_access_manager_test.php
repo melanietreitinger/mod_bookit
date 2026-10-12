@@ -949,7 +949,6 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($user);
         $this->assertTrue(event_access_manager::can_view_request_workspace($context));
         $this->assertFalse(event_access_manager::can_manage_open_requests($context));
-}
     }
 
     /**
