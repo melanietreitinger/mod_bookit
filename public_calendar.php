@@ -24,6 +24,9 @@
 
 declare(strict_types=1);
 
+// Public calendar feed is intentionally accessible without login.
+// It exposes only confirmed events without private event details.
+// phpcs:ignore moodle.Files.RequireLogin.Missing
 require('../../config.php');
 
 use mod_bookit\local\manager\event_access_manager;

@@ -50,7 +50,6 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
     const dateDayEl = formEl.querySelector('select[name="startdate[day]"]');
     const dateMonthEl = formEl.querySelector('select[name="startdate[month]"]');
     const dateYearEl = formEl.querySelector('select[name="startdate[year]"]');
-   
     const extraBeforeEl = formEl.querySelector('input[name="extratimebefore"]');
     const extraAfterEl = formEl.querySelector('input[name="extratimeafter"]');
     const editInternalEl = formEl.querySelector('input[name="editinternal"]');
@@ -168,6 +167,32 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         };
     };
 
+    const updateExtraTimeUi = async(
+    overwriteBefore,
+    overwriteAfter,
+    effectiveBefore,
+    effectiveAfter
+    ) => {
+        const canEditInternal = editInternalEl?.value === '1';
+
+        if (extraBeforeEl) {
+            extraBeforeEl.disabled = !canEditInternal || !overwriteBefore;
+        }
+        if (extraAfterEl) {
+            extraAfterEl.disabled = !canEditInternal || !overwriteAfter;
+        }
+        if (extraTimeDescriptionEl) {
+            extraTimeDescriptionEl.innerHTML = await getString(
+                'event_extratime_description_values',
+                'mod_bookit',
+                {
+                    before: effectiveBefore,
+                    after: effectiveAfter,
+                }
+            );
+        }
+    };
+
     const refreshStarttimes = async() => {
         const year = parseInt(dateYearEl.value);
         const month = parseInt(dateMonthEl.value);
@@ -214,23 +239,13 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                 extratimeafter: requestTimes.extratimeafter,
             }
         }])[0];
-        const canEditInternal = editInternalEl?.value === '1';
-        if (extraBeforeEl) {
-            extraBeforeEl.disabled = !canEditInternal || !overwriteextratimebefore;
-        }
-        if (extraAfterEl) {
-            extraAfterEl.disabled = !canEditInternal || !overwriteextratimeafter;
-        }
-        if (extraTimeDescriptionEl) {
-            extraTimeDescriptionEl.innerHTML = await getString(
-                'event_extratime_description_values',
-                'mod_bookit',
-                {
-                    before: effectiveextratimebefore,
-                    after: effectiveextratimeafter,
-                }
-            );
-        }
+       
+        await updateExtraTimeUi(
+            overwriteextratimebefore,
+            overwriteextratimeafter,
+            effectiveextratimebefore,
+            effectiveextratimeafter
+        );
         const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
         const preserveCurrentStarttime = exceptEventId !== null && currentSelectionValue !== '';
 
