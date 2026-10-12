@@ -37,6 +37,7 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/styles.css'));
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
+$eventid = optional_param('eventid', 0, PARAM_INT);
 
 // Activity instance id.
 $b = optional_param('b', 0, PARAM_INT);
@@ -240,5 +241,45 @@ $PAGE->requires->js_call_amd(
         $configcalendar,
     ]
 );
+
+// Open a directly linked booking request (#48).
+if ($eventid > 0) {
+    $linkedevent = $DB->get_record('bookit_event', ['id' => $eventid]);
+
+    if (
+        $linkedevent
+        && event_access_manager::can_user_view_event_details(
+            $linkedevent,
+            $modulecontext,
+            (int)$USER->id
+        )
+    ) {
+        $modaloptions = [
+            'cmid' => (int)$cm->id,
+            'eventid' => $eventid,
+            'title' => get_string(
+                'calendar_editevent',
+                'mod_bookit'
+            ),
+            'modalfootermode' =>
+                event_access_manager::get_event_modal_footer_mode(
+                    $linkedevent,
+                    $modulecontext,
+                    (int)$USER->id
+                ),
+        ];
+
+        $PAGE->requires->js_init_code(
+            "require(['mod_bookit/event_modal_opener'], function(EventModalOpener) {\n" .
+            "    var url = new URL(window.location.href);\n" .
+            "    url.searchParams.delete('eventid');\n" .
+            "    window.history.replaceState({}, '', url.toString());\n" .
+            "    EventModalOpener.openEditEventModal(" .
+                json_encode($modaloptions) .
+            ");\n" .
+            "});"
+        );
+    }
+}
 
 echo $OUTPUT->footer();
