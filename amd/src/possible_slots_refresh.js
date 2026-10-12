@@ -239,7 +239,6 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                 extratimeafter: requestTimes.extratimeafter,
             }
         }])[0];
-       
         await updateExtraTimeUi(
             overwriteextratimebefore,
             overwriteextratimeafter,

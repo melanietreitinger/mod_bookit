@@ -4027,8 +4027,10 @@ final class event_manager_test extends advanced_testcase {
                     'usermodified' => (int)$otheruser->id,
             ]);
         }
-
-        $filters = ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED]];
+        $filters = [
+            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
+            'semesterids' => [20261],
+        ];
         $pagezero = $this->get_workspace_query_result(
             $context,
             (int)$supportuser->id,
@@ -4298,7 +4300,7 @@ final class event_manager_test extends advanced_testcase {
         );
         $pageone = $this->get_workspace_query_result(
             $context,
-            (int)get_admin()->id,    
+            (int)get_admin()->id,
             'allrequests',
             ['semesterids' => [20261]],
             $start,
