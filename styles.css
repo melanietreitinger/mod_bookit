@@ -681,7 +681,7 @@
 
 /* Timeslot display (#218): unbookable times greyed out, weekplan slots framed. */
 #ec .ec-bg-event.bookit-slot-unbookable {
-    opacity: 0.4;
+    opacity: 1;
 }
 
 #ec .ec-bg-event.bookit-slot-bookable {
