@@ -43,6 +43,7 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         'event_error_weekplan_before',
         'event_error_weekplan_after',
         'event_error_weekplan_both',
+        'event_extratime_description_values',
     ]);
     const roomEl = formEl.querySelector('select[name="roomid"]');
     const durationEl = formEl.querySelector('select[name="duration"]');
@@ -53,6 +54,9 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
     const extraBeforeEl = formEl.querySelector('input[name="extratimebefore"]');
     const extraAfterEl = formEl.querySelector('input[name="extratimeafter"]');
     const editInternalEl = formEl.querySelector('input[name="editinternal"]');
+    const extraTimeDescriptionEl = formEl.querySelector(
+        '.form-control-static[data-name="extratime_label"]'
+    );
 
     const timeEl = formEl.querySelector('select[name="starttime"]');
 
@@ -193,6 +197,8 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             afteroutside,
             overwriteextratimebefore,
             overwriteextratimeafter,
+            effectiveextratimebefore,
+            effectiveextratimeafter,
         } = await Ajax.call([{
             methodname: 'mod_bookit_get_possible_starttimes',
             args: {
@@ -214,8 +220,15 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             extraBeforeEl.disabled = !canEditInternal || !overwriteextratimebefore;
         }
 
-        if (extraAfterEl) {
-            extraAfterEl.disabled = !canEditInternal || !overwriteextratimeafter;
+        if (extraTimeDescriptionEl) {
+            extraTimeDescriptionEl.innerHTML = await getString(
+                'event_extratime_description_values',
+                'mod_bookit',
+                {
+                    before: effectiveextratimebefore,
+                    after: effectiveextratimeafter,
+                }
+            );
         }
         const currentSelected = currentSelectionValue ? new Date(currentSelectionValue * 1000) : null;
         const preserveCurrentStarttime = exceptEventId !== null && currentSelectionValue !== '';

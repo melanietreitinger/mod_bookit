@@ -233,6 +233,7 @@ $string['event_error_weekplan_before'] = 'Cannot save event from {$a->start}–{
 $string['event_error_weekplan_both'] = 'Cannot save event from {$a->start}–{$a->end}: {$a->start} and {$a->end} are outside of any available weekplan slot.';
 $string['event_extratime'] = '<i>Extra time for the event</i>';
 $string['event_extratime_description'] = '<i>Note that extra time before and after the event is automatically added to allow preparation and wrap-up works to be done.</i>';
+$string['event_extratime_description_values'] = '<i>Please note that an extra time of {$a->before} minutes before the event and {$a->after} minutes after the event are automatically added to allow preparation and wrap-up works.</i>';
 $string['event_internalnotes'] = 'Internal notes';
 $string['event_internalnotes_help'] = 'These notes are just for internal use and not shown to the booking person.';
 $string['event_name'] = 'Event title';
