@@ -342,12 +342,10 @@ class get_possible_starttimes extends external_api {
         ]);
         $context = \context_module::instance($cmid);
         self::validate_context($context);
-   
         require_capability('mod/bookit:addevent', $context);
         $allowpast = event_access_manager::can_manage_past_bookings($context);
 
         $selectedroom = room::get_record(['id' => $roomid], MUST_EXIST);
-       
         $overwriteextratimebefore = $selectedroom->get('extratimebefore') !== null;
         $overwriteextratimeafter = $selectedroom->get('extratimeafter') !== null;
 

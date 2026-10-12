@@ -188,7 +188,7 @@ class event_access_manager {
             || has_capability('mod/bookit:viewalldetailsofevent', $context);
     }
 
-       /**
+    /**
      * Check whether the current user may view the Request Workspace.
      *
      * @param context_module $context

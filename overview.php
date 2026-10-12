@@ -74,8 +74,7 @@ $tableprofile = $canviewrequestworkspace
     ? event_manager::get_workspace_table_profile($workspacetab)
     : [];
 
-    
-    $showreportfilters = $canviewrequestworkspace || $isobserverrestricted;
+$showreportfilters = $canviewrequestworkspace || $isobserverrestricted;
 $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
 

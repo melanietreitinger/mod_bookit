@@ -281,5 +281,4 @@ if ($eventid > 0) {
         );
     }
 }
-
 echo $OUTPUT->footer();

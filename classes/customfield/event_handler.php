@@ -93,7 +93,7 @@ class event_handler extends \core_customfield\handler {
         $mform->setType('configdata[uniquevalues]', PARAM_BOOL);
         $mform->setConstant('configdata[uniquevalues]', 0);
     }
-    
+
     /**
      * Who may edit a field value on an instance (form access is gated separately).
      *

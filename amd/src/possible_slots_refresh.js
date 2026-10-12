@@ -215,11 +215,12 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             }
         }])[0];
         const canEditInternal = editInternalEl?.value === '1';
-
         if (extraBeforeEl) {
             extraBeforeEl.disabled = !canEditInternal || !overwriteextratimebefore;
         }
-
+        if (extraAfterEl) {
+            extraAfterEl.disabled = !canEditInternal || !overwriteextratimeafter;
+        }
         if (extraTimeDescriptionEl) {
             extraTimeDescriptionEl.innerHTML = await getString(
                 'event_extratime_description_values',

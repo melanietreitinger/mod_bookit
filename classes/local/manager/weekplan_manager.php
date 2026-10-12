@@ -54,6 +54,11 @@ class weekplan_manager {
     /** @var int How many seconds there are in one day. */
     const SECONDS_PER_DAY = 24 * 60 * 60;
 
+    /**
+     * Return localized weekday abbreviations.
+     *
+     * @return string[]
+     */
     public static function get_weekday_abbreviations(): array {
         return [
             get_string('weekday_monday_short', 'mod_bookit'),
@@ -285,7 +290,7 @@ class weekplan_manager {
         $result = [];
 
         foreach ($rangesbyday as $weekday => $ranges) {
-            usort($ranges, static function(array $a, array $b): int {
+            usort($ranges, static function (array $a, array $b): int {
                 return ($a[0] <=> $b[0]) ?: ($a[1] <=> $b[1]);
             });
 
