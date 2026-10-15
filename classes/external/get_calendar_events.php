@@ -174,11 +174,11 @@ class get_calendar_events extends external_api {
             }
         }
 
-    return event_access_manager::build_governed_empty_response( 
-        'calendar',
+        return event_access_manager::build_governed_empty_response(
+            'calendar',
             $filters,
             empty($events) ? 'no_matches' : 'none'
-        ) + ['events' => $events];
+            ) + ['events' => $events];
     }
 
     /**
@@ -338,7 +338,7 @@ class get_calendar_events extends external_api {
             'events' => new external_multiple_structure(new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Event id'),
                 'title' => new external_value(PARAM_RAW, 'Event title'),
-                'start' => new external_value(PARAM_TEXT, 'Event start'),                
+                'start' => new external_value(PARAM_TEXT, 'Event start'),
             'end' => new external_value(PARAM_TEXT, 'Event end'),
             'display' => new external_value(
                 PARAM_ALPHA,
