@@ -266,13 +266,18 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         const end = parseWallClock(event.end);
         const segments = [];
 
-        const day = new Date(
+        let day = new Date(
             start.getFullYear(),
             start.getMonth(),
             start.getDate()
         );
 
-        for (; day < end; day.setDate(day.getDate() + 1)) {
+
+        for (; day < end; day = new Date(
+            day.getFullYear(),
+            day.getMonth(),
+            day.getDate() + 1
+        )) {
             bookableRanges(day).forEach(([rangeStart, rangeEnd]) => {
                 const slotStart = new Date(
                     day.getFullYear(),

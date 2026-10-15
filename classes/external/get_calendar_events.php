@@ -154,7 +154,7 @@ class get_calendar_events extends external_api {
                     'start' => date('Y-m-d H:i', (int)$blocker->starttime),
                     'end' => date('Y-m-d H:i', (int)$blocker->endtime),
                     'display' => 'background',
-                    'backgroundColor' => 'rgba(108, 117, 125, 0.4)',                    
+                    'backgroundColor' => 'rgba(108, 117, 125, 0.4)',
                     'textColor' => '',
                     'classNames' => ['bookit-slot-unbookable'],
                     'extendedProps' => [
@@ -178,7 +178,7 @@ class get_calendar_events extends external_api {
             'calendar',
             $filters,
             empty($events) ? 'no_matches' : 'none'
-            ) + ['events' => $events];
+        ) + ['events' => $events];
     }
 
     /**
