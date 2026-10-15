@@ -278,7 +278,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             day.getMonth(),
             day.getDate() + 1
         )) {
-            bookableRanges(day).forEach(([rangeStart, rangeEnd]) => {
+            for (const [rangeStart, rangeEnd] of bookableRanges(day)) {
                 const slotStart = new Date(
                     day.getFullYear(),
                     day.getMonth(),
@@ -311,7 +311,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                         end: formatWallClock(new Date(segmentEndMs)),
                     }));
                 }
-            });
+            }
         }
 
         return segments;
