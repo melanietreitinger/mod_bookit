@@ -39,7 +39,7 @@ Feature: Keep calendar and overview visibility aligned
     When I log in as "supportuser"
     Then the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Accepted support exam"
     And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "In progress support exam"
-    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should contain "Hidden support exam"
+    And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Hidden support exam"
     And the Bookit calendar projection for user "supportuser" in "My BookIt Activity" from "tomorrow 00:00" to "tomorrow 23:59" should not contain "Reserved"
     When I open the Bookit overview "myevents" for "My BookIt Activity"
     Then I should see "Accepted support exam"
