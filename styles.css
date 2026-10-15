@@ -697,6 +697,9 @@
     z-index: 1080;
     max-width: 320px;
     padding: 4px;
+    background: #343a40;
+    color: #fff;
+    border-radius: 6px;
 }
 .bookit-summary-panel-row {
     padding: 4px 8px;

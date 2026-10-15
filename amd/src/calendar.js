@@ -242,6 +242,76 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         );
     };
 
+    const parseWallClock = (value) => {
+        const parts = String(value).split(' ');
+        const dateParts = parts[0].split('-').map(Number);
+        const timeParts = (parts[1] || '00:00').split(':').map(Number);
+
+        return new Date(
+            dateParts[0],
+            dateParts[1] - 1,
+            dateParts[2],
+            timeParts[0],
+            timeParts[1]
+        );
+    };
+
+    const formatWallClock = (date) =>
+        ymd(date) + ' ' +
+        pad(date.getHours()) + ':' +
+        pad(date.getMinutes());
+
+    const clipBlockerToBookableRanges = (event) => {
+        const start = parseWallClock(event.start);
+        const end = parseWallClock(event.end);
+        const segments = [];
+
+        const day = new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate()
+        );
+
+        for (; day < end; day.setDate(day.getDate() + 1)) {
+            bookableRanges(day).forEach(([rangeStart, rangeEnd]) => {
+                const slotStart = new Date(
+                    day.getFullYear(),
+                    day.getMonth(),
+                    day.getDate(),
+                    0,
+                    rangeStart
+                );
+
+                const slotEnd = new Date(
+                    day.getFullYear(),
+                    day.getMonth(),
+                    day.getDate(),
+                    0,
+                    rangeEnd
+                );
+
+                const segmentStartMs = Math.max(
+                    start.getTime(),
+                    slotStart.getTime()
+                );
+                const segmentEndMs = Math.min(
+                    end.getTime(),
+                    slotEnd.getTime()
+                );
+
+                if (segmentStartMs < segmentEndMs) {
+                    segments.push(Object.assign({}, event, {
+                        id: String(event.id) + '-' + segmentStartMs,
+                        start: formatWallClock(new Date(segmentStartMs)),
+                        end: formatWallClock(new Date(segmentEndMs)),
+                    }));
+                }
+            });
+        }
+
+        return segments;
+    };
+
     const loadSlotBackground = (fetchInfo, successCallback) => {
         const events = [];
 
@@ -253,7 +323,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 display: 'background',
 
                 // Must be set explicitly, otherwise eventBackgroundColor (#035AA3) applies.
-                backgroundColor: bookable ? 'transparent' : '#6c757d',
+                backgroundColor: bookable ? 'transparent' : 'rgba(108, 117, 125, 0.4)',
                 classNames: [
                     bookable
                         ? 'bookit-slot-bookable'
@@ -303,7 +373,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             .filter((item) => !Number.isNaN(item));
     };
 
-        const loadEvents = (fetchInfo, successCallback, failureCallback) => {
+    const loadEvents = (fetchInfo, successCallback, failureCallback) => {
         const activeView = (window.bookitCalendar && window.bookitCalendar.getView)
             ? window.bookitCalendar.getView().type
             : viewType;
@@ -323,7 +393,28 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             },
         }])[0]
             .then((response) => {
-                successCallback(response.events || []);
+                let events = response.events || [];
+
+                if (markUnbookable) {
+                    const clippedEvents = [];
+
+                    events.forEach((event) => {
+                        if (
+                            event.extendedProps &&
+                            event.extendedProps.visibilitymode === 'blocker'
+                        ) {
+                            clipBlockerToBookableRanges(event).forEach((segment) => {
+                                clippedEvents.push(segment);
+                            });
+                        } else {
+                            clippedEvents.push(event);
+                        }
+                    });
+
+                    events = clippedEvents;
+                }
+
+                successCallback(events);
                 return null;
             })
             .catch((error) => {
@@ -331,7 +422,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             });
     };
 
-        // Summary hover: floating, clickable overlay panel (stays open while hovered).
+    // Summary hover: floating, clickable overlay panel (stays open while hovered).
     let summaryPanel = null;
     let summaryPanelTimer = null;
 
