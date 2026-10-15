@@ -61,8 +61,10 @@ echo $OUTPUT->render(new \core\output\single_button(
     single_button::BUTTON_PRIMARY
 )) . '<br><br>';
 
+$weekdays = \mod_bookit\local\manager\weekplan_manager::get_weekday_abbreviations();
+
 foreach ($eventsbyday as $weekdayindex => $events) {
-    echo "<h3>" . \mod_bookit\local\manager\weekplan_manager::WEEKDAYS[$weekdayindex] . "</h3>";
+    echo "<h3>" . $weekdays[$weekdayindex] . "</h3>";
     echo "<ul>";
     foreach ($events as $event) {
         echo "<li>" . htmlentities($event) . "</li>";

@@ -26,6 +26,7 @@ use mod_bookit\event\course_module_viewed;
 use mod_bookit\local\manager\resource_manager;
 use mod_bookit\local\manager\event_manager;
 use mod_bookit\local\manager\event_access_manager;
+use mod_bookit\local\manager\weekplan_manager;
 
 
 
@@ -36,6 +37,7 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/styles.css'));
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
+$eventid = optional_param('eventid', 0, PARAM_INT);
 
 // Activity instance id.
 $b = optional_param('b', 0, PARAM_INT);
@@ -138,6 +140,21 @@ foreach (['day', 'week', 'month'] as $lv) {
     $configcalendar['layout_' . $lv] = ($val === false || $val === '') ? 0 : (int)$val;
 }
 
+// Timeslot display (#218): 1 = grey out and disable times outside the weekplans of all active rooms.
+$val = get_config('mod_bookit', 'calendar_slotdisplay');
+$configcalendar['slotdisplay'] = ($val === false || $val === '') ? 0 : (int)$val;
+
+// Timeslot display (#218): 1 = grey out and disable times outside all configured weekplans.
+$val = get_config('mod_bookit', 'calendar_slotdisplay');
+$configcalendar['slotdisplay'] = ($val === false || $val === '') ? 0 : (int)$val;
+
+if ($configcalendar['slotdisplay'] === 1) {
+    $PAGE->requires->js_init_code(
+        'M.cfg.bookit_weekplanslots = ' .
+        json_encode(weekplan_manager::get_combined_weekplan_slots()) .
+        ';'
+    );
+}
 
 // Inject allowed weekdays for JS.
 $PAGE->requires->js_init_code(
@@ -168,12 +185,24 @@ $PAGE->requires->css(new moodle_url('/mod/bookit/thirdpartylibs/event-calendar/c
 echo $OUTPUT->header();
 
 // Mustache for Filter Bar + Export Button.
+$publiccalendarurl = false;
+
+if ((int)get_config('mod_bookit', 'public_exam_calendar') === 1) {
+    $publiccalendarurl = (
+        new moodle_url('/mod/bookit/public_calendar.php')
+    )->out(false);
+}
+
 $templatecontext = [
     'rooms' => [],
     'faculties' => [],
     'statuses' => [],
-    'canfilterstatus' => has_capability('mod/bookit:filterstatus', $modulecontext),
+    'canfilterstatus' => has_capability(
+        'mod/bookit:filterstatus',
+        $modulecontext
+    ),
     'canexportevents' => !$observerrestricted,
+    'publiccalendarurl' => $publiccalendarurl,
 ];
 
 foreach ($rooms as $rid => $rname) {
@@ -213,4 +242,43 @@ $PAGE->requires->js_call_amd(
     ]
 );
 
+// Open a directly linked booking request (#48).
+if ($eventid > 0) {
+    $linkedevent = $DB->get_record('bookit_event', ['id' => $eventid]);
+
+    if (
+        $linkedevent
+        && event_access_manager::can_user_view_event_details(
+            $linkedevent,
+            $modulecontext,
+            (int)$USER->id
+        )
+    ) {
+        $modaloptions = [
+            'cmid' => (int)$cm->id,
+            'eventid' => $eventid,
+            'title' => get_string(
+                'calendar_editevent',
+                'mod_bookit'
+            ),
+            'modalfootermode' =>
+                event_access_manager::get_event_modal_footer_mode(
+                    $linkedevent,
+                    $modulecontext,
+                    (int)$USER->id
+                ),
+        ];
+
+        $PAGE->requires->js_init_code(
+            "require(['mod_bookit/event_modal_opener'], function(EventModalOpener) {\n" .
+            "    var url = new URL(window.location.href);\n" .
+            "    url.searchParams.delete('eventid');\n" .
+            "    window.history.replaceState({}, '', url.toString());\n" .
+            "    EventModalOpener.openEditEventModal(" .
+                json_encode($modaloptions) .
+            ");\n" .
+            "});"
+        );
+    }
+}
 echo $OUTPUT->footer();

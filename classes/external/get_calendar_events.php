@@ -90,8 +90,7 @@ class get_calendar_events extends external_api {
         bool $aggregate = false,
         int $maxevents = 0
     ): array {
-        global $USER;
-
+        global $USER, $DB;
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'start' => $start,
@@ -129,6 +128,50 @@ class get_calendar_events extends external_api {
             $events = self::aggregate_events($events);
         } else if ($params['maxevents'] > 0 && !empty($events)) {
             $events = self::cap_events($events, (int)$params['maxevents']);
+        }
+
+        // Global blockers apply to every room, so show them as unavailable calendar background.
+        if (!$params['exportmode']) {
+            $starttime = strtotime($filters['start']);
+            $endtime = strtotime($filters['end']);
+
+            $blockers = $DB->get_records_sql(
+                'SELECT id, starttime, endtime
+                FROM {bookit_blocker}
+                WHERE roomid IS NULL
+                    AND starttime < :endtime
+                    AND endtime > :starttime',
+                [
+                    'starttime' => $starttime,
+                    'endtime' => $endtime,
+                ]
+            );
+
+            foreach ($blockers as $blocker) {
+                $events[] = [
+                    'id' => -2000000000 - (int)$blocker->id,
+                    'title' => '',
+                    'start' => date('Y-m-d H:i', (int)$blocker->starttime),
+                    'end' => date('Y-m-d H:i', (int)$blocker->endtime),
+                    'display' => 'background',
+                    'backgroundColor' => 'rgba(108, 117, 125, 0.4)',
+                    'textColor' => '',
+                    'classNames' => ['bookit-slot-unbookable'],
+                    'extendedProps' => [
+                        'titlehtml' => '',
+                        'bookingstatus' => -1,
+                        'semesterid' => 0,
+                        'visibilitymode' => 'blocker',
+                        'modalfootermode' => 'readonly',
+                        'room' => [
+                            'roomid' => 0,
+                            'roomname' => '',
+                            'location' => '',
+                            'shortname' => '',
+                        ],
+                    ],
+                ];
+            }
         }
 
         return event_access_manager::build_governed_empty_response(
@@ -296,8 +339,13 @@ class get_calendar_events extends external_api {
                 'id' => new external_value(PARAM_INT, 'Event id'),
                 'title' => new external_value(PARAM_RAW, 'Event title'),
                 'start' => new external_value(PARAM_TEXT, 'Event start'),
-                'end' => new external_value(PARAM_TEXT, 'Event end'),
-                'backgroundColor' => new external_value(PARAM_RAW, 'Background color'),
+            'end' => new external_value(PARAM_TEXT, 'Event end'),
+            'display' => new external_value(
+                PARAM_ALPHA,
+                'FullCalendar display mode',
+                VALUE_OPTIONAL
+            ),
+            'backgroundColor' => new external_value(PARAM_RAW, 'Background color'),
                 'textColor' => new external_value(PARAM_RAW, 'Text color'),
                 'classNames' => new external_multiple_structure(new external_value(PARAM_RAW)),
                 'extendedProps' => new external_single_structure([

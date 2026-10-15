@@ -4027,8 +4027,10 @@ final class event_manager_test extends advanced_testcase {
                     'usermodified' => (int)$otheruser->id,
             ]);
         }
-
-        $filters = ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED]];
+        $filters = [
+            'bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CONFIRMED],
+            'semesterids' => [20261],
+        ];
         $pagezero = $this->get_workspace_query_result(
             $context,
             (int)$supportuser->id,
@@ -4124,7 +4126,10 @@ final class event_manager_test extends advanced_testcase {
             $context,
             $adminid,
             'allrequests',
-            ['assignmentfilter' => 'assigned'],
+            [
+                'assignmentfilter' => 'assigned',
+                'semesterids' => [20261],
+            ],
             $start,
             $start + (60 * HOURSECS),
             25,
@@ -4287,7 +4292,7 @@ final class event_manager_test extends advanced_testcase {
             $context,
             (int)get_admin()->id,
             'allrequests',
-            [],
+            ['semesterids' => [20261]],
             $start,
             $start + (30 * DAYSECS),
             0,
@@ -4297,7 +4302,7 @@ final class event_manager_test extends advanced_testcase {
             $context,
             (int)get_admin()->id,
             'allrequests',
-            [],
+            ['semesterids' => [20261]],
             $start,
             $start + (30 * DAYSECS),
             25,
@@ -4361,7 +4366,7 @@ final class event_manager_test extends advanced_testcase {
             $context,
             (int)get_admin()->id,
             'history',
-            [],
+            ['semesterids' => [20261]],
             $end - (30 * DAYSECS),
             $end,
             0,
@@ -4371,7 +4376,7 @@ final class event_manager_test extends advanced_testcase {
             $context,
             (int)get_admin()->id,
             'history',
-            [],
+            ['semesterids' => [20261]],
             $end - (30 * DAYSECS),
             $end,
             25,

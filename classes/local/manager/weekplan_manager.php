@@ -36,22 +36,40 @@ namespace mod_bookit\local\manager;
  */
 class weekplan_manager {
 // phpcs:enable moodle.Commenting.ValidTags.Invalid,moodle.Commenting.DocblockDescription.Missing
-    /** @var string[] Array of Weekdays. */
-    const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-
-    /** @var int[] Like WEEKDAYS, but flipped. */
+    /** @var int[] Accepted weekday abbreviations mapped to weekday index. */
     const INDEXED_WEEKDAYS = [
         "mo" => 0,
         "di" => 1,
+        "tu" => 1,
         "mi" => 2,
+        "we" => 2,
         "do" => 3,
+        "th" => 3,
         "fr" => 4,
         "sa" => 5,
         "so" => 6,
+        "su" => 6,
     ];
 
     /** @var int How many seconds there are in one day. */
     const SECONDS_PER_DAY = 24 * 60 * 60;
+
+    /**
+     * Return localized weekday abbreviations.
+     *
+     * @return string[]
+     */
+    public static function get_weekday_abbreviations(): array {
+        return [
+            get_string('weekday_monday_short', 'mod_bookit'),
+            get_string('weekday_tuesday_short', 'mod_bookit'),
+            get_string('weekday_wednesday_short', 'mod_bookit'),
+            get_string('weekday_thursday_short', 'mod_bookit'),
+            get_string('weekday_friday_short', 'mod_bookit'),
+            get_string('weekday_saturday_short', 'mod_bookit'),
+            get_string('weekday_sunday_short', 'mod_bookit'),
+        ];
+    }
 
     /**
      * Parses a string detailing a week plan into an array of slots (start and end time relative to start of week).
@@ -170,10 +188,12 @@ class weekplan_manager {
      */
     private static function weekplan_to_string(array $weekplan) {
         $eventsbyday = self::group_events_by_day($weekplan);
+        $weekdays = self::get_weekday_abbreviations();
         $result = "";
         foreach ($eventsbyday as $weekdayindex => $events) {
-            $result .= self::WEEKDAYS[$weekdayindex] . ' ' . join(", ", $events) . "\n";
+            $result .= $weekdays[$weekdayindex] . ' ' . join(", ", $events) . "\n";
         }
+
         return $result;
     }
 
@@ -228,5 +248,67 @@ class weekplan_manager {
         );
 
         return $records;
+    }
+    /**
+     * Return the union of all configured weekplan slots for each weekday.
+     *
+     * Room assignments are intentionally ignored. The calendar uses these ranges to mark
+     * every time covered by at least one weekplan as bookable (#218). Overlapping and
+     * directly adjacent slots are merged; real gaps remain separate and therefore blocked.
+     *
+     * @return array List of [weekday, startminute, endminute], weekday 0 = Monday.
+     */
+    public static function get_combined_weekplan_slots(): array {
+        global $DB;
+
+        $slots = $DB->get_records(
+            'bookit_weekplanslot',
+            null,
+            'starttime ASC, endtime ASC',
+            'id, starttime, endtime'
+        );
+
+        $rangesbyday = [];
+
+        foreach ($slots as $slot) {
+            $weekday = intdiv((int)$slot->starttime, self::SECONDS_PER_DAY);
+            if ($weekday < 0 || $weekday > 6) {
+                continue;
+            }
+
+            $daystart = $weekday * self::SECONDS_PER_DAY;
+            $startminute = intdiv((int)$slot->starttime - $daystart, 60);
+            $endminute = intdiv((int)$slot->endtime - $daystart, 60);
+
+            if ($endminute <= $startminute) {
+                continue;
+            }
+
+            $rangesbyday[$weekday][] = [$startminute, $endminute];
+        }
+
+        $result = [];
+
+        foreach ($rangesbyday as $weekday => $ranges) {
+            usort($ranges, static function (array $a, array $b): int {
+                return ($a[0] <=> $b[0]) ?: ($a[1] <=> $b[1]);
+            });
+
+            $merged = [];
+
+            foreach ($ranges as [$startminute, $endminute]) {
+                $lastindex = count($merged) - 1;
+
+                if ($lastindex >= 0 && $startminute <= $merged[$lastindex][1]) {
+                    $merged[$lastindex][1] = max($merged[$lastindex][1], $endminute);
+                    continue;
+                }
+                $merged[] = [$startminute, $endminute];
+            }
+            foreach ($merged as [$startminute, $endminute]) {
+                $result[] = [(int)$weekday, $startminute, $endminute];
+            }
+        }
+        return $result;
     }
 }

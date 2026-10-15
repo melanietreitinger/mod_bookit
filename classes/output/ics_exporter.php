@@ -107,6 +107,46 @@ class ics_exporter {
     }
 
     /**
+     * Build the public exam calendar without event details.
+     *
+     * @param array $events Confirmed event records with id, starttime, endtime and room.
+     * @param string $hostname Hostname used for the UID property.
+     * @return string The public .ics body.
+     */
+    public static function build_public(array $events, string $hostname): string {
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//BookIT//Public exam calendar//EN',
+        ];
+
+        foreach ($events as $ev) {
+            $start = date('Ymd\THis', (int)$ev->starttime);
+            $end = date(
+                'Ymd\THis',
+                (int)($ev->endtime ?? ($ev->starttime + 3600))
+            );
+
+            $lines = array_merge($lines, [
+                'BEGIN:VEVENT',
+                'UID:public-' . (int)$ev->id . '@' . $hostname,
+                'DTSTAMP:' . gmdate('Ymd\THis\Z'),
+                'DTSTART:' . $start,
+                'DTEND:' . $end,
+                'SUMMARY:' . self::escape(
+                    get_string('event_reserved', 'mod_bookit')
+                ),
+                'LOCATION:' . self::escape((string)($ev->room ?? '')),
+                'DESCRIPTION:',
+                'END:VEVENT',
+            ]);
+        }
+
+        $lines[] = 'END:VCALENDAR';
+        return implode("\r\n", $lines);
+    }
+
+    /**
      * Escape a string for inclusion in an iCalendar text property.
      *
      * Implements the escaping rules from RFC 5545, section 3.3.11:
@@ -176,6 +216,11 @@ class ics_exporter {
         if (!empty($ev->participantsamount)) {
             $descrrows[] = get_string('exportevents_ics_participants', 'mod_bookit')
                 . ': ' . $ev->participantsamount;
+        }
+
+        if (!empty($ev->exportresources)) {
+            $descrrows[] = get_string('exportevents_ics_resources', 'mod_bookit')
+                . ': ' . $ev->exportresources;
         }
 
         if (!empty($ev->bookingurl)) {

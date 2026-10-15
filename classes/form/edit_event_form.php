@@ -1696,10 +1696,12 @@ class edit_event_form extends dynamic_form {
             $errors[$fieldname] = $message;
         }
 
-        $errors = array_merge(
-            $errors,
-            \mod_bookit\customfield\event_handler::create()->instance_form_validation($data, $files)
-        );
+        if ($existingevent === null || $caneditpublic) {
+            $errors = array_merge(
+                $errors,
+                \mod_bookit\customfield\event_handler::create()->instance_form_validation($data, $files)
+            );
+        }
         return $errors;
     }
 

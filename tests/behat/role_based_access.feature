@@ -141,6 +141,6 @@ Feature: Enforce role-based visibility and editing for booking requests
   Scenario: Observer overview has no personal navigation and shows the restricted empty state
     When I log in as "observeruser"
     And I open the Bookit overview "myevents" for "My BookIt Activity"
-    Then the Bookit overview navigation should not contain "My booked events"
+    Then the Bookit overview navigation should not contain "My events"
     And the Bookit overview navigation should not contain "History"
     And I should see "No confirmed bookings are currently available for your role."

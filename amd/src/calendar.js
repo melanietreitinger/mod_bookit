@@ -196,6 +196,173 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
 
     const hiddenDays = [0, 1, 2, 3, 4, 5, 6].filter(d => !allowedWeekdays.includes(d));
 
+    // Timeslot display (#218): grey out and disable everything outside the union of all
+    // configured weekplans. Room assignments and existing events are intentionally ignored.
+    const markUnbookable = Number(config.slotdisplay) === 1;
+    const weekplanSlots = (window.M && M.cfg && Array.isArray(M.cfg.bookit_weekplanslots))
+        ? M.cfg.bookit_weekplanslots
+        : [];
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    const ymd = (day) =>
+        day.getFullYear() + '-' +
+        pad(day.getMonth() + 1) + '-' +
+        pad(day.getDate());
+
+    // Wall-clock string like the PHP feed ('Y-m-d H:i'). Date objects would be shifted by
+    // EventCalendar on days whose DST offset differs from today's.
+    const wallClock = (day, minute) => {
+        const d = new Date(
+            day.getFullYear(),
+            day.getMonth(),
+            day.getDate(),
+            0,
+            minute
+        );
+
+        return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
+
+    // Maximal [start, end) ranges covered by at least one weekplan on this weekday.
+    // The PHP side already merges overlapping/adjacent ranges, so genuine gaps stay blocked.
+    const bookableRanges = (day) => {
+        const weekday = (day.getDay() + 6) % 7; // 0 = Monday, as in weekplan_manager.
+
+        return weekplanSlots
+            .filter(([slotday, start, end]) => slotday === weekday && end > start)
+            .map(([, start, end]) => [start, end]);
+    };
+
+    const isBookable = (date) => {
+        const minute = date.getHours() * 60 + date.getMinutes();
+
+        return bookableRanges(date).some(
+            ([start, end]) => minute >= start && minute < end
+        );
+    };
+
+    const parseWallClock = (value) => {
+        const parts = String(value).split(' ');
+        const dateParts = parts[0].split('-').map(Number);
+        const timeParts = (parts[1] || '00:00').split(':').map(Number);
+
+        return new Date(
+            dateParts[0],
+            dateParts[1] - 1,
+            dateParts[2],
+            timeParts[0],
+            timeParts[1]
+        );
+    };
+
+    const formatWallClock = (date) =>
+        ymd(date) + ' ' +
+        pad(date.getHours()) + ':' +
+        pad(date.getMinutes());
+
+    const clipBlockerToBookableRanges = (event) => {
+        const start = parseWallClock(event.start);
+        const end = parseWallClock(event.end);
+        const segments = [];
+
+        let day = new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate()
+        );
+
+
+        for (; day < end; day = new Date(
+            day.getFullYear(),
+            day.getMonth(),
+            day.getDate() + 1
+        )) {
+            for (const [rangeStart, rangeEnd] of bookableRanges(day)) {
+                const slotStart = new Date(
+                    day.getFullYear(),
+                    day.getMonth(),
+                    day.getDate(),
+                    0,
+                    rangeStart
+                );
+
+                const slotEnd = new Date(
+                    day.getFullYear(),
+                    day.getMonth(),
+                    day.getDate(),
+                    0,
+                    rangeEnd
+                );
+
+                const segmentStartMs = Math.max(
+                    start.getTime(),
+                    slotStart.getTime()
+                );
+                const segmentEndMs = Math.min(
+                    end.getTime(),
+                    slotEnd.getTime()
+                );
+
+                if (segmentStartMs < segmentEndMs) {
+                    segments.push(Object.assign({}, event, {
+                        id: String(event.id) + '-' + segmentStartMs,
+                        start: formatWallClock(new Date(segmentStartMs)),
+                        end: formatWallClock(new Date(segmentEndMs)),
+                    }));
+                }
+            }
+        }
+
+        return segments;
+    };
+
+    const loadSlotBackground = (fetchInfo, successCallback) => {
+        const events = [];
+
+        const addBlock = (day, start, end, bookable) => {
+            events.push({
+                start: wallClock(day, start),
+                end: wallClock(day, end),
+                allDay: false,
+                display: 'background',
+
+                // Must be set explicitly, otherwise eventBackgroundColor (#035AA3) applies.
+                backgroundColor: bookable ? 'transparent' : 'rgba(108, 117, 125, 0.4)',
+                classNames: [
+                    bookable
+                        ? 'bookit-slot-bookable'
+                        : 'bookit-slot-unbookable'
+                ],
+            });
+        };
+
+        const day = new Date(
+            fetchInfo.start.getFullYear(),
+            fetchInfo.start.getMonth(),
+            fetchInfo.start.getDate()
+        );
+
+        for (; day < fetchInfo.end; day.setDate(day.getDate() + 1)) {
+            let covered = 0;
+
+            bookableRanges(day).forEach(([start, end]) => {
+                if (start > covered) {
+                    addBlock(day, covered, start, false);
+                }
+
+                addBlock(day, start, end, true);
+                covered = Math.max(covered, end);
+            });
+
+            if (covered < 24 * 60) {
+                addBlock(day, covered, 24 * 60, false);
+            }
+        }
+
+        successCallback(events);
+    };
+
     // Runtime filter parameters – mutable via bookitCalendarUpdate()
     let extraFilterParams = {}; // {room:123, status:2, faculty:'ENG', …}
 
@@ -211,7 +378,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             .filter((item) => !Number.isNaN(item));
     };
 
-        const loadEvents = (fetchInfo, successCallback, failureCallback) => {
+    const loadEvents = (fetchInfo, successCallback, failureCallback) => {
         const activeView = (window.bookitCalendar && window.bookitCalendar.getView)
             ? window.bookitCalendar.getView().type
             : viewType;
@@ -231,7 +398,28 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             },
         }])[0]
             .then((response) => {
-                successCallback(response.events || []);
+                let events = response.events || [];
+
+                if (markUnbookable) {
+                    const clippedEvents = [];
+
+                    events.forEach((event) => {
+                        if (
+                            event.extendedProps &&
+                            event.extendedProps.visibilitymode === 'blocker'
+                        ) {
+                            clipBlockerToBookableRanges(event).forEach((segment) => {
+                                clippedEvents.push(segment);
+                            });
+                        } else {
+                            clippedEvents.push(event);
+                        }
+                    });
+
+                    events = clippedEvents;
+                }
+
+                successCallback(events);
                 return null;
             })
             .catch((error) => {
@@ -239,7 +427,7 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
             });
     };
 
-        // Summary hover: floating, clickable overlay panel (stays open while hovered).
+    // Summary hover: floating, clickable overlay panel (stays open while hovered).
     let summaryPanel = null;
     let summaryPanelTimer = null;
 
@@ -325,15 +513,15 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
         });
         panel.style.display = 'block';
         const rect = anchorEl.getBoundingClientRect();
-        let left = rect.right + 8 + window.scrollX;
+        let left = rect.right + window.scrollX;
         let top = rect.top + window.scrollY;
         const pw = panel.offsetWidth;
         const viewright = window.scrollX + document.documentElement.clientWidth;
         if (left + pw > viewright) {
-            left = rect.left + window.scrollX - pw - 8;
+            left = rect.left + window.scrollX - pw;
             if (left < window.scrollX) {
                 left = rect.left + window.scrollX;
-                top = rect.bottom + window.scrollY + 8;
+                top = rect.bottom + window.scrollY;
             }
         }
         panel.style.left = left + 'px';
@@ -450,6 +638,11 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
                 return;
             }
 
+            // Unbookable timeslot (#218): no booking request outside the weekplans.
+            if (markUnbookable && !info.allDay && !isBookable(info.date)) {
+                return;
+            }
+
             let startdate = info.dateStr;
             const isFutureSlot = info.date.getTime() > Date.now();
 
@@ -542,10 +735,15 @@ export async function init(cmid, readconfig, capabilities, lang, config) {
 
         resources: [],
 
-        // Feed with logged extra params
-        eventSources: [{
-            events: loadEvents,
-        }],
+        // Feed with logged extra params.
+        eventSources: markUnbookable
+            ? [
+                {events: loadEvents},
+                {events: loadSlotBackground},
+            ]
+            : [
+                {events: loadEvents},
+            ],
 
         views: {
             timeGridDay: {slotEventOverlap: dayOverlap},

@@ -345,7 +345,31 @@ class get_possible_starttimes extends external_api {
         require_capability('mod/bookit:addevent', $context);
         $allowpast = event_access_manager::can_manage_past_bookings($context);
 
+        $selectedroom = room::get_record(['id' => $roomid], MUST_EXIST);
+        $overwriteextratimebefore = $selectedroom->get('extratimebefore') !== null;
+        $overwriteextratimeafter = $selectedroom->get('extratimeafter') !== null;
+
+        // Event-level extra time is only editable when the room explicitly overrides the global value.
+        if (!$overwriteextratimebefore) {
+            $extratimebefore = -1;
+        }
+        if (!$overwriteextratimeafter) {
+            $extratimeafter = -1;
+        }
+
+        // Resolve the values that are actually applied to this event.
+        $effectiveextratimebefore = $extratimebefore >= 0
+            ? $extratimebefore
+            : (int)($selectedroom->get('extratimebefore')
+                ?? get_config('mod_bookit', 'extratimebefore'));
+
+        $effectiveextratimeafter = $extratimeafter >= 0
+            ? $extratimeafter
+            : (int)($selectedroom->get('extratimeafter')
+                ?? get_config('mod_bookit', 'extratimeafter'));
+
         $date = new \DateTime("now");
+
         $date->setTime(0, 0);
         $date->setDate($year, $month, $day);
 
@@ -430,6 +454,10 @@ class get_possible_starttimes extends external_api {
             'status' => $status,
             'beforeoutside' => $beforeoutside,
             'afteroutside' => $afteroutside,
+            'overwriteextratimebefore' => $overwriteextratimebefore,
+            'overwriteextratimeafter' => $overwriteextratimeafter,
+            'effectiveextratimebefore' => $effectiveextratimebefore,
+            'effectiveextratimeafter' => $effectiveextratimeafter,
         ];
     }
 
@@ -452,8 +480,13 @@ class get_possible_starttimes extends external_api {
                     'Constant describing why there are no slots',
                     VALUE_OPTIONAL,
                 ),
+
                 'beforeoutside' => new external_value(PARAM_BOOL),
                 'afteroutside' => new external_value(PARAM_BOOL),
+                'overwriteextratimebefore' => new external_value(PARAM_BOOL),
+                'overwriteextratimeafter' => new external_value(PARAM_BOOL),
+                'effectiveextratimebefore' => new external_value(PARAM_INT),
+                'effectiveextratimeafter' => new external_value(PARAM_INT),
             ]);
     }
 }

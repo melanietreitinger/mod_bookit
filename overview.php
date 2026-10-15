@@ -73,15 +73,201 @@ $filterprofile = $canviewrequestworkspace
 $tableprofile = $canviewrequestworkspace
     ? event_manager::get_workspace_table_profile($workspacetab)
     : [];
+
 $showreportfilters = $canviewrequestworkspace || $isobserverrestricted;
 $checklistenabled = event_access_manager::is_checklist_enabled();
 $resourcesenabled = event_access_manager::is_resources_enabled();
-$hasexplicitstatusfilter = array_key_exists('bookingstatusfilter', $_GET);
-$rawstatusfilter = optional_param_array('bookingstatusfilter', [], PARAM_INT);
-$selectedfacultyid = optional_param('facultyid', 0, PARAM_INT);
-$selectedsemesterids = optional_param_array('semesterids', [], PARAM_INT);
-$search = optional_param('search', '', PARAM_RAW_TRIMMED);
-$isrejectedcancelledtab = $canviewrequestworkspace && $workspacetab === 'rejectedcancelled';
+
+// Persist overview filters in a user-, activity- and tab-specific cookie (#227).
+$filtercookiescope = $canviewrequestworkspace
+    ? 'requestworkspace_' . (string)$workspacetab
+    : (string)$currenttab;
+
+$filtercookiename = 'mod_bookit_filters_'
+    . (int)$USER->id . '_'
+    . (int)$cm->id . '_'
+    . $filtercookiescope;
+
+$filtercookieoptions = [
+    'path' => '/',
+    'secure' => str_starts_with((string)$CFG->wwwroot, 'https://'),
+    'httponly' => true,
+    'samesite' => 'Lax',
+];
+
+$filtercookie = [];
+$resetfilters = optional_param('resetfilters', 0, PARAM_BOOL);
+$filtersubmitted = optional_param('filtersubmitted', 0, PARAM_BOOL);
+
+if ($resetfilters) {
+    setcookie(
+        $filtercookiename,
+        '',
+        array_merge(
+            $filtercookieoptions,
+            ['expires' => time() - 3600]
+        )
+    );
+
+    unset($_COOKIE[$filtercookiename]);
+} else if ($filtersubmitted) {
+    if (array_key_exists('bookingstatusfilter', $_GET)) {
+        $filtercookie['bookingstatusfilter[]'] = array_map(
+            'strval',
+            optional_param_array(
+                'bookingstatusfilter',
+                [],
+                PARAM_INT
+            )
+        );
+    }
+
+    if (array_key_exists('facultyid', $_GET)) {
+        $filtercookie['facultyid'] = [
+            (string)optional_param('facultyid', 0, PARAM_INT),
+        ];
+    }
+
+    if (array_key_exists('semesterids', $_GET)) {
+        $filtercookie['semesterids[]'] = array_map(
+            'strval',
+            optional_param_array(
+                'semesterids',
+                [],
+                PARAM_INT
+            )
+        );
+    }
+
+    if (array_key_exists('reportstart', $_GET)) {
+        $filtercookie['reportstart'] = [
+            optional_param('reportstart', '', PARAM_TEXT),
+        ];
+    }
+
+    if (array_key_exists('reportend', $_GET)) {
+        $filtercookie['reportend'] = [
+            optional_param('reportend', '', PARAM_TEXT),
+        ];
+    }
+
+    if (array_key_exists('assignmentfilter', $_GET)) {
+        $filtercookie['assignmentfilter'] = [
+            optional_param(
+                'assignmentfilter',
+                'all',
+                PARAM_ALPHA
+            ),
+        ];
+    }
+
+    setcookie(
+        $filtercookiename,
+        json_encode($filtercookie),
+        array_merge(
+            $filtercookieoptions,
+            [
+                'expires' =>
+                    time() + (10 * 365 * 24 * 60 * 60),
+            ]
+        )
+    );
+} else if (!empty($_COOKIE[$filtercookiename])) {
+    $decodedfiltercookie = json_decode(
+        (string)$_COOKIE[$filtercookiename],
+        true
+    );
+
+    if (is_array($decodedfiltercookie)) {
+        $filtercookie = $decodedfiltercookie;
+    }
+}
+
+$getcookievalues = static function (
+    array $cookie,
+    string $name
+): array {
+    $values = $cookie[$name] ?? [];
+    return is_array($values) ? array_values($values) : [];
+};
+
+$getcookievalue = static function (
+    array $cookie,
+    string $name,
+    string $default = ''
+) use ($getcookievalues): string {
+    $values = $getcookievalues($cookie, $name);
+
+    return isset($values[0]) && is_scalar($values[0])
+        ? (string)$values[0]
+        : $default;
+};
+
+$hasexplicitstatusfilter =
+    array_key_exists('bookingstatusfilter', $_GET);
+
+$hascookiestatusfilter =
+    array_key_exists('bookingstatusfilter[]', $filtercookie);
+
+$rawstatusfilter = $hasexplicitstatusfilter
+    ? optional_param_array(
+        'bookingstatusfilter',
+        [],
+        PARAM_INT
+    )
+    : array_values(array_map(
+        'intval',
+        $getcookievalues(
+            $filtercookie,
+            'bookingstatusfilter[]'
+        )
+    ));
+
+$hasexplicitstatusfilter =
+    $hasexplicitstatusfilter || $hascookiestatusfilter;
+
+$selectedfacultyid = array_key_exists('facultyid', $_GET)
+    ? optional_param('facultyid', 0, PARAM_INT)
+    : (int)$getcookievalue(
+        $filtercookie,
+        'facultyid',
+        '0'
+    );
+
+$hasexplicitsemesterfilter =
+    array_key_exists('semesterids', $_GET);
+
+$hascookiesemesterfilter =
+    array_key_exists('semesterids[]', $filtercookie);
+
+$selectedsemesterids = $hasexplicitsemesterfilter
+    ? optional_param_array(
+        'semesterids',
+        [],
+        PARAM_INT
+    )
+    : array_values(array_map(
+        'intval',
+        $getcookievalues(
+            $filtercookie,
+            'semesterids[]'
+        )
+    ));
+
+$hasexplicitsemesterfilter =
+    $hasexplicitsemesterfilter || $hascookiesemesterfilter;
+
+$search = optional_param(
+    'search',
+    '',
+    PARAM_RAW_TRIMMED
+);
+
+$isrejectedcancelledtab =
+    $canviewrequestworkspace
+    && $workspacetab === 'rejectedcancelled';
+
+
 $selectedstatuses = event_manager::resolve_overview_booking_status_filter_ids(
     $rawstatusfilter,
     $hasexplicitstatusfilter,
@@ -104,18 +290,34 @@ $tableid = $canviewrequestworkspace
 );
 $defaultreportstartvalue = date('Y-m-d', $defaultreportstart);
 $defaultreportendvalue = date('Y-m-d', $defaultreportend);
+
 $hasexplicitreportstart = array_key_exists('reportstart', $_GET);
 $hasexplicitreportend = array_key_exists('reportend', $_GET);
-$reportstartvalue = optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT);
-$reportendvalue = optional_param('reportend', $defaultreportendvalue, PARAM_TEXT);
-$hasexplicitsemesterfilter = array_key_exists('semesterids', $_GET);
+$hascookiereportstart = array_key_exists('reportstart', $filtercookie);
+$hascookiereportend = array_key_exists('reportend', $filtercookie);
+
+$reportstartvalue = $hasexplicitreportstart
+    ? optional_param('reportstart', $defaultreportstartvalue, PARAM_TEXT)
+    : $getcookievalue($filtercookie, 'reportstart', $defaultreportstartvalue);
+
+$reportendvalue = $hasexplicitreportend
+    ? optional_param('reportend', $defaultreportendvalue, PARAM_TEXT)
+    : $getcookievalue($filtercookie, 'reportend', $defaultreportendvalue);
+
+$hasexplicitreportstart = $hasexplicitreportstart || $hascookiereportstart;
+$hasexplicitreportend = $hasexplicitreportend || $hascookiereportend;
+
 $assignmentfilter = 'all';
 if (!empty($filterprofile['show_assignment_filter'])) {
-    $assignmentfilter = optional_param('assignmentfilter', 'all', PARAM_ALPHA);
+    $assignmentfilter = array_key_exists('assignmentfilter', $_GET)
+        ? optional_param('assignmentfilter', 'all', PARAM_ALPHA)
+        : $getcookievalue($filtercookie, 'assignmentfilter', 'all');
+
     if (!in_array($assignmentfilter, ['all', 'assigned'], true)) {
         $assignmentfilter = 'all';
     }
 }
+
 if ($showreportfilters) {
     $selectedsemesterids = event_manager::resolve_effective_semester_filter_ids(
         $selectedsemesterids,
@@ -251,6 +453,8 @@ if (!$canviewrequestworkspace) {
 $PAGE->requires->js_call_amd('mod_bookit/event_details_modal', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/overview/booking_status_dropdown', 'init');
 $PAGE->requires->js_call_amd('mod_bookit/semester_date_sync', 'init');
+
+
 
 if (!$isobserverrestricted) {
     $calendarreadconfig = [
@@ -508,7 +712,14 @@ $templatecontext = [
     'assignmentfilteroptions' => $assignmentfilteroptions,
     'reportapplylabel' => get_string('overview_apply_filters', 'mod_bookit'),
     'reportresetlabel' => get_string('overview_reset_filters', 'mod_bookit'),
-    'reportreseturl' => (new moodle_url('/mod/bookit/overview.php', ['id' => $cm->id, 'tab' => $activetabparam]))->out(false),
+    'reportreseturl' => (new moodle_url(
+        '/mod/bookit/overview.php',
+        [
+            'id' => $cm->id,
+            'tab' => $activetabparam,
+            'resetfilters' => 1,
+        ]
+    ))->out(false),
     'facultyoptions' => $facultyoptions,
     'statusfilteroptions' => $statusfilteroptions,
     'semesteroptions' => $semesteroptions,

@@ -937,17 +937,16 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Support on site may view the Request Workspace without manage capabilities.
+     * Support on site must not see the Request Workspace.
      *
      * @return void
      */
-    public function test_can_view_request_workspace_true_for_support_only(): void {
+    public function test_can_view_request_workspace_false_for_support_only(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_support_role();
         $user = $this->getDataGenerator()->create_user();
         $this->assign_support_role($context, $user->id);
         $this->setUser($user);
-
         $this->assertTrue(event_access_manager::can_view_request_workspace($context));
         $this->assertFalse(event_access_manager::can_manage_open_requests($context));
     }
@@ -1007,8 +1006,7 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Support-only users may view but not manage open requests.
-     *
+     * Support-only users may view, but not manage, the Request Workspace.
      * @return void
      */
     public function test_support_only_cannot_manage_open_requests(): void {
@@ -1017,7 +1015,6 @@ final class event_access_manager_test extends advanced_testcase {
         $user = $this->getDataGenerator()->create_user();
         $this->assign_support_role($context, $user->id);
         $this->setUser($user);
-
         $this->assertTrue(event_access_manager::can_view_request_workspace($context));
         $this->assertFalse(event_access_manager::can_manage_open_requests($context));
     }
