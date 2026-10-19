@@ -40,4 +40,3 @@ Feature: Governed calendar and export read contract stay aligned
     And I click on "Export events" "button"
     Then the Bookit export modal should contain "Accepted export exam"
     And I should not see "Hidden export exam" in the "#bookit-export-list" "css_element"
-    
