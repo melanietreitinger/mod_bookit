@@ -9,21 +9,21 @@ Therefore, BookIt provides adaptability and configurability in many details.
 
 Install the plugin to the folder `mod/bookit`.
 
-## Configuration
+## Settings
 
-See [config docs (GERMAN)](docs/CONFIG_de.md) for details.
+See [config docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki/Konfiguration-(Deutsch)) for details.
 
 ## Usage
 
-See [user docs (GERMAN)](docs/USER_de.md) for details.
+See [user docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki) for details.
 
 ## BookIt roles
 
-See [roles docs (GERMAN)](docs/ROLES_de.md) for details.
+See [roles docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki/Rollen-(Deutsch)) for details.
 
 ## Credits
 
-BookIt was conceived, designed and planned by a team from several universities.
+BookIt was conceived, designed and planned by a team from several organisations.
 
 **The main contributors to the plugin are (in alphabetical order):**
 
@@ -43,7 +43,7 @@ BookIt was conceived, designed and planned by a team from several universities.
 
 The communal programming of this project was started on the MoodleMoot DACH 2024 DevCamp.
 
-Contributors (in alphabetical order): Wolfgang Baier, Justus Dieckmann, Philipp Dorok, Florian Fischer, Sandra Jaeger, Valentin Koser, Christian Kupfer, Hanna Meyer zu Hörste, Lena Nedwed, Katja Neubehler, Jonas Priebe, Christopher Reimann, Melanie Treitinger.
+Contributors of the MoodleMoot DACH 2024 DevCamp (in alphabetical order): Wolfgang Baier, Justus Dieckmann, Philipp Dorok, Florian Fischer, Sandra Jaeger, Valentin Koser, Christian Kupfer, Hanna Meyer zu Hörste, Lena Nedwed, Katja Neubehler, Jonas Priebe, Christopher Reimann, Melanie Treitinger.
 
 
 
