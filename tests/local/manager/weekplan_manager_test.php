@@ -33,7 +33,6 @@ use advanced_testcase;
  * @covers \mod_bookit\local\manager\weekplan_manager
  */
 final class weekplan_manager_test extends advanced_testcase {
-
     /**
      * Saving slots updates the parent weekplan's modification metadata.
      *
