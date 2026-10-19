@@ -11,7 +11,7 @@ Install the plugin to the folder `mod/bookit`.
 
 ## Settings
 
-See [config docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki/Konfiguration-(Deutsch)) for details.
+See [config docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki/DE%E2%80%90Konfiguration-(Deutsch)) for details.
 
 ## Usage
 
@@ -19,7 +19,7 @@ See [user docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki) f
 
 ## BookIt roles
 
-See [roles docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki/Rollen-(Deutsch)) for details.
+See [roles docs (GERMAN)](https://github.com/melanietreitinger/mod_bookit/wiki/DE%E2%80%90Rollen-(Deutsch)) for details.
 
 ## Credits
 
