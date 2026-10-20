@@ -79,7 +79,7 @@ class event_handler extends \core_customfield\handler {
      * @return bool
      */
     public function can_configure(): bool {
-        return has_capability('moodle/site:config', $this->get_configuration_context());
+        return has_capability('mod/bookit:managebasics', $this->get_configuration_context());
     }
 
     /**
