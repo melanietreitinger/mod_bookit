@@ -57,6 +57,8 @@ if ($hassiteconfig) {
     ));
     // XXX TODO: write some text as introduction to bookit.
 
+    // 226100 treitmzt: optional plugin parts are not available for release 1.
+    /*
     $settings->add(new admin_setting_heading(
         'mod_bookit_optional_parts_heading',
         get_string('optional_plugin_parts_heading', 'mod_bookit'),
@@ -76,6 +78,8 @@ if ($hassiteconfig) {
         get_string('optional_checklist_enabled_desc', 'mod_bookit'),
         0
     ));
+    */
+
     $installhelperfinished = (int)get_config('mod_bookit', 'installhelperfinished');
     $installhelperstatus = optional_param('installhelperstatus', '', PARAM_ALPHAEXT);
     $rolesimported = optional_param('rolesimported', 0, PARAM_INT);
