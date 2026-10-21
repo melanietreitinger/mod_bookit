@@ -43,7 +43,7 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         'event_error_weekplan_before',
         'event_error_weekplan_after',
         'event_error_weekplan_both',
-        'event_extratime_description_values',
+        'event_extratime_description',
     ]);
     const roomEl = formEl.querySelector('select[name="roomid"]');
     const durationEl = formEl.querySelector('select[name="duration"]');
@@ -183,7 +183,7 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         }
         if (extraTimeDescriptionEl) {
             extraTimeDescriptionEl.innerHTML = await getString(
-                'event_extratime_description_values',
+                'event_extratime_description',
                 'mod_bookit',
                 {
                     before: effectiveBefore,
