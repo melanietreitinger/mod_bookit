@@ -32,8 +32,13 @@
         "showhistorydetails": false
     }
 }}
+
+
 {{#showoptions}}
+{{! autocomplete="off" stops Firefox from restoring the previous selection on reload,
+    which would override the server-rendered status and its colour. }}
 <select class="custom-select custom-select-sm mod-bookit-status-select"
+        autocomplete="off"
         data-action="{{updateaction}}"
         {{#eventid}}data-eventid="{{eventid}}"{{/eventid}}
         {{#cmid}}data-cmid="{{cmid}}"{{/cmid}}
