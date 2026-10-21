@@ -29,13 +29,12 @@
  * @return void
  */
 function xmldb_bookit_install(): void {
+    // Install baseline values for institution, room and weekplan.
     $report = \mod_bookit\local\install_helper::ensure_fresh_install_baseline();
+    // Set resources and checklist to "not active".
     \mod_bookit\local\install_helper::ensure_optional_part_defaults(false);
+    // Set all notification settings to "active".
     \mod_bookit\local\install_helper::ensure_booking_status_notification_defaults();
 
-    set_config(
-        'installhelperfinished',
-        in_array($report['status'], ['success', 'idempotent'], true) ? 1 : 0,
-        'mod_bookit'
-    );
+    mtrace($report);
 }
