@@ -36,5 +36,24 @@ function xmldb_bookit_install(): void {
     // Set all notification settings to "active".
     \mod_bookit\local\install_helper::ensure_booking_status_notification_defaults();
 
-    mtrace($report);
+    mtrace('BookIt baseline setup: ' . $report['status']);
+
+    $operationnames = [
+        'institution' => 'Institution',
+        'room' => 'Room',
+        'weekplan' => 'Weekplan',
+    ];
+    foreach ($report['operations'] as $name => $operation) {
+        $operationname = $operationnames[$name] ?? ucfirst($name);
+        $message = $operationname . ': ' . $operation['status'];
+        if (!empty($operation['id'])) {
+            $message .= ' (ID: ' . $operation['id'] . ')';
+        }
+        mtrace(' - ' . $message);
+
+        if (!empty($operation['message'])) {
+            mtrace('   ' . $operation['message']);
+        }
+    }
+    mtrace('');
 }
