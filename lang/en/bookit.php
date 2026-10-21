@@ -58,20 +58,20 @@ $string['bookingstatus_enabled_inprogress'] = 'Send message for In Progress';
 $string['bookingstatus_enabled_new'] = 'Send message for New';
 $string['bookingstatus_enabled_rejected'] = 'Send message for Rejected';
 $string['bookingstatus_notification_body_default'] = 'The booking request "###EVENTNAME###" has been updated to "###BOOKINGSTATUS###".'
-    . "\n\n"
-    . 'Room: ###ROOM###'
-    . "\n"
-    . 'Start: ###STARTTIME###'
-    . "\n"
-    . 'End: ###ENDTIME###'
-    . "\n"
-    . 'Booking person: ###BOOKINGPERSON###'
-    . "\n"
-    . 'Person in charge: ###PERSONINCHARGE###'
-    . "\n"
-    . 'Other examiners: ###OTHEREXAMINERS###'
-    . "\n\n"
-    . 'Open booking: ###EVENTURL###';
+        . "\n\n"
+        . 'Room: ###ROOM###'
+        . "\n"
+        . 'Start: ###STARTTIME###'
+        . "\n"
+        . 'End: ###ENDTIME###'
+        . "\n"
+        . 'Booking person: ###BOOKINGPERSON###'
+        . "\n"
+        . 'Person in charge: ###PERSONINCHARGE###'
+        . "\n"
+        . 'Other examiners: ###OTHEREXAMINERS###'
+        . "\n\n"
+        . 'Open booking: ###EVENTURL###';
 $string['bookingstatus_notification_closing'] = "Kind regards,\nYour BookIt team";
 $string['bookingstatus_notification_greeting'] = 'Hello,';
 $string['bookingstatus_notifications_desc'] = 'Configure recipients and message templates for booking-status changes.';
@@ -164,41 +164,41 @@ $string['customfields'] = 'Custom booking fields';
 $string['customtemplate'] = 'Message';
 $string['customtemplate_help'] = 'The custom message template for the notification. ';
 $string['customtemplatedefaultmessage_before_due'] = 'Lorem ipsum ante ###RECIPIENT###,'
-. '<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### vitae cursus ###CHECKLISTITEM### consequat '
-. 'magna. ###ITEMDUETIME### pellentesque habitant morbi. ###ITEMSTATUS### tristique senectus netus.</p>'
-. '<p>Mauris ###SEMESTERTERM### eleifend ###EVENTTITLE###. Sed ###DEPARTMENT### fermentum ###ROOM### '
-. 'tempor. ###EVENTSTART### blandit aliquam etiam. ###EVENTDURATION### enim facilisis ###TOTALDURATION### gravida.</p>'
-. '<p>Ultricies integer ###COURSETEMPLATE###, quis ###PERSONINCHARGE###. Vivamus ###OTHEREXAMINERS### '
-. 'arcu felis ###NUMBEROFPARTICIPANTS### bibendum ###BOOKINGPERSON### ut ###BOOKINGSTATUS### placerat.</p>'
-. '<p>Ante tempus imperdiet,<br>'
-. 'Duis autem vel.</p>';
+        . '<p>Consectetur adipiscing elit. ###CHECKLISTCATEGORY### vitae cursus ###CHECKLISTITEM### consequat '
+        . 'magna. ###ITEMDUETIME### pellentesque habitant morbi. ###ITEMSTATUS### tristique senectus netus.</p>'
+        . '<p>Mauris ###SEMESTERTERM### eleifend ###EVENTTITLE###. Sed ###DEPARTMENT### fermentum ###ROOM### '
+        . 'tempor. ###EVENTSTART### blandit aliquam etiam. ###EVENTDURATION### enim facilisis ###TOTALDURATION### gravida.</p>'
+        . '<p>Ultricies integer ###COURSETEMPLATE###, quis ###PERSONINCHARGE###. Vivamus ###OTHEREXAMINERS### '
+        . 'arcu felis ###NUMBEROFPARTICIPANTS### bibendum ###BOOKINGPERSON### ut ###BOOKINGSTATUS### placerat.</p>'
+        . '<p>Ante tempus imperdiet,<br>'
+        . 'Duis autem vel.</p>';
 $string['customtemplatedefaultmessage_overdue'] = 'Lorem ipsum serius ###RECIPIENT###,'
-. '<p>Gravida quis ###CHECKLISTCATEGORY### blandit turpis ###CHECKLISTITEM### cursus in '
-. 'hac. ###ITEMDUETIME### habitasse platea dictumst. ###ITEMSTATUS### vestibulum rhoncus est.</p>'
-. '<p>Pellentesque ###SEMESTERTERM### eu ###EVENTTITLE###. Tincidunt ###DEPARTMENT### praesent ###ROOM### '
-. 'semper. ###EVENTSTART### feugiat nisl pretium. ###EVENTDURATION### fusce ut ###TOTALDURATION### placerat.</p>'
-. '<p>Orci eu ###COURSETEMPLATE### lobortis ###PERSONINCHARGE###. Elementum ###OTHEREXAMINERS### '
-. 'pulvinar etiam ###NUMBEROFPARTICIPANTS### non ###BOOKINGPERSON### enim ###BOOKINGSTATUS### praesent.</p>'
-. '<p>Elementum curabitur vitae,<br>'
-. 'Nunc congue nisi.</p>';
+        . '<p>Gravida quis ###CHECKLISTCATEGORY### blandit turpis ###CHECKLISTITEM### cursus in '
+        . 'hac. ###ITEMDUETIME### habitasse platea dictumst. ###ITEMSTATUS### vestibulum rhoncus est.</p>'
+        . '<p>Pellentesque ###SEMESTERTERM### eu ###EVENTTITLE###. Tincidunt ###DEPARTMENT### praesent ###ROOM### '
+        . 'semper. ###EVENTSTART### feugiat nisl pretium. ###EVENTDURATION### fusce ut ###TOTALDURATION### placerat.</p>'
+        . '<p>Orci eu ###COURSETEMPLATE### lobortis ###PERSONINCHARGE###. Elementum ###OTHEREXAMINERS### '
+        . 'pulvinar etiam ###NUMBEROFPARTICIPANTS### non ###BOOKINGPERSON### enim ###BOOKINGSTATUS### praesent.</p>'
+        . '<p>Elementum curabitur vitae,<br>'
+        . 'Nunc congue nisi.</p>';
 $string['customtemplatedefaultmessage_when_done'] = 'Lorem ipsum factum ###RECIPIENT###,'
-. '<p>Faucibus ornare ###CHECKLISTCATEGORY### suspendisse ###CHECKLISTITEM### sed nisi '
-. 'lacus. ###ITEMDUETIME### sed viverra ipsum. ###ITEMSTATUS### nunc aliquet bibendum.</p>'
-. '<p>Enim ###SEMESTERTERM### neque ###EVENTTITLE###. Volutpat ###DEPARTMENT### consequat ###ROOM### '
-. 'mauris. ###EVENTSTART### nunc congue nisi. ###EVENTDURATION### vitae ###TOTALDURATION### suscipit tellus.</p>'
-. '<p>Mauris ###COURSETEMPLATE### augue ###PERSONINCHARGE###. Interdum ###OTHEREXAMINERS### '
-. 'et malesuada ###NUMBEROFPARTICIPANTS### fames ###BOOKINGPERSON### ac ###BOOKINGSTATUS### turpis.</p>'
-. '<p>Egestas congue quisque,<br>'
-. 'Egestas diam in.</p>';
+        . '<p>Faucibus ornare ###CHECKLISTCATEGORY### suspendisse ###CHECKLISTITEM### sed nisi '
+        . 'lacus. ###ITEMDUETIME### sed viverra ipsum. ###ITEMSTATUS### nunc aliquet bibendum.</p>'
+        . '<p>Enim ###SEMESTERTERM### neque ###EVENTTITLE###. Volutpat ###DEPARTMENT### consequat ###ROOM### '
+        . 'mauris. ###EVENTSTART### nunc congue nisi. ###EVENTDURATION### vitae ###TOTALDURATION### suscipit tellus.</p>'
+        . '<p>Mauris ###COURSETEMPLATE### augue ###PERSONINCHARGE###. Interdum ###OTHEREXAMINERS### '
+        . 'et malesuada ###NUMBEROFPARTICIPANTS### fames ###BOOKINGPERSON### ac ###BOOKINGSTATUS### turpis.</p>'
+        . '<p>Egestas congue quisque,<br>'
+        . 'Egestas diam in.</p>';
 $string['customtemplatedefaultmessage_when_due'] = 'Lorem ipsum hodie ###RECIPIENT###,'
-. '<p>Pellentesque habitant ###CHECKLISTCATEGORY### morbi tristique ###CHECKLISTITEM### senectus et '
-. 'netus. ###ITEMDUETIME### malesuada fames ac. ###ITEMSTATUS### turpis egestas pretium.</p>'
-. '<p>Aenean ###SEMESTERTERM### euismod ###EVENTTITLE###. Elementum ###DEPARTMENT### tempus ###ROOM### '
-. 'egestas. ###EVENTSTART### sed viverra tellus. ###EVENTDURATION### in hac ###TOTALDURATION### habitasse.</p>'
-. '<p>Platea dictumst ###COURSETEMPLATE### vestibulum ###PERSONINCHARGE###. Rhoncus ###OTHEREXAMINERS### '
-. 'mattis rhoncus ###NUMBEROFPARTICIPANTS### urna ###BOOKINGPERSON### neque ###BOOKINGSTATUS### viverra.</p>'
-. '<p>Justo nec ultrices,<br>'
-. 'Dui sapien eget.</p>';
+        . '<p>Pellentesque habitant ###CHECKLISTCATEGORY### morbi tristique ###CHECKLISTITEM### senectus et '
+        . 'netus. ###ITEMDUETIME### malesuada fames ac. ###ITEMSTATUS### turpis egestas pretium.</p>'
+        . '<p>Aenean ###SEMESTERTERM### euismod ###EVENTTITLE###. Elementum ###DEPARTMENT### tempus ###ROOM### '
+        . 'egestas. ###EVENTSTART### sed viverra tellus. ###EVENTDURATION### in hac ###TOTALDURATION### habitasse.</p>'
+        . '<p>Platea dictumst ###COURSETEMPLATE### vestibulum ###PERSONINCHARGE###. Rhoncus ###OTHEREXAMINERS### '
+        . 'mattis rhoncus ###NUMBEROFPARTICIPANTS### urna ###BOOKINGPERSON### neque ###BOOKINGSTATUS### viverra.</p>'
+        . '<p>Justo nec ultrices,<br>'
+        . 'Dui sapien eget.</p>';
 $string['duedate_after_event'] = 'After event';
 $string['duedate_before_event'] = 'Before event';
 $string['edit'] = 'Edit';
@@ -359,7 +359,7 @@ $string['new_checklistcategory'] = 'New checklist category';
 $string['new_checklistitem'] = 'New checklist item';
 $string['new_institution'] = 'New institution';
 $string['new_room'] = 'New room';
-$string['new_weekplan'] = 'New week plan';
+$string['new_weekplan'] = 'New weekplan';
 $string['new_weekplan_assignment'] = 'New weekplan assignment';
 $string['no_categories_available'] = 'No categories available. Please create a category first.';
 $string['no_selection'] = 'No selection';
@@ -607,7 +607,7 @@ $string['settings_display_week'] = 'Week view';
 $string['settings_eventdefaultduration'] = 'Default duration of an event in minutes';
 $string['settings_eventdurationstepwidth'] = 'The step width for the duration of an event in minutes';
 $string['settings_eventmaxduration'] = 'Maximum duration of an event in minutes';
-$string['settings_eventmaxyear'] = 'Maxmum year to select for event';
+$string['settings_eventmaxyear'] = 'Maximum year to select for event';
 $string['settings_eventmaxyear_desc'] = 'Note: this only applies to roles with the capability <code>caneditinternal</code>.';
 $string['settings_eventminyear'] = 'Minimum year to select for event';
 $string['settings_eventminyear_desc'] = 'Note: this only applies to roles with the capability <code>caneditinternal</code>.';
@@ -683,11 +683,11 @@ $string['weekplan_assignment_edit'] = 'Edit weekplan assignment';
 $string['weekplan_assignment_overlaps'] = 'The entered period is overlapping an already existing weekplan assignment.';
 $string['weekplan_assignments'] = 'Weekplan assignments';
 $string['weekplan_did_not_begin_with_weekday'] = "Did not begin with weekday abbreviation";
-$string['weekplan_edit'] = 'Edit week plan';
+$string['weekplan_edit'] = 'Edit weekplan';
 $string['weekplan_end_before_start'] = 'The end date has to be after the start date!';
 $string['weekplan_end_of_period'] = 'End of period';
-$string['weekplan_help'] = 'The week plan defines the available time slots and room assignments for this semester.';
+$string['weekplan_help'] = 'The weekplan defines the available time slots and room assignments for this semester.';
 $string['weekplan_start_of_period'] = 'Start of period';
-$string['weekplans'] = 'Week plans';
+$string['weekplans'] = 'Weekplans';
 $string['when_done'] = 'When done';
 $string['when_due'] = 'When due';
