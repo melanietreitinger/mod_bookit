@@ -466,7 +466,7 @@ final class edit_event_form_cancel_save_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_participant_explicit_cancel_transitions_to_canceled(): void {
+    public function test_participant_explicit_cancel_transitions_to_cancelled(): void {
         global $DB;
 
         $bookingperson = $this->getDataGenerator()->create_user();

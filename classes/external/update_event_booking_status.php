@@ -122,7 +122,7 @@ class update_event_booking_status extends external_api {
             $params['status'] === event_access_manager::BOOKINGSTATUS_NEW
             && $oldstatus === event_access_manager::BOOKINGSTATUS_CANCELED
             && $params['tab'] === 'history'
-            && event_access_manager::can_reactivate_canceled_request($event, $context)
+            && event_access_manager::can_reactivate_cancelled_request($event, $context)
         ) {
             $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
         } else if (
@@ -143,7 +143,7 @@ class update_event_booking_status extends external_api {
                 $effectivestatus = event_access_manager::BOOKINGSTATUS_NEW;
             } else if (
                 $effectivestatus === null
-                || !event_access_manager::can_restore_canceled_booking($event, $context, $effectivestatus)
+                || !event_access_manager::can_restore_cancelled_booking($event, $context, $effectivestatus)
             ) {
                 throw new \required_capability_exception($context, 'mod/bookit:managebasics', 'nopermissions', '');
             }

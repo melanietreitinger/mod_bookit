@@ -791,7 +791,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_rejectedcancelled_workspace_includes_booker_canceled(): void {
+    public function test_rejectedcancelled_workspace_includes_booker_cancelled(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -820,14 +820,14 @@ final class event_manager_test extends advanced_testcase {
                 'timemodified' => time(),
         ];
 
-        $canceledid = $DB->insert_record('bookit_event', (object)($common + [
-                        'name' => 'Booker canceled',
+        $cancelledid = $DB->insert_record('bookit_event', (object)($common + [
+                        'name' => 'Booker cancelled',
                         'starttime' => strtotime('2026-05-08 09:00:00'),
                         'endtime' => strtotime('2026-05-08 11:00:00'),
                         'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
                 ]));
         event_manager::record_booking_history(
-            (int)$canceledid,
+            (int)$cancelledid,
             'status_changed',
             (int)$booker->id,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
@@ -837,7 +837,7 @@ final class event_manager_test extends advanced_testcase {
         $requests = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled')['events'];
         $ids = array_map(static fn($event): int => (int)$event->id, $requests);
 
-        $this->assertContains((int)$canceledid, $ids);
+        $this->assertContains((int)$cancelledid, $ids);
     }
 
     /**
@@ -845,7 +845,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_rejectedcancelled_workspace_excludes_service_team_canceled(): void {
+    public function test_rejectedcancelled_workspace_excludes_service_team_cancelled(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -875,14 +875,14 @@ final class event_manager_test extends advanced_testcase {
                 'timemodified' => time(),
         ];
 
-        $canceledid = $DB->insert_record('bookit_event', (object)($common + [
-                        'name' => 'Service canceled',
+        $cancelledid = $DB->insert_record('bookit_event', (object)($common + [
+                        'name' => 'Service cancelled',
                         'starttime' => strtotime('2026-05-08 09:00:00'),
                         'endtime' => strtotime('2026-05-08 11:00:00'),
                         'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
                 ]));
         event_manager::record_booking_history(
-            (int)$canceledid,
+            (int)$cancelledid,
             'status_changed',
             (int)$serviceteam->id,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
@@ -892,7 +892,7 @@ final class event_manager_test extends advanced_testcase {
         $requests = $this->get_workspace_query_result($context, $adminid, 'rejectedcancelled')['events'];
         $ids = array_map(static fn($event): int => (int)$event->id, $requests);
 
-        $this->assertNotContains((int)$canceledid, $ids);
+        $this->assertNotContains((int)$cancelledid, $ids);
     }
 
     /**
@@ -1534,7 +1534,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Reactivating a canceled request back to New through the lifecycle path must send a notification.
+     * Reactivating a cancelled request back to New through the lifecycle path must send a notification.
      *
      * @return void
      */
@@ -1553,9 +1553,9 @@ final class event_manager_test extends advanced_testcase {
         $saved = event_manager::save_event_with_lifecycle_tracking($event, null, (int)$user->id, $context);
 
         $beforecancel = bookit_event::from_database($saved->id);
-        $canceled = bookit_event::from_database($saved->id);
-        $canceled->bookingstatus = event_access_manager::BOOKINGSTATUS_CANCELED;
-        event_manager::save_event_with_lifecycle_tracking($canceled, $beforecancel, (int)$user->id, $context);
+        $cancelled = bookit_event::from_database($saved->id);
+        $cancelled->bookingstatus = event_access_manager::BOOKINGSTATUS_CANCELED;
+        event_manager::save_event_with_lifecycle_tracking($cancelled, $beforecancel, (int)$user->id, $context);
 
         $beforerestore = bookit_event::from_database($saved->id);
         $reactivated = bookit_event::from_database($saved->id);
@@ -1715,11 +1715,11 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Accepted requests exclude canceled and history bookings.
+     * Accepted requests exclude cancelled and history bookings.
      *
      * @return void
      */
-    public function test_confirmedrequests_workspace_excludes_canceled_and_history_events(): void {
+    public function test_confirmedrequests_workspace_excludes_cancelled_and_history_events(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -2065,13 +2065,13 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Explicit Canceled selection on the active tab must return canceled rows.
+     * Explicit Canceled selection on the active tab must return cancelled rows.
      *
      * @return void
      */
-    public function test_filter_overview_events_explicit_canceled_on_active_tab(): void {
+    public function test_filter_overview_events_explicit_cancelled_on_active_tab(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
-        $canceled = (object)[
+        $cancelled = (object)[
                 'id' => 201,
                 'semester' => 20261,
                 'institutionid' => 1,
@@ -2081,7 +2081,7 @@ final class event_manager_test extends advanced_testcase {
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$canceled],
+            [$cancelled],
             ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
             false,
             $referencetime
@@ -2123,7 +2123,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_filter_overview_events_canceled_only_excludes_active_statuses(): void {
+    public function test_filter_overview_events_cancelled_only_excludes_active_statuses(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $events = [
                 (object)[
@@ -2176,7 +2176,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_filter_overview_events_new_and_canceled_mixed_on_active(): void {
+    public function test_filter_overview_events_new_and_cancelled_mixed_on_active(): void {
         $referencetime = strtotime('2026-05-07 10:00:00');
         $newevent = (object)[
                 'id' => 311,
@@ -2186,7 +2186,7 @@ final class event_manager_test extends advanced_testcase {
                 'starttime' => strtotime('2026-05-08 09:00:00'),
                 'endtime' => strtotime('2026-05-08 11:00:00'),
         ];
-        $canceled = (object)[
+        $cancelled = (object)[
                 'id' => 312,
                 'semester' => 20261,
                 'institutionid' => 1,
@@ -2196,7 +2196,7 @@ final class event_manager_test extends advanced_testcase {
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$newevent, $canceled],
+            [$newevent, $cancelled],
             [
                         'bookingstatuses' => [
                                 event_access_manager::BOOKINGSTATUS_NEW,
@@ -2372,7 +2372,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Terminal-only selection returns only canceled and rejected rows on the active tab.
+     * Terminal-only selection returns only cancelled and rejected rows on the active tab.
      *
      * @return void
      */
@@ -2426,17 +2426,17 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_filter_overview_events_participant_explicit_canceled_on_active(): void {
-        $this->test_filter_overview_events_explicit_canceled_on_active_tab();
+    public function test_filter_overview_events_participant_explicit_cancelled_on_active(): void {
+        $this->test_filter_overview_events_explicit_cancelled_on_active_tab();
     }
 
     /**
-     * Spec 062 alias: participant canceled-only filter excludes active statuses.
+     * Spec 062 alias: participant cancelled-only filter excludes active statuses.
      *
      * @return void
      */
-    public function test_filter_overview_events_participant_canceled_only_excludes_active(): void {
-        $this->test_filter_overview_events_canceled_only_excludes_active_statuses();
+    public function test_filter_overview_events_participant_cancelled_only_excludes_active(): void {
+        $this->test_filter_overview_events_cancelled_only_excludes_active_statuses();
     }
 
     /**
@@ -2444,8 +2444,8 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_filter_overview_events_participant_new_and_canceled_mixed(): void {
-        $this->test_filter_overview_events_new_and_canceled_mixed_on_active();
+    public function test_filter_overview_events_participant_new_and_cancelled_mixed(): void {
+        $this->test_filter_overview_events_new_and_cancelled_mixed_on_active();
     }
 
     /**
@@ -2485,13 +2485,13 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Examiner fixtures must return canceled rows when only Canceled is selected.
+     * Examiner fixtures must return cancelled rows when only Canceled is selected.
      *
      * @return void
      */
-    public function test_filter_overview_events_examiner_explicit_canceled_on_active(): void {
+    public function test_filter_overview_events_examiner_explicit_cancelled_on_active(): void {
         $referencetime = strtotime('2026-06-01 10:00:00');
-        $canceled = (object)[
+        $cancelled = (object)[
                 'id' => 801,
                 'semester' => 20261,
                 'institutionid' => 1,
@@ -2505,7 +2505,7 @@ final class event_manager_test extends advanced_testcase {
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$canceled],
+            [$cancelled],
             ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
             false,
             $referencetime
@@ -2551,7 +2551,7 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_filter_overview_events_participant_canceled_outside_semester_hidden(): void {
+    public function test_filter_overview_events_participant_cancelled_outside_semester_hidden(): void {
         $referencetime = strtotime('2026-06-01 10:00:00');
         $insamesemester = (object)[
                 'id' => 901,
@@ -2764,7 +2764,7 @@ final class event_manager_test extends advanced_testcase {
         ]);
         event_manager::record_booking_history(
             $eventid,
-            'canceled',
+            'cancelled',
             (int)$user->id,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
             event_access_manager::BOOKINGSTATUS_CANCELED,
@@ -2820,7 +2820,7 @@ final class event_manager_test extends advanced_testcase {
         ]);
         event_manager::record_booking_history(
             $eventid,
-            'self_canceled',
+            'self_cancelled',
             (int)$user->id,
             event_access_manager::BOOKINGSTATUS_NEW,
             event_access_manager::BOOKINGSTATUS_CANCELED,
@@ -2884,7 +2884,7 @@ final class event_manager_test extends advanced_testcase {
 
         $history = array_values(event_manager::get_booking_history($eventid));
         $this->assertCount(1, $history);
-        $this->assertSame('self_canceled', $history[0]->action);
+        $this->assertSame('self_cancelled', $history[0]->action);
         $this->assertSame((int)$requester->id, (int)$history[0]->usermodified);
         $this->assertTrue(event_manager::is_hidden_from_active_overview(
             $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST)
@@ -2896,13 +2896,13 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_is_event_in_history_treats_canceled_as_history(): void {
-        $canceled = (object)[
+    public function test_is_event_in_history_treats_cancelled_as_history(): void {
+        $cancelled = (object)[
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
                 'endtime' => strtotime('+2 days'),
         ];
 
-        $this->assertTrue(event_manager::is_event_in_history($canceled));
+        $this->assertTrue(event_manager::is_event_in_history($cancelled));
     }
 
     /**
@@ -2920,13 +2920,13 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * History overview filtering must still include canceled bookings.
+     * History overview filtering must still include cancelled bookings.
      *
      * @return void
      */
-    public function test_filter_overview_events_includes_canceled_in_history_view(): void {
+    public function test_filter_overview_events_includes_cancelled_in_history_view(): void {
         $referencetime = time();
-        $canceled = (object)[
+        $cancelled = (object)[
                 'id' => 21,
                 'semester' => 20261,
                 'institutionid' => 1,
@@ -2935,8 +2935,8 @@ final class event_manager_test extends advanced_testcase {
                 'endtime' => strtotime('+2 days +2 hours'),
         ];
 
-        $active = event_manager::filter_overview_events([$canceled], [], false, $referencetime);
-        $history = event_manager::filter_overview_events([$canceled], [], true, $referencetime);
+        $active = event_manager::filter_overview_events([$cancelled], [], false, $referencetime);
+        $history = event_manager::filter_overview_events([$cancelled], [], true, $referencetime);
 
         $this->assertCount(0, $active);
         $this->assertCount(1, $history);
@@ -3324,7 +3324,7 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
-     * Rejected-and-cancelled tab with Rejected-only status excludes canceled fixtures.
+     * Rejected-and-cancelled tab with Rejected-only status excludes cancelled fixtures.
      *
      * @return void
      */
@@ -3341,7 +3341,7 @@ final class event_manager_test extends advanced_testcase {
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
                 'usercreated' => $booker->id,
         ]);
-        $canceledid = $this->create_event_record([
+        $cancelledid = $this->create_event_record([
                 'name' => 'Canceled only fixture',
                 'semester' => 20261,
                 'starttime' => strtotime('2026-04-11 09:00:00'),
@@ -3350,7 +3350,7 @@ final class event_manager_test extends advanced_testcase {
                 'usercreated' => $booker->id,
         ]);
         event_manager::record_booking_history(
-            $canceledid,
+            $cancelledid,
             'status_changed',
             (int)$booker->id,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
@@ -3366,7 +3366,7 @@ final class event_manager_test extends advanced_testcase {
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
         $this->assertContains($rejectedid, $ids);
-        $this->assertNotContains($canceledid, $ids);
+        $this->assertNotContains($cancelledid, $ids);
     }
 
     /**
@@ -3387,7 +3387,7 @@ final class event_manager_test extends advanced_testcase {
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
                 'usercreated' => $booker->id,
         ]);
-        $canceledid = $this->create_event_record([
+        $cancelledid = $this->create_event_record([
                 'name' => 'Canceled for cancel filter',
                 'semester' => 20261,
                 'starttime' => strtotime('2026-04-13 09:00:00'),
@@ -3396,7 +3396,7 @@ final class event_manager_test extends advanced_testcase {
                 'usercreated' => $booker->id,
         ]);
         event_manager::record_booking_history(
-            $canceledid,
+            $cancelledid,
             'status_changed',
             (int)$booker->id,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
@@ -3411,7 +3411,7 @@ final class event_manager_test extends advanced_testcase {
         );
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
-        $this->assertContains($canceledid, $ids);
+        $this->assertContains($cancelledid, $ids);
         $this->assertNotContains($rejectedid, $ids);
     }
 
@@ -3433,7 +3433,7 @@ final class event_manager_test extends advanced_testcase {
                 'bookingstatus' => event_access_manager::BOOKINGSTATUS_REJECTED,
                 'usercreated' => $booker->id,
         ]);
-        $canceledid = $this->create_event_record([
+        $cancelledid = $this->create_event_record([
                 'name' => 'Canceled both default',
                 'semester' => 20261,
                 'starttime' => strtotime('2026-04-15 09:00:00'),
@@ -3442,7 +3442,7 @@ final class event_manager_test extends advanced_testcase {
                 'usercreated' => $booker->id,
         ]);
         event_manager::record_booking_history(
-            $canceledid,
+            $cancelledid,
             'status_changed',
             (int)$booker->id,
             event_access_manager::BOOKINGSTATUS_CONFIRMED,
@@ -3460,7 +3460,7 @@ final class event_manager_test extends advanced_testcase {
         $ids = array_map(static fn($event): int => (int)$event->id, $result['events']);
 
         $this->assertContains($rejectedid, $ids);
-        $this->assertContains($canceledid, $ids);
+        $this->assertContains($cancelledid, $ids);
     }
 
     /**
@@ -3480,9 +3480,9 @@ final class event_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_workspace_allrequests_explicit_terminal_status_includes_canceled_rejected(): void {
+    public function test_workspace_allrequests_explicit_terminal_status_includes_cancelled_rejected(): void {
         $referencetime = strtotime('2026-06-01 10:00:00');
-        $canceled = (object)[
+        $cancelled = (object)[
                 'id' => 1101,
                 'semester' => 20261,
                 'institutionid' => 1,
@@ -3492,7 +3492,7 @@ final class event_manager_test extends advanced_testcase {
         ];
 
         $filtered = event_manager::filter_overview_events(
-            [$canceled],
+            [$cancelled],
             ['bookingstatuses' => [event_access_manager::BOOKINGSTATUS_CANCELED]],
             false,
             $referencetime

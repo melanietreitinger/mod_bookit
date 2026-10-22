@@ -23,7 +23,7 @@ Feature: Manage booking status notification settings
     And the Bookit editor field "Message body for In Progress" should equal "Thank you for your request ""###EVENTNAME###"" for ###BOOKINGDATE###. Some resources are still being reviewed. You will be notified shortly."
     And the field "Message subject for Confirmed" matches value "Booking request confirmed: ###EVENTNAME### on ###BOOKINGDATE###"
     And the Bookit editor field "Message body for Confirmed" should equal "Thank you for your request ""###EVENTNAME###"" for ###BOOKINGDATE###. We are pleased to confirm your booking."
-    And the field "Message subject for Canceled" matches value "Booking request canceled: ###EVENTNAME### on ###BOOKINGDATE###"
+    And the field "Message subject for Canceled" matches value "Booking request cancelled: ###EVENTNAME### on ###BOOKINGDATE###"
     And the Bookit editor field "Message body for Canceled" should equal "Thank you for your request ""###EVENTNAME###"" for ###BOOKINGDATE###. Unfortunately, we must decline the request due to the current circumstances."
     And the field "Message subject for Rejected" matches value "Booking request rejected: ###EVENTNAME### on ###BOOKINGDATE###"
     And the Bookit editor field "Message body for Rejected" should equal "Thank you for your request ""###EVENTNAME###"" for ###BOOKINGDATE###. Unfortunately, we must decline the request due to the current circumstances."

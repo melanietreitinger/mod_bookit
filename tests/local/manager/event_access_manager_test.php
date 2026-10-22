@@ -535,14 +535,14 @@ final class event_access_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_support_canceled_rejected_hidden_in_calendar(): void {
+    public function test_support_cancelled_rejected_hidden_in_calendar(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_support_role();
         $user = $this->getDataGenerator()->create_user();
         $this->assign_support_role($context, $user->id);
         $this->setUser($user);
 
-        $canceled = (object)[
+        $cancelled = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => 0,
             'usercreated' => 999,
@@ -550,10 +550,10 @@ final class event_access_manager_test extends advanced_testcase {
             'otherexaminers' => '',
             'supportpersons' => '',
         ];
-        $rejected = clone $canceled;
+        $rejected = clone $cancelled;
         $rejected->bookingstatus = event_access_manager::BOOKINGSTATUS_REJECTED;
 
-        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($canceled, $context, $user->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($cancelled, $context, $user->id));
         $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($rejected, $context, $user->id));
     }
 
@@ -1167,11 +1167,11 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Examiners may see canceled bookings in overview when they are person in charge.
+     * Examiners may see cancelled bookings in overview when they are person in charge.
      *
      * @return void
      */
-    public function test_can_user_view_canceled_in_overview_as_examiner(): void {
+    public function test_can_user_view_cancelled_in_overview_as_examiner(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $examiner = $this->getDataGenerator()->create_user();
@@ -1525,18 +1525,18 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Service-team users must not see canceled bookings in the active calendar projection.
+     * Service-team users must not see cancelled bookings in the active calendar projection.
      *
      * @return void
      */
-    public function test_service_team_cannot_view_canceled_event_in_calendar(): void {
+    public function test_service_team_cannot_view_cancelled_event_in_calendar(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_service_role('bookitservice016');
         $serviceuser = $this->getDataGenerator()->create_user();
         $this->assign_role_by_shortname($context, $serviceuser->id, 'bookitservice016');
         $this->setUser($serviceuser);
 
-        $canceled = (object)[
+        $cancelled = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'endtime' => strtotime('2026-05-20 11:00:00'),
             'personinchargeid' => 0,
@@ -1545,20 +1545,20 @@ final class event_access_manager_test extends advanced_testcase {
             'otherexaminers' => '',
             'supportpersons' => '',
         ];
-        $accepted = clone $canceled;
+        $accepted = clone $cancelled;
         $accepted->bookingstatus = event_access_manager::BOOKINGSTATUS_CONFIRMED;
 
-        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($canceled, $context, $serviceuser->id));
-        $this->assertTrue(event_access_manager::can_user_view_event_details($canceled, $context, $serviceuser->id));
+        $this->assertFalse(event_access_manager::can_user_view_event_in_calendar($cancelled, $context, $serviceuser->id));
+        $this->assertTrue(event_access_manager::can_user_view_event_details($cancelled, $context, $serviceuser->id));
         $this->assertTrue(event_access_manager::can_user_view_event_in_calendar($accepted, $context, $serviceuser->id));
     }
 
     /**
-     * Reactivating a canceled booking must restore service-team calendar visibility.
+     * Reactivating a cancelled booking must restore service-team calendar visibility.
      *
      * @return void
      */
-    public function test_service_team_calendar_visibility_returns_after_canceled_reactivation(): void {
+    public function test_service_team_calendar_visibility_returns_after_cancelled_reactivation(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1569,7 +1569,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($serviceuser);
 
         $eventid = (int)$DB->insert_record('bookit_event', (object)[
-            'name' => 'Reactivate canceled exam',
+            'name' => 'Reactivate cancelled exam',
             'semester' => 20261,
             'institutionid' => 1,
             'starttime' => strtotime('2026-05-20 09:00:00'),
@@ -1610,11 +1610,11 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Booking persons must not see canceled bookings in the calendar.
+     * Booking persons must not see cancelled bookings in the calendar.
      *
      * @return void
      */
-    public function test_booking_person_canceled_hidden_in_calendar(): void {
+    public function test_booking_person_cancelled_hidden_in_calendar(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $user = $this->getDataGenerator()->create_user();
@@ -1668,11 +1668,11 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Service-team canceled calendar filtering remains unchanged.
+     * Service-team cancelled calendar filtering remains unchanged.
      *
      * @return void
      */
-    public function test_service_team_canceled_calendar_unchanged(): void {
+    public function test_service_team_cancelled_calendar_unchanged(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_service_role('bookitservice039');
         $user = $this->getDataGenerator()->create_user();
@@ -1819,11 +1819,11 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Booking persons may reactivate their own canceled bookings from History.
+     * Booking persons may reactivate their own cancelled bookings from History.
      *
      * @return void
      */
-    public function test_booking_person_can_reactivate_own_canceled(): void {
+    public function test_booking_person_can_reactivate_own_cancelled(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $user = $this->getDataGenerator()->create_user();
@@ -1839,15 +1839,15 @@ final class event_access_manager_test extends advanced_testcase {
             'supportpersons' => '',
         ];
 
-        $this->assertTrue(event_access_manager::can_reactivate_canceled_request($event, $context));
+        $this->assertTrue(event_access_manager::can_reactivate_cancelled_request($event, $context));
     }
 
     /**
-     * Booking persons cannot reactivate non-canceled bookings via canceled helper.
+     * Booking persons cannot reactivate non-cancelled bookings via cancelled helper.
      *
      * @return void
      */
-    public function test_booking_person_cannot_reactivate_non_canceled(): void {
+    public function test_booking_person_cannot_reactivate_non_cancelled(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $user = $this->getDataGenerator()->create_user();
@@ -1869,16 +1869,16 @@ final class event_access_manager_test extends advanced_testcase {
                 'otherexaminers' => '',
                 'supportpersons' => '',
             ];
-            $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+            $this->assertFalse(event_access_manager::can_reactivate_cancelled_request($event, $context));
         }
     }
 
     /**
-     * Non-owners cannot reactivate canceled bookings.
+     * Non-owners cannot reactivate cancelled bookings.
      *
      * @return void
      */
-    public function test_non_owner_cannot_reactivate_canceled(): void {
+    public function test_non_owner_cannot_reactivate_cancelled(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $owner = $this->getDataGenerator()->create_user();
@@ -1895,15 +1895,15 @@ final class event_access_manager_test extends advanced_testcase {
             'supportpersons' => '',
         ];
 
-        $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+        $this->assertFalse(event_access_manager::can_reactivate_cancelled_request($event, $context));
     }
 
     /**
-     * Examiner-only users cannot reactivate canceled bookings as booking person.
+     * Examiner-only users cannot reactivate cancelled bookings as booking person.
      *
      * @return void
      */
-    public function test_examiner_only_cannot_reactivate_canceled(): void {
+    public function test_examiner_only_cannot_reactivate_cancelled(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $examiner = $this->getDataGenerator()->create_user();
@@ -1920,15 +1920,15 @@ final class event_access_manager_test extends advanced_testcase {
             'supportpersons' => '',
         ];
 
-        $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+        $this->assertFalse(event_access_manager::can_reactivate_cancelled_request($event, $context));
     }
 
     /**
-     * Service team without bookingperson role cannot use canceled reactivate helper.
+     * Service team without bookingperson role cannot use cancelled reactivate helper.
      *
      * @return void
      */
-    public function test_service_team_cannot_use_canceled_reactivate_helper(): void {
+    public function test_service_team_cannot_use_cancelled_reactivate_helper(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_service_role('bookitservice049cancel');
         $user = $this->getDataGenerator()->create_user();
@@ -1945,7 +1945,7 @@ final class event_access_manager_test extends advanced_testcase {
             'supportpersons' => '',
         ];
 
-        $this->assertFalse(event_access_manager::can_reactivate_canceled_request($event, $context));
+        $this->assertFalse(event_access_manager::can_reactivate_cancelled_request($event, $context));
     }
 
     /**
@@ -2020,7 +2020,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_participant_role($context, $examiner->id);
         $this->setUser($examiner);
 
-        $canceledother = (object)[
+        $cancelledother = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'personinchargeid' => (int)$examiner->id,
             'usercreated' => (int)$owner->id,
@@ -2028,7 +2028,7 @@ final class event_access_manager_test extends advanced_testcase {
             'otherexaminers' => '',
             'supportpersons' => '',
         ];
-        $this->assertFalse(event_access_manager::can_reactivate_from_history($canceledother, $context));
+        $this->assertFalse(event_access_manager::can_reactivate_from_history($cancelledother, $context));
 
         $accepted = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
@@ -2064,11 +2064,11 @@ final class event_access_manager_test extends advanced_testcase {
     }
 
     /**
-     * Terminal restore helper allows service team on booker-canceled requests.
+     * Terminal restore helper allows service team on booker-cancelled requests.
      *
      * @return void
      */
-    public function test_can_restore_terminal_request_booker_canceled(): void {
+    public function test_can_restore_terminal_request_booker_cancelled(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -2079,7 +2079,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($serviceteam);
 
         $eventid = (int)$DB->insert_record('bookit_event', (object)[
-            'name' => 'Booker canceled terminal',
+            'name' => 'Booker cancelled terminal',
             'semester' => 20261,
             'institutionid' => 1,
             'starttime' => strtotime('2026-05-20 09:00:00'),
@@ -2147,7 +2147,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->setUser($serviceteam);
 
         $eventid = (int)$DB->insert_record('bookit_event', (object)[
-            'name' => 'Service canceled terminal',
+            'name' => 'Service cancelled terminal',
             'semester' => 20261,
             'institutionid' => 1,
             'starttime' => strtotime('2026-05-20 09:00:00'),
@@ -2179,8 +2179,8 @@ final class event_access_manager_test extends advanced_testcase {
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS,
             event_access_manager::BOOKINGSTATUS_CANCELED
         );
-        $servicecanceled = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
-        $this->assertFalse(event_access_manager::can_restore_terminal_request($servicecanceled, $servicecontext));
+        $servicecancelled = $DB->get_record('bookit_event', ['id' => $eventid], '*', MUST_EXIST);
+        $this->assertFalse(event_access_manager::can_restore_terminal_request($servicecancelled, $servicecontext));
 
         $accepted = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CONFIRMED,
@@ -2476,7 +2476,7 @@ final class event_access_manager_test extends advanced_testcase {
         $this->assign_participant_role($context, $user->id);
         $this->setUser($user);
 
-        $canceled = (object)[
+        $cancelled = (object)[
             'bookingstatus' => event_access_manager::BOOKINGSTATUS_CANCELED,
             'starttime' => time() + 3600,
             'personinchargeid' => $user->id,
@@ -2487,7 +2487,7 @@ final class event_access_manager_test extends advanced_testcase {
         ];
         $this->assertSame(
             event_access_manager::MODAL_FOOTER_MODE_VIEW_ONLY,
-            event_access_manager::get_event_modal_footer_mode($canceled, $context, $user->id)
+            event_access_manager::get_event_modal_footer_mode($cancelled, $context, $user->id)
         );
 
         $cancelonly = (object)[
@@ -2571,7 +2571,7 @@ final class event_access_manager_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_participant_cannot_view_resources_for_canceled_booking(): void {
+    public function test_participant_cannot_view_resources_for_cancelled_booking(): void {
         $this->resetAfterTest(true);
         $context = $this->create_bookit_context_with_participant_role();
         $user = $this->getDataGenerator()->create_user();

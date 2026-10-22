@@ -130,7 +130,7 @@ final class lifecycle_events_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_save_event_with_lifecycle_tracking_triggers_canceled_audit_event(): void {
+    public function test_save_event_with_lifecycle_tracking_triggers_cancelled_audit_event(): void {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
@@ -154,7 +154,7 @@ final class lifecycle_events_test extends advanced_testcase {
 
         $this->assertCount(1, $events);
         $this->assertInstanceOf(booking_status_changed::class, $events[0]);
-        $this->assertSame('canceled', $events[0]->other['action']);
+        $this->assertSame('cancelled', $events[0]->other['action']);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CONFIRMED, (int)$events[0]->other['oldstatus']);
         $this->assertSame(event_access_manager::BOOKINGSTATUS_CANCELED, (int)$events[0]->other['newstatus']);
     }

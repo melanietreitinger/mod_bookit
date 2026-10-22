@@ -238,7 +238,7 @@ class event_manager {
                 || has_capability('mod/bookit:viewalldetailsofevent', $context, $userid)
             )
         ) {
-            $events = self::merge_service_team_canceled_export_events(
+            $events = self::merge_service_team_cancelled_export_events(
                 $events,
                 $filters['start'] ?? $starttime,
                 $filters['end'] ?? $endtime,
@@ -1286,13 +1286,13 @@ class event_manager {
         ];
 
         if ($workspace === 'history') {
-            $conditions[] = '(e.bookingstatus IN (:historycanceled, :historyrejected) OR e.endtime < :referencetime)';
-            $params['historycanceled'] = event_access_manager::BOOKINGSTATUS_CANCELED;
+            $conditions[] = '(e.bookingstatus IN (:historycancelled, :historyrejected) OR e.endtime < :referencetime)';
+            $params['historycancelled'] = event_access_manager::BOOKINGSTATUS_CANCELED;
             $params['historyrejected'] = event_access_manager::BOOKINGSTATUS_REJECTED;
         } else if (empty($bookingstatuses)) {
-            $conditions[] = 'e.bookingstatus NOT IN (:activecanceled, :activerejected)';
+            $conditions[] = 'e.bookingstatus NOT IN (:activecancelled, :activerejected)';
             $conditions[] = 'e.endtime >= :referencetime';
-            $params['activecanceled'] = event_access_manager::BOOKINGSTATUS_CANCELED;
+            $params['activecancelled'] = event_access_manager::BOOKINGSTATUS_CANCELED;
             $params['activerejected'] = event_access_manager::BOOKINGSTATUS_REJECTED;
         }
 
@@ -1561,18 +1561,18 @@ class event_manager {
             (
                 e.bookingstatus = :rejected
                 OR (
-                    e.bookingstatus = :canceled
+                    e.bookingstatus = :cancelled
                     AND EXISTS (
                         SELECT 1
                           FROM {bookit_event_history} h
                          WHERE h.eventid = e.id
-                           AND h.newstatus = :historycanceled
+                           AND h.newstatus = :historycancelled
                            AND (h.usermodified = 0 OR h.usermodified = e.usercreated)
                            AND NOT EXISTS (
                                SELECT 1
                                  FROM {bookit_event_history} newer
                                 WHERE newer.eventid = e.id
-                                  AND newer.newstatus = :newerhistorycanceled
+                                  AND newer.newstatus = :newerhistorycancelled
                                   AND (
                                       newer.timecreated > h.timecreated
                                       OR (newer.timecreated = h.timecreated AND newer.id > h.id)
@@ -1592,9 +1592,9 @@ class event_manager {
     private static function get_rejected_requests_params(): array {
         return [
             'rejected' => event_access_manager::BOOKINGSTATUS_REJECTED,
-            'canceled' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'historycanceled' => event_access_manager::BOOKINGSTATUS_CANCELED,
-            'newerhistorycanceled' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'cancelled' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'historycancelled' => event_access_manager::BOOKINGSTATUS_CANCELED,
+            'newerhistorycancelled' => event_access_manager::BOOKINGSTATUS_CANCELED,
         ];
     }
 
@@ -1724,7 +1724,7 @@ class event_manager {
     }
 
     /**
-     * Resolve the last valid pre-cancel booking status for a canceled item.
+     * Resolve the last valid pre-cancel booking status for a cancelled item.
      *
      * @param int $eventid
      * @return int|null
@@ -1949,7 +1949,7 @@ class event_manager {
         }
 
         $entry = reset($latest);
-        return (string)($entry->action ?? '') === 'self_canceled'
+        return (string)($entry->action ?? '') === 'self_cancelled'
             && (int)($entry->oldstatus ?? -1) === event_access_manager::BOOKINGSTATUS_NEW
             && (int)($entry->newstatus ?? -1) === event_access_manager::BOOKINGSTATUS_CANCELED;
     }
@@ -2067,7 +2067,7 @@ class event_manager {
     }
 
     /**
-     * Merge canceled bookings into export reads when service team explicitly requests them.
+     * Merge cancelled bookings into export reads when service team explicitly requests them.
      *
      * @param array $events
      * @param string $starttime
@@ -2076,7 +2076,7 @@ class event_manager {
      * @return array
      * @throws dml_exception|coding_exception
      */
-    private static function merge_service_team_canceled_export_events(
+    private static function merge_service_team_cancelled_export_events(
         array $events,
         string $starttime,
         string $endtime,
@@ -2494,7 +2494,7 @@ class event_manager {
         bool $isselfcancelnew = false
     ): string {
         if ($isselfcancelnew) {
-            return 'self_canceled';
+            return 'self_cancelled';
         }
 
         if (
@@ -2517,7 +2517,7 @@ class event_manager {
         return match ($newstatus) {
             event_access_manager::BOOKINGSTATUS_IN_PROGRESS => 'moved_to_in_progress',
             event_access_manager::BOOKINGSTATUS_CONFIRMED => 'confirmed',
-            event_access_manager::BOOKINGSTATUS_CANCELED => 'canceled',
+            event_access_manager::BOOKINGSTATUS_CANCELED => 'cancelled',
             event_access_manager::BOOKINGSTATUS_REJECTED => 'rejected',
             default => 'updated',
         };

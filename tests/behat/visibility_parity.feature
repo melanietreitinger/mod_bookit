@@ -87,7 +87,7 @@ Feature: Keep calendar and overview visibility aligned
     Then I should see "Transition visibility"
     And I should see "Confirmed"
 
-  Scenario: Service team no longer sees canceled booking in calendar
+  Scenario: Service team no longer sees cancelled booking in calendar
     Given the following "users" exist:
       | username    | firstname | lastname |
       | serviceteam | Service   | Team     |

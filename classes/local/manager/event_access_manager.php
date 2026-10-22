@@ -47,7 +47,7 @@ class event_access_manager {
     /** Booking status: confirmed by service team. */
     public const BOOKINGSTATUS_CONFIRMED = 2;
 
-    /** Booking status: canceled. */
+    /** Booking status: cancelled. */
     public const BOOKINGSTATUS_CANCELED = 3;
 
     /** Booking status: rejected. */
@@ -692,13 +692,13 @@ class event_access_manager {
     }
 
     /**
-     * Check whether a canceled booking may be reactivated as a new request from History.
+     * Check whether a cancelled booking may be reactivated as a new request from History.
      *
      * @param stdClass $event
      * @param context_module $context
      * @return bool
      */
-    public static function can_reactivate_canceled_request(
+    public static function can_reactivate_cancelled_request(
         stdClass $event,
         context_module $context
     ): bool {
@@ -725,7 +725,7 @@ class event_access_manager {
             return true;
         }
 
-        if (self::can_reactivate_canceled_request($event, $context)) {
+        if (self::can_reactivate_cancelled_request($event, $context)) {
             return true;
         }
 
@@ -739,12 +739,12 @@ class event_access_manager {
     }
 
     /**
-     * Check whether a canceled booking was initiated by the booking person.
+     * Check whether a cancelled booking was initiated by the booking person.
      *
      * @param stdClass $event
      * @return bool
      */
-    public static function is_booking_person_canceled(stdClass $event): bool {
+    public static function is_booking_person_cancelled(stdClass $event): bool {
         if ((int)($event->bookingstatus ?? -1) !== self::BOOKINGSTATUS_CANCELED) {
             return false;
         }
@@ -766,7 +766,7 @@ class event_access_manager {
     }
 
     /**
-     * Check whether a rejected or booker-canceled request may be restored from the terminal tab.
+     * Check whether a rejected or booker-cancelled request may be restored from the terminal tab.
      *
      * @param stdClass $event
      * @param context_module $context
@@ -781,7 +781,7 @@ class event_access_manager {
             return true;
         }
 
-        return self::is_booking_person_canceled($event);
+        return self::is_booking_person_cancelled($event);
     }
 
     /**
@@ -792,7 +792,7 @@ class event_access_manager {
      * @param int|null $restoredstatus
      * @return bool
      */
-    public static function can_restore_canceled_booking(
+    public static function can_restore_cancelled_booking(
         stdClass $event,
         context_module $context,
         ?int $restoredstatus = null

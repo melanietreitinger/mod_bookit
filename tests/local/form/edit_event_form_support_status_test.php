@@ -541,11 +541,11 @@ final class edit_event_form_support_status_test extends advanced_testcase {
     }
 
     /**
-     * Tampered canceled status submissions must not change the persisted status.
+     * Tampered cancelled status submissions must not change the persisted status.
      *
      * @return void
      */
-    public function test_support_tamper_canceled_status_ignored_on_save(): void {
+    public function test_support_tamper_cancelled_status_ignored_on_save(): void {
         global $DB;
 
         $bookingperson = $this->getDataGenerator()->create_user();
@@ -575,11 +575,11 @@ final class edit_event_form_support_status_test extends advanced_testcase {
     }
 
     /**
-     * Terminal canceled and rejected bookings keep support status edit disabled.
+     * Terminal cancelled and rejected bookings keep support status edit disabled.
      *
      * @return void
      */
-    public function test_support_readonly_status_canceled_and_rejected(): void {
+    public function test_support_readonly_status_cancelled_and_rejected(): void {
         $bookingstatuses = [
                 event_access_manager::BOOKINGSTATUS_CANCELED,
                 event_access_manager::BOOKINGSTATUS_REJECTED,

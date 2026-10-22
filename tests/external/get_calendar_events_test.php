@@ -318,18 +318,18 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
     }
 
     /**
-     * Governed calendar reads must hide canceled bookings from the service-team active calendar.
+     * Governed calendar reads must hide cancelled bookings from the service-team active calendar.
      *
      * @return void
      */
-    public function test_execute_hides_canceled_event_after_service_team_transition(): void {
+    public function test_execute_hides_cancelled_event_after_service_team_transition(): void {
         global $DB;
 
         $this->resetAfterTest(true);
 
         $serviceuser = $this->getDataGenerator()->create_user();
         $course = $this->getDataGenerator()->create_course();
-        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Calendar canceled']);
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Calendar cancelled']);
         $context = \context_module::instance($bookit->cmid);
         $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
 
@@ -401,11 +401,11 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
     }
 
     /**
-     * Self-canceled bookings must not appear in the service-team active calendar read.
+     * Self-cancelled bookings must not appear in the service-team active calendar read.
      *
      * @return void
      */
-    public function test_execute_hides_self_canceled_event_from_service_team_calendar(): void {
+    public function test_execute_hides_self_cancelled_event_from_service_team_calendar(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -441,7 +441,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         ]);
 
         $eventid = (int)$DB->insert_record('bookit_event', (object)[
-            'name' => 'Self canceled calendar exam',
+            'name' => 'Self cancelled calendar exam',
             'semester' => 20261,
             'institutionid' => 1,
             'starttime' => strtotime('2026-05-21 09:00:00'),
@@ -493,18 +493,18 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
     }
 
     /**
-     * Export preview may include canceled bookings when the service team explicitly filters for them.
+     * Export preview may include cancelled bookings when the service team explicitly filters for them.
      *
      * @return void
      */
-    public function test_execute_includes_canceled_event_in_export_mode_with_explicit_status_filter(): void {
+    public function test_execute_includes_cancelled_event_in_export_mode_with_explicit_status_filter(): void {
         global $DB;
 
         $this->resetAfterTest(true);
 
         $serviceuser = $this->getDataGenerator()->create_user();
         $course = $this->getDataGenerator()->create_course();
-        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Export canceled']);
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Export cancelled']);
         $context = \context_module::instance($bookit->cmid);
         $this->getDataGenerator()->enrol_user($serviceuser->id, $course->id);
 
@@ -519,13 +519,13 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
 
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_bookit');
         $roomid = $generator->create_room([
-            'name' => 'Export canceled room',
+            'name' => 'Export cancelled room',
             'shortname' => 'EC-1',
             'location' => 'North',
         ]);
 
         $eventid = (int)$DB->insert_record('bookit_event', (object)[
-            'name' => 'Export canceled exam',
+            'name' => 'Export cancelled exam',
             'semester' => 20261,
             'institutionid' => 1,
             'starttime' => strtotime('2026-05-22 09:00:00'),
@@ -676,11 +676,11 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
     }
 
     /**
-     * Governed calendar reads omit canceled bookings for booking persons.
+     * Governed calendar reads omit cancelled bookings for booking persons.
      *
      * @return void
      */
-    public function test_booking_person_canceled_omitted_from_calendar_read(): void {
+    public function test_booking_person_cancelled_omitted_from_calendar_read(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -692,7 +692,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
         $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
 
         \update_capabilities('mod_bookit');
-        $participantrole = \create_role('Bookit canceled participant', 'bookitcanceledparticipant', 'student');
+        $participantrole = \create_role('Bookit cancelled participant', 'bookitcancelledparticipant', 'student');
         \assign_capability('mod/bookit:view', CAP_ALLOW, $participantrole, $context->id, true);
         \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $participantrole, $context->id, true);
         \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $participantrole, $context->id, true);
@@ -706,7 +706,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
             'location' => 'North',
         ]);
 
-        $canceledid = (int)$DB->insert_record('bookit_event', (object)[
+        $cancelledid = (int)$DB->insert_record('bookit_event', (object)[
             'name' => 'Canceled calendar exam',
             'semester' => 20261,
             'institutionid' => 1,
@@ -772,7 +772,7 @@ final class get_calendar_events_test extends externallib_advanced_testcase {
 
         $this->assertSame('ok', $response['status']);
         $returnedids = array_map(static fn(array $event): int => (int)$event['id'], $response['events']);
-        $this->assertNotContains($canceledid, $returnedids);
+        $this->assertNotContains($cancelledid, $returnedids);
         $this->assertContains($acceptedid, $returnedids);
     }
 }

@@ -140,15 +140,15 @@ class install_helper {
                 'subjectstring' => 'bookingstatus_subject_confirmed',
                 'bodystring' => 'bookingstatus_body_confirmed',
             ],
-            'canceled' => [
+            'cancelled' => [
                 'id' => event_access_manager::BOOKINGSTATUS_CANCELED,
-                'key' => 'canceled',
-                'enabledconfig' => 'bookingstatus_enabled_canceled',
-                'subjectconfig' => 'bookingstatus_subject_canceled',
-                'bodyconfig' => 'bookingstatus_body_canceled',
-                'enabledstring' => 'bookingstatus_enabled_canceled',
-                'subjectstring' => 'bookingstatus_subject_canceled',
-                'bodystring' => 'bookingstatus_body_canceled',
+                'key' => 'cancelled',
+                'enabledconfig' => 'bookingstatus_enabled_cancelled',
+                'subjectconfig' => 'bookingstatus_subject_cancelled',
+                'bodyconfig' => 'bookingstatus_body_cancelled',
+                'enabledstring' => 'bookingstatus_enabled_cancelled',
+                'subjectstring' => 'bookingstatus_subject_cancelled',
+                'bodystring' => 'bookingstatus_body_cancelled',
             ],
             'rejected' => [
                 'id' => event_access_manager::BOOKINGSTATUS_REJECTED,

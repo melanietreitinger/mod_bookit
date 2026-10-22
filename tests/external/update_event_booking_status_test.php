@@ -406,12 +406,12 @@ final class update_event_booking_status_test extends advanced_testcase {
     }
 
     /**
-     * Booking persons may reactivate their own canceled bookings from History without managebasics.
+     * Booking persons may reactivate their own cancelled bookings from History without managebasics.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_booking_person_canceled_to_new_via_history_tab(): void {
+    public function test_booking_person_cancelled_to_new_via_history_tab(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -420,13 +420,13 @@ final class update_event_booking_status_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $bookit = $this->getDataGenerator()->create_module('bookit', [
             'course' => $course->id,
-            'name' => 'Booker canceled reactivate',
+            'name' => 'Booker cancelled reactivate',
         ]);
         $context = \context_module::instance($bookit->cmid);
         $this->getDataGenerator()->enrol_user($bookingperson->id, $course->id);
 
         \update_capabilities('mod_bookit');
-        $roleid = \create_role('Bookit participant canceled reactivate', 'bookitparticipantcancelreact', 'student');
+        $roleid = \create_role('Bookit participant cancelled reactivate', 'bookitparticipantcancelreact', 'student');
         \assign_capability('mod/bookit:view', CAP_ALLOW, $roleid, $context->id, true);
         \assign_capability('mod/bookit:viewownoverview', CAP_ALLOW, $roleid, $context->id, true);
         \assign_capability('mod/bookit:viewalldetailsofownevent', CAP_ALLOW, $roleid, $context->id, true);
@@ -483,12 +483,12 @@ final class update_event_booking_status_test extends advanced_testcase {
     }
 
     /**
-     * Non-owners cannot reactivate canceled bookings via History tab.
+     * Non-owners cannot reactivate cancelled bookings via History tab.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_non_owner_canceled_to_new_via_history_tab_rejected(): void {
+    public function test_non_owner_cancelled_to_new_via_history_tab_rejected(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -496,7 +496,7 @@ final class update_event_booking_status_test extends advanced_testcase {
         $owner = $this->getDataGenerator()->create_user();
         $other = $this->getDataGenerator()->create_user();
         $course = $this->getDataGenerator()->create_course();
-        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Non-owner canceled']);
+        $bookit = $this->getDataGenerator()->create_module('bookit', ['course' => $course->id, 'name' => 'Non-owner cancelled']);
         $context = \context_module::instance($bookit->cmid);
         $this->getDataGenerator()->enrol_user($other->id, $course->id);
 
@@ -508,7 +508,7 @@ final class update_event_booking_status_test extends advanced_testcase {
         \accesslib_clear_all_caches_for_unit_testing();
 
         $eventid = (int)$DB->insert_record('bookit_event', (object)[
-            'name' => 'Foreign canceled exam',
+            'name' => 'Foreign cancelled exam',
             'semester' => 20261,
             'institutionid' => 1,
             'starttime' => strtotime('2026-05-20 09:00:00'),
@@ -544,12 +544,12 @@ final class update_event_booking_status_test extends advanced_testcase {
     }
 
     /**
-     * Service team must restore booker-canceled requests to New from the terminal tab.
+     * Service team must restore booker-cancelled requests to New from the terminal tab.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_service_team_canceled_to_new_from_rejected_tab(): void {
+    public function test_service_team_cancelled_to_new_from_rejected_tab(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -607,12 +607,12 @@ final class update_event_booking_status_test extends advanced_testcase {
     }
 
     /**
-     * Service team may restore canceled bookings from History tab.
+     * Service team may restore cancelled bookings from History tab.
      *
      * @runInSeparateProcess
      * @return void
      */
-    public function test_service_team_canceled_to_new_via_history_tab(): void {
+    public function test_service_team_cancelled_to_new_via_history_tab(): void {
         global $DB;
 
         $this->resetAfterTest(true);
