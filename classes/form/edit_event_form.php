@@ -324,7 +324,7 @@ class edit_event_form extends dynamic_form {
         $mform->addElement(
             'text',
             'participantsamount',
-            get_string('event_students', 'mod_bookit'),
+            get_string('event_participants', 'mod_bookit'),
             ['size' => '4']
         );
         $mform->disabledIf('participantsamount', 'editevent', 'neq');
@@ -332,7 +332,7 @@ class edit_event_form extends dynamic_form {
         if ($requirepublicfields) {
             $mform->addRule('participantsamount', null, 'required', null, 'client');
         }
-        $mform->addHelpButton('participantsamount', 'event_students', 'mod_bookit');
+        $mform->addHelpButton('participantsamount', 'event_participants', 'mod_bookit');
 
         // Add the "person in charge" field.
         $examinersresolver = examiner_pool_resolver::from_config($config);

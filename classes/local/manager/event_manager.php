@@ -1085,7 +1085,7 @@ class event_manager {
             'name' => 'event_name',
             'notes' => 'event_notes',
             'otherexaminers' => 'event_otherexaminers',
-            'participantsamount' => 'event_students',
+            'participantsamount' => 'event_participants',
             'totalparticipantsamount' => 'event_totalparticipants',
             'personinchargeid' => 'event_personincharge',
             'roomid' => 'event_room',
