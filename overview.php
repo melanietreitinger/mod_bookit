@@ -166,10 +166,7 @@ if ($resetfilters) {
         json_encode($filtercookie),
         array_merge(
             $filtercookieoptions,
-            [
-                'expires' =>
-                    time() + (10 * 365 * 24 * 60 * 60),
-            ]
+            ['expires' => time() + YEARSECS]
         )
     );
 } else if (!empty($_COOKIE[$filtercookiename])) {
