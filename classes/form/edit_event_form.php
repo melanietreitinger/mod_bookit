@@ -467,6 +467,17 @@ class edit_event_form extends dynamic_form {
             $mform->addElement('header', 'header_internal', get_string('header_internal', 'mod_bookit'));
             $mform->setExpanded('header_internal', true);
         }
+        if ($caneditinternal) {
+            $mform->addElement(
+                'text',
+                'totalparticipantsamount',
+                get_string('event_totalparticipants', 'mod_bookit'),
+                ['size' => '4']
+            );
+            $mform->setType('totalparticipantsamount', PARAM_RAW_TRIMMED);
+            $mform->addRule('totalparticipantsamount', null, 'numeric', null, 'client');
+            $mform->addHelpButton('totalparticipantsamount', 'event_totalparticipants', 'mod_bookit');
+        }
 
         // Add the "bookingstatus" field.
         $bookingstatusoptions = [];

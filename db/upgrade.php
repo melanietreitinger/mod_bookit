@@ -32,5 +32,29 @@
  * @throws ddl_table_missing_exception
  */
 function xmldb_bookit_upgrade(int $oldversion): bool {
-      return true;
+    global $DB;
+
+    $dbman = $DB->get_manager();
+
+    if ($oldversion < 2026102600) {
+        $table = new xmldb_table('bookit_event');
+        $field = new xmldb_field(
+            'totalparticipantsamount',
+            XMLDB_TYPE_INTEGER,
+            '11',
+            null,
+            null,
+            null,
+            null,
+            'participantsamount'
+        );
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026102600, 'bookit');
+    }
+
+    return true;
 }
