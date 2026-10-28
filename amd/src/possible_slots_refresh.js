@@ -59,6 +59,20 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
 
     const timeEl = formEl.querySelector('select[name="starttime"]');
 
+    // Default extra times of the room shown last (#238). Input values that still match them are
+    // inherited and get cleared on a room change, so the new room's defaults apply.
+    let previousRoomExtraBefore = null;
+    let previousRoomExtraAfter = null;
+
+    const resetInheritedExtraTimes = () => {
+        if (extraBeforeEl && extraBeforeEl.value.trim() === String(previousRoomExtraBefore)) {
+            extraBeforeEl.value = '';
+        }
+        if (extraAfterEl && extraAfterEl.value.trim() === String(previousRoomExtraAfter)) {
+            extraAfterEl.value = '';
+        }
+    };
+
     const starttimeEl = document.querySelector('.fitem:has(select[name="starttime"])');
     const starttimeExplanationEl = document.querySelector('.fitem:has(.form-control-static[data-name="starttime_explanation"])');
     const starttimeExplanationTextEl = starttimeExplanationEl.querySelector(
@@ -224,7 +238,10 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
             overwriteextratimeafter,
             effectiveextratimebefore,
             effectiveextratimeafter,
+            roomextratimebefore,
+            roomextratimeafter,
         } = await Ajax.call([{
+            
             methodname: 'mod_bookit_get_possible_starttimes',
             args: {
                 cmid: cmId,
@@ -239,7 +256,9 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
                 extratimeafter: requestTimes.extratimeafter,
             }
         }])[0];
-        await updateExtraTimeUi(
+        previousRoomExtraBefore = roomextratimebefore;
+        previousRoomExtraAfter = roomextratimeafter;
+        await updateExtraTimeUi( 
             overwriteextratimebefore,
             overwriteextratimeafter,
             effectiveextratimebefore,
@@ -315,7 +334,9 @@ export function initPossibleStarttimesRefresh(cmId, exceptEventId = null) {
         }
     };
 
+    roomEl?.addEventListener('change', resetInheritedExtraTimes);
     for (let el of [
+        roomEl,
         roomEl,
         durationEl,
         dateDayEl,

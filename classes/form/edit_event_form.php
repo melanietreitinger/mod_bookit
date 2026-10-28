@@ -1231,6 +1231,19 @@ class edit_event_form extends dynamic_form {
                     : (int)$submittedextratimeafter;
             }
         }
+
+        // Issue #238: Events store resolved extra times. On a room change, values that still match the
+        // previous room's defaults are re-resolved from the new room; explicit overrides are kept.
+        if ($currentevent && isset($formdata->roomid) && (int)$formdata->roomid !== (int)$currentevent->roomid) {
+            $previousroom = room::get_record(['id' => $currentevent->roomid], IGNORE_MISSING) ?: null;
+            foreach (['extratimebefore', 'extratimeafter'] as $field) {
+                $previousdefault = (int)($previousroom?->get($field) ?? get_config('mod_bookit', $field));
+                $value = $formdata->{$field} ?? null;
+                if ($value === null || $value === '' || (int)$value === $previousdefault) {
+                    $formdata->{$field} = null;
+                }
+            }
+        }
         $event = bookit_event::from_record($formdata);
         $cmid = (int)$this->optional_param('cmid', 0, PARAM_INT);
         $persistedevent = event_manager::save_event_with_lifecycle_tracking(

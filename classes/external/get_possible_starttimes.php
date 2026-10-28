@@ -458,6 +458,10 @@ class get_possible_starttimes extends external_api {
             'overwriteextratimeafter' => $overwriteextratimeafter,
             'effectiveextratimebefore' => $effectiveextratimebefore,
             'effectiveextratimeafter' => $effectiveextratimeafter,
+            'roomextratimebefore' => (int)($selectedroom->get('extratimebefore')
+                ?? get_config('mod_bookit', 'extratimebefore')),
+            'roomextratimeafter' => (int)($selectedroom->get('extratimeafter')
+                ?? get_config('mod_bookit', 'extratimeafter')),
         ];
     }
 
@@ -487,6 +491,8 @@ class get_possible_starttimes extends external_api {
                 'overwriteextratimeafter' => new external_value(PARAM_BOOL),
                 'effectiveextratimebefore' => new external_value(PARAM_INT),
                 'effectiveextratimeafter' => new external_value(PARAM_INT),
+                'roomextratimebefore' => new external_value(PARAM_INT, 'Default extra time before of the selected room'),
+                'roomextratimeafter' => new external_value(PARAM_INT, 'Default extra time after of the selected room'),
             ]);
     }
 }
