@@ -396,6 +396,10 @@ $string['overview_column_date'] = 'Datum';
 $string['overview_column_datetime'] = 'Datum und Uhrzeit';
 $string['overview_column_id'] = 'ID';
 $string['overview_column_myrole'] = 'Meine Rolle';
+$string['overview_column_participants'] = 'Teilnehmende';
+$string['overview_column_participants_help'] = 'Die erste Zahl gibt die geplante Anzahl der Teilnehmenden an. Die zweite Zahl nach dem „|“ steht für die tatsächliche Anzahl der Teilnehmenden, die bei der Veranstaltung anwesend waren. Solange die tatsächliche Anzahl noch nicht eingetragen ist, erscheint hier „-“.
+
+Beispiel vor der Veranstaltung: „42 | -“. Beispiel nach der Veranstaltung, wenn die tatsächliche Anzahl (41) eingetragen wurde: „42 | 41“.';
 $string['overview_column_personincharge'] = 'Verantwortliche Person';
 $string['overview_column_progress'] = 'Fortschritt';
 $string['overview_column_resources'] = 'Ressourcen';

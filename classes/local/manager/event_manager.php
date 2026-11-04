@@ -325,7 +325,10 @@ class event_manager {
                 e.supportpersons,
                 e.usercreated,
                 e.usermodified,
+                e.participantsamount,
+                e.totalparticipantsamount,
                 r.name AS room
+
             FROM {bookit_event} e
             LEFT JOIN {bookit_room} r ON r.id = e.roomid
             WHERE
@@ -505,10 +508,13 @@ class event_manager {
             e.supportpersons,
             e.usercreated,
             e.usermodified,
+            e.participantsamount,
+            e.totalparticipantsamount,
             creator.firstname AS creatorfirstname,
             creator.lastname AS creatorlastname,
             creator.deleted AS creatordeleted,
             COALESCE(r.name, '') AS room,
+            
             " . $DB->sql_fullname('pic.firstname', 'pic.lastname') . " AS personincharge,
             " . $DB->sql_fullname('creator.firstname', 'creator.lastname') . ' AS createdby';
 
@@ -1230,6 +1236,8 @@ class event_manager {
                 e.supportpersons,
                 e.usercreated,
                 e.usermodified,
+                e.participantsamount,
+                e.totalparticipantsamount,
                 creator.firstname AS creatorfirstname,
                 creator.lastname AS creatorlastname,
                 creator.deleted AS creatordeleted,
@@ -2313,6 +2321,38 @@ class event_manager {
      */
     public static function get_booking_status_label(int $status): string {
         return get_string('event_bookingstatus_' . $status, 'mod_bookit');
+    }
+
+    /**
+     * Format an event's time span for the "Date and time" column, e.g. "18 November 2026, 9:10 AM - 10:25 AM".
+     *
+     * The end shows only the time on the same day and the full date and time otherwise.
+     *
+     * @param int $starttime
+     * @param int $endtime
+     * @return string
+     */
+    public static function format_event_datetime_range(int $starttime, int $endtime): string {
+        $start = userdate($starttime, get_string('strftimedatetime', 'langconfig'));
+        if ($endtime <= $starttime) {
+            return $start;
+        }
+        $sameday = userdate($starttime, '%Y%m%d') === userdate($endtime, '%Y%m%d');
+        $endformat = get_string($sameday ? 'strftimetime' : 'strftimedatetime', 'langconfig');
+        return $start . ' - ' . userdate($endtime, $endformat);
+    }
+
+    /**
+     * Format planned and actual participants for the overview tables as "planned | actual", e.g. "42 | -".
+     *
+     * Missing values are shown as "-".
+     *
+     * @param stdClass $event Record with participantsamount and totalparticipantsamount.
+     * @return string
+     */
+    public static function format_participants_summary(stdClass $event): string {
+        $format = static fn($value): string => ($value === null || $value === '') ? '-' : (string)(int)$value;
+        return $format($event->participantsamount ?? null) . ' | ' . $format($event->totalparticipantsamount ?? null);
     }
 
     /**

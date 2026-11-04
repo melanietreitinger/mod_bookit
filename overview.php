@@ -690,6 +690,9 @@ $templatecontext = [
     'overviewcolumndatetime' => get_string('overview_column_datetime', 'mod_bookit'),
     'overviewcolumnid' => get_string('overview_column_id', 'mod_bookit'),
     'overviewcolumntitle' => get_string('overview_column_title', 'mod_bookit'),
+    'overviewcolumnparticipants' => get_string('overview_column_participants', 'mod_bookit'),
+    'participantshelpicon' => (new \core\output\help_icon('overview_column_participants', 'mod_bookit'))
+        ->export_for_template($OUTPUT),
     'overviewcolumnroom' => get_string('overview_column_room', 'mod_bookit'),
     'overviewcolumnpersonincharge' => get_string('overview_column_personincharge', 'mod_bookit'),
     'overviewcolumnmyrole' => get_string('overview_column_myrole', 'mod_bookit'),
@@ -804,7 +807,7 @@ $prepareeventrow = function (
     }
 
     $datestr = userdate($ev->starttime, '%d.%m.%Y');
-    $datetimestr = userdate((int)$ev->starttime, get_string('strftimedatetime', 'langconfig'));
+        $datetimestr = event_manager::format_event_datetime_range((int)$ev->starttime, (int)$ev->endtime);
     $canviewchecklist = event_access_manager::can_view_event_checklist($ev, $context, (int)$USER->id);
     $canviewresources = event_access_manager::can_view_event_resources($ev, $context, (int)$USER->id);
 
@@ -864,6 +867,7 @@ $prepareeventrow = function (
         'is_reserved_projection' => $isreservedprojection,
         'caneventdetails' => $caneventdetails,
         'room' => s($room),
+        'participants' => $isreservedprojection ? '-' : event_manager::format_participants_summary($ev),
         'personincharge' => s($pic),
         'myrole' => s($myrole),
         'createdby' => s($createdby),

@@ -36,6 +36,7 @@
     * room - Room label (string).
     * personincharge - Full name of the person in charge (string).
     * myrole - Role label for current user (string).
+    * participants - Planned and actual participants, e.g. "42 | -" (string).
     * statusgroupkey - Row accent class suffix (open|confirmed|closed).
     * statuscellhtml - Pre-rendered shared booking status cell markup.
     * datestr - Date string for display (string).
@@ -58,6 +59,7 @@
           "room": "Room 1",
           "personincharge": "Jane Doe",
           "myrole": "Person in charge",
+          "participants": "42 | -",
           "statusgroupkey": "confirmed",
           "statuscellhtml": "<td class=\"mod-bookit-status-cell\">...</td>",
           "datestr": "14.01.2026",
@@ -109,6 +111,10 @@
                 {{/showidcolumn}}
                 <th class="align-middle" data-sort-key="starttime">{{overviewcolumndatetime}}</th>
                 <th class="align-middle" data-sort-key="title">{{overviewcolumntitle}}</th>
+                <th class="align-middle">
+                    {{overviewcolumnparticipants}}
+                    {{#participantshelpicon}}{{> core/help_icon }}{{/participantshelpicon}}
+                </th>
                 <th class="align-middle" data-sort-key="room">{{overviewcolumnroom}}</th>
                 <th class="align-middle" data-sort-key="personincharge">{{overviewcolumnpersonincharge}}</th>
                 <th class="align-middle" data-sort-key="myrole">{{overviewcolumnmyrole}}</th>
@@ -161,6 +167,8 @@
                         {{^caneventdetails}}{{name}}{{/caneventdetails}}
                         {{/is_reserved_projection}}
                     </td>
+                    <td class="align-middle">{{participants}}</td>
+
 
                     <td class="align-middle">{{room}}</td>
                     <td class="align-middle">{{personincharge}}</td>

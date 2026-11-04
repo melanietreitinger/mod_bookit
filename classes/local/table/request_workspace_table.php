@@ -17,6 +17,7 @@
 namespace mod_bookit\local\table;
 
 use context_module;
+use core\output\help_icon;
 use core_table\sql_table;
 use html_writer;
 use mod_bookit\local\manager\event_access_manager;
@@ -89,9 +90,10 @@ final class request_workspace_table extends sql_table {
             $columns[] = 'starttime';
             $headers[] = get_string('overview_column_datetime', 'mod_bookit');
         }
-        $columns = array_merge($columns, ['title', 'room', 'personincharge', 'myrole']);
+        $columns = array_merge($columns, ['title', 'participants', 'room', 'personincharge', 'myrole']);
         $headers = array_merge($headers, [
             get_string('overview_column_title', 'mod_bookit'),
+            get_string('overview_column_participants', 'mod_bookit'),
             get_string('overview_column_room', 'mod_bookit'),
             get_string('overview_column_personincharge', 'mod_bookit'),
             get_string('overview_column_myrole', 'mod_bookit'),
@@ -126,7 +128,11 @@ final class request_workspace_table extends sql_table {
         $this->define_columns($columns);
         $this->availablecolumns = $columns;
         $this->define_headers($headers);
-        foreach (['myrole', 'progress', 'checklist', 'resources', 'reactivate'] as $column) {
+        $this->define_help_for_headers([
+            array_search('participants', $columns, true) => new help_icon('overview_column_participants', 'mod_bookit'),
+        ]);
+        foreach (['myrole', 'participants', 'progress', 'checklist', 'resources', 'reactivate'] as $column) {
+        
             $this->no_sorting($column);
         }
         $this->sortable(true, 'starttime', SORT_DESC);
@@ -230,16 +236,26 @@ final class request_workspace_table extends sql_table {
     }
 
     /**
-     * Render start time according to the active profile.
+     * Render planned and actual participants.
+     *
+     * @param stdClass $row
+     * @return string
+     */
+    public function col_participants($row): string {
+        return s(event_manager::format_participants_summary($row));
+    }
+
+    /**
+     * Render the date, or the date and time span, according to the active profile.
      *
      * @param stdClass $row
      * @return string
      */
     public function col_starttime($row): string {
-        $format = !empty($this->profile['showdatetimecolumn'])
-            ? get_string('strftimedatetime', 'langconfig')
-            : '%d.%m.%Y';
-        return userdate((int)$row->starttime, $format);
+        if (!empty($this->profile['showdatetimecolumn'])) {
+            return s(event_manager::format_event_datetime_range((int)$row->starttime, (int)$row->endtime));
+        }
+        return userdate((int)$row->starttime, '%d.%m.%Y');
     }
 
     /**

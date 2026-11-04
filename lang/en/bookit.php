@@ -396,6 +396,10 @@ $string['overview_column_date'] = 'Date';
 $string['overview_column_datetime'] = 'Date and time';
 $string['overview_column_id'] = 'ID';
 $string['overview_column_myrole'] = 'My role';
+$string['overview_column_participants'] = 'Participants';
+$string['overview_column_participants_help'] = 'The first number denotes the planned amount of participants. The second number after the "|" represents the actual amount of participants, who were present during the event. As long as the actual amount of participants isn\'t filled in, it appears as "-" here.
+
+Example notation before the event: "42 | -". Example notation after the event, when the actual amount of participants (41) has been filled in: "42 | 41".';
 $string['overview_column_personincharge'] = 'Person in charge';
 $string['overview_column_progress'] = 'Progress';
 $string['overview_column_resources'] = 'Resources';
