@@ -23,7 +23,6 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-
 $plugin->component = 'mod_bookit';
 $plugin->version = 2026102600;
 $plugin->release = '1.0.0';
