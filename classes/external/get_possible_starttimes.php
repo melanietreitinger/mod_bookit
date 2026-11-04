@@ -129,8 +129,16 @@ class get_possible_starttimes extends external_api {
             $blockingstatuses = [2];
             [$sqlpart, $params] = $DB->get_in_or_equal($blockingstatuses, SQL_PARAMS_NAMED);
             $sqlconditions[] = "e.bookingstatus $sqlpart";
-        } // Else the room is in room::OVERLAPPING_ALLOW_NONE mode.
-
+        } else {
+            // Room is in room::OVERLAPPING_ALLOW_NONE mode (#242): cancelled and rejected requests free their slot.
+            [$sqlpart, $params] = $DB->get_in_or_equal(
+                [event_access_manager::BOOKINGSTATUS_CANCELED, event_access_manager::BOOKINGSTATUS_REJECTED],
+                SQL_PARAMS_NAMED,
+                'param',
+                false
+            );
+            $sqlconditions[] = "e.bookingstatus $sqlpart";
+        }
         if ($excepteventid) {
             $sqlconditions[] = 'e.id != :excepteventid';
             $params['excepteventid'] = $excepteventid;
