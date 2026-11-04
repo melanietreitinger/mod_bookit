@@ -3117,6 +3117,25 @@ final class event_manager_test extends advanced_testcase {
     }
 
     /**
+     * "My events" semester options start at the current semester.
+     *
+     * @return void
+     */
+    public function test_get_semester_filter_options_excludepast_starts_at_current_semester(): void {
+        // Winter term 2026 is current in November 2026.
+        $options = event_manager::get_semester_filter_options(strtotime('2026-11-04 10:00:00'), true);
+        $this->assertSame([20262, 20271, 20272], array_keys($options));
+
+        // January belongs to the previous winter term, which stays selectable.
+        $options = event_manager::get_semester_filter_options(strtotime('2027-01-15 10:00:00'), true);
+        $this->assertSame([20262, 20271, 20272], array_keys($options));
+
+        // The Request workspace keeps the full range including past semesters.
+        $options = event_manager::get_semester_filter_options(strtotime('2026-11-04 10:00:00'));
+        $this->assertArrayHasKey(20251, $options);
+    }
+
+    /**
      * Explicit empty semester selection must include events from multiple semesters.
      *
      * @return void

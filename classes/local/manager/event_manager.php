@@ -878,16 +878,23 @@ class event_manager {
      * Build semester filter options around the current semester.
      *
      * @param int|null $referencetime
+     * @param bool $excludepast Only offer the current and future semesters (used by "My events").
      * @return array
      */
-    public static function get_semester_filter_options(?int $referencetime = null): array {
+    public static function get_semester_filter_options(?int $referencetime = null, bool $excludepast = false): array {
         $currentsemester = self::get_current_semester($referencetime);
         $baseyear = (int)floor($currentsemester / 10);
         $options = [];
 
         for ($year = $baseyear - 1; $year <= $baseyear + 1; $year++) {
-            $options[($year * 10) + 1] = get_string('event_semester_summer', 'mod_bookit') . ' ' . $year;
-            $options[($year * 10) + 2] = get_string('event_semester_winter', 'mod_bookit') . ' ' . $year;
+            $semester = ($year * 10) + 1;
+            if (!$excludepast || $semester >= $currentsemester) {
+                $options[$semester] = get_string('event_semester_summer', 'mod_bookit') . ' ' . $year;
+            }
+            $semester = ($year * 10) + 2;
+            if (!$excludepast || $semester >= $currentsemester) {
+                $options[$semester] = get_string('event_semester_winter', 'mod_bookit') . ' ' . $year;
+            }
         }
 
         return $options;

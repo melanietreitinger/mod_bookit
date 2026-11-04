@@ -254,6 +254,17 @@ $selectedsemesterids = $hasexplicitsemesterfilter
 $hasexplicitsemesterfilter =
     $hasexplicitsemesterfilter || $hascookiesemesterfilter;
 
+// "My events" lists only current and future bookings; past ones are in "History".
+// Past terms are therefore no filter option there, and a stored past term must not stay selected invisibly.
+$ismyeventsview = !$canviewrequestworkspace && !$historyactive;
+if ($ismyeventsview) {
+    $currentsemester = event_manager::get_current_semester();
+    $selectedsemesterids = array_values(array_filter(
+        $selectedsemesterids,
+        static fn($semesterid): bool => (int)$semesterid >= $currentsemester
+    ));
+}
+
 $search = optional_param(
     'search',
     '',
@@ -535,7 +546,7 @@ if ($canviewrequestworkspace) {
 $openrequests = [];
 $rejectedcancelledqueue = [];
 $confirmedrequests = [];
-$semesteroptionssource = event_manager::get_semester_filter_options();
+$semesteroptionssource = event_manager::get_semester_filter_options(null, $ismyeventsview);
 $semesteroptions = [];
 foreach ($semesteroptionssource as $value => $label) {
     $semesteroptions[] = [
