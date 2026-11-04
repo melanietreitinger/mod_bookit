@@ -3591,7 +3591,7 @@ final class event_manager_test extends advanced_testcase {
             $this->assertFalse($profile['showdatecolumn'], $tab);
             $this->assertTrue($profile['showcreatedbycolumn'], $tab);
             $this->assertTrue($profile['showprogresscolumn'], $tab);
-            $this->assertFalse($profile['showtablesearch'], $tab);
+            $this->assertTrue($profile['showtablesearch'], $tab);
         }
     }
 

@@ -1033,7 +1033,7 @@ class event_manager {
             'showresourcescolumn' => $isreporting,
             'showcancelcolumn' => false,
             'showreactivatecolumn' => in_array($workspacetab, ['history', 'rejectedcancelled'], true),
-            'showtablesearch' => $isqueue,
+            'showtablesearch' => $isqueue || $isreporting,
             'enableworkflowhistory' => true,
             'emptymessage' => $emptymessages[$workspacetab] ?? 'overview_no_results',
             'requesttab' => $workspacetab,
