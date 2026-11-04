@@ -55,6 +55,7 @@ class edit_room_form extends \core\form\persistent {
         $mform->addRule('name', get_string('required'), 'required');
 
         $mform->addElement('text', 'shortname', get_string('room_shortname', 'mod_bookit'));
+        $mform->addRule('shortname', get_string('room_shortname_toolong', 'mod_bookit'), 'maxlength', 6, 'client');
         $mform->addHelpButton('shortname', 'room_shortname', 'mod_bookit');
 
         $mform->addElement('text', 'seats', get_string('room_seats', 'mod_bookit'));

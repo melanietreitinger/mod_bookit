@@ -574,6 +574,7 @@ $string['room_overwrite_extratimebefore'] = 'Overwrite global extratimebefore se
 $string['room_seats'] = 'Amount of seats';
 $string['room_shortname'] = 'Shortname';
 $string['room_shortname_help'] = 'Shortname of a room with max. 6 characters. This is used in the calendar view.';
+$string['room_shortname_toolong'] = 'The short name may not be longer than 6 characters.';
 $string['roomid_empty_notice'] = 'No active rooms are available. Run the install helper first.';
 $string['rooms'] = 'Rooms';
 $string['rooms_help'] = 'These rooms will be assigned to the checklist item. Multiple rooms may be selected by holding CTRL.';

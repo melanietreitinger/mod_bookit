@@ -108,4 +108,17 @@ class room extends persistent {
             ],
         ];
     }
+
+    /**
+     * Validate the shortname: the DB column holds at most 6 characters (#243).
+     *
+     * @param string|null $value
+     * @return true|\lang_string
+     */
+    protected function validate_shortname($value) {
+        if (\core_text::strlen((string)$value) > 6) {
+            return new \lang_string('room_shortname_toolong', 'mod_bookit');
+        }
+        return true;
+    }
 }

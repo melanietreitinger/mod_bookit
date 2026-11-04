@@ -574,6 +574,7 @@ $string['room_overwrite_extratimebefore'] = 'Globale extratimebefore-Einstellung
 $string['room_seats'] = 'Anzahl an Plätzen';
 $string['room_shortname'] = 'Kurzname';
 $string['room_shortname_help'] = 'Kurzname des Raums mit maximal 6 Zeichen. Dieser wird in der Kalenderansicht verwendet.';
+$string['room_shortname_toolong'] = 'Der Kurzname darf nicht länger als 6 Zeichen sein.';
 $string['roomid_empty_notice'] = 'Es sind keine aktiven Räume vorhanden. Führen Sie zuerst den Install Helper aus.';
 $string['rooms'] = 'Räume';
 $string['rooms_help'] = 'Diese Räume werden dem Checklisten-Element zugewiesen. Mehrere Räume können durch Halten von STRG ausgewählt werden.';
