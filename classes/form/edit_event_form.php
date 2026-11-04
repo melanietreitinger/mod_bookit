@@ -908,7 +908,11 @@ class edit_event_form extends dynamic_form {
      * @return bool
      */
     private function is_optional_field_enabled(\stdClass $config, string $fieldname): bool {
-        $rawfields = (string)($config->calendar_optional_fields ?? '');
+        // If never saved (e.g. fresh install), all optional fields are enabled, like the settings form default.
+        if (!isset($config->calendar_optional_fields)) {
+            return true;
+        }
+        $rawfields = (string)$config->calendar_optional_fields;
         $enabledfields = array_values(array_filter(array_map('trim', explode(',', $rawfields))));
 
         return in_array($fieldname, $enabledfields, true);
