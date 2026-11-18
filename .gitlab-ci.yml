@@ -17,7 +17,7 @@ default:
   services:
     - name: selenium/standalone-chrome:3
       alias: behat
-    - name: mariadb:10.6
+    - name: mariadb:10.11
       alias: mariadb
       command:
         - '--character-set-server=utf8mb4'
@@ -27,7 +27,7 @@ default:
         - '--skip-log-bin'
       variables:
         MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
-    - name: postgres:14
+    - name: postgres:15
       alias: pgsql
       variables:
         POSTGRES_USER: 'postgres'
@@ -55,7 +55,8 @@ default:
     - composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci /opt/mci ^4
     - export PATH="/opt/mci/bin:/opt/mci/vendor/bin:$PATH"
     - moodle-plugin-ci install --db-host "$DB" --db-name moodle
-    - '{ php -S 0.0.0.0:8000 -t "$CI_PROJECT_DIR/moodle" >/dev/null 2>&1 & }'
+    - 'if [ -d "$CI_PROJECT_DIR/moodle/public" ]; then DOCROOT="$CI_PROJECT_DIR/moodle/public"; else DOCROOT="$CI_PROJECT_DIR/moodle"; fi'
+    - '{ php -S 0.0.0.0:8000 -t "$DOCROOT" >/dev/null 2>&1 & }'
 
 tests:
   script:
@@ -74,6 +75,6 @@ tests:
 
   parallel:
     matrix:
-      - MOODLE_BRANCH: [MOODLE_405_STABLE]
-        PHP_VERSION: ['8.1', '8.3']
+      - MOODLE_BRANCH: [MOODLE_501_STABLE]
+        PHP_VERSION: ['8.2', '8.4']
         DB: [pgsql, mariadb]
